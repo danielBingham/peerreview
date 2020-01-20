@@ -12,3 +12,8 @@
 **Author:**
 
 *Is there anything we explicitly decided not to pursue as part of this story?  Why?*
+
+## What tests do we need?
+**Author:**
+
+*Outline what unit, integration, and e2e tests we plan to write for this story.*
