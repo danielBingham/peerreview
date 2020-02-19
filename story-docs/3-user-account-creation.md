@@ -108,9 +108,18 @@ We could also expand scope to include more than just the registration form, but
 lets stay with small chunks.
 
 ## What are we not doing?
-**Author:**
+**Author:** danielBingham
 
 *Is there anything we explicitly decided not to pursue as part of this story?  Why?*
 
 We're not writing the login form, we're not worrying about React Router, not
 doing any kind of user list.
+
+## What tests do we need?
+**Author:** danielBingham
+
+*Outline what unit, integration, and e2e tests we plan to write for this story.*
+
+We're going to get the test framework set up in this story.  We're going to use
+Mocha/Chai/Sinon to test both the frontend and the backend.  We'll need to get
+them installed and setup.
