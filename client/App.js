@@ -1,4 +1,5 @@
-import React, { Component } from 'react';
+import React from 'react';
+import RegistrationForm from './containers/RegistrationForm';
 import './app.css';
 
 /**
@@ -10,7 +11,7 @@ import './app.css';
  * <App />
  * ```
  */
-export default class App extends Component {
+export default class App extends React.Component {
 
     /**
      * Takes no props.
@@ -27,6 +28,7 @@ export default class App extends Component {
             <section className="app">
                 <header>
                     <h1>Peer Review</h1>
+                    <RegistrationForm />
                 </header>
             </section>
         );

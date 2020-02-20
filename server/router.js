@@ -1,18 +1,20 @@
 /**************************************************************************************************
  *         API Router v0 
  *
- * This is the RESTful API router.  It contains all of our backend API routes.  For now, all of
- * the routes and their implementations are defined in this file.  
+ * This is the RESTful API router.  It contains all of our backend API routes.
+ * For now, all of the routes and their implementations are defined in this
+ * file.  
  *
  * @version: 0.0.0
  *
- * NOTE: This file is versioned and loaded on ``/api/v0/``.  So ``/recipes`` is really
- * ``/api/v0/recipes``.  This is so that we can load multiple versions of the api as we make changes
- * and leave past versions still accessible.
+ * NOTE: This file is versioned and loaded on ``/api/0.0.0/``.  So ``/users`` is
+ * really ``/api/0.0.0/users``.  This is so that we can load multiple versions
+ * of the api as we make changes and leave past versions still accessible.
  *
- * @TODO: For now keeping the route's implementations in this file is perfectly managable.  However,
- * this file will eventually get too big.  Choose either the Controller pattern or the Action
- * pattern to break the route's implementations out into their own files in the future.
+ * @TODO: For now keeping the route's implementations in this file is perfectly
+ * managable.  However, this file will eventually get too big.  Choose either
+ * the Controller pattern or the Action pattern to break the route's
+ * implementations out into their own files in the future.
  *
  **************************************************************************************************/
 var version = '0.0.0';
@@ -30,13 +32,13 @@ module.exports = function(database) {
     });
 
     /******************************************************************************
-     *          Recipe REST Routes
+     *          User REST Routes
      ******************************************************************************/
 
-    // Get a list of all recipes.
-    router.get('/recipes', function(request, response) {
+    // Get a list of all users.
+    router.get('/users', function(request, response) {
         database.query(
-            'select * from recipes', 
+            'select * from users', 
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
@@ -46,26 +48,29 @@ module.exports = function(database) {
         );
     });
 
-    // Create a new recipe
-    router.post('/recipes', function(request, response) {
-        var recipe = request.body;
+    // Create a new user 
+    router.post('/users', function(request, response) {
+        var user = request.body;
         database.query(
-            'insert into recipes (title, source_url, created_date, update_date) values (?, ?, now(), now())', 
-            [recipe.title, recipe.source_url], 
+            'insert into users (name, email, created_date, updated_date) values (?, ?, now(), now())', 
+            [user.name, user.email], 
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
                 }
-                recipe.id = results.insertId;
-                response.json(recipe);
+                delete user.password;
+                user.id = results.insertId;
+                console.log('Responding with user: ');
+                console.log(user);
+                response.json(user);
             }
         );
     });
 
-    // Get the details of a single recipe
-    router.get('/recipes/:id', function(request, response) {
+    // Get the details of a single user 
+    router.get('/user/:id', function(request, response) {
         database.query(
-            'select * from recipes where id=?', 
+            'select * from users where id=?', 
             [request.params.id], 
             function(error, results, fields) {
                 if ( error ) {
@@ -76,11 +81,27 @@ module.exports = function(database) {
         );
     });
 
-    // Edit an existing recipe.
-    router.post('/recipes/:id', function(request, response) {
+    // Edit an existing user.
+    router.patch('/users/:id', function(request, response) {
         database.query(
-            'update recipes set title = ? and source_url = ? where id = ?', 
-            [request.params.title, request.params.source_url, request.params.id],
+            'update users set name = ? and email and updated_date = now() where id = ?', 
+            [request.params.name, request.params.email, request.params.id],
+            function(error, results, fields) {
+                if ( error ) {
+                    throw error;
+                }
+                response.json({success: true});
+            }
+        );
+    });
+
+    // Set a user's password.
+    router.post('/users/:id/password', function(request, response) {
+        const user = request.body;
+        console.log('Setting user ' + request.params.id + ' password to ' + user.password);
+        database.query(
+            'update users set password = ? where id = ?', 
+            [user.password, request.params.id],
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
@@ -91,8 +112,8 @@ module.exports = function(database) {
 
     });
 
-    // Delete an existing recipe.
-    router.delete('/recipes/:id', function(request, response) {
+    // Delete an existing user.
+    router.delete('/users/:id', function(request, response) {
         database.query(
             'delete from recipes where id = ?',
             [ request.params.id ],
