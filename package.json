@@ -8,7 +8,8 @@
     "build": "webpack --mode production",
     "client": "webpack-dev-server --mode development --devtool inline-source-map --hot",
     "server": "nodemon ./server/bin/www",
-    "dev": "export NODE_ENV=hot-dev && concurrently \"npm run server\" \"npm run client\""
+    "dev": "export NODE_ENV=hot-dev && concurrently \"npm run server\" \"npm run client\"",
+    "test": "mocha --require @babel/register --preset babel 'test/**/*.spec.js'"
   },
   "dependencies": {
     "cookie-parser": "~1.4.3",
@@ -26,9 +27,13 @@
     "redux-thunk": "^2.3.0"
   },
   "devDependencies": {
+    "@babel/cli": "^7.8.4",
     "@babel/core": "^7.7.7",
+    "@babel/node": "^7.8.4",
+    "@babel/plugin-transform-runtime": "^7.8.3",
     "@babel/preset-env": "^7.7.7",
     "@babel/preset-react": "^7.7.4",
+    "@babel/register": "^7.8.3",
     "babel-loader": "^8.0.6",
     "chai": "^4.2.0",
     "clean-webpack-plugin": "^0.1.19",
