@@ -1,9 +1,10 @@
 
-const backend = '';
+const backend = '/api/0.0.0';
 
 /**
  * An action and action creator to revieve a user from the backend and update
- * the store.
+ * the store.  Assumes we're getting the user from the backend, so the user
+ * must have an `id` property.
  */
 export const RECIEVE_USER = 'RECIEVE_USER';
 export const recieveUser = function(user) { 
@@ -40,7 +41,7 @@ export const postUser = function(user) {
  */
 export const postUserPassword = function(user) { 
     return function(dispatch) {
-        return fetch(backend + '/' + user.id + '/password', {
+        return fetch(backend + '/users/' + user.id + '/password', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

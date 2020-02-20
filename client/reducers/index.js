@@ -1,7 +1,4 @@
-import { combineReducers } from 'redux';
-import {
-    RECIEVE_USER, POST_USER,
-    POST_USER_PASSWORD, REGISTER_USER } from '../actions';
+import { RECIEVE_USER } from '../actions';
 
 const initialState = {
     registeringUser: {}, 
