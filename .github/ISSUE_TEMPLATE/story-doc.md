@@ -24,6 +24,10 @@ As a [who] I want to [what] so I can [why].
 
 *What stories does this one depend on?  What do we need to do first before we can call this one done?*
 
+## UX Research 
+
+*An area for doing UX research, planning out the IU, and linking or embedding prototypes and mocks.*
+
 ## What are we doing?
 **Author:**
 
