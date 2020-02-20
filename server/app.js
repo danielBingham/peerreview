@@ -62,7 +62,7 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // Load our router at the ``/api/v0/`` route.  This allows us to version our api. If,
 // in the future, we want to release an updated version of the api, we can load it at
 // ``/api/v1/`` and so on, with out impacting the old versions of the router.
-app.use('/api/v0/', router);
+app.use('/api/0.0.0/', router);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
