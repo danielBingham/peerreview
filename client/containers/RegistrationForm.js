@@ -1,6 +1,6 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import { registerUser } from 'actions';
+import { registerUser } from '../actions';
 
 class RegistrationForm extends React.Component { 
 
@@ -19,8 +19,11 @@ class RegistrationForm extends React.Component {
 
     handleInputChange(event) {
         const name = event.target.name;
+        const value = event.target.value;
 
-        this.state[name] = event.target.value;
+        this.setState({
+            [name]:  value
+        });
     }
 
     handleRegisterUser(event) {
@@ -40,22 +43,22 @@ class RegistrationForm extends React.Component {
     render() {
         return (
             <form onSubmit={this.handleRegisterUser}>
-                <label for="name">Name:</label>
+                <label htmlFor="name">Name:</label>
                 <input type="text" 
                     name="name" 
                     value={this.state.name} 
                     onChange={this.handleInputChange} />
-                <label for="email">Email:</label>
+                <label htmlFor="email">Email:</label>
                 <input type="text" 
                     name="email" 
                     value={this.state.email}
                     onChange={this.handleInputChange} />
-                <label for="password">Password:</label>
+                <label htmlFor="password">Password:</label>
                 <input type="password" 
                     name="password" 
                     value={this.state.password}
                     onChange={this.handleInputChange} />
-                <label for="confirmPassword">Confirm Password:</label>
+                <label htmlFor="confirmPassword">Confirm Password:</label>
                 <input type="password" 
                     name="confirmPassword"
                     value={this.state.confirmPassword}

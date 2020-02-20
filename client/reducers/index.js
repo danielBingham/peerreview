@@ -1,7 +1,6 @@
 import { RECIEVE_USER } from '../actions';
 
 const initialState = {
-    registeringUser: {}, 
     users: {}
 };
 

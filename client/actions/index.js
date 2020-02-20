@@ -14,13 +14,30 @@ export const recieveUser = function(user) {
     };
 };
 
+/**
+ * We don't want to store the user's password on the front end, so this method
+ * simply updates the user's password on the backend.  It doesn't update state
+ * at all and that's intentional.
+ */
+export const postUserPassword = function(id, password) { 
+    return function(dispatch) {
+        return fetch(backend + '/users/' + id + '/password', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({password: password})
+        });
+    };
+};
 
 /**
  * A thunk action creator to post a user to the backend and retrieve the
  * complete user (with ID) in response.  It then calls recieveUser() to add the
  * user to our store.
  */
-export const postUser = function(user) { 
+ export const postUser = function(user) { 
+    let password = user.password;
     return function(dispatch) {
         return fetch(backend + '/users', {
             method: 'POST',
@@ -29,27 +46,16 @@ export const postUser = function(user) {
             },
             body: JSON.stringify(user)
         })
-        .then(response => response.json())
-        .then(user => dispatch(recieveUser(user)));
-    };
-};
-
-/**
- * We don't want to store the user's password on the front end, so this method
- * simply updates the user's password on the backend.  It doesn't update state
- * at all and that's intentional.
- */
-export const postUserPassword = function(user) { 
-    return function(dispatch) {
-        return fetch(backend + '/users/' + user.id + '/password', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({password: user.password});
+        .then(function(response) {
+                return response.json()
+        })
+        .then(function(user) {
+            dispatch(recieveUser(user));
+            dispatch(postUserPassword(user.id, password))
         });
     };
 };
+
 
 /**
  * A thunk action creator to execute the complete user registration flow:
@@ -58,7 +64,6 @@ export const postUserPassword = function(user) {
  */
 export const registerUser = function(user) { 
     return function(dispatch) {
-        dispatch(postUser(user));
-        return dispatch(postUserPassword(user));
+        return dispatch(postUser(user));
     };
 };

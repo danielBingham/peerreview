@@ -29,7 +29,6 @@ export default class App extends React.Component {
                 <header>
                     <h1>Peer Review</h1>
                     <RegistrationForm />
-
                 </header>
             </section>
         );

@@ -52,13 +52,16 @@ module.exports = function(database) {
     router.post('/users', function(request, response) {
         var user = request.body;
         database.query(
-            'insert into users (name, email, created_date, update_date) values (?, ?, now(), now())', 
+            'insert into users (name, email, created_date, updated_date) values (?, ?, now(), now())', 
             [user.name, user.email], 
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
                 }
-                user.id = user.insertId;
+                delete user.password;
+                user.id = results.insertId;
+                console.log('Responding with user: ');
+                console.log(user);
                 response.json(user);
             }
         );
@@ -94,9 +97,11 @@ module.exports = function(database) {
 
     // Set a user's password.
     router.post('/users/:id/password', function(request, response) {
+        const user = request.body;
+        console.log('Setting user ' + request.params.id + ' password to ' + user.password);
         database.query(
             'update users set password = ? where id = ?', 
-            [request.params.password, request.params.id],
+            [user.password, request.params.id],
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
