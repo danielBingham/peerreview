@@ -1,5 +1,5 @@
 import React from 'react';
-import RegistrationForm from './containers/RegistrationForm';
+import RegisterUser from './containers/RegisterUser.js';
 import './app.css';
 
 /**
@@ -28,7 +28,7 @@ export default class App extends React.Component {
             <section className="app">
                 <header>
                     <h1>Peer Review</h1>
-                    <RegistrationForm />
+                    <RegisterUser />
                 </header>
             </section>
         );

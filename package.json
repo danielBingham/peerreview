@@ -9,7 +9,7 @@
     "client": "webpack-dev-server --mode development --devtool inline-source-map --hot",
     "server": "nodemon ./server/bin/www",
     "dev": "export NODE_ENV=hot-dev && concurrently \"npm run server\" \"npm run client\"",
-    "test": "mocha --require @babel/register --preset babel 'test/**/*.spec.js'"
+    "test": "mocha --require @babel/register --preset babel --file test/setup.js 'test/**/*.spec.js'"
   },
   "dependencies": {
     "cookie-parser": "~1.4.3",
