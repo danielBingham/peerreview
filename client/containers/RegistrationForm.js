@@ -1,6 +1,6 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import { registerUser } from '../actions';
+import { postUser } from '../actions/users.js';
 
 class RegistrationForm extends React.Component { 
 
@@ -37,7 +37,7 @@ class RegistrationForm extends React.Component {
             email: this.state.email,
             password: this.state.password
         };
-        this.props.dispatch(registerUser(user));
+        this.props.dispatch(postUser(user));
     }
 
     render() {

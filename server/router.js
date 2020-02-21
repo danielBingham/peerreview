@@ -49,19 +49,18 @@ module.exports = function(database) {
     });
 
     // Create a new user 
+    // TODO hash the password properly
     router.post('/users', function(request, response) {
-        var user = request.body;
+        const user = request.body;
         database.query(
-            'insert into users (name, email, created_date, updated_date) values (?, ?, now(), now())', 
-            [user.name, user.email], 
+            'insert into users (name, email, password, created_date, updated_date) values (?, ?, ?, now(), now())', 
+            [ user.name, user.email, user.password ], 
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
                 }
                 delete user.password;
                 user.id = results.insertId;
-                console.log('Responding with user: ');
-                console.log(user);
                 response.json(user);
             }
         );
@@ -81,27 +80,36 @@ module.exports = function(database) {
         );
     });
 
-    // Edit an existing user.
-    router.patch('/users/:id', function(request, response) {
+    // Replace a user wholesale.
+    // TODO hash the password properly
+    router.put('/users/:id', function(request, response) {
+        const user = request.body;
         database.query(
-            'update users set name = ? and email and updated_date = now() where id = ?', 
-            [request.params.name, request.params.email, request.params.id],
+            'udpate users set name = ? and email = ? and password = ? and updated_date = now() where id = ?',
+            [ user.name, user.email, user.password, user.id ],
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
                 }
-                response.json({success: true});
+                response.json({ success: true });
             }
         );
     });
-
-    // Set a user's password.
-    router.post('/users/:id/password', function(request, response) {
+        
+    // Edit an existing user with partial data.
+    // TODO secure password hashing
+    router.patch('/users/:id', function(request, response) {
         const user = request.body;
-        console.log('Setting user ' + request.params.id + ' password to ' + user.password);
-        database.query(
-            'update users set password = ? where id = ?', 
-            [user.password, request.params.id],
+
+        let sql = 'update users set ';
+        let params = [];
+        for(let key in user) {
+            sql += key + ' = ? and ';
+            params.push(user[key]);
+        }
+        sql += 'updated_date = now() where id = ?';
+
+        database.query( sql, params,
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
@@ -109,7 +117,6 @@ module.exports = function(database) {
                 response.json({success: true});
             }
         );
-
     });
 
     // Delete an existing user.

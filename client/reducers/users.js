@@ -1,4 +1,4 @@
-import { RECIEVE_USER } from '../actions';
+import { RECIEVE_USER } from '../actions/users.js';
 
 export default function users(state = {}, action) {
     switch (action.type) {

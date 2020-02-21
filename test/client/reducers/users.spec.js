@@ -1,5 +1,5 @@
 import users from '../../../client/reducers/users.js';
-import * as actions from '../../../client/actions';
+import { RECIEVE_USER } from '../../../client/actions/users.js';
 import { expect } from 'chai';
 
 
@@ -12,7 +12,7 @@ describe('reducers', function() {
         };
 
         let action = {
-            type: actions.RECIEVE_USER,
+            type: RECIEVE_USER,
             user: user
         };
 
@@ -32,7 +32,7 @@ describe('reducers', function() {
             email: 'jane.doe@email.com'
         };
         let action = {
-            type: actions.RECIEVE_USER,
+            type: RECIEVE_USER,
             user: user
         };
 
@@ -62,7 +62,7 @@ describe('reducers', function() {
         };
 
         let action2 = {
-            type: actions.RECIEVE_USER,
+            type: RECIEVE_USER,
             user: user2
         };
 
