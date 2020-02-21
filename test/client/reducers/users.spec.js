@@ -4,7 +4,7 @@ import { expect } from 'chai';
 
 
 describe('reducers', function() {
-    it('RECIEVE_USER should update the state when recieving first user', function() {
+    it('RECIEVE_USER should update state when recieving first user', function() {
         let user = {
             id: 1,
             name: 'John Doe',
@@ -24,7 +24,7 @@ describe('reducers', function() {
         expect(users(initialState, action)).to.eql(expectedState);
     });
 
-    it('RECIEVE_USER should update the state when recieving additional users', function() {
+    it('RECIEVE_USER should update state when recieving additional users', function() {
 
         let user = {
             id: 2,
