@@ -5,10 +5,13 @@
  *
  ******************************************************************************/
 
+const AuthenticationService = require('../services/authentication');
+
 module.exports = class UserController {
 
     constructor(database) {
         this.database = database;
+        this.auth = new AuthenticationService();
     }
 
     /**
@@ -38,8 +41,10 @@ module.exports = class UserController {
      *
      * Create a new user in thethis.database from the provided JSON.
      */
-    postUsers(request, response) {
+    async postUsers(request, response) {
         const user = request.body;
+        user.password = await this.auth.hashPassword(user.password);
+
         this.database.query(
             'insert into users (name, email, password, created_date, updated_date) values (?, ?, ?, now(), now())', 
             [ user.name, user.email, user.password ], 
@@ -81,8 +86,10 @@ module.exports = class UserController {
      *
      * Replace an existing user wholesale with the provided JSON.
      */
-    putUser(request, response) {
+    async putUser(request, response) {
         const user = request.body;
+        user.password = await this.auth.hashPassword(user.password);
+
         this.database.query(
             'udpate users set name = ? and email = ? and password = ? and updated_date = now() where id = ?',
             [ user.name, user.email, user.password, request.params.id ],
@@ -100,7 +107,7 @@ module.exports = class UserController {
      *
      * Update an existing user given a partial set of fields in JSON.
      */
-    patchUser(request, response) {
+    async patchUser(request, response) {
         let user = request.body;
         delete user.id;
 
@@ -108,6 +115,11 @@ module.exports = class UserController {
         let params = [];
         for(let key in user) {
             sql += key + ' = ? and ';
+
+            if ( key == 'password' ) {
+                user[key] = await this.auth.hashPassword(user[key]);
+            }
+
             params.push(user[key]);
         }
         sql += 'updated_date = now() where id = ?';

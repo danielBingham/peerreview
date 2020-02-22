@@ -12,6 +12,7 @@
     "test": "mocha --require @babel/register --preset babel --file test/setup.js 'test/**/*.spec.js'"
   },
   "dependencies": {
+    "bcrypt": "^4.0.0",
     "cookie-parser": "~1.4.3",
     "debug": "~2.6.9",
     "express": "~4.16.0",
