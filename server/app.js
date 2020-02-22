@@ -30,15 +30,9 @@ var connection = mysql.createConnection({
 });
 connection.connect();
 
-// Load the router.  We use a single router file to contain all the routes.  For now
-// each route implements its own code.
-//
-// @TODO When the router gets big enough, decide on either a Controller or Action pattern
-// and have the routes call methods implemented in either controllers or actions.
-var router = require('./router')(connection);
-
 // Load express.
 var app = express();
+
 
 // Setup a view engine, we'll use Handlebars (http://handlebarsjs.com/)
 //
@@ -59,6 +53,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'dist')));
 
+// Get the api router, pre-wired up to the controllers.
+const router = require('./router')(connection, config);
+
 // Load our router at the ``/api/v0/`` route.  This allows us to version our api. If,
 // in the future, we want to release an updated version of the api, we can load it at
 // ``/api/v1/`` and so on, with out impacting the old versions of the router.
@@ -71,13 +68,16 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = process.env.NODE_ENV === 'development' ? err : {};
+    // set locals, only providing error in development
+    res.locals.message = err.message;
+    res.locals.error = process.env.NODE_ENV === 'development' ? err : {};
+    // Log the error.
+    console.log(err);
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
+
+    // render the error page
+    res.status(err.status || 500);
+    res.render('error');
 });
 
 module.exports = app;

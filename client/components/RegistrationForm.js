@@ -1,6 +1,6 @@
 import React from 'react';
 import {connect} from 'react-redux';
-import { registerUser } from '../actions';
+import { postUser } from '../actions/users.js';
 
 class RegistrationForm extends React.Component { 
 
@@ -14,7 +14,7 @@ class RegistrationForm extends React.Component {
         };
 
         this.handleInputChange = this.handleInputChange.bind(this);
-        this.handleRegisterUser = this.handleRegisterUser.bind(this);
+        this.onSubmit = this.onSubmit.bind(this);
     }
 
     handleInputChange(event) {
@@ -26,23 +26,14 @@ class RegistrationForm extends React.Component {
         });
     }
 
-    handleRegisterUser(event) {
+    onSubmit(event) {
         event.preventDefault();
-        if ( this.state.password != this.state.confirmPassword ) {
-            // TODO Give some sort of error.
-            return;
-        }
-        let user = {
-            name: this.state.name,
-            email: this.state.email,
-            password: this.state.password
-        };
-        this.props.dispatch(registerUser(user));
+        this.props.onSubmit(this.state);
     }
 
     render() {
         return (
-            <form onSubmit={this.handleRegisterUser}>
+            <form onSubmit={this.onSubmit}>
                 <label htmlFor="name">Name:</label>
                 <input type="text" 
                     name="name" 
@@ -69,4 +60,4 @@ class RegistrationForm extends React.Component {
     }
 }
 
-export default connect()(RegistrationForm);
+export default RegistrationForm;
