@@ -61,13 +61,17 @@ module.exports = class UserController {
      */
     getUser(request, response) {
        this.database.query(
-            'select * from users where id=?', 
+            'select * from users where id=? limit 1', 
             [request.params.id], 
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
                 }
-                response.json(results);
+
+                let user = results[0];
+                delete user.password;
+
+                response.json(user);
             }
         );
     }
@@ -79,9 +83,9 @@ module.exports = class UserController {
      */
     putUser(request, response) {
         const user = request.body;
-       this.database.query(
+        this.database.query(
             'udpate users set name = ? and email = ? and password = ? and updated_date = now() where id = ?',
-            [ user.name, user.email, user.password, user.id ],
+            [ user.name, user.email, user.password, request.params.id ],
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
@@ -97,7 +101,8 @@ module.exports = class UserController {
      * Update an existing user given a partial set of fields in JSON.
      */
     patchUser(request, response) {
-        const user = request.body;
+        let user = request.body;
+        delete user.id;
 
         let sql = 'update users set ';
         let params = [];
@@ -107,7 +112,9 @@ module.exports = class UserController {
         }
         sql += 'updated_date = now() where id = ?';
 
-       this.database.query( sql, params,
+        params.push(request.params.id);
+
+        this.database.query( sql, params,
             function(error, results, fields) {
                 if ( error ) {
                     throw error;
@@ -124,7 +131,7 @@ module.exports = class UserController {
      */
     deleteUser(request, response) {
        this.database.query(
-            'delete from recipes where id = ?',
+            'delete from users where id = ?',
             [ request.params.id ],
             function(error, results, fields) {
                 if ( error ) {
