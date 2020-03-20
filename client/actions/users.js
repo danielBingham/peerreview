@@ -14,6 +14,42 @@ export const recieveUser = function(user) {
     };
 };
 
+export const REQUEST_USER = 'REQUEST_USER';
+export const requestUser = function(id) {
+    return {
+        type: REQUEST_USER,
+        user: {
+            id: id
+        }
+    };
+};
+
+export REQUEST_USER_FAILED = 'REQUEST_USER_FAILED';
+export const requestUserFailed = function(error) {
+    return {
+        type: REQUEST_USER_FAILED, 
+        error: error
+    };
+};
+
+export const fetchUser = function(id) {
+    return function(dispatch) {
+        dispatch(requestUser(id));
+        return fetch(backend + '/users/' + id, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+        .then(function(response) {
+            return response.json();
+        })
+        .then(function(user) {
+            dispatch(recieveUser(user));
+        });
+};
+
+
 /**
  * A thunk action creator to post a user to the backend and retrieve the
  * complete user (with ID) in response.  It then calls recieveUser() to add the
