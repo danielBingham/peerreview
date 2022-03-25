@@ -39,11 +39,17 @@ module.exports = class UserController {
     /**
      * POST /users
      *
-     * Create a new user in thethis.database from the provided JSON.
+     * Create a new user in the this.database from the provided JSON.
      */
     async postUsers(request, response) {
         const user = request.body;
-        user.password = await this.auth.hashPassword(user.password);
+        console.log('Processing recieved user: ');
+        console.log(user);
+        try {
+            user.password = await this.auth.hashPassword(user.password);
+        } catch (error) {
+            console.log(error);
+        }
 
         this.database.query(
             'insert into users (name, email, password, created_date, updated_date) values (?, ?, ?, now(), now())', 

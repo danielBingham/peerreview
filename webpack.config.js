@@ -7,8 +7,9 @@ const outputDirectory = 'dist';
 module.exports = {
   entry: './client/index.js',
   output: {
-    path: path.join(__dirname, outputDirectory),
-    filename: 'bundle.js'
+    path: path.resolve(__dirname, outputDirectory),
+      filename: 'bundle.js',
+      publicPath: '/'
   },
   module: {
     rules: [
@@ -25,12 +26,13 @@ module.exports = {
       }
     ]
   },
-  devServer: {
-    port: 3000,
-    open: true,
-    proxy: {
-        '/api/0.0.0': 'http://localhost:8080'
-    }
+    devServer: {
+        port: 3000,
+        open: true,
+        historyApiFallback: true,
+        proxy: {
+            '/api/0.0.0': 'http://localhost:8080'
+        }
   },
   plugins: [
     new CleanWebpackPlugin([outputDirectory]),

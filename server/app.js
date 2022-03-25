@@ -51,7 +51,7 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'dist')));
+//app.use(express.static(path.join(__dirname, 'dist')));
 
 // Get the api router, pre-wired up to the controllers.
 const router = require('./router')(connection, config);
@@ -61,9 +61,13 @@ const router = require('./router')(connection, config);
 // ``/api/v1/`` and so on, with out impacting the old versions of the router.
 app.use('/api/0.0.0/', router);
 
+app.use('*', function(req,res) {
+    res.sendFile(path.join(__dirname+'/dist/index.html'));
+});
+
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
-  next(createError(404));
+    next(createError(404));
 });
 
 // error handler

@@ -50,5 +50,10 @@ module.exports = function(database, config) {
         userController.deleteUser(request, response);
     });
 
+    router.get('*', function(request, response) {
+        console.log('hi.');
+    });
+
+
     return router;
 };

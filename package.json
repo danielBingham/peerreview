@@ -12,6 +12,7 @@
     "test": "mocha --require @babel/register --preset babel --file test/setup.js 'test/**/*.spec.js'"
   },
   "dependencies": {
+    "@reduxjs/toolkit": "^1.8.0",
     "bcrypt": "^4.0.1",
     "cookie-parser": "^1.4.6",
     "debug": "~2.6.9",
@@ -24,6 +25,7 @@
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-redux": "^7.2.6",
+    "react-router-dom": "^6.2.2",
     "redux": "^4.1.2",
     "redux-thunk": "^2.4.1"
   },

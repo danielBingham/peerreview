@@ -1,12 +1,15 @@
 import React from 'react';
-import RegisterUser from './containers/RegisterUser.js';
-import './app.css';
 import {
     BrowserRouter as Router,
-    Switch,
+    Routes,
     Route,
     Link
 } from 'react-router-dom';
+
+import UserProfile from './components/UserProfile';
+import RegistrationForm from './components/RegistrationForm';
+
+import './app.css';
 
 
 /**
@@ -33,17 +36,17 @@ export default class App extends React.Component {
     render() {
         return (
         <Router>
+            <section className="navigation">
+                <Link to="login">login</Link> 
+                <Link to="register">register</Link>
+            </section>
             <section className="app">
                 <header>
                     <h1>Peer Review</h1>
-                    <Switch>
-                        <Route path="/">
-                            <RegisterUser />
-                        </Route>
-                        <Route path="/user/:id/:displayName">
-                            <UserProfile />
-                        </Route>
-                    </Switch>
+                    <Routes>
+                        <Route path="/register" element={ <RegistrationForm /> } />
+                        <Route path="/user/:id" element={ <UserProfile /> } />
+                    </Routes>
                 </header>
             </section>
         </Router>

@@ -1,63 +1,63 @@
-import React from 'react';
-import {connect} from 'react-redux';
-import { postUser } from '../actions/users.js';
+import React, { useState } from 'react'
+import { useDispatch } from 'react-redux'
+import { postUser } from '../state/users'
 
-class RegistrationForm extends React.Component { 
+const RegistrationForm = function(props) { 
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const dispatch = useDispatch()
 
-    constructor(props) {
-        super(props);
-        this.state = {
-            name: '',
-            email: '',
-            password: '',
-            confirmPassword: ''
-        };
 
-        this.handleInputChange = this.handleInputChange.bind(this);
-        this.onSubmit = this.onSubmit.bind(this);
-    }
-
-    handleInputChange(event) {
-        const name = event.target.name;
-        const value = event.target.value;
-
-        this.setState({
-            [name]:  value
-        });
-    }
-
-    onSubmit(event) {
+    const onSubmit = function(event) {
         event.preventDefault();
-        this.props.onSubmit(this.state);
+
+        if (password != confirmPassword) {
+            // TODO Error handling!
+            return
+        }
+
+        const user = {
+            name: name,
+            email: email,
+            password: password,
+        }
+
+        console.log('RegistrationForm')
+        console.log(user)
+        dispatch(postUser(user))
     }
 
-    render() {
-        return (
-            <form onSubmit={this.onSubmit}>
-                <label htmlFor="name">Name:</label>
-                <input type="text" 
-                    name="name" 
-                    value={this.state.name} 
-                    onChange={this.handleInputChange} />
-                <label htmlFor="email">Email:</label>
-                <input type="text" 
-                    name="email" 
-                    value={this.state.email}
-                    onChange={this.handleInputChange} />
-                <label htmlFor="password">Password:</label>
-                <input type="password" 
-                    name="password" 
-                    value={this.state.password}
-                    onChange={this.handleInputChange} />
-                <label htmlFor="confirmPassword">Confirm Password:</label>
-                <input type="password" 
-                    name="confirmPassword"
-                    value={this.state.confirmPassword}
-                    onChange={this.handleInputChange} />
-                <input type="submit" name="register" value="Register" />
-            </form>
-        );
-    }
+    return (
+        <form onSubmit={onSubmit}>
+
+            <label htmlFor="name">Name:</label>
+            <input type="text" 
+                name="name" 
+                value={name} 
+                onChange={ (event) => setName(event.target.value) } />
+
+            <label htmlFor="email">Email:</label>
+            <input type="text" 
+                name="email" 
+                value={email}
+                onChange={ (event) => setEmail(event.target.value) } />
+
+            <label htmlFor="password">Password:</label>
+            <input type="password" 
+                name="password" 
+                value={password}
+                onChange={ (event) => setPassword(event.target.value) } />
+
+            <label htmlFor="confirmPassword">Confirm Password:</label>
+            <input type="password" 
+                name="confirmPassword"
+                value={confirmPassword}
+                onChange={ (event) => setConfirmPassword(event.target.value) } />
+            <input type="submit" name="register" value="Register" />
+        </form>
+    )
 }
 
-export default RegistrationForm;
+export default RegistrationForm

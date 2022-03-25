@@ -10,6 +10,7 @@ module.exports = class AuthenticationService {
      * Returns a promise that will resolve with the completed hash.
      */
     hashPassword(password) {
+        console.log('Attempting to hash: ' + password);
         return bcrypt.hash(password, 10);
     }
 
