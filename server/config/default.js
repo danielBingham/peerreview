@@ -14,5 +14,9 @@ module.exports = {
         password: null,
         name: null
     },
+    session: {
+        key: null,
+        secret: null
+    },
     log_level: "info"
 };

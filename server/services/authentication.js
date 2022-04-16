@@ -10,8 +10,7 @@ module.exports = class AuthenticationService {
      * Returns a promise that will resolve with the completed hash.
      */
     hashPassword(password) {
-        console.log('Attempting to hash: ' + password);
-        return bcrypt.hash(password, 10);
+        return bcrypt.hashSync(password, 10);
     }
 
     /**
@@ -19,7 +18,7 @@ module.exports = class AuthenticationService {
      * whether they match.
      */
     checkPassword(password, hash) {
-        return bcrypt.compare(password, hash);
+        return bcrypt.compareSync(password, hash);
     }
 
 }

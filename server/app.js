@@ -9,9 +9,11 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 var mysql = require('mysql');
+var session = require('express-session');
+var mysqlStore = require('express-mysql-session')(session);
+
 
 // Load our configuration file.  Loads the index.js file from the config/ directory which
 // then uses the NODE_ENV variable to determine what environment we're running in and
@@ -29,6 +31,7 @@ var connection = mysql.createConnection({
     database: config.database.name 
 });
 connection.connect();
+
 
 // Load express.
 var app = express();
@@ -50,8 +53,26 @@ app.use(logger('dev'));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-//app.use(express.static(path.join(__dirname, 'dist')));
+
+let sessionStore = new mysqlStore({
+    host: config.database.host,
+    user: config.database.user,
+    password: config.database.password,
+    database: config.database.name
+});
+
+app.use(session({
+    key: config.session.key,
+    secret: config.session.secret,
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: true,
+    cookie: { 
+        path: '/',
+        httpOnly: true,
+        secure: false,
+        maxAge: 1000 * 60 * 60 * 24 } // One 24 hour period.
+}));
 
 // Get the api router, pre-wired up to the controllers.
 const router = require('./router')(connection, config);

@@ -24,8 +24,6 @@ const RegistrationForm = function(props) {
             password: password,
         }
 
-        console.log('RegistrationForm')
-        console.log(user)
         dispatch(postUser(user))
     }
 

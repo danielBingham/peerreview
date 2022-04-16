@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit'
-
-const backend = '/api/0.0.0'
+import configuration from './config'
 
 
 export const userSlice = createSlice({
@@ -31,7 +30,7 @@ export const userSlice = createSlice({
 export const fetchUser = function(id) {
     return async function(dispatch, getState) {
         dispatch(usersSlice.actions.request(id))
-        const response = await fetch(backend + '/users/' + id, {
+        const response = await fetch(configuration.backend + '/users/' + id, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
@@ -46,7 +45,7 @@ export const postUser = function(user) {
     return async function(dispatch, getState) {
         console.log('postUser')
         console.log(user)
-        const response = await fetch(backend + '/users', {
+        const response = await fetch(configuration.backend + '/users', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

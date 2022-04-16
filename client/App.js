@@ -1,13 +1,15 @@
-import React from 'react';
+import React from 'react'
 import {
     BrowserRouter as Router,
     Routes,
     Route,
     Link
-} from 'react-router-dom';
+} from 'react-router-dom'
 
-import UserProfile from './components/UserProfile';
-import RegistrationForm from './components/RegistrationForm';
+import UserProfile from './components/UserProfile'
+import RegistrationForm from './components/RegistrationForm'
+import LoginForm from './components/LoginForm'
+import AuthenticationNavigation from './components/AuthenticationNavigation'
 
 import './app.css';
 
@@ -27,7 +29,8 @@ export default class App extends React.Component {
      * Takes no props.
      */
     constructor(props) {
-        super(props);
+        super(props)
+
     }
 
     /**
@@ -37,17 +40,19 @@ export default class App extends React.Component {
         return (
         <Router>
             <section className="navigation">
-                <Link to="login">login</Link> 
-                <Link to="register">register</Link>
+                <AuthenticationNavigation />
             </section>
             <section className="app">
                 <header>
                     <h1>Peer Review</h1>
+                </header>
+                <section className="main">
                     <Routes>
                         <Route path="/register" element={ <RegistrationForm /> } />
+                        <Route path="/login" element={ <LoginForm /> } />
                         <Route path="/user/:id" element={ <UserProfile /> } />
                     </Routes>
-                </header>
+                </section>
             </section>
         </Router>
         );

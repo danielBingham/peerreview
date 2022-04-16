@@ -50,10 +50,23 @@ module.exports = function(database, config) {
         userController.deleteUser(request, response);
     });
 
-    router.get('*', function(request, response) {
-        console.log('hi.');
+    /******************************************************************************
+     *          Authentication REST Routes
+     ******************************************************************************/
+    const AuthenticationController = require('./controllers/authentication');
+    const authenticationController = new AuthenticationController(database);
+
+    router.post('/authenticate', function(request, response) {
+        authenticationController.authenticate(request, response);
     });
 
+    router.get('/authenticate', function(request, response) {
+        authenticationController.getAuthenticated(request,response);
+    });
+
+    router.get('/logout', function(request, response) {
+        authenticationController.logout(request, response);
+    });
 
     return router;
 };

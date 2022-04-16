@@ -16,6 +16,10 @@ module.exports = {
         password: 'local-development',
         name: 'peer_review' 
     },
+    session: {
+        key: 'peer_review_id',
+        secret: 'development' 
+    },
     // What level of logging do we want?  Not used at the moment.
     log_level: 'debug'
 

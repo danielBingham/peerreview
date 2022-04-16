@@ -43,10 +43,8 @@ module.exports = class UserController {
      */
     async postUsers(request, response) {
         const user = request.body;
-        console.log('Processing recieved user: ');
-        console.log(user);
         try {
-            user.password = await this.auth.hashPassword(user.password);
+            user.password = this.auth.hashPassword(user.password);
         } catch (error) {
             console.log(error);
         }

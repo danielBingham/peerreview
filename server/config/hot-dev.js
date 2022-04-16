@@ -16,6 +16,10 @@ module.exports = {
         password: 'local-development',
         name: 'peer_review' 
     },
+    session: {
+        key: 'peer_review_id',
+        secret: 'hot-dev' 
+    },
     log_level: 'debug'
 
 };
