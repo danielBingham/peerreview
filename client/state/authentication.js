@@ -107,7 +107,7 @@ export const getAuthenticated = function() {
         } catch (error) {
             console.log("ERROR IN getAuthenticated:")
             console.log(error)
-            dispatch(authenticationSlice.actions.requestAuthenticatedUserErrored(error))
+            dispatch(authenticationSlice.actions.requestAuthenticatedUserErrored(error.toString()))
         }
     }
 }

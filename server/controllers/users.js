@@ -24,14 +24,16 @@ module.exports = class UserController {
             'select * from users', 
             function(error, results, fields) {
                 if ( error ) {
-                    throw error;
+                    console.log(error);
+                    response.status(500).send();
+
+                } else {
+                    results.forEach(function(user) {
+                        delete user.password;
+                    });
+
+                    response.status(200).json(results); 
                 }
-
-                results.forEach(function(user) {
-                    delete user.password;
-                });
-
-                response.json(results); 
             }
         );
     }
@@ -43,10 +45,30 @@ module.exports = class UserController {
      */
     async postUsers(request, response) {
         const user = request.body;
+
+        // If a user already exists with that email, send a 409 Conflict
+        // response.
+        this.database.query(
+            'select id, email from users where email=?',
+            [ user.email ],
+            function(error, results, fields) {
+                if (error) {
+                    console.log(error);
+                    response.status(500).send();
+                }
+
+                if (results.length > 0) {
+                    response.status(409).send();
+                }
+            }
+        );
+
+
         try {
             user.password = this.auth.hashPassword(user.password);
         } catch (error) {
             console.log(error);
+            response.status(500).send();
         }
 
         this.database.query(
@@ -54,11 +76,13 @@ module.exports = class UserController {
             [ user.name, user.email, user.password ], 
             function(error, results, fields) {
                 if ( error ) {
-                    throw error;
+                    console.log(error);
+                    response.status(500).send();
+                } else {
+                    response.status(201).json({
+                        id: results.insertId 
+                    });
                 }
-                delete user.password;
-                user.id = results.insertId;
-                response.json(user);
             }
         );
     }
@@ -74,13 +98,14 @@ module.exports = class UserController {
             [request.params.id], 
             function(error, results, fields) {
                 if ( error ) {
-                    throw error;
+                    console.log(error);
+                    response.status(500).send();
+                } else {
+                    let user = results[0];
+                    delete user.password;
+
+                    response.status(200).json(user);
                 }
-
-                let user = results[0];
-                delete user.password;
-
-                response.json(user);
             }
         );
     }
@@ -95,13 +120,15 @@ module.exports = class UserController {
         user.password = await this.auth.hashPassword(user.password);
 
         this.database.query(
-            'udpate users set name = ? and email = ? and password = ? and updated_date = now() where id = ?',
+            'update users set name = ? and email = ? and password = ? and updated_date = now() where id = ?',
             [ user.name, user.email, user.password, request.params.id ],
             function(error, results, fields) {
                 if ( error ) {
-                    throw error;
+                    console.log(error);
+                    response.status(500).send();
+                } else {
+                    response.status(200).send();
                 }
-                response.json({ success: true });
             }
         );
     }
@@ -133,9 +160,11 @@ module.exports = class UserController {
         this.database.query( sql, params,
             function(error, results, fields) {
                 if ( error ) {
-                    throw error;
+                    console.log(error);
+                    response.status(500).send();
+                } else {
+                    response.status(200).send();
                 }
-                response.json({success: true});
             }
         );
     }
@@ -151,9 +180,11 @@ module.exports = class UserController {
             [ request.params.id ],
             function(error, results, fields) {
                 if ( error ) {
-                    throw error;
+                    console.log(error);
+                    response.status(500).send();
+                } else {
+                    response.status(200).send();
                 }
-                response.json({success: true});
             }
         );
     }
