@@ -1,175 +1,176 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { v4 as uuidv4 } from 'uuid'
+
 import configuration from './config' 
+
+import RequestTracker  from './requestTracker'
 
 export const authenticationSlice = createSlice({
     name: 'authentication',
     initialState: {
-        getAuthenticatedUser: {
-            requested: false,
-            requestInProgress: false,
-            requestErrored: false,
-            error: null,
-        },
-        authenticate: {
-            requestInProgress: false,
-            requestErrored: false,
-            error: null,
-            failed: false
-        },
-        logout: {
-            requestInProgress: false,
-            requestErrored: false,
-            error: null
-        },
+        requests: {},
         currentUser: null
     },
     reducers: {
         // getAuthenticatedUser 
-        requestAuthenticatedUser: function(state, action) {
-            state.getAuthenticatedUser.requested = true
-            state.getAuthenticatedUser.requestInProgress = true 
-            state.getAuthenticatedUser.requestErrored = false
-            state.getAuthenticatedUser.error = null
+        requestGetAuthenticate: function(state, action) {
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('GET', 'authenticate')
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
-        requestAuthenticatedUserErrored: function(state, action) {
-            state.getAuthenticatedUser.requestInProgress = false
-            state.getAuthenticatedUser.requestErrored = true
-            state.getAuthenticatedUser.error = action.payload
-        },
-        setAuthenticatedUser: function(state, action) {
-            state.getAuthenticatedUser.requestInProgress = false
-            state.getAuthenticatedUser.requestErrored = false
-            state.getAuthenticatedUser.error = null
-            state.currentUser = action.payload
+        completeGetAuthenticate: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+            state.currentUser = action.payload.user
         },
 
         // authenticate
-        requestAuthenticate: function(state, action) {
-            state.authenticate.requestInProgress = true
-            state.authenticate.requestErrored = false
-            state.authenticate.error = null
+        requestPostAuthenticate: function(state, action) {
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('POST', 'authenticate')
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
-        requestAuthenticateErrored: function(state, action) {
-            state.authenticate.requestInProgress = false
-            state.authenticate.requestErrored = true
-            state.authenticate.error = action.payload
-        },
-        authenticateFailed: function(state, action) {
-            state.authenticate.requestInProgress = false
-            state.authenticate.requestErrored = false
-            state.authenticate.error = null
-            state.authenticate.failed = true
-        },
-        authenticateSucceeded: function(state, action) {
-            state.authenticate.requestInProgress = false
-            state.authenticate.requestErrored = false
-            state.authenticate.error = null
-            state.currentUser = action.payload
+        completePostAuthenticate: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+
+            if (action.payload.user = 'authorization-rejected') {
+                state.currentUser = null
+            } else {
+                state.currentUser = action.payload.user
+            }
         },
 
         // Logout
-        requestLogout: function(state, action) {
-            state.logout.requestInProgress = true
-            state.logout.requestErrored = false
-            state.logout.error = null
+        requestGetLogout: function(state, action) {
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('GET', 'logout')
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
-        requestLogoutErrored: function(state, action) {
-            state.logout.requestInProgress = false
-            state.logout.requestErrored = true
-            state.logout.error = action.payload.error
-        },
-        logoutSucceeded: function(state, action) {
-            state.logout.requestInProgress = false
-            state.logout.requestErrored = false
-            state.logout.error = null
+        completeGetLogout: function(state, action) {
+            RequestTracker.completeRequest(state.requsets[action.payload.requestId], action)
+
             state.currentUser = null
+        },
+
+        // Failure
+        failRequest: function(state, action) {
+            RequestTracker.failRequest(state.requests[action.payload.requestId], action)
+        },
+        
+        // Cleanup
+        cleanupRequest: function(state, action) {
+            delete state.requests[action.payload.requestId]
         }
     }
 
 })
 
-export const getAuthenticated = function() {
-    return async function(dispatch, getState) {
-        dispatch(authenticationSlice.actions.requestAuthenticatedUser())
-        try {
-            const rawResponse= await fetch(configuration.backend + '/authenticate',
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-            const response = await rawResponse.json()
-
-            if (response.success == true) {
-                dispatch(authenticationSlice.actions.setAuthenticatedUser(response.user))
-            } 
-        } catch (error) {
-            console.log("ERROR IN getAuthenticated:")
-            console.log(error)
-            dispatch(authenticationSlice.actions.requestAuthenticatedUserErrored(error.toString()))
-        }
+export const getAuthenticatedUser = function() {
+    return function(dispatch, getState) {
+        const requestId = uuidv4()
+        dispatch(authenticationSlice.actions.requestGetAuthenticate({requestId: requestId}))
+        fetch(configuration.backend + '/authenticate', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            if ( response.ok ) {
+                if ( response.status == 200) {
+                    return response.json()
+                } else if( response.status == 204 ) {
+                    // No authenticated users
+                    return null
+                } else {
+                    console.log('Unrecognized status: ' + response.status)
+                    return Promise.reject({ status: response.status, error: 'Unrecognized status.'})
+                }
+            } else {
+                return Promise.reject({ status: response.status, error: 'Unrecognized status.' })
+            }
+        }).then(function(user) {
+            dispatch(authenticationSlice.actions.completeGetAuthenticate({requestId: requestId, user: user}))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                console.log(error)
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, error: error.toString()}))
+            } else if( error.status ) {
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, status: error.status, error: error.status}))
+            } else {
+                console.log(error)
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, error: 'unknown'}))
+            }
+        })
+        return requestId
     }
 }
 
 export const authenticate = function(email, password) {
-    return async function(dispatch, getState) {
-        dispatch(authenticationSlice.actions.requestAuthenticate())
-
-        try {
-            const rawResponse = await fetch(configuration.backend + '/authenticate',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        email: email,
-                        password: password
-                    })
-                })
-            const response = await rawResponse.json()
-            if (response.success == true) {
-                dispatch(authenticationSlice.actions.authenticateSucceeded(response.user))
+    return function(dispatch, getState) {
+        const requestId = uuidv4()
+        dispatch(authenticationSlice.actions.requestPostAuthenticate({requestId: requestId}))
+        fetch(configuration.backend + '/authenticate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        }).then(function(response) {
+            if(response.ok) {
+                return response.json()
+            } else if (response.status == 403) {
+                return Promise.reject({status: response.status, error: 'Authentication failed.'})
             } else {
-                dispatch(authenticationSlice.actions.authenticateFailed())
+                return Promise.reject({status: response.status, error: 'Unrecognized status.'})
             }
-        } catch (error) {
-            console.log("ERROR IN authenticate: ")
-            console.log(error)
-            dispatch(authenticationSlice.actions.requestAuthenticateErrored(error))
-        }
-
+        }).then(function(user) {
+            dispatch(authenticationSlice.actions.completePostAuthenticate({responseId: responseId, user: user}))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                console.log(error)
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, error: error.toString()}))
+            } else if( error.status ) {
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, status: error.status, error: error.error}))
+            } else {
+                console.log(error)
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, error: 'unknown'}))
+            }
+        })
+        return requestId
     }
 }
 
 export const logout = function() {
-    return async function(dispatch, getState) {
-        dispatch(authenticationSlice.actions.requestLogout())
-        try {
-            const rawResponse = await fetch(configuration.backend + '/logout',
-                {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-            const response = await rawResponse.json()
-            if (response.success == true) {
-                dispatch(authenticationSlice.actions.logoutSucceeded())
-            } else {
-                dispatch(authenticationSlice.actions.requestFailed())
+    return function(dispatch, getState) {
+        const requestId = uuidv4()
+        dispatch(authenticationSlice.actions.requestGetLogout({requestId: requestId}))
+        fetch(configuration.backend + '/logout', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
             }
-        } catch (error) {
-            console.log("ERROR IN logout: ")
-            console.log(error)
-            dispatch(authenticationSlice.actions.requestLogoutErrored(error))
-        }
+        }).then(function(response) {
+            if (response.ok) {
+                dispatch(authenticationSlice.actions.completeGetLogout({requestId: requestId}))
+            } else {
+                return Promise.reject({status: response.status, error: 'Unrecognized status.'})
+            }
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                console.log(error)
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, error: error.toString()}))
+            } else if( error.status ) {
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, status: error.status, error: error.error}))
+            } else {
+                console.log(error)
+                dispatch(authenticationSlice.actions.failRequest({requestId: requestId, error: 'unknown'}))
+            }
+        })
     }
 }
 
-export const {requestAuthenticatedUser, requestAuthenticatedUserErrored, setAuthenticatedUser,
-                requestAuthenticate, requestAuthenticateErrored, authenticateFailed, authenticateSucceeded,
-                requestLogout, requestLogoutErrored, logoutSucceeded } = authenticationSlice.actions
+export const {requestGetAuthenticate, completeGetAuthenticate, 
+                requestPostAuthenticate, completePostAuthenticate, 
+    requestGetLogout, completeGetLogout, 
+    failRequest, cleanupRequest} = authenticationSlice.actions
 
 export default authenticationSlice.reducer

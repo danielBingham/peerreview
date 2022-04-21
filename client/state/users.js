@@ -1,18 +1,25 @@
 import { createSlice } from '@reduxjs/toolkit'
+import { v4 as uuidv4 } from 'uuid'
+
 import configuration from './config'
 
-import getRequestTracker, {makeRequest, failRequest, completeRequest} from './requestTracker'
+import RequestTracker from './requestTracker'
 
 
+/**
+ * TODO
+ *
+ * We don't want the redux state to get out of sync with the database. Issues we need to resolve:
+ * - We could be sending multiple requests at once.  Potentially even multiple copies of the same request on the same
+ *   resource.  We should track requests in progress against a resource.
+ * - We should get the resulting state of resource in the database back from
+ *   every request so that we can set that in state.
+ *
+ */
 export const usersSlice = createSlice({
     name: 'users',
     initialState: {
-        getUsers: getRequestTracker(),
-        postUsers: getRequestTracker(),
-        getUser: getRequestTracker(),
-        putUser: getRequestTracker(),
-        patchUser: getRequestTracker(),
-        deleteUser: getRequestTracker(),
+        requests: {},
         users: {},
     },
     reducers: {
@@ -21,30 +28,25 @@ export const usersSlice = createSlice({
         /**
          * Start a GET request to /users.
          *
-         * No payload.
+         * Payload should be an object with:
+         *  requestId: a uuid
          */
         requestGetUsers: function(state, action) {
-            makeRequest(state.getUsers, action)
-        },
-
-        /**
-         * The GET request to /users failed with an error at some point.
-         *
-         * Payload should be the error encountered or an array of errors.
-         */
-        failGetUsersWithError: function(state, action) {
-            failRequest(state.getUsers, action)
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('GET', 'users') 
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
 
         /**
          * The GET request to /users succeeded.
          *
-         * Payload should be an array of users.
+         * Payload should be an object with:
+         *     requestId: a uuid
+         *     users: an array of populated user objects
          */
         completeGetUsers: function(state, action) {
-            completeRequest(state.getUsers, action)
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            action.payload.forEach(function(user) {
+            action.payload.users.forEach(function(user) {
                 state.users[user.id] = user
             })
         },
@@ -54,32 +56,26 @@ export const usersSlice = createSlice({
         /**
          * Start a POST request to /users to create a new user.  
          *
-         * No payload.
+         * Payload should be an object with:
+         *  requestId: a uuid
          */
         requestPostUsers: function(state, action) {
-            makeRequest(state.postUsers, action)
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('POST', 'users')
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
 
-        /**
-         * A POST request to /users failed with an error at some point.
-         *
-         * Payload should be the error encountered or an array of errors.
-         */
-        failPostUsersWithError: function(state, action) {
-            failRequest(state.postUsers, action)
-        },
         /**
          * Get the result of a POST /users call and store it in the state.  In
          * this case, the call returns the posted user.  
          *
-         * Payload will be a `user` object.
+         * Payload should be an object with:
+         *  requestId: a uuid
+         *  user: a populated user object
          */
         completePostUsers: function(state, action) {
-            completeRequest(state.postUsers, action)
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            const user = { ...state.postUsers.target }
-            user.id = action.payload
-            state.users[user.id] = user 
+            state.users[user.id] = action.payload.user 
         },
 
         // ========== GET /user/:id =================
@@ -87,30 +83,26 @@ export const usersSlice = createSlice({
         /**
          * Start a GET request to /user/:id to retrieve a single user.  
          *
-         * No payload.
+         * Payload should be an object with:
+         *  requestId: uuid
          */
         requestGetUser: function(state, action) {
-            makeRequest(state.getUser, action)
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('GET', 'user')
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
 
-        /**
-         * A GET request to /user/:id failed with an error at some point.
-         *
-         * Payload should be the error encountered or an array of errors.
-         */
-        failGetUserWithError: function(state, action) {
-            failRequest(state.getUser, action)
-        },
         /**
          * Get the result of a GET /user/:id call and store it in the state.  In
          * this case, the call returns the requested user.  
          *
-         * Payload will be a `user` object.
+         * Payload should be an object with:
+         *  requestId: uuid
+         *  user: a populated user object
          */
         completeGetUser: function(state, action) {
-            completeRequest(state.getUser, action)
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            const user = action.payload
+            const user = action.payload.user
             state.users[user.id] = user 
         },
 
@@ -119,64 +111,26 @@ export const usersSlice = createSlice({
         /**
          * Start a PUT request to /user/:id to replace a single user.  
          *
-         * No payload.
+         * Payload should be an object with:
+         *  requestId: uuid
          */
         requestPutUser: function(state, action) {
-            makeRequest(state.putUser, action)
-        },
-
-        /**
-         * A PUT request to /user/:id failed with an error at some point.
-         *
-         * Payload should be the error encountered or an array of errors.
-         */
-        failPutUserWithError: function(state, action) {
-            failRequest(state.putUser, action)
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('PUT', 'user')
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
 
         /**
          * Get the result of a PUT /user/:id call and store it in the state.  In
          * this case, the call returns the replaced user.  
          *
-         * Payload will be a `user` object.
+         * Payload should be an object with:
+         *  requestId: uuid
+         *  user: a populated user object
          */
         completePutUser: function(state, action) {
-            completeRequest(state.putUser, action)
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            const user = action.payload
-            state.users[user.id] = user 
-        },
-
-        // ========== PUT /user/:id =================
-
-        /**
-         * Start a PUT request to /user/:id to replace a single user.  
-         *
-         * No payload.
-         */
-        requestPutUser: function(state, action) {
-            makeRequest(state.putUser, action)
-        },
-
-        /**
-         * A PUT request to /user/:id failed with an error at some point.
-         *
-         * Payload should be the error encountered or an array of errors.
-         */
-        failPutUserWithError: function(state, action) {
-            failRequest(state.putUser, action)
-        },
-
-        /**
-         * Get the result of a PUT /user/:id call and store it in the state.  In
-         * this case, the call returns the replaced user.  
-         *
-         * Payload will be a `user` object.
-         */
-        completePutUser: function(state, action) {
-            completeRequest(state.putUser, action)
-
-            const user = action.payload
+            const user = action.payload.user
             state.users[user.id] = user 
         },
 
@@ -185,33 +139,27 @@ export const usersSlice = createSlice({
         /**
          * Start a PATCH request to /user/:id to update a single user.  
          *
-         * No payload.
+         * Payload should be an object with:
+         *  requestId: uuid
          */
         requestPatchUser: function(state, action) {
-            makeRequest(state.patchUser, action)
-        },
-
-        /**
-         * A PATCH request to /user/:id failed with an error at some point.
-         *
-         * Payload should be the error encountered or an array of errors.
-         */
-        failPatchUserWithError: function(state, action) {
-            failRequest(state.patchUser, action)
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('PATCH', 'user')
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
 
         /**
          * Get the result of a PATCH /user/:id call and store it in the state.  In
          * this case, the call returns the updated user.  
          *
-         * Payload will be a `user` object.
+         * Payload will be an object with:
+         *  requestId: uuid
+         *  user: a populated user object
          */
         completePatchUser: function(state, action) {
-            completeRequest(state.patchUser, action)
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            const user = action.payload
-            const newUser = {...state.users[user.id], ...user }
-            state.users[user.id] = newUser 
+            const user = action.payload.user
+            state.users[user.id] = user 
         },
 
 
@@ -220,19 +168,12 @@ export const usersSlice = createSlice({
         /**
          * Start a DELETE request to /user/:id to remove a single user.  
          *
-         * No payload.
+         * Payload will be an object with:
+         *  requestId: uuid
          */
         requestDeleteUser: function(state, action) {
-            makeRequest(state.deleteUser, action)
-        },
-
-        /**
-         * A DELETE request to /user/:id failed with an error at some point.
-         *
-         * Payload should be the error encountered or an array of errors.
-         */
-        failDeleteUserWithError: function(state, action) {
-            failRequest(state.deleteUser, action)
+            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker('DELETE', 'user')
+            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
         },
 
         /**
@@ -240,12 +181,26 @@ export const usersSlice = createSlice({
          * the id of the deleted user and we need to delete them from state on
          * our side.  
          *
-         * Payload will be the id of the deleted user.
+         * Payload will be an object with:
+         *  requestId: uuid
+         *  userId: id of the deleted user
          */
         completeDeleteUser: function(state, action) {
-            completeRequest(state.deleteUser, action)
-            delete state.users[action.payload]
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+            delete state.users[action.payload.userId]
+        },
+
+        // Failure
+        failRequest: function(state, action) {
+            RequestTracker.failRequest(state.requests[action.payload.requestId], action)
+        },
+        
+        // Cleanup
+        cleanupRequest: function(state, action) {
+            delete state.requests[action.payload.requestId]
         }
+
+
     }
 })
 
@@ -255,25 +210,35 @@ export const usersSlice = createSlice({
  * Get all users in the database.
  */
 export const getUsers = function() {
-    return async function(dispatch, getState) {
-        dispatch(usersSlice.actions.requestGetUsers("users"))
+    return function(dispatch, getState) {
+        const requestId = uuidv4() 
+        dispatch(usersSlice.actions.requestGetUsers({responseId: requestId}))
 
-        try {
-            const response = await fetch(configuration.backend + '/users', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-            if ( response.ok ) {
-                const users = await response.json()
-                dispatch(usersSlice.actions.completeGetUsers(users))
-            } else {
-                dispatch(usersSlice.actions.failGetUsersWithError('GET /users failed with status ' + response.status))
+        fetch(configuration.backend + '/users', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
             }
-        } catch(error) {
-            dispatch(usersSlice.actions.failGetUsersWithError(error.toString()))
-        }
+        }).then(function(response) {
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject({status: response.status})
+            }
+        }).then(function(users) {
+            dispatch(usersSlice.actions.completeGetUsers({requestId: requestId, users: users}))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                console.log(error)
+                dispatch(usersSlice.actions.failRequest({requestId: requestId, error: error.toString()}))
+            } else if( error.status ) {
+                dispatch(usersSlice.actions.failRequest({requestId: requestId, status: error.status, error: ''}))
+            } else {
+                console.log(error)
+                dispatch(usersSlice.actions.failRequest({requestId: requestId, error: 'unknown'}))
+            }
+        })
+        return requestId
     }
 }
 
@@ -284,25 +249,34 @@ export const getUsers = function() {
  */
 export const postUsers = function(user) {
     return async function(dispatch, getState) {
-        dispatch(usersSlice.actions.requestPostUsers(user))
-        try {
-            const response = await fetch(configuration.backend + '/users', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(user)
-            })
+        const requestId = uuidv4()
+        dispatch(usersSlice.actions.requestPostUsers({requestId:requestId}))
+        fetch(configuration.backend + '/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(user)
+        }).then(function(response) {
             if ( response.ok ) {
-                const responseBody = await response.json()
-                dispatch(usersSlice.actions.completePostUsers(responseBody.id))
+                return response.json()
             } else {
-                dispatch(usersSlice.actions.failPostUsersWithError(response.status))
+                return Promise.reject({status: response.status})
             }
-        } catch (error) {
-            console.log(error)
-            dispatch(usersSlice.actions.failPostUsersWithError(error.toString()))
-        }
+        }).then(function(user) {
+            dispatch(usersSlice.actions.completePostUsers(user))
+        }).catch(function(error) {
+            if ( error instanceof Error) {
+                console.log(error)
+                dispatch(usersSlice.actions.failRequest({requestId: requestId, error: error.toString()}))
+            } else if (error.status) {
+                dispatch(usersSlice.actions.failRequest({requestId: requestId, status: error.status, error: ''}))
+            } else {
+                console.log(error)
+                dispatch(usersSlice.actions.failRequest({requestId: requestId, error: 'unknown'}))
+            }
+        })
+        return requestId
     }
 }
 
@@ -325,11 +299,11 @@ export const getUser = function(id) {
                 const user = await response.json()
                 dispatch(usersSlice.actions.completeGetUser(user))
             } else {
-                dispatch(usersSlice.actions.failGetUserWithError('GET /user/' + id + ' failed with status ' + response.status))
+                dispatch(usersSlice.actions.failRequest('GET /user/' + id + ' failed with status ' + response.status))
             }
         } catch(error) {
             console.log(error)
-            dispatch(usersSlice.actions.failGetUserWithError(error.toString()))
+            dispatch(usersSlice.actions.failRequest(error.toString()))
         }
     }
 }
@@ -354,11 +328,11 @@ export const putUser = function(user) {
                 delete user.password
                 dispatch(usersSlice.actions.completePutUser(user))
             } else {
-                dispatch(usersSlice.actions.failPutUserWithError('PUT /user/' + user.id + ' failed with status ' + response.status))
+                dispatch(usersSlice.actions.failRequest('PUT /user/' + user.id + ' failed with status ' + response.status))
             }
         } catch (error) {
             console.log(error)
-            dispatch(usersSlice.actions.failPutUserWithError(error.toString()))
+            dispatch(usersSlice.actions.failRequest(error.toString()))
         }
     }
 }
@@ -383,10 +357,10 @@ export const patchUser = function(user) {
                 delete user.password
                 dispatch(usersSlice.actions.completePatchUser(user))
             } else {
-                dispatch(usersSlice.actions.failPatchUserWithError('PATCH /user/' + user.id + ' failed with status ' + response.status))
+                dispatch(usersSlice.actions.failRequest('PATCH /user/' + user.id + ' failed with status ' + response.status))
             }
         } catch (error) {
-            dispatch(usersSlice.actions.failPatchUserWithError(error.toString()))
+            dispatch(usersSlice.actions.failRequest(error.toString()))
         }
     }
 }
@@ -409,20 +383,21 @@ export const deleteUser = function(user) {
             if ( response.ok ) {
                 dispatch(usersSlice.actions.completeDeleteUser(user.id))
             } else {
-                dispatch(usersSlice.actions.failDeleteUserWithError('DELETE /user/' + user.id + ' failed with status ' + response.status))
+                dispatch(usersSlice.actions.failRequest('DELETE /user/' + user.id + ' failed with status ' + response.status))
             }
         } catch (error) {
-            dispatch(usersSlice.actions.failDeleteUserWithError(error.toString()))
+            dispatch(usersSlice.actions.failRequest(error.toString()))
         }
     }
-}
+} 
 
 
-export const {requestGetUsers, failGetUsersWithError, completeGetUsers,
-                requestPostUsers, failPostUsersWithError, completePostUsers,
-    requestGetUser, failGetUserWithError, completeGetUser,
-    requestPutUser, failPutUserWithError, completePutUser,
-    requestPatchUser, failPatchUserWithError, completePatchUser,
-    requestDeleteUser, failDeleteUserWithError, completeDeleteUser}  = usersSlice.actions
+export const {requestGetUsers,  completeGetUsers,
+                requestPostUsers,  completePostUsers,
+        requestGetUser,  completeGetUser,
+    requestPutUser,  completePutUser,
+    requestPatchUser,  completePatchUser,
+    requestDeleteUser,  completeDeleteUser,
+    failRequest, cleanupRequest }  = usersSlice.actions
 
 export default usersSlice.reducer

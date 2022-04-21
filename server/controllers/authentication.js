@@ -16,15 +16,11 @@ module.exports = class AuthenticationController {
 
     getAuthenticated(request, response) {
         if (request.session.user) {
-            response.json({
-                success: true,
+            response.status(200).json({
                 user: request.session.user
             });
         } else {
-            response.json({
-                success: true,
-                user: null
-            })
+            response.status(204).send();
         }
     }
 
@@ -37,7 +33,8 @@ module.exports = class AuthenticationController {
             [ credentials.email ],
             function(error, results, fields) {
                 if (error) {
-                    throw error;
+                    console.log(error)
+                    response.status(500).send()
                 }
 
                 const user = results[0];
@@ -46,20 +43,15 @@ module.exports = class AuthenticationController {
                     if (passwords_match) {
                         delete user.password
                         request.session.user = user;
-                        response.json({
-                            success: true,
+                        response.status(200).json({
                             user: user
                         });
                     } else {
-                        response.json({
-                            success: false
-                        });
-                    }
+                        response.status(403).send()
+                    } 
                 } catch (error) {
                     console.log(error);
-                    response.json({
-                        success: false
-                    })
+                    response.status(500).send()
                 }
 
             }
@@ -70,14 +62,9 @@ module.exports = class AuthenticationController {
         request.session.destroy(function(error) {
             if (error) {
                 console.log(error)
-                response.json({
-                    success: false,
-                    error: error
-                })
+                response.status(500).send()
             } else {
-                response.json({
-                    success: true
-                })
+                response.status(200).send()
             }
         });
     }

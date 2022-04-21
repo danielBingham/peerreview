@@ -5,11 +5,17 @@ import Spinner from './Spinner'
 
 
 import { useDispatch, useSelector } from 'react-redux'
-import { authenticate } from '../state/authentication'
+import { authenticate, cleanupRequest } from '../state/authentication'
 
+/**
+ * A login form allowing the user to authenticate using an email and a password.
+ *
+ * No props.
+ */
 const LoginForm = function(props) { 
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [requestId, setRequestId] = useState(null);
 
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -18,20 +24,31 @@ const LoginForm = function(props) {
         return state.authentication
     })
 
+    /**
+     * Handle the form's submission by attempting to authenticate the user.
+     * Store the requestId so that we can track the request and respond to
+     * errors.
+     */
     const onSubmit = function(event) {
         event.preventDefault();
 
-        dispatch(authenticate(email, password))
+        setRequestId(dispatch(authenticate(email, password)))
     }
 
     useEffect(function() {
+        // If we're logged in then we don't want to be here.  We don't really
+        // care if we were already logged in or if this is the result of a
+        // successful authentication.
         if (authentication.currentUser) {
+            // Cleanup our request before we go.
+            dispatch(cleanupRequest({requestId: requestId}))
             navigate("/", { replace: true })
         }
     })
 
 
-    if (authentication.authenticate.requestInProgress) {
+    // Show a spinner if the request we made is still in progress.
+    if (authentication.requests[requestId].requestInProgress) {
         return (
             <Spinner />
         )
@@ -39,7 +56,7 @@ const LoginForm = function(props) {
 
     return (
         <form onSubmit={onSubmit}>
-            {authentication.authenticate.failed && <div className="authentication-error">Login failed.</div>}
+            {authentication.requests[requestId].status == 403 && <div className="authentication-error">Login failed.</div>}
 
             <label htmlFor="email">Email:</label>
             <input type="text" 

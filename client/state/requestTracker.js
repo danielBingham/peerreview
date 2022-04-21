@@ -1,29 +1,39 @@
 
-export default function getRequestTracker() {
-    return {
-        target: null,
-        requestInProgress: false,
-        error: null,
-        completed: false
+export default {
 
+    getRequestTracker: function(method, endpoint) {
+        return {
+            requestMethod: method,
+            requestEndpoint: endpoint,
+            requestInProgress: false,
+            error: null,
+            status: null,
+            completed: false
+
+        }
+    },
+
+
+    makeRequest: function(requestTracker, action) {
+        requestTracker.requestInProgress = true
+        requestTracker.error = null
+        requestTracker.completed = false
+    },
+
+    failRequest: function(requestTracker, action) {
+        requestTracker.requestInProgress = false
+        requestTracker.status = action.payload.status
+        requestTracker.error = action.payload.error
+        requestTracker.completed = true
+    },
+
+    completeRequest: function(requestTracker, action) {
+        requestTracker.requestInProgress = false
+        requestTracker.error = null
+        requestTracker.status = action.payload.status
+        requestTracker.completed = true
     }
+
 }
 
-export const makeRequest = function(requestTracker, action) {
-    requestTracker.target = action.payload
-    requestTracker.requestInProgress = true
-    requestTracker.error = null
-    requestTracker.completed = false
-}
 
-export const failRequest = function(requestTracker, action) {
-    requestTracker.requestInProgress = false
-    requestTracker.error = action.payload 
-    requestTracker.completed = true
-}
-
-export const completeRequest = function(requestTracker, action) {
-    requestTracker.requestInProgress = false
-    requestTracker.error = null
-    requestTracker.completed = true
-}
