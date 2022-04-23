@@ -3,9 +3,17 @@ import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postUsers } from '../state/users'
-import { authenticate } from '../state/authentication'
+import { postUsers, cleanupRequest as cleanupUsersRequest } from '../state/users'
+import { authenticate, cleanupRequest as cleanupAuthenticationRequest } from '../state/authentication'
 
+import Spinner from './Spinner'
+
+/**
+ * A user registration form that will allow a user to register themselves and
+ * then will authenticate them on a successful registration.
+ *
+ * @param {object} props - An empty object, takes no props.
+ */
 const RegistrationForm = function(props) { 
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
@@ -16,17 +24,25 @@ const RegistrationForm = function(props) {
     const [emailError, setEmailError] = useState('')
     const [passwordConfirmationError, setPasswordConfirmationError] = useState('')
 
+    const [postUsersRequestId, setPostUsersRequestId] = useState(null)
+    const [authenticateRequestId, setAuthenticateRequestId] = useState(null)
+
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
 
-    const postUsersRequest = useSelector(function(state) {
-        return state.users.postUsers
+    const users = useSelector(function(state) {
+        return state.users
     })
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
+    const authentication = useSelector(function(state) {
+        return state.authentication
     })
 
+    /**
+     * Handle a form submission event.
+     *
+     * @param {object} event - The standard javascript event object.
+     */
     const onSubmit = function(event) {
         event.preventDefault();
 
@@ -41,9 +57,12 @@ const RegistrationForm = function(props) {
             password: password,
         }
 
-        dispatch(postUsers(user))
+        setPostUsersRequestId(dispatch(postUsers(user)))
     }
 
+
+    // Make sure to do our cleanup in a useEffect so that we do it after
+    // rendering.
     useEffect(function() {
         // If we have a user logged in, at all, then we want to navigate away
         // to the home page.  This works whether we're nagivating away to the
@@ -51,25 +70,47 @@ const RegistrationForm = function(props) {
         // navigating away to the homepage after an already authenticated user
         // somehow winds up on the registration page.  Either way, we don't
         // want to be here.
-        if ( currentUser ) {
+        if ( authentication.currentUser ) {
+
+            // Make sure we cleanup our authentication request before we go.
+            dispatch(cleanupAuthenticationRequest({requestId: authenticateRequestId}))
+
             navigate("/", {replace: true})
         }
 
-        if (postUsersRequest.target && postUsersRequest.target.email == email 
-            && postUsersRequest.completed && ! postUsersRequest.error) {
+        // If we've successfully created our user, then we want to authenticate them.
+        if (users.requests[postUsersRequestId] && users.requests[postUsersRequestId].completed 
+            && ! users.requests[postUsersRequestId].error) {
 
-            dispatch(authenticate(email, password))
+            // At this point, we're done with the postUsers request, so clean
+            // it up.
+            dispatch(cleanupUsersRequest({requestId: postUsersRequestId}))
+
+            setAuthenticateRequestId(dispatch(authenticate(email, password)))
         } 
     })
 
-    if ( postUsersRequest.target && postUsersRequest.target.email == email) {
-        if (postUsersRequest.error == 409 ) {
+
+    // Handle errors in the registration process.
+    if ( users.requests[postUsersRequestId] ) {
+        if (users.requests[postUsersRequestId].status == 409 ) {
             setEmailError('A user with that email already exists.  Please login instead.')
-        } else if (postUsersRequest.error) {
-            setOverallError(postUsersRequest.error)
+        } else if (users.requests[postUsersRequestId].error) {
+            setOverallError(users.requests[postUsersRequestId].error)
         }
     }
 
+
+    // ====================== Render ==========================================
+
+    // If either of our requests are in progress, render a spinner.
+    if ( (users.requests[postUsersRequestId] && users.requests[postUsersRequestId].requestInProgress )
+        || (authentication.requests[authenticateRequestId] && authentication.requests[authenticateRequestId].requestInProgress) ) {
+
+        return (
+            <Spinner />
+        )
+    }
 
     return (
         <form onSubmit={onSubmit}>

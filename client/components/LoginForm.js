@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 
-import Spinner from './Spinner'
-
-
 import { useDispatch, useSelector } from 'react-redux'
+
 import { authenticate, cleanupRequest } from '../state/authentication'
+
+import Spinner from './Spinner'
 
 /**
  * A login form allowing the user to authenticate using an email and a password.
  *
- * No props.
+ * @param {object} props - An empty object, takes no props.
  */
 const LoginForm = function(props) { 
     const [email, setEmail] = useState('');
@@ -35,6 +35,8 @@ const LoginForm = function(props) {
         setRequestId(dispatch(authenticate(email, password)))
     }
 
+    // Make sure to do our cleanup in a useEffect so that we do it after
+    // rendering.
     useEffect(function() {
         // If we're logged in then we don't want to be here.  We don't really
         // care if we were already logged in or if this is the result of a
@@ -46,6 +48,7 @@ const LoginForm = function(props) {
         }
     })
 
+    // ====================== Render ==========================================
 
     // Show a spinner if the request we made is still in progress.
     if (authentication.requests[requestId].requestInProgress) {

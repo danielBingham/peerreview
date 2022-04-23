@@ -23,7 +23,13 @@ export default {
     failRequest: function(requestTracker, action) {
         requestTracker.requestInProgress = false
         requestTracker.status = action.payload.status
-        requestTracker.error = action.payload.error
+
+        if ( action.payload.error ) {
+            requestTracker.error = action.payload.error
+        } else {
+            requestTracker.error = 'Unknown error.'
+        }
+
         requestTracker.completed = true
     },
 
