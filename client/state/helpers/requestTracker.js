@@ -5,23 +5,21 @@ export default {
         return {
             requestMethod: method,
             requestEndpoint: endpoint,
-            requestInProgress: false,
+            state: 'none',
             error: null,
             status: null,
-            completed: false
 
         }
     },
 
 
     makeRequest: function(requestTracker, action) {
-        requestTracker.requestInProgress = true
+        requestTracker.state = 'pending' 
         requestTracker.error = null
-        requestTracker.completed = false
     },
 
     failRequest: function(requestTracker, action) {
-        requestTracker.requestInProgress = false
+        requestTracker.state = 'failed' 
         requestTracker.status = action.payload.status
 
         if ( action.payload.error ) {
@@ -29,15 +27,13 @@ export default {
         } else {
             requestTracker.error = 'Unknown error.'
         }
-
-        requestTracker.completed = true
     },
 
     completeRequest: function(requestTracker, action) {
-        requestTracker.requestInProgress = false
+        requestTracker.state = 'fulfilled' 
+
         requestTracker.error = null
         requestTracker.status = action.payload.status
-        requestTracker.completed = true
     }
 
 }

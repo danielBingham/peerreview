@@ -150,22 +150,35 @@ export const getUsers = function() {
         const requestId = uuidv4() 
         const endpoint = '/users'
 
-        dispatch(usersSlice.actions.makeRequest({responseId: requestId, method: 'GET', endpoint: endpoint}))
+        let payload = {
+            requestId: requestId
+        }
+
+
+        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json'
             }
         }).then(function(response) {
+            payload.status = response.status
             if ( response.ok ) {
                 return response.json()
             } else {
-                return Promise.reject({status: response.status})
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(users) {
-            dispatch(usersSlice.actions.completeGetUsersRequest({requestId: requestId, users: users}))
+            payload.users = users
+            dispatch(usersSlice.actions.completeGetUsersRequest(payload))
         }).catch(function(error) {
-            handleError(dispatch, usersSlice.actions.failRequest, requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            console.log(error)
+            dispatch(usersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -190,6 +203,9 @@ export const postUsers = function(user) {
         const requestId = uuidv4()
         const endpoint = '/users'
 
+        const payload = {
+            requestId: requestId
+        }
 
         dispatch(usersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -199,15 +215,23 @@ export const postUsers = function(user) {
             },
             body: JSON.stringify(user)
         }).then(function(response) {
+            payload.status = response.status
             if ( response.ok ) {
                 return response.json()
             } else {
-                return Promise.reject({status: response.status})
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.completeRequest({requestId: requestId, user: returnedUser}))
+            payload.user = returnedUser
+            dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
-            handleError(dispatch, usersSlice.actions.failRequest, requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            console.log(error)
+            dispatch(usersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -232,6 +256,9 @@ export const getUser = function(id) {
         const requestId = uuidv4()
         const endpoint = '/user/' + id
 
+        const payload = {
+            requestId: requestId
+        }
 
         dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -240,15 +267,23 @@ export const getUser = function(id) {
                 'Content-Type': 'application/json'
             }
         }).then(function(response) {
+            payload.status = response.status
             if ( response.ok ) {
                 return response.json()
             } else {
-                return Promise.reject({status: response.status})
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
-            dispatch(usersSlice.actions.completeRequest({requestId: requestId, user: user}))
+            payload.user = user
+            dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
-            handleError(dispatch, usersSlice.actions.failRequest, requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            console.log(error)
+            dispatch(usersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -271,7 +306,11 @@ export const putUser = function(user) {
     return function(dispatch, getState) {
     
         const requestId = uuidv4()
-        const endpoint = '/user/' + id
+        const endpoint = '/user/' + user.id
+
+        const payload = {
+            requestId: requestId
+        }
 
         dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -281,17 +320,25 @@ export const putUser = function(user) {
             },
             body: JSON.stringify(user)
         }).then(function(response) {
+            payload.status = response.status
             if ( response.ok ) {
                 return response.json()
 
             } else {
-                return Promise.reject({status: response.status})
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
 
         }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.completeRequest({requestId: requestId, user: returnedUser})    )
+            payload.user = returnedUser
+            dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
-            handleError(dispatch, usersSlice.actions.failRequest, requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            console.log(error)
+            dispatch(usersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -314,7 +361,11 @@ export const patchUser = function(user) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/user/' + id
+        const endpoint = '/user/' + user.id
+
+        const payload = {
+            requestId: requestId
+        }
 
         dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -324,15 +375,23 @@ export const patchUser = function(user) {
             },
             body: JSON.stringify(user)
         }).then(function(response) {
+            payload.status = response.status
             if ( response.ok ) {
                 return response.json()
             } else {
-                return Promise.reject({status: response.status})
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.completeRequest({requestId: requestId, user: returnedUser}))
+            payload.user = returnedUser
+            dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
-            handleErrorr(requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            console.log(error)
+            dispatch(usersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -355,7 +414,12 @@ export const deleteUser = function(user) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/user/' + id
+        const endpoint = '/user/' + user.id
+
+        const payload = {
+            requestId: requestId,
+            userId: user.id
+        }
         
         dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -364,13 +428,20 @@ export const deleteUser = function(user) {
                 'Content-Type': 'application/json'
             }
         }).then(function(response) {
+            payload.status = response.status
             if( response.ok ) {
-                dispatch(usersSlice.actions.completeDeleteUserRequest({requestId: requestId, userId: user.id}))
+                dispatch(usersSlice.actions.completeDeleteUserRequest(payload))
             } else {
-                return Promise.reject({status: response.status})
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).catch(function(error) {
-            handleError(dispatch, usersSlice.actions.failRequest, requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            console.log(error)
+            dispatch(usersSlice.actions.failRequest(payload))
         })
 
         return requestId

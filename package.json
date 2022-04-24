@@ -9,7 +9,7 @@
     "client": "webpack-dev-server --mode development --devtool inline-source-map --hot",
     "server": "nodemon ./server/bin/www",
     "dev": "export NODE_ENV=hot-dev && concurrently \"npm run server\" \"npm run client\"",
-    "test": "mocha --require @babel/register --preset babel --file test/setup.js 'test/**/*.spec.js'"
+    "test": "jest --config test/jest.config.js test"
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.0",
