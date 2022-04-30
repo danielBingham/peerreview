@@ -25,7 +25,7 @@ module.exports = class UserController {
             results.rows.forEach(function(user) {
                 delete user.password;
             });
-            response.status(200).json(results.rows);
+            return response.status(200).json(results.rows);
 
         } catch (error) {
             console.error(error);
@@ -58,12 +58,12 @@ module.exports = class UserController {
             user.password = this.auth.hashPassword(user.password);
 
             const results = await this.database.query(
-                'INSERT INTO root.users (name, email, password, created_date, updated_date) VALUES ($1, $2, $3, now(), now()) RETURNING id', 
+                'INSERT INTO root.users (name, email, password, created_date, updated_date) VALUES ($1, $2, $3, now(), now()) RETURNING *', 
                 [ user.name, user.email, user.password ]
             );
-            return response.status(201).json({
-                id: results.rows[0].id
-            });
+            const returnedUser = results.rows[0];
+            delete returnedUser.password;
+            return response.status(201).json(returnedUser);
         } catch (error) {
             console.error(error);
             return response.status(500).json({error: 'unknown'});

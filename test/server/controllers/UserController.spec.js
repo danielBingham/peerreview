@@ -1,10 +1,10 @@
 const UserController = require('../../../server/controllers/users.js');
 const AuthenticationService = require('../../../server/services/authentication.js');
 
-xdescribe('UserController', function() {
+describe('UserController', function() {
 
     describe('.getUsers()', function() {
-        it('should clean passwords out of the results', function() {
+        it('should clean passwords out of the results', async function() {
             // Fixture data.
             const users = [
                 {
@@ -26,26 +26,41 @@ xdescribe('UserController', function() {
 
             // Mocked API
             const database = {
-                query: sinon.fake.yields(null, users)
+                query: jest.fn(function(sql) {
+                    return {
+                        rows: users
+                    };
+                })
+
             };
-            const response = {
-                json: sinon.spy()
+            const Response = function() {
+                this.status = jest.fn(() => this);
+                this.json = jest.fn(() => this);
             };
 
             const userController = new UserController(database);
 
-            userController.getUsers(null, response);
+            const response = new Response();
+            await userController.getUsers(null, response);
 
-            expect(response.json.calledWith(expectedUsers)).toEqual(true);
+            expect(response.status.mock.calls[0][0]).toEqual(200);
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers);
             
         });
 
     });
 
-    describe('.postUsers()', function() {
+   describe('.postUsers()', function() {
         it('should remove password and add id to the returned user result', async function() {
             // Fixture data.
-            const user = {
+            const submittedUser = {
+                name: 'John Doe',
+                email: 'john.doe@email.com',
+                password: 'p4ssw0rd'
+            };
+
+            const returnedUser = {
+                id: 1,
                 name: 'John Doe',
                 email: 'john.doe@email.com',
                 password: 'p4ssw0rd'
@@ -59,27 +74,28 @@ xdescribe('UserController', function() {
 
             // Mocked API
             const database = {
-                query: sinon.fake.yields(null, {insertId: 1})
+                query: jest.fn().mockReturnValueOnce({rowCount: 0, rows: []}).mockReturnValue({rowCount:1, rows: [returnedUser]})
             };
             const request = {
-                body: user
+                body: submittedUser 
             };
-            const response = {
-                json: sinon.spy()
+            const Response = function() {
+                this.json = jest.fn(() => this);
+                this.status = jest.fn(() => this);
             };
 
+            const response = new Response();
             const userController = new UserController(database);
             await userController.postUsers(request, response);
 
-            expect(response.json.calledWith(expectedUser)).to.equal(true);
+            expect(response.status.mock.calls[0][0]).toEqual(201);
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUser);
         });
 
-        it('should hash the password', async function() {
-            // Patch user replaces password on the user object with the hash.
-            // So we need to store it here if we want to check it after
-            // `patchUser()` has run.
-            var password = 'password';             
-            const user = {
+       it('should hash the password', async function() {
+            const password = 'p4ssw0rd';
+            // Fixture data.
+            const submittedUser = {
                 name: 'John Doe',
                 email: 'john.doe@email.com',
                 password: password 
@@ -91,30 +107,33 @@ xdescribe('UserController', function() {
                 email: 'john.doe@email.com'
             };
 
+
             // Mocked API
             const auth = new AuthenticationService();
             const database = {
-                query: sinon.stub().yields(null, {insertId: 1})
+                query: jest.fn().mockReturnValueOnce({rowCount: 0, rows: []}).mockReturnValue({rowCount:1, rows: [{...submittedUser, id: 1}]})
             };
             const request = {
-                body: user,
+                body: submittedUser,
             };
-            const response = {
-                json: sinon.spy()
+            const Response = function() {
+                this.json = jest.fn(() => this);
+                this.status = jest.fn(() => this);
             };
 
+            const response = new Response();
             const userController = new UserController(database);
             await userController.postUsers(request, response);
 
-            const databaseCall = database.query.getCall(0);
-            expect(await auth.checkPassword(password, databaseCall.args[1][2])).to.equal(true);
+            const databaseCall = database.query.mock.calls[1];
+            expect(auth.checkPassword(password, databaseCall[1][2])).toEqual(true);
 
-            const jsonCall = response.json.getCall(0);
-            expect(jsonCall.args[0]).to.eql(expectedUser);
+            const jsonCall = response.json.mock.calls[0];
+            expect(jsonCall[0]).toEqual(expectedUser);
         });
     });
 
-    describe('.getUser()', function() {
+    xdescribe('.getUser()', function() {
         it('should clean password data out of the user', function() {
             // Fixture data.
             const user = [{
@@ -151,8 +170,8 @@ xdescribe('UserController', function() {
 
     });
 
-    describe('putUser()', function() {
-        it('should return `{ success: true }`', async function() {
+    xdescribe('putUser()', function() {
+       it('should return `{ success: true }`', async function() {
             // Fixture data.
             const user = {
                 id: 1,
@@ -260,7 +279,7 @@ xdescribe('UserController', function() {
 
     });
 
-    describe('patchUser()', function() {
+    xdescribe('patchUser()', function() {
         it('should construct update SQL and return `{ success: true }`', function() {
             // Fixture data.
             const user = {
@@ -372,7 +391,7 @@ xdescribe('UserController', function() {
 
     });
 
-    describe('deleteUser()', function() {
+    xdescribe('deleteUser()', function() {
         it('should return `{ success: true }`', function() {
             // Mocked API
             const database = {
