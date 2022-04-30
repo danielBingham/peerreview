@@ -24,38 +24,39 @@ module.exports = class AuthenticationController {
         }
     }
 
-    authenticate(request, response) {
+    async authenticate(request, response) {
         const credentials = request.body;
 
-        let auth = this.auth;
-        this.database.query(
-            'select * from users where email = ?',
-            [ credentials.email ],
-            function(error, results, fields) {
-                if (error) {
-                    console.log(error)
-                    response.status(500).send()
-                }
+        try {
+            const results = await this.database.query(
+                'select * from root.users where email = $1',
+                [ credentials.email ]
+            );
 
-                const user = results[0];
-                try {
-                    const passwords_match = auth.checkPassword(credentials.password, user.password);
-                    if (passwords_match) {
-                        delete user.password
-                        request.session.user = user;
-                        response.status(200).json({
-                            user: user
-                        });
-                    } else {
-                        response.status(403).send()
-                    } 
-                } catch (error) {
-                    console.log(error);
-                    response.status(500).send()
-                }
-
+            if (results.rowCount > 0) {
+                const user = results.rows[0];
+                const passwords_match = this.auth.checkPassword(credentials.password, user.password);
+                if (passwords_match) {
+                    delete user.password
+                    request.session.user = user;
+                    response.status(200).json({
+                        user: user
+                    });
+                    return;
+                } else {
+                    response.status(403).json({error: 'login-failed'})
+                    return;
+                } 
+            } else {
+                response.status(403).json({error: 'login-failed'})
+                return;
             }
-        );
+
+        } catch (error) {
+            console.error(error)
+            response.status(500).json({error: 'unknown'})
+            return;
+        }
     }
 
     logout(request, response) {

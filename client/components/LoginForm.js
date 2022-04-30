@@ -51,7 +51,7 @@ const LoginForm = function(props) {
     // ====================== Render ==========================================
 
     // Show a spinner if the request we made is still in progress.
-    if (authentication.requests[requestId].requestInProgress) {
+    if (authentication.requests[requestId] && authentication.requests[requestId].state == 'pending') {
         return (
             <Spinner />
         )
@@ -59,7 +59,7 @@ const LoginForm = function(props) {
 
     return (
         <form onSubmit={onSubmit}>
-            {authentication.requests[requestId].status == 403 && <div className="authentication-error">Login failed.</div>}
+            {(authentication.requests[requestId] && authentication.requests[requestId].status == 403) && <div className="authentication-error">Login failed.</div>}
 
             <label htmlFor="email">Email:</label>
             <input type="text" 

@@ -19,23 +19,19 @@ module.exports = class UserController {
      *
      * Return a JSON array of all users in thethis.database.
      */
-    getUsers(request, response) {
-       this.database.query(
-            'select * from users', 
-            function(error, results, fields) {
-                if ( error ) {
-                    console.log(error);
-                    response.status(500).send();
+    async getUsers(request, response) {
+        try {
+            const results = await this.database.query('select * from root.users');
+            results.rows.forEach(function(user) {
+                delete user.password;
+            });
+            response.status(200).json(results.rows);
 
-                } else {
-                    results.forEach(function(user) {
-                        delete user.password;
-                    });
-
-                    response.status(200).json(results); 
-                }
-            }
-        );
+        } catch (error) {
+            console.error(error);
+            response.status(500).json({ error: 'unknown' });
+            return;
+        }
     }
 
     /**
@@ -48,43 +44,30 @@ module.exports = class UserController {
 
         // If a user already exists with that email, send a 409 Conflict
         // response.
-        this.database.query(
-            'select id, email from users where email=?',
-            [ user.email ],
-            function(error, results, fields) {
-                if (error) {
-                    console.log(error);
-                    response.status(500).send();
-                }
-
-                if (results.length > 0) {
-                    response.status(409).send();
-                }
-            }
-        );
-
-
+        //
         try {
-            user.password = this.auth.hashPassword(user.password);
-        } catch (error) {
-            console.log(error);
-            response.status(500).send();
-        }
+            const userExistsResults = await this.database.query(
+                'SELECT id, email FROM root.users WHERE email=$1',
+                [ user.email ]
+            );
 
-        this.database.query(
-            'insert into users (name, email, password, created_date, updated_date) values (?, ?, ?, now(), now())', 
-            [ user.name, user.email, user.password ], 
-            function(error, results, fields) {
-                if ( error ) {
-                    console.log(error);
-                    response.status(500).send();
-                } else {
-                    response.status(201).json({
-                        id: results.insertId 
-                    });
-                }
+            if (userExistsResults.rowCount > 0) {
+                return response.status(409).json({error: 'user-exists'});
             }
-        );
+
+            user.password = this.auth.hashPassword(user.password);
+
+            const results = await this.database.query(
+                'INSERT INTO users (name, email, password, created_date, updated_date) VALUES ($1, $2, $3, now(), now()) RETURNING id', 
+                [ user.name, user.email, user.password ]
+            );
+            return response.status(201).json({
+                id: results.rows[0].id
+            });
+        } catch (error) {
+            console.error(error);
+            return response.status(500).json({error: 'unknown'});
+        }
     }
 
     /**

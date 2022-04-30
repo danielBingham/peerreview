@@ -10,9 +10,9 @@ var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
 var logger = require('morgan');
-var mysql = require('mysql');
+var { Client, Pool } = require('pg');
 var session = require('express-session');
-var mysqlStore = require('express-mysql-session')(session);
+var pgSession= require('connect-pg-simple')(session);
 
 
 // Load our configuration file.  Loads the index.js file from the config/ directory which
@@ -23,19 +23,16 @@ var mysqlStore = require('express-mysql-session')(session);
 // For sturcture, see config/default.js
 var config = require('./config');
 
-// Initialize the database connection with settings from our configuration file.
-var connection = mysql.createConnection({
+const connection = new Pool({
     host: config.database.host,
     user: config.database.user,
     password: config.database.password,
-    database: config.database.name 
+    database: config.database.name,
+    port: 5432
 });
-connection.connect();
-
 
 // Load express.
 var app = express();
-
 
 // Setup a view engine, we'll use Handlebars (http://handlebarsjs.com/)
 //
@@ -54,13 +51,10 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-let sessionStore = new mysqlStore({
-    host: config.database.host,
-    user: config.database.user,
-    password: config.database.password,
-    database: config.database.name
+let sessionStore = new pgSession({
+    pool: connection,
+    createTableIfMissing: true
 });
-
 app.use(session({
     key: config.session.key,
     secret: config.session.secret,
