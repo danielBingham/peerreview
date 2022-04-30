@@ -9,7 +9,10 @@
     "client": "webpack-dev-server --mode development --devtool inline-source-map --hot",
     "server": "nodemon ./server/bin/www",
     "dev": "export NODE_ENV=hot-dev && concurrently \"npm run server\" \"npm run client\"",
-    "test": "jest --config test/jest.config.js test"
+    "test": "jest test"
+  },
+  "jest": {
+      "verbose": true
   },
   "dependencies": {
     "@reduxjs/toolkit": "^1.8.1",
@@ -38,6 +41,7 @@
     "@babel/preset-env": "^7.17.10",
     "@babel/preset-react": "^7.16.7",
     "@babel/register": "^7.17.7",
+    "babel-jest": "^28.0.3",
     "babel-loader": "^8.2.5",
     "clean-webpack-plugin": "^4.0.0",
     "concurrently": "^7.1.0",
@@ -45,7 +49,7 @@
     "fetch-mock": "^9.11.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^28.0.3",
-    "node-fetch": "^3.2.4",
+    "node-fetch": "^2.6.7",
     "nodemon": "^2.0.16",
     "style-loader": "^3.3.1",
     "webpack": "^5.72.0",
