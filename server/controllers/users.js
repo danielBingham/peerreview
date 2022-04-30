@@ -58,7 +58,7 @@ module.exports = class UserController {
             user.password = this.auth.hashPassword(user.password);
 
             const results = await this.database.query(
-                'INSERT INTO users (name, email, password, created_date, updated_date) VALUES ($1, $2, $3, now(), now()) RETURNING id', 
+                'INSERT INTO root.users (name, email, password, created_date, updated_date) VALUES ($1, $2, $3, now(), now()) RETURNING id', 
                 [ user.name, user.email, user.password ]
             );
             return response.status(201).json({
@@ -75,22 +75,26 @@ module.exports = class UserController {
      *
      * Get details for a single user in thethis.database.
      */
-    getUser(request, response) {
-       this.database.query(
-            'select * from users where id=? limit 1', 
-            [request.params.id], 
-            function(error, results, fields) {
-                if ( error ) {
-                    console.log(error);
-                    response.status(500).send();
-                } else {
-                    let user = results[0];
-                    delete user.password;
+    async getUser(request, response) {
 
-                    response.status(200).json(user);
-                }
+        try {
+           const results = await this.database.query(
+                'select * from root.users where id=$1 limit 1', 
+               [request.params.id] 
+           );
+
+            if (results.rowCount == 0) {
+                return response.status(404).json({});
             }
-        );
+
+            const user = results.rows[0];
+            delete user.password;
+
+            return response.status(200).json(user);
+        } catch (error) {
+            console.error(error);
+            return response.status(500).send();
+        }
     }
 
     /**
@@ -99,21 +103,26 @@ module.exports = class UserController {
      * Replace an existing user wholesale with the provided JSON.
      */
     async putUser(request, response) {
-        const user = request.body;
-        user.password = await this.auth.hashPassword(user.password);
+        try {
+            const user = request.body;
+            user.password = this.auth.hashPassword(user.password);
 
-        this.database.query(
-            'update users set name = ? and email = ? and password = ? and updated_date = now() where id = ?',
-            [ user.name, user.email, user.password, request.params.id ],
-            function(error, results, fields) {
-                if ( error ) {
-                    console.log(error);
-                    response.status(500).send();
-                } else {
-                    response.status(200).send();
-                }
+            const results = await this.database.query(
+                'UPDATE root.users SET name = $1 AND email = $2 AND password = $3 AND updated_date = now() WHERE id = $4 RETURNING *',
+                [ user.name, user.email, user.password, request.params.id ]
+            );
+
+            if (results.rowCount == 0 && results.rows.length == 0) {
+                return response.status(404).json({error: 'no-resource'});
             }
-        );
+
+            const returnedUser = results.rows[0];
+            delete returnedUser.password;
+            return response.status(200).json(returnedUser);
+        } catch (error) {
+            console.error(error);
+            response.status(500).json({error: 'unknown'});
+        }
     }
 
     /**
@@ -125,31 +134,42 @@ module.exports = class UserController {
         let user = request.body;
         delete user.id;
 
-        let sql = 'update users set ';
+        let sql = 'UPDATE root.users SET';
         let params = [];
+        let count = 1;
         for(let key in user) {
-            sql += key + ' = ? and ';
+            sql += key + ' = $' + count + ' and ';
 
             if ( key == 'password' ) {
-                user[key] = await this.auth.hashPassword(user[key]);
+                try {
+                    user[key] = await this.auth.hashPassword(user[key]);
+                } catch (error) {
+                    console.error(error);
+                    return response.status(500).json({error: 'unknown'});
+                }
             }
 
             params.push(user[key]);
+            count = count + 1;
         }
-        sql += 'updated_date = now() where id = ?';
+        sql += 'updated_date = now() WHERE id = $' + count + ' RETURNING *';
 
         params.push(request.params.id);
 
-        this.database.query( sql, params,
-            function(error, results, fields) {
-                if ( error ) {
-                    console.log(error);
-                    response.status(500).send();
-                } else {
-                    response.status(200).send();
-                }
+        try {
+            const results = await this.database.query(sql, params);
+
+            if ( results.rowCount == 0 && results.rows.length == 0) {
+                return response.status(404).json({error: 'no-resource'});
             }
-        );
+
+            const returnedUser = results.rows[0];
+            delete returnedUser.password;
+            return response.status(200).json(returnedUser);
+        } catch (error) {
+            console.error(error);
+            response.status(500).json({error: 'unknown'})
+        }
     }
 
     /**
@@ -157,18 +177,22 @@ module.exports = class UserController {
      *
      * Delete an existing user.
      */
-    deleteUser(request, response) {
-       this.database.query(
-            'delete from users where id = ?',
-            [ request.params.id ],
-            function(error, results, fields) {
-                if ( error ) {
-                    console.log(error);
-                    response.status(500).send();
-                } else {
-                    response.status(200).send();
-                }
+    async deleteUser(request, response) {
+
+        try {
+            const results = await this.database.query(
+                'delete from root.users where id = $1',
+                [ request.params.id ]
+            );
+
+            if ( results.rowCount == 0) {
+                return response.status(404).json({error: 'no-resource'});
             }
-        );
+
+            return response.status(200).json({userId: request.params.id});
+        } catch (error) {
+            console.error(error);
+            return response.status(500).json({error: 'unknown'});
+        }
     }
 }; 

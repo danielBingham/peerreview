@@ -24,7 +24,7 @@ const AuthenticationNavigation = function(props) {
     // whether or not we have an existing session.  We only want to do this
     // once, so we'll hang on to the getAuthenticatedUserRequestId to track the request -- and
     // after we're done to remember that we've made the request.
-    if ( ! getAuthenticatedUserRequestId ) {
+    if ( ! authentication.currentUser && ! getAuthenticatedUserRequestId ) {
         setGetAuthenticatedUserRequestId(dispatch(getAuthenticatedUser()))
     } 
 

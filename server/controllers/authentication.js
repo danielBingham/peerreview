@@ -16,9 +16,7 @@ module.exports = class AuthenticationController {
 
     getAuthenticated(request, response) {
         if (request.session.user) {
-            response.status(200).json({
-                user: request.session.user
-            });
+            response.status(200).json(request.session.user);
         } else {
             response.status(204).send();
         }
@@ -39,9 +37,7 @@ module.exports = class AuthenticationController {
                 if (passwords_match) {
                     delete user.password
                     request.session.user = user;
-                    response.status(200).json({
-                        user: user
-                    });
+                    response.status(200).json(user);
                     return;
                 } else {
                     response.status(403).json({error: 'login-failed'})

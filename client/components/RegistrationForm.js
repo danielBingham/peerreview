@@ -31,11 +31,22 @@ const RegistrationForm = function(props) {
     const navigate = useNavigate()
 
 
-    const users = useSelector(function(state) {
-        return state.users
+    const postUsersRequest = useSelector(function(state) {
+        if (postUsersRequestId) {
+            return state.users.requests[postUsersRequestId]
+        } else {
+            return null
+        }
     })
-    const authentication = useSelector(function(state) {
-        return state.authentication
+    const authenticationRequest = useSelector(function(state) {
+        if (authenticateRequestId) {
+            return state.authentication.requests[authenticateRequestId]
+        } else {
+            return null
+        }
+    })
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
     })
 
     /**
@@ -70,7 +81,7 @@ const RegistrationForm = function(props) {
         // navigating away to the homepage after an already authenticated user
         // somehow winds up on the registration page.  Either way, we don't
         // want to be here.
-        if ( authentication.currentUser ) {
+        if ( currentUser ) {
 
             // Make sure we cleanup our authentication request before we go.
             dispatch(cleanupAuthenticationRequest({requestId: authenticateRequestId}))
@@ -79,9 +90,7 @@ const RegistrationForm = function(props) {
         }
 
         // If we've successfully created our user, then we want to authenticate them.
-        if (users.requests[postUsersRequestId] && users.requests[postUsersRequestId].completed 
-            && ! users.requests[postUsersRequestId].error) {
-
+        if ( postUsersRequest && postUsersRequest.state == 'fulfilled') {
             // At this point, we're done with the postUsers request, so clean
             // it up.
             dispatch(cleanupUsersRequest({requestId: postUsersRequestId}))
@@ -92,11 +101,11 @@ const RegistrationForm = function(props) {
 
 
     // Handle errors in the registration process.
-    if ( users.requests[postUsersRequestId] ) {
-        if (users.requests[postUsersRequestId].status == 409 ) {
+    if ( postUsersRequest ) {
+        if (postUsersRequest.status == 409 ) {
             setEmailError('A user with that email already exists.  Please login instead.')
-        } else if (users.requests[postUsersRequestId].error) {
-            setOverallError(users.requests[postUsersRequestId].error)
+        } else if (postUsersRequest.error) {
+            setOverallError(postUsersRequest.error)
         }
     }
 
@@ -104,8 +113,8 @@ const RegistrationForm = function(props) {
     // ====================== Render ==========================================
 
     // If either of our requests are in progress, render a spinner.
-    if ( (users.requests[postUsersRequestId] && users.requests[postUsersRequestId].requestInProgress )
-        || (authentication.requests[authenticateRequestId] && authentication.requests[authenticateRequestId].requestInProgress) ) {
+    if ( (postUsersRequest && postUsersRequest.state == 'pending' )
+        || (authenticationRequest && authenticationRequest.state == 'pending' ) ) {
 
         return (
             <Spinner />
