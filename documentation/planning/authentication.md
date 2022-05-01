@@ -45,6 +45,7 @@ verifiable, testable statements.*
 *Here's where you can brainstorm and document what we need to do to achieve
 this milestone and how we can go about doing it.*
 
+### Users API
 First, we'll need to define the **Users API**.
 
 We'll start by defining the `user` object:
@@ -58,7 +59,7 @@ We'll start by defining the `user` object:
 }
 ```
 
-> **Note** We'll use "fully populated" to refer to a `user` object that has all of the
+> **NOTE**: We'll use "fully populated" to refer to a `user` object that has all of the
 > above fields populated.  We'll use "populated" to refer to a `user` object that
 > has the appropriate set of fields for the context (for example, if
 > being returned from the backend, the `password` will be missing or if being
@@ -68,6 +69,12 @@ We'll start by defining the `user` object:
 Then we need to define the end points.  We'll use the verbs `GET`, `POST`,
 `PUT`, `PATCH`, and `DELETE` with both the singular and plural endpoints.
 Unless otherwise noted, the request body and return will be `json`.
+
+#### `/users` Endpoint
+
+> **NOTE**: The user's password hash should **never** be returned from any of
+> this endpoints.  It should be stripped out from all `users` returned in
+> responses.
 
 `GET /users`: 
 
@@ -113,7 +120,7 @@ themselves.
 **Request**: One or more partially populated `user` objects in an array.  The `id`
 field **must** be populated.
 
-**Action**: Merges the fields in the posted `user` objects with those populated
+**Action**: Merges the fields in the provided `user` objects with those populated
 in the database, overwriting the database. 
 
 **Response**: The modified `user` objects, fully populated, in an array.
@@ -121,6 +128,118 @@ in the database, overwriting the database.
 **Authorization**: Users must be logged in.  Non-admin users may only submit a
 single user, and it must be themselves.  Admin users may submit an arbitrary
 numbers of users.
+
+`DELETE /users`: 
+
+**Request**: One or more partially populated `user` objects in an array.  The
+`id` field **must** be populated and is the only field that is required.  The
+other fields are ignored.
+
+**Action**: Deletes the provided users from the database.
+
+**Response**: Returns an array containing the `id` numbers of the deleted
+users.
+
+**Authorization**: User must be logged in.  Non-admin users may only submit a
+single user and it must be themselves.  Admin users may submit an arbitrary
+number of users.
+
+#### `/user/:id` Endpoint
+
+> **NOTE**: The user's password hash should **never** be returned from any of
+> this endpoints.  It should be stripped out from all `users` returned in
+> responses.
+
+`GET /user/:id`: 
+
+**Request**: No body.
+
+**Response**: Populated `user` object matching `:id`, or `404 Not Found`. 
+
+**Authorization**: Anyone.
+
+`POST /user/:id`:
+
+**Request**: A populated `user` object. 
+
+**Action**: Synonym for `PUT /user/:id`. Overwrites the user in the database
+identified by `:id` with the provided `user` object. 
+
+**Response**: The modified `user` object, populated.
+
+**Authorization**:  Anyone. 
+
+`PUT /user/:id`:
+
+**Request**: A populated `user` object.
+
+**Action**:  Synonym for `POST /user/:id`. Overwrites the user identified by `:id` with the `user` object provided. 
+
+**Response**: The modified `user` object, populated. 
+
+**Authorization**: User must be logged in. Non-admin users may only modify
+themselves. Admin users may modify any user.
+
+`PATCH /user/:id`:
+
+**Request**: A partially populated `user` object in an array. 
+
+**Action**: Merges the fields in the provided `user` object with those populated
+in the database as identified by `:id`, overwriting the database. 
+
+**Response**: The modified `user` object, populated.
+
+**Authorization**: Users must be logged in.  Non-admin users may only modify
+themselves.  Admin users may modify anyone. 
+
+`DELETE /user/:id`: 
+
+**Request**: No body. 
+
+**Action**: Deletes the user identified by `:id` from the database.
+
+**Response**: An object containing only the `id` number of the user deleted. 
+
+**Authorization**: User must be logged in. Non-admin users may only delete
+themselves.  Admin users may delete any user.
+
+### Authentication API
+
+We're also going to need to define the **Authentication API**.
+
+#### '/authentication` Endpoint
+
+`GET /authentication`: 
+
+**Request**: No body.
+
+**Action**: No action.
+
+**Response**: Populated `user` object from the user session, representing the currently authenticated user. 
+
+**Authorization**: Anyone.
+
+`POST /authentication`:
+
+**Request**: An object containing the user's credentials (email and password). 
+
+**Action**: Authenticates the user against the database, and on successful
+authentication, creates the session and populates it with the `user` object for
+the user. 
+
+**Response**: The populated `user` object from the user session, representing the currently authenticated user. 
+
+**Authorization**: Anyone.
+
+`DELETE /authentication`:
+
+**Request**: No body. 
+
+**Action**:  Destroys the current user session. 
+
+**Response**: Empty response. 
+
+**Authorization**: User must be logged in.
 
 
 ## How should we break up the work?
