@@ -157,8 +157,10 @@ describe('UserController', function() {
         it('should use request.params.id and ignore user.id', async function() {
            connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
 
+           const submittedUser = {...submittedUsers[0]};
+           submittedUser.id = 2;
            const request = {
-                body: submittedUsers[0],
+                body: submittedUser,
                 params: {
                     id: 1
                 }
@@ -173,45 +175,38 @@ describe('UserController', function() {
 
 
             expect(response.status.mock.calls[0][0]).toEqual(200);
-
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
         });
 
-        xit('should hash the password', async function() {
-            // Patch user replaces password on the user object with the hash.
-            // So we need to store it here if we want to check it after
-            // `patchUser()` has run.
-            var password = 'password';             
-            const user = {
-                id: 1,
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-                password: password 
-            };
+        it('should hash the password', async function() {
+          connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
 
-            // Mocked API
-            const auth = new AuthenticationService();
-            const database = {
-                query: sinon.stub().yields(null)
-            };
-            const request = {
-                body: user,
-                params: {
-                    id: 1
-                }
-            };
-            const response = {
-                json: sinon.spy()
-            };
+          const submittedUser = {...submittedUsers[0]};
+          submittedUser.id = 1;
+          // Patch user replaces password on the user object with the hash.
+          // So we need to store it here if we want to check it after
+          // `patchUser()` has run.
+          var password = submittedUser.password;
 
-            const userController = new UserController(database);
-            await userController.putUser(request, response);
+          // Mocked API
+          const auth = new AuthenticationService();
+          const request = {
+              body: submittedUser,
+              params: {
+                  id: 1
+              }
+          };
+          const response = new Response();
 
-            const databaseCall = database.query.getCall(0);
-            expect(await auth.checkPassword(password, databaseCall.args[1][2])).to.equal(true);
+          const userController = new UserController(connection);
+          await userController.putUser(request, response);
+
+          const databaseCall = connection.query.mock.calls[0];
+          expect(await auth.checkPassword(password, databaseCall[1][2])).toEqual(true);
 
 
-            expect(response.json.calledWith({ success: true })).to.equal(true, "Wrong return value");
-
+          expect(response.status.mock.calls[0][0]).toEqual(200);
+          expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
         });
 
     });
