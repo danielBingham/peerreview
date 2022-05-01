@@ -2,43 +2,72 @@ const UserController = require('../../../server/controllers/users.js');
 const AuthenticationService = require('../../../server/services/authentication.js');
 
 describe('UserController', function() {
+    
+    const auth = new AuthenticationService();
+
+    // ====================== Fixture Data ====================================
+
+    const submittedUsers = [
+        {
+            name: 'John Doe',
+            email: 'john.doe@university.edu',
+            password: 'p4ssw0rd'
+        },
+        {
+            name: 'Jane Doe',
+            email: 'jane.doe@university.edu',
+            password: 'different-password'
+        }
+    ];
+
+    const database = [
+        {
+            id: 1,
+            name: 'John Doe',
+            email: 'john.doe@university.edu',
+            password: auth.hashPassword('p4ssw0rd')
+        },
+        {
+            id: 2,
+            name: 'Jane Doe',
+            email: 'jane.doe@university.edu',
+            password: auth.hashPassword('different-password')
+        }
+    ];
+
+    const expectedUsers = [
+        {
+            id: 1,
+            name: 'John Doe',
+            email: 'john.doe@university.edu',
+        },
+        {
+            id: 2,
+            name: 'Jane Doe',
+            email: 'jane.doe@university.edu'
+        }
+    ];
+
+    // ====================== Mocks ===========================================
+
+    const Response = function() {
+        this.status = jest.fn(() => this);
+        this.json = jest.fn(() => this);
+    };
+
+    const connection = {
+        query: jest.fn()
+    };
+
+    beforeEach(function() {
+        connection.query.mockReset();
+    });
 
     describe('.getUsers()', function() {
         it('should clean passwords out of the results', async function() {
-            // Fixture data.
-            const users = [
-                {
-                    id: 1,
-                    name: 'John Doe',
-                    email: 'john.doe@email.com',
-                    password: 'p4ssw0rd'
-                }
-            ];
+            connection.query.mockReturnValueOnce({ rowCount: 2, rows: database }); 
 
-            const expectedUsers = [
-                {
-                    id: 1,
-                    name: 'John Doe',
-                    email: 'john.doe@email.com'
-                }
-            ];
-
-
-            // Mocked API
-            const database = {
-                query: jest.fn(function(sql) {
-                    return {
-                        rows: users
-                    };
-                })
-
-            };
-            const Response = function() {
-                this.status = jest.fn(() => this);
-                this.json = jest.fn(() => this);
-            };
-
-            const userController = new UserController(database);
+            const userController = new UserController(connection);
 
             const response = new Response();
             await userController.getUsers(null, response);
@@ -52,172 +81,80 @@ describe('UserController', function() {
 
    describe('.postUsers()', function() {
         it('should remove password and add id to the returned user result', async function() {
-            // Fixture data.
-            const submittedUser = {
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-                password: 'p4ssw0rd'
-            };
-
-            const returnedUser = {
-                id: 1,
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-                password: 'p4ssw0rd'
-            };
-
-            const expectedUser = {
-                id: 1,
-                name: 'John Doe',
-                email: 'john.doe@email.com'
-            };
-
-            // Mocked API
-            const database = {
-                query: jest.fn().mockReturnValueOnce({rowCount: 0, rows: []}).mockReturnValue({rowCount:1, rows: [returnedUser]})
-            };
+            connection.query.mockReturnValueOnce({rowCount: 0, rows: []}).mockReturnValue({rowCount:1, rows: [database[0]]})
             const request = {
-                body: submittedUser 
-            };
-            const Response = function() {
-                this.json = jest.fn(() => this);
-                this.status = jest.fn(() => this);
+                body: submittedUsers[0]
             };
 
             const response = new Response();
-            const userController = new UserController(database);
+            const userController = new UserController(connection);
             await userController.postUsers(request, response);
 
             expect(response.status.mock.calls[0][0]).toEqual(201);
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUser);
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
         });
 
        it('should hash the password', async function() {
-            const password = 'p4ssw0rd';
-            // Fixture data.
-            const submittedUser = {
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-                password: password 
-            };
 
-            const expectedUser = {
-                id: 1,
-                name: 'John Doe',
-                email: 'john.doe@email.com'
-            };
+           connection.query.mockReturnValueOnce({rowCount: 0, rows: []}).mockReturnValue({rowCount:1, rows: [database[0]]})
 
+           // Do this so that submittedUsers[0].password doesn't get
+           // overwritten and we can use it in future tests.
+           const submittedUser = {...submittedUsers[0] };
+           const request = {
+               body: submittedUser,
+           };
 
-            // Mocked API
-            const auth = new AuthenticationService();
-            const database = {
-                query: jest.fn().mockReturnValueOnce({rowCount: 0, rows: []}).mockReturnValue({rowCount:1, rows: [{...submittedUser, id: 1}]})
-            };
+           const response = new Response();
+           const userController = new UserController(connection);
+           await userController.postUsers(request, response);
+
+           const databaseCall = connection.query.mock.calls[1];
+           expect(auth.checkPassword(submittedUsers[0].password, databaseCall[1][2])).toEqual(true);
+           expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
+        });
+    });
+
+    describe('.getUser()', function() {
+        it('should clean password data out of the user', async function() {
+            connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
             const request = {
-                body: submittedUser,
-            };
-            const Response = function() {
-                this.json = jest.fn(() => this);
-                this.status = jest.fn(() => this);
+                params: {
+                    id: 1
+                }
             };
 
             const response = new Response();
-            const userController = new UserController(database);
-            await userController.postUsers(request, response);
+            const userController = new UserController(connection);
+            await userController.getUser(request, response);
 
-            const databaseCall = database.query.mock.calls[1];
-            expect(auth.checkPassword(password, databaseCall[1][2])).toEqual(true);
-
-            const jsonCall = response.json.mock.calls[0];
-            expect(jsonCall[0]).toEqual(expectedUser);
-        });
-    });
-
-    xdescribe('.getUser()', function() {
-        it('should clean password data out of the user', function() {
-            // Fixture data.
-            const user = [{
-                id: 1,
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-                password: 'p4ssw0rd'
-            }];
-
-            const expectedUser = {
-                id: 1,
-                name: 'John Doe',
-                email: 'john.doe@email.com'
-            };
-
-            // Mocked API
-            const database = {
-                query: sinon.fake.yields(null, user)
-            };
-            const request = {
-                params: {
-                    id: 1
-                }
-            };
-            const response = {
-                json: sinon.spy()
-            };
-
-            const userController = new UserController(database);
-            userController.getUser(request, response);
-
-            expect(response.json.calledWith(expectedUser)).to.equal(true);
+            expect(response.status.mock.calls[0][0]).toEqual(200);
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
         });
 
     });
 
-    xdescribe('putUser()', function() {
-       it('should return `{ success: true }`', async function() {
-            // Fixture data.
-            const user = {
-                id: 1,
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-                password: 'p4ssw0rd'
-            };
+    describe('putUser()', function() {
+       it('should return the modified user with passwords removed', async function() {
+           connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
 
-            // Mocked API
-            const database = {
-                query: sinon.fake.yields(null)
-            };
-            const request = {
-                body: user,
-                params: {
-                    id: 1
-                }
-            };
-            const response = {
-                json: sinon.spy()
-            };
+           const submittedUser = {...submittedUsers[0]};
+           const request = {
+               body: submittedUser,
+               params: {
+                   id: 1
+               }
+           };
+           const response = new Response();
+           const userController = new UserController(connection);
+           await userController.putUser(request, response);
 
-            const userController = new UserController(database);
-            await userController.putUser(request, response);
-
-            expect(response.json.calledWith({ success: true })).to.equal(true);
+           expect(response.status.mock.calls[0][0]).toEqual(200);
+           expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
 
         });
 
-        it('should use request.params.id and ignore user.id', async function() {
-            // Patch user replaces password on the user object with the hash.
-            // So we need to store it here if we want to check it after
-            // `patchUser()` has run.
-            var password = 'password';             
-            const user = {
-                id: 2,
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-                password: password 
-            };
-
-            // Mocked API
-            const auth = new AuthenticationService();
-            const database = {
-                query: sinon.stub().yields(null)
-            };
+        xit('should use request.params.id and ignore user.id', async function() {
             const request = {
                 body: user,
                 params: {
@@ -239,7 +176,7 @@ describe('UserController', function() {
 
         });
 
-        it('should hash the password', async function() {
+        xit('should hash the password', async function() {
             // Patch user replaces password on the user object with the hash.
             // So we need to store it here if we want to check it after
             // `patchUser()` has run.
