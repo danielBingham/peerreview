@@ -18,7 +18,7 @@ Navigate back to the root directory and run the Postgres docker container:
 
 ```
 $ cd ..
-$ docker run -d -p 5432:5432--name peer-sql peer-sql
+$ docker run -d -p 5432:5432 --name peer-sql peer-sql
 ```
 
 Run ``npm install`` to install project dependencies:
