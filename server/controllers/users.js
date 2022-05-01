@@ -79,7 +79,7 @@ module.exports = class UserController {
 
         try {
            const results = await this.database.query(
-                'select * from root.users where id=$1 limit 1', 
+                'select * from root.users where id=$1', 
                [request.params.id] 
            );
 
