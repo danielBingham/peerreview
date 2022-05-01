@@ -154,25 +154,25 @@ describe('UserController', function() {
 
         });
 
-        xit('should use request.params.id and ignore user.id', async function() {
-            const request = {
-                body: user,
+        it('should use request.params.id and ignore user.id', async function() {
+           connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
+
+           const request = {
+                body: submittedUsers[0],
                 params: {
                     id: 1
                 }
             };
-            const response = {
-                json: sinon.spy()
-            };
+            const response = new Response();
 
-            const userController = new UserController(database);
+            const userController = new UserController(connection);
             await userController.putUser(request, response);
 
-            const databaseCall = database.query.getCall(0);
-            expect(databaseCall.args[1][3]).to.equal(request.params.id);
+            const databaseCall = connection.query.mock.calls[0];
+            expect(databaseCall[1][3]).toEqual(request.params.id);
 
 
-            expect(response.json.calledWith({ success: true })).to.equal(true, "Wrong return value");
+            expect(response.status.mock.calls[0][0]).toEqual(200);
 
         });
 
