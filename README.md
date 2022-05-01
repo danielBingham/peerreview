@@ -7,18 +7,18 @@ Peer Review is an open access, reputation based scientific publishing system.
 After pulling the github repo, you can run the development server by first running the MySql docker
 container and then running nodemon and the react dev server.
 
-From the root project directory, build the mysql docker container:
+From the root project directory, build the postgres docker container:
 
 ```
 $ cd database
 $ docker build -t peer-sql .
 ```
 
-Navigate back to the root directory and run the MySql docker container:
+Navigate back to the root directory and run the Postgres docker container:
 
 ```
 $ cd ..
-$ docker run -d -p 3306:3306 --name peer-sql peer-sql
+$ docker run -d -p 5432:5432--name peer-sql peer-sql
 ```
 
 Run ``npm install`` to install project dependencies:
