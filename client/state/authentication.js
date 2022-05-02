@@ -149,7 +149,7 @@ export const getAuthenticatedUser = function() {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/authenticate'
+        const endpoint = '/authentication'
 
         dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -198,10 +198,10 @@ export const authenticate = function(email, password) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/authenticate'
+        const endpoint = '/authentication'
 
         dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + '/authenticate', {
+        fetch(configuration.backend + endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -244,11 +244,11 @@ export const logout = function() {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/logout'
+        const endpoint = '/authentication'
 
         dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
-            method: 'GET',
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             }

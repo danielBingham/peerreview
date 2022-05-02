@@ -56,16 +56,16 @@ module.exports = function(database, config) {
     const AuthenticationController = require('./controllers/authentication');
     const authenticationController = new AuthenticationController(database);
 
-    router.post('/authenticate', function(request, response) {
-        authenticationController.authenticate(request, response);
+    router.post('/authentication', function(request, response) {
+        authenticationController.postAuthentication(request, response);
     });
 
-    router.get('/authenticate', function(request, response) {
-        authenticationController.getAuthenticated(request,response);
+    router.get('/authentication', function(request, response) {
+        authenticationController.getAuthentication(request,response);
     });
 
-    router.get('/logout', function(request, response) {
-        authenticationController.logout(request, response);
+    router.delete('/authentication', function(request, response) {
+        authenticationController.deleteAuthentication(request, response);
     });
 
     return router;

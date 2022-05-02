@@ -309,11 +309,10 @@ Retrieve the currently authenticated user, if any.
 **Action**: No action.
 
 **Response**: Populated `user` object from the user session, representing the
-currently authenticated user or `404` if no currently authenticated user.
+currently authenticated user or `204` if no currently authenticated user.
 
 **Errors**: 
 
-- Returns `404` and `no-user` if there is no session.
 - Returns `500` and `unknown-error` on server error.
 
 **Authorization**: Anyone.
@@ -330,7 +329,7 @@ the user.
 
 **Errors**: 
 
-- Returns `400` and `authentication-failed` if authentication failed. 
+- Returns `403` and `authentication-failed` if authentication failed. 
 - Returns `500` and `unknown-error` on server error.
 
 
@@ -348,7 +347,6 @@ Destroy the currently authenticated user's session, logging them out.
 
 **Errors**: 
 
-- Returns `400` and `authentication-failed` if authentication failed. 
 - Returns `500` and `unknown-error` on server error.
 
 **Response**: Empty response. 
