@@ -329,7 +329,9 @@ the user.
 
 **Errors**: 
 
-- Returns `403` and `authentication-failed` if authentication failed. 
+- Returns `400` and `missing-email` error if email isn't provided.
+- Returns `400` and `missing-password` error if password isn't provided.
+- Returns `403` and `authentication-failed` error if authentication failed. 
 - Returns `500` and `unknown-error` on server error.
 
 
@@ -352,6 +354,41 @@ Destroy the currently authenticated user's session, logging them out.
 **Response**: Empty response. 
 
 **Authorization**: User must be logged in.
+
+### Users Redux Slice
+
+Create a redux slice for the **Users API** with thunks for each of the
+endpoints. The initial state of the slice should contain a dictionary for users
+retrieved from the backend and a dictionary for requests we have made or are
+making to the backend.
+
+```javascript
+{
+    requests: {},
+    users: {}
+}
+```
+
+Create generic `makeRequest`, `failRequest`, `completeRequest`, and
+`cleanupRequest` methods.  These methods will work primarily with the
+`requests` hash to track requests in progress.  We want to be able to track
+more than one request in process, because its plausible that we would kick off
+several requests before the first one returns and we want to make sure we're
+not in a situation where we're losing track of requests.
+
+`completeRequest` will assume we're getting one or more populated `user`
+object(s) and adding them to the hash.  If we need to do something different at
+the end of a request, such as delete a user from the dictionary, then we'll
+need a specific complete method of the form
+`complete[Method][EndpointBase]Request`.  For example,
+`completeDeleteUserRequest`.
+
+In this case, we only need a `completeDeleteUserRequest`, all other methods
+should return either an array of `user` objects or a single `user` object.
+
+### Authentication Redux Slice
+
+
 
 
 ## How should we break up the work?
