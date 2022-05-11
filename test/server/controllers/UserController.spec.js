@@ -211,43 +211,38 @@ describe('UserController', function() {
 
     });
 
-    xdescribe('patchUser()', function() {
-        it('should construct update SQL and return `{ success: true }`', function() {
+    describe('patchUser()', function() {
+        it('should construct update SQL', async function() {
+            connection.query.mockReturnValue({rowCount:1, rows: [database[0]]});
+
             // Fixture data.
-            const user = {
+            const submittedUser = {
                 name: 'John Doe',
                 email: 'john.doe@email.com',
             };
-
-            // Mocked API
-            const database = {
-                query: sinon.stub().yields(null)
-            };
             const request = {
-                body: user,
+                body: submittedUser,
                 params: {
                     id: 1
                 }
             };
-            const response = {
-                json: sinon.spy()
-            };
+            const response = new Response();
 
-            const userController = new UserController(database);
-            userController.patchUser(request, response);
+            const userController = new UserController(connection);
+            await userController.patchUser(request, response);
 
-            const expectedSQL = 'update users set name = ? and email = ? and updated_date = now() where id = ?';
+            const expectedSQL = 'UPDATE root.users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3 RETURNING *';
             const expectedParams = [ 'John Doe', 'john.doe@email.com', 1 ];
 
-            const databaseCall = database.query.getCall(0);
-            expect(databaseCall.args[0]).to.equal(expectedSQL);
-            expect(databaseCall.args[1]).to.eql(expectedParams);
+            const databaseCall = connection.query.mock.calls[0];
+            expect(databaseCall[0]).toEqual(expectedSQL);
+            expect(databaseCall[1]).toEqual(expectedParams);
 
-            expect(response.json.calledWith({ success: true })).to.equal(true, "Wrong return value");
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
 
         });
 
-        it('should ignore the id in the body and use the id in request.params', function() {
+        xit('should ignore the id in the body and use the id in request.params', function() {
             // Fixture data.
             const user = {
                 id: 2,
@@ -283,7 +278,7 @@ describe('UserController', function() {
 
         });
 
-        it('should hash the password', async function() {
+        xit('should hash the password', async function() {
             // Patch user replaces password on the user object with the hash.
             // So we need to store it here if we want to check it after
             // `patchUser()` has run.

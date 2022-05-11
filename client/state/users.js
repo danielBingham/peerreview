@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
 import configuration from '../configuration'
+import logger from '../logger'
 
 import RequestTracker from './helpers/requestTracker'
 import handleError from './helpers/handleError'
@@ -177,7 +178,7 @@ export const getUsers = function() {
             } else {
                 payload.error = 'Unknown error.'
             }
-            console.log(error)
+            logger.error(error)
             dispatch(usersSlice.actions.failRequest(payload))
         })
 
@@ -230,7 +231,7 @@ export const postUsers = function(user) {
             } else {
                 payload.error = 'Unknown error.'
             }
-            console.log(error)
+            logger.error(error)
             dispatch(usersSlice.actions.failRequest(payload))
         })
 
@@ -282,7 +283,7 @@ export const getUser = function(id) {
             } else {
                 payload.error = 'Unknown error.'
             }
-            console.log(error)
+            logger.error(error)
             dispatch(usersSlice.actions.failRequest(payload))
         })
 
@@ -337,7 +338,7 @@ export const putUser = function(user) {
             } else {
                 payload.error = 'Unknown error.'
             }
-            console.log(error)
+            logger.error(error)
             dispatch(usersSlice.actions.failRequest(payload))
         })
 
@@ -390,7 +391,7 @@ export const patchUser = function(user) {
             } else {
                 payload.error = 'Unknown error.'
             }
-            console.log(error)
+            logger.error(error)
             dispatch(usersSlice.actions.failRequest(payload))
         })
 
@@ -440,7 +441,7 @@ export const deleteUser = function(user) {
             } else {
                 payload.error = 'Unknown error.'
             }
-            console.log(error)
+            logger.error(error)
             dispatch(usersSlice.actions.failRequest(payload))
         })
 

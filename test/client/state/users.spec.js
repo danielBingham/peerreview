@@ -1,6 +1,7 @@
 import fetchMock from 'fetch-mock'
 
 import configuration from '../../../client/configuration'
+import logger from '../../../client/logger'
 
 import store from '../../../client/state/store'
 import { reset } from '../../../client/state/system'
@@ -96,6 +97,11 @@ const stateUpdate = function(store) {
 }
 
 describe('in client/state/users.js', function() {
+
+    beforeAll(function() {
+        // disable logging
+        logger.level = -1
+    })
 
     describe('getUsers()', function() {
 

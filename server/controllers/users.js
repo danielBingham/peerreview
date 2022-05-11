@@ -134,7 +134,7 @@ module.exports = class UserController {
         let user = request.body;
         delete user.id;
 
-        let sql = 'UPDATE root.users SET';
+        let sql = 'UPDATE root.users SET ';
         let params = [];
         let count = 1;
         for(let key in user) {
