@@ -60,7 +60,6 @@ module.exports = class AuthenticationController {
     }
 
     deleteAuthentication(request, response) {
-        const id = request.session.user.id;
         request.session.destroy(function(error) {
             if (error) {
                 console.log(error)

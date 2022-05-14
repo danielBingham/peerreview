@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
 import configuration from '../configuration' 
+import logger from '../logger'
 
 import RequestTracker  from './helpers/requestTracker'
 
@@ -150,10 +151,11 @@ export const getAuthenticatedUser = function() {
                     return Promise.reject(new Error('Request failed with status: ' + response.status))
                 }
             } else {
-                return Promise.reject({ status: response.status, error: 'Unrecognized status.' })
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
-            dispatch(authenticationSlice.actions.completeRequest({requestId: requestId, user: user}))
+            payload.user = user
+            dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -211,7 +213,8 @@ export const authenticate = function(email, password) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
-            dispatch(authenticationSlice.actions.completeRequest({requestId: requestId, user: user}))
+            payload.user = user
+            dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -247,17 +250,18 @@ export const logout = function() {
             requestId: requestId
         }
 
-        dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             }
         }).then(function(response) {
+            payload.status = response.status
             if (response.ok) {
-                dispatch(authenticationSlice.actions.completeGetLogoutRequest({requestId: requestId}))
+                dispatch(authenticationSlice.actions.completeGetLogoutRequest(payload))
             } else {
-                return Promise.reject({status: response.status, error: 'Unrecognized status.'})
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -273,6 +277,6 @@ export const logout = function() {
     }
 }
 
-export const { completeGetLogoutRequest, makeRequest, failRequest, completeRequst, cleanupRequest} = authenticationSlice.actions
+export const { completeGetLogoutRequest, makeRequest, failRequest, completeRequest, cleanupRequest} = authenticationSlice.actions
 
 export default authenticationSlice.reducer
