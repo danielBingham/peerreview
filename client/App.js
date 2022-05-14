@@ -6,6 +6,7 @@ import {
     Link
 } from 'react-router-dom'
 
+import HomePage from './components/HomePage'
 import UserProfile from './components/UserProfile'
 import RegistrationForm from './components/RegistrationForm'
 import LoginForm from './components/LoginForm'
@@ -46,13 +47,14 @@ export default class App extends React.Component {
                 <header>
                     <h1>Peer Review</h1>
                 </header>
-                <section className="main">
+                <main>
                     <Routes>
+                        <Route path="/" element={ <HomePage /> } />
                         <Route path="/register" element={ <RegistrationForm /> } />
                         <Route path="/login" element={ <LoginForm /> } />
                         <Route path="/user/:id" element={ <UserProfile /> } />
                     </Routes>
-                </section>
+                </main>
             </section>
         </Router>
         );

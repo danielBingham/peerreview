@@ -20,8 +20,16 @@ const LoginForm = function(props) {
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
-    const authentication = useSelector(function(state) {
-        return state.authentication
+    const request = useSelector(function(state) {
+        if (requestId) {
+            return state.authentication.requests[requestId]
+        } else {
+            return null
+        }
+    })
+
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
     })
 
     /**
@@ -41,7 +49,7 @@ const LoginForm = function(props) {
         // If we're logged in then we don't want to be here.  We don't really
         // care if we were already logged in or if this is the result of a
         // successful authentication.
-        if (authentication.currentUser) {
+        if ( currentUser ) {
             // Cleanup our request before we go.
             dispatch(cleanupRequest({requestId: requestId}))
             navigate("/", { replace: true })
@@ -51,7 +59,7 @@ const LoginForm = function(props) {
     // ====================== Render ==========================================
 
     // Show a spinner if the request we made is still in progress.
-    if (authentication.requests[requestId] && authentication.requests[requestId].state == 'pending') {
+    if (request && request.state == 'pending') {
         return (
             <Spinner />
         )
@@ -59,7 +67,7 @@ const LoginForm = function(props) {
 
     return (
         <form onSubmit={onSubmit}>
-            {(authentication.requests[requestId] && authentication.requests[requestId].status == 403) && <div className="authentication-error">Login failed.</div>}
+            {(request && request.status == 403) && <div className="authentication-error">Login failed.</div>}
 
             <label htmlFor="email">Email:</label>
             <input type="text" 

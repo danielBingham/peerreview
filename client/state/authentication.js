@@ -4,7 +4,6 @@ import { v4 as uuidv4 } from 'uuid'
 import configuration from '../configuration' 
 
 import RequestTracker  from './helpers/requestTracker'
-import handleError from './helpers/handleError'
 
 export const authenticationSlice = createSlice({
     name: 'authentication',
@@ -25,44 +24,6 @@ export const authenticationSlice = createSlice({
         currentUser: null
     },
     reducers: {
-
-        // ================== GET /authenticate ===============================
-
-        /**
-         * Complete a request to GET /authenticate by setting currentUser with
-         * the returned user.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.user - A populated `user` object
-         */
-        completeGetAuthenticateRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            state.currentUser = action.payload.user
-        },
-
-        // ================== POST /authenticate ==============================
-
-        /**
-         * Complete a reqeust to POST /authenticate by either setting the
-         * currentUser back to null (in the case authorization failed) or
-         * setting the currentUser to the returned user object (our newly
-         * authenticated user).
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.user - A populated `user` object. 
-         */
-        completePostAuthenticateRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            state.currentUser = action.payload.user
-        },
 
         // ================== GET /logout =====================================
 
@@ -119,6 +80,22 @@ export const authenticationSlice = createSlice({
             RequestTracker.failRequest(state.requests[action.payload.requestId], action)
         },
 
+        /**
+         * Complete a request by setting the current user to the value returned
+         * in the payload.
+         *
+         * @param {object} state - The redux state slice.
+         * @param {object} action - The redux action we're reducing.
+         * @param {object} action.payload - The payload sent with the action.
+         * @param {string} action.payload.requestId - A uuid for the request.
+         * @param {object} action.payload.user - A populated `user` object or NULL.
+         */
+        completeRequest: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+
+            state.currentUser = action.payload.user
+        },
+
 
         /**
          * Cleanup a request once we're finished with it.
@@ -136,7 +113,7 @@ export const authenticationSlice = createSlice({
 })
 
 /**
- * GET /authenticate
+ * GET /authentication
  *
  * Retrieve the currently authenticated user from the backend's session.
  *
@@ -151,6 +128,10 @@ export const getAuthenticatedUser = function() {
         const requestId = uuidv4()
         const endpoint = '/authentication'
 
+        let payload = {
+            requestId: requestId
+        }
+
         dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'GET',
@@ -158,6 +139,7 @@ export const getAuthenticatedUser = function() {
                 'Content-Type': 'application/json'
             }
         }).then(function(response) {
+            payload.status = response.status
             if ( response.ok ) {
                 if ( response.status == 200) {
                     return response.json()
@@ -165,16 +147,21 @@ export const getAuthenticatedUser = function() {
                     // No authenticated users
                     return null
                 } else {
-                    console.log('Unrecognized status: ' + response.status)
-                    return Promise.reject({ status: response.status, error: 'Unrecognized status.'})
+                    return Promise.reject(new Error('Request failed with status: ' + response.status))
                 }
             } else {
                 return Promise.reject({ status: response.status, error: 'Unrecognized status.' })
             }
         }).then(function(user) {
-            dispatch(authenticationSlice.actions.completeGetAuthenticateRequest({requestId: requestId, user: user}))
+            dispatch(authenticationSlice.actions.completeRequest({requestId: requestId, user: user}))
         }).catch(function(error) {
-            handleError(dispatch, authenticationSlice.actions.failRequest, requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(authenticationSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -182,7 +169,7 @@ export const getAuthenticatedUser = function() {
 }
 
 /**
- * POST /authenticate
+ * POST /authentication
  *
  * Attempt to authenticate a user with the backend, starting the user's session on success.
  *
@@ -200,6 +187,10 @@ export const authenticate = function(email, password) {
         const requestId = uuidv4()
         const endpoint = '/authentication'
 
+        let payload = {
+            requestId: requestId
+        }
+
         dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'POST', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'POST',
@@ -211,18 +202,24 @@ export const authenticate = function(email, password) {
                 password: password
             })
         }).then(function(response) {
+            payload.status = response.status
             if(response.ok) {
                 return response.json()
             } else if (response.status == 403) {
-                return Promise.reject({status: response.status, error: 'Authentication failed.'})
+                return Promise.reject(new Error('Attempt to authenticate "' + email + '" failed.'))
             } else {
-                console.log('Unrecognized status: ' + response.status)
-                return Promise.reject({status: response.status, error: 'Unrecognized status.'})
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
-            dispatch(authenticationSlice.actions.completePostAuthenticateRequest({requestId: requestId, user: user}))
+            dispatch(authenticationSlice.actions.completeRequest({requestId: requestId, user: user}))
         }).catch(function(error) {
-            handleError(dispatch, authenticationSlice.actions.failRequest, requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(authenticationSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -230,7 +227,7 @@ export const authenticate = function(email, password) {
 }
 
 /**
- * GET /logout
+ * DELETE /authentication
  *
  * Attempt to logout the current user from the backend, destroying their
  * session on the backend before destroying it on the frontend.
@@ -246,6 +243,10 @@ export const logout = function() {
         const requestId = uuidv4()
         const endpoint = '/authentication'
 
+        let payload = {
+            requestId: requestId
+        }
+
         dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'DELETE',
@@ -259,14 +260,19 @@ export const logout = function() {
                 return Promise.reject({status: response.status, error: 'Unrecognized status.'})
             }
         }).catch(function(error) {
-            handleError(dispatch, authenticationSlice.actions.failRequest, requestId, error)
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(authenticationSlice.actions.failRequest(payload))
         })
 
         return requestId
     }
 }
 
-export const {completeGetAuthenticateRequest, completePostAuthenticateRequest, completeGetLogoutRequest,
-    makeRequest, failRequest, cleanupRequest} = authenticationSlice.actions
+export const { completeGetLogoutRequest, makeRequest, failRequest, completeRequst, cleanupRequest} = authenticationSlice.actions
 
 export default authenticationSlice.reducer

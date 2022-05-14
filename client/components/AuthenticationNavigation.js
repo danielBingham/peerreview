@@ -16,17 +16,36 @@ const AuthenticationNavigation = function(props) {
     const [ logoutRequestId, setLogoutRequestId ] = useState(null)
 
     const dispatch = useDispatch()
-    const authentication = useSelector(function(state) {
-        return state.authentication
+
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
+    const authenticationRequest = useSelector(function(state) {
+        if (getAuthenticatedUserRequestId) {
+            return state.authentication.requests[getAuthenticatedUserRequestId]
+        } else {
+            return null
+        }
+    })
+
+    const logoutRequest = useSelector(function(state) {
+        if (logoutRequestId) {
+            return state.authentication.requests[logoutRequestId]
+        } else {
+            return null
+        }
     })
 
     // We need to request the authenticated user from the backend to determine
     // whether or not we have an existing session.  We only want to do this
     // once, so we'll hang on to the getAuthenticatedUserRequestId to track the request -- and
     // after we're done to remember that we've made the request.
-    if ( ! authentication.currentUser && ! getAuthenticatedUserRequestId ) {
+    if ( ! currentUser && ! getAuthenticatedUserRequestId ) {
         setGetAuthenticatedUserRequestId(dispatch(getAuthenticatedUser()))
     } 
+
+
 
     /**
      * Handle a Logout request by dispatching the appropriate action.
@@ -49,20 +68,20 @@ const AuthenticationNavigation = function(props) {
 
         // If we've made the request and it still exists, but is complete, then
         // we need to cleanup.  
-        if ( getAuthenticatedUserRequestId && authentication.requests[getAuthenticatedUserRequestId] && authentication.requests[getAuthenticatedUserRequestId].completed ) {
+        if (  authenticationRequest && authenticationRequest.state == "fulfilled") {
             dispatch(cleanupRequest({ requestId: getAuthenticatedUserRequestId }))
         }
 
-        if ( logoutRequestId && authentication.requests[logoutRequestId] && authentication.requests[logoutRequestId].completed ) {
+        if (  logoutRequest && logoutRequest.state == "fulfilled") {
             dispatch(cleanupRequest({ requestId: logoutRequestId }))
         }
     })
 
     // ============= RENDER =======================
-    if ( authentication.currentUser ) {
+    if ( currentUser ) {
         return (
             <section className="authentication">
-                <Link to="profile">{ authentication.currentUser.name }</Link>
+                <Link to="profile">{ currentUser.name }</Link>
                 &nbsp;
                 <a href="" onClick={handleLogout} >logout</a>
             </section>

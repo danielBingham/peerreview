@@ -5,7 +5,6 @@ import configuration from '../configuration'
 import logger from '../logger'
 
 import RequestTracker from './helpers/requestTracker'
-import handleError from './helpers/handleError'
 
 export const usersSlice = createSlice({
     name: 'users',
