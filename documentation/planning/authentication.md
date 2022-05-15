@@ -117,7 +117,6 @@ validate the email (see below).
 
 - `user.email` must be unique.  Returns `400` and `'email-exists'` error.
 - `user.email`, `user.name`, and `user.password` must all be populated.  Returns `400` and `incomplete-user` error.
-- `user.email` must be a valid email.  Returns `400` and `invalid-email` error.
 - `user.password` must be at least 16 characters. Returns `400` and `inadequate-password` error.
 - `user.id` is populated -- no error, just delete it.
 - Returns `500` and `unknown-error` on server error.
@@ -219,7 +218,7 @@ number of users.
 
 
 
-`GET /user/:id`: 
+##### `GET /user/:id`: 
 
 Get the user identified by `:id`.
 
@@ -236,7 +235,7 @@ Get the user identified by `:id`.
 
 
 
-`POST /user/:id`:
+##### `POST /user/:id`:
 
 Overwrite the user identified by `:id`.
 
@@ -260,7 +259,7 @@ identified by `:id` with the provided `user` object.
 
 
 
-`PUT /user/:id`:
+##### `PUT /user/:id`:
 
 Overwrite the user identified by `:id`.
 
@@ -284,7 +283,7 @@ themselves. Admin users may modify any user.
 
 
 
-`PATCH /user/:id`:
+##### `PATCH /user/:id`:
 
 Update the user identified by `:id`.
 
@@ -308,7 +307,7 @@ themselves.  Admin users may modify anyone.
 
 
 
-`DELETE /user/:id`: 
+##### `DELETE /user/:id`: 
 
 Delete the user identified by `:id`.
 
@@ -338,7 +337,7 @@ We're also going to need to define the **Authentication API**.
 
 
 
-`GET /authentication`: 
+##### `GET /authentication`: 
 
 Retrieve the currently authenticated user, if any.
 
@@ -357,7 +356,7 @@ currently authenticated user or `204` if no currently authenticated user.
 
 
 
-`POST /authentication`:
+##### `POST /authentication`:
 
 Authenticate a user, logging them in.
 
@@ -381,7 +380,7 @@ the user.
 
 
 
-`DELETE /authentication`:
+##### `DELETE /authentication`:
 
 Destroy the currently authenticated user's session, logging them out.
 
@@ -396,69 +395,6 @@ Destroy the currently authenticated user's session, logging them out.
 **Response**: Empty response. 
 
 **Authorization**: User must be logged in.
-
-
-
-### Tokens 
-
-Authentication is going to require at least two flows that involve a landing
-page with a token in the query string:  the reset password flow and the and the
-confirm email flow.
-
-In the former flow, after we've confirmed the token, we'll want to show a form
-allowing the user to reset their password.
-
-In the later flow, all we need to do is confirm their token, and then we can
-redirect them to the home page with their email confirmed.
-
-In both cases, although there is technically a resource here (password reset in
-the first, email confirmation in the second), there isn't really much to build
-a rest API around. 
-
-In password reset, we just need to confirm that the reset token is valid.  Then
-we'll collect the new password on the front end and probably send a `PATCH
-/user/:id` request to update it on the backend.
-
-In email confirmation, we just need to confirm that the confirmation token is
-valid.
-
-Possible email confirmation flow:
-
-1. User gets a link to `peer-review.io/confirm?token=aaa`.
-1. EmailConfirmationComponent takes `token` and hits `GET /api/v/token/:token`
-   which returns `404` if the token doesn't exist, or `200` along with `type`
-   and `userId` if it does exist.
-   1. On a successful token request, the backend goes ahead and starts a
-      session for the user.
-1. If the request was successful, EmailConfirmationComponent confirms `type`
-   equals `email-confirmation`.
-   1. When type is confirmed, the EmailConfirmationComponent submits a `GET
-      /authentication` request to get the session, and then submits a `PATCH
-      /api/v/user/:id` to update the `email_confirmed` field of the user to
-      `true`.
-    1. EmailConfirmationComponent returns user to the homepage.
-
-Possible reset password flow: 
-
-1. User gets a link to `peer-review.io/reset?token=aaaa`.
-1. PasswordResetComponent takes `token` and hits `GET /api/v/token/:token`, this
-   returns `404` if the token doesn't exist or `200` along with `type` and
-   `userId` if it does.
-   1. If the token has expired it returns `<TBD error code>`. 
-1. PasswordResetComponent, having confirmed the token is valid, presents the
-   user with a `password` and `passwordConfirmation` form, validates the input,
-   and then sends a `PATCH /user/:id` request (where userId came from the token
-   endpoint).
-   WIP
-
-
-
-
-`GET /token/:token`
-
-Determine whether a token is valid.
-
-
 
 
 ### Users Redux Slice
@@ -521,9 +457,9 @@ setting the `currentUser` or unsetting them.
 ### AuthenticationNavigation Component
 
 We'll need a component to live in the navigation header and present navigation
-links.  When there is no current user, those navigation links will be `login`
-and `register`.  When there is a `currentUser`, they will be a link to the user
-profile displaying their username, and a `logout` link.
+links for authentication.  When there is no current user, those navigation
+links will be `login` and `register`.  When there is a `currentUser`, they will
+be a link to the user profile (`/user/:id/`) displaying their username, and a `logout` link.
 
 The component will need to query the `getAuthentication` thunk to
 determine if there is a current user session.  If there is, show that view,
@@ -546,13 +482,115 @@ to create a new user.
 It should record the requestId for the `postUsers` request.  When that request
 completes, if it completes successfully, it should use the same information to
 call the `getAuthentication` endpoint and create the session.
+ 
+#### Error Handling
 
-**Validation**
+`postUsers`:
 
-- Email: Keep it simple, just validate the precense of an `@`, we'll validate
-- that the email actually exists on the backend.GET /authentication
+- `400`, `email-exists`: Show "A user with that email already exists, please
+try logging in." underneath the `email` field.
+- `400`, `incomplete-user`: Show "Please fill out all the fields." in the
+`overall-error` section.
+- `400`, `inadequate-password`: Show "Please select a strong password, of at
+least 16 characters in length.  We recommend the XKCD method of choosing
+passwords if you don't have a password manager to generate and store a random
+one." in the `password-error` section.
+- `500`, `unknown-error`: Show "Something went wrong on our side.  Please
+report a bug and try again." in the `overall-error` section.
+
+`getAuthentication`: 
 
 
+
+#### Validation
+
+- **Email**: Keep it simple, just validate the precense of an `@`, we'll validate
+that the email actually exists on the backend.GET /authentication
+- **Password**: validate that the password is at least 16 characters long.
+Recommend the xkcd method.
+- **Confirm Password**: validate that `password` and `confirmPassword` match. 
+- **Completion**: validate that `name`, `password`, `email`, and
+`confirmPassword` all have content before allowing submission.
+
+
+### LoginForm Component
+
+
+### Tokens 
+
+Authentication is going to require at least two flows that involve a landing
+page with a token in the query string:  the reset password flow and the and the
+confirm email flow.
+
+In the former flow, after we've confirmed the token, we'll want to show a form
+allowing the user to reset their password.
+
+In the later flow, all we need to do is confirm their token, and then we can
+redirect them to the home page with their email confirmed.
+
+In both cases, although there is technically a resource here (password reset in
+the first, email confirmation in the second), there isn't really much to build
+a rest API around. 
+
+In password reset, we just need to confirm that the reset token is valid.  Then
+we'll collect the new password on the front end and probably send a `PATCH
+/user/:id` request to update it on the backend.
+
+In email confirmation, we just need to confirm that the confirmation token is
+valid.
+
+Possible email confirmation flow:
+
+1. User gets a link to `peer-review.io/confirm?token=aaa`.
+1. EmailConfirmationComponent takes `token` and hits `GET /api/v/token/:token`
+   which returns `404` if the token doesn't exist, or `200` along with `type`
+   and `userId` if it does exist.
+   1. On a successful token request, the backend goes ahead and starts a
+      session for the user.
+1. If the request was successful, EmailConfirmationComponent confirms `type`
+   equals `email-confirmation`.
+   1. When type is confirmed, the EmailConfirmationComponent submits a `GET
+      /authentication` request to get the session, and then submits a `PATCH
+      /api/v/user/:id` to update the `email_confirmed` field of the user to
+      `true`.
+    1. EmailConfirmationComponent returns user to the homepage.
+
+Possible reset password flow: 
+
+1. User gets a link to `peer-review.io/reset?token=aaaa`.
+1. PasswordResetComponent takes `token` and hits `GET /api/v/token/:token`, this
+   returns `404` if the token doesn't exist or `200` along with `type` and
+   `userId` if it does.
+   1. If the token has expired it returns `<TBD error code>`. 
+1. PasswordResetComponent, having confirmed the token is valid, presents the
+   user with a `password` and `passwordConfirmation` form, validates the input,
+   and then sends a `PATCH /user/:id` request (where userId came from the token
+   endpoint).
+   WIP
+
+
+#### Token API
+
+##### `GET /token/:token`
+
+Determine whether a token is valid.
+
+**Request**: An object containing the `type` of token we're confirming. 
+
+**Action**:  Confirms the token exists in the database, the `type` on the
+request matches the type in the database, and hasn't expired.  Creates a
+session for the user matching the token. 
+
+**Errors**: 
+
+- Returns `400` and `token-expired` if that token has expired.
+- Returns `404` if the token doesn't exist or if there's a type mismatch.
+- Returns `500` and `unknown-error` on server error.
+
+
+**Response**: The populated `user` object matching the token or `null`. 
+
+**Authorization**: Anyone.
 
 ## How should we break up the work?
 *Break the work up into small, clearly scoped, releasable stories.*
