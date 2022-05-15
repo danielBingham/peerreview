@@ -81,7 +81,7 @@ const AuthenticationNavigation = function(props) {
     if ( currentUser ) {
         return (
             <section className="authentication">
-                <Link to="profile">{ currentUser.name }</Link>
+                <Link to={`/user/${currentUser.id}`}>{ currentUser.name }</Link>
                 &nbsp;
                 <a href="" onClick={handleLogout} >logout</a>
             </section>
