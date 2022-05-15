@@ -84,7 +84,7 @@ Unless otherwise noted, the request body and return will be `json`.
 
 
 
-`GET /users`: 
+##### `GET /users`: 
 
 Retrieve all users.
 
@@ -101,7 +101,7 @@ objects, or an empty array if there are no users.
 
 
 
-`POST /users`:
+##### `POST /users`:
 
 Create one or more users.
 
@@ -130,7 +130,7 @@ single user.  Admin users may submit multiple users.
 
 
 
-`PUT /users`:
+##### `PUT /users`:
 
 Create or overwrite one or more users.
 
@@ -159,7 +159,7 @@ themselves.
 
 
 
-`PATCH /users`:
+##### `PATCH /users`:
 
 Update one or more users with a partial set of fields.
 
@@ -186,7 +186,7 @@ numbers of users.
 
 
 
-`DELETE /users`: 
+##### `DELETE /users`: 
 
 Delete one or more users.
 
