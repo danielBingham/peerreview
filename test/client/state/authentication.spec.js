@@ -6,7 +6,7 @@ import logger from '../../../client/logger'
 
 import store from '../../../client/state/store'
 import { reset } from '../../../client/state/system'
-import { makeRequest, completeRequest, getAuthenticatedUser, authenticate, logout } from '../../../client/state/authentication'
+import { makeRequest, completeRequest, getAuthentication, postAuthentication, deleteAuthentication } from '../../../client/state/authentication'
 import RequestTracker from '../../../client/state/helpers/requestTracker'
 
 
@@ -55,7 +55,7 @@ describe('in client/state/authentication.js', function() {
         logger.level = -1
     })
 
-    describe('getAuthenticatedUser()', function() {
+    describe('getAuthentication()', function() {
 
         afterEach(function() {
             fetchMock.restore()
@@ -79,7 +79,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getAuthenticatedUser())
+            const requestId = store.dispatch(getAuthentication())
             let state = store.getState() 
 
             const expectedRequestTracker = {
@@ -109,7 +109,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getAuthenticatedUser())
+            const requestId = store.dispatch(getAuthentication())
             deferred.resolve(database[0])
 
             let state = await stateUpdate(store) 
@@ -146,7 +146,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getAuthenticatedUser())
+            const requestId = store.dispatch(getAuthentication())
             deferred.resolve({ status: 204 })
 
             let state = await stateUpdate(store) 
@@ -183,7 +183,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getAuthenticatedUser())
+            const requestId = store.dispatch(getAuthentication())
             deferred.resolve({ status: 404 })
 
             let state = await stateUpdate(store)
@@ -220,7 +220,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getAuthenticatedUser())
+            const requestId = store.dispatch(getAuthentication())
             deferred.resolve({ status: 500 })
 
             let state = await stateUpdate(store)
@@ -257,7 +257,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getAuthenticatedUser())
+            const requestId = store.dispatch(getAuthentication())
             deferred.resolve({ throws: new TypeError('Fetch failed!')})
 
 
@@ -281,7 +281,7 @@ describe('in client/state/authentication.js', function() {
 
     })
 
-    describe('authenticate()', function() {
+    describe('postAuthentication()', function() {
 
         afterEach(function() {
             fetchMock.restore()
@@ -308,7 +308,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(authenticate(credentials.email, credentials.password))
+            const requestId = store.dispatch(postAuthentication(credentials.email, credentials.password))
             let state = store.getState() 
 
             const expectedRequestTracker = {
@@ -339,7 +339,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(authenticate(credentials.email, credentials.password))
+            const requestId = store.dispatch(postAuthentication(credentials.email, credentials.password))
             deferred.resolve(database[0])
 
             let state = await stateUpdate(store) 
@@ -377,7 +377,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(authenticate(credentials.email, credentials.password))
+            const requestId = store.dispatch(postAuthentication(credentials.email, credentials.password))
             deferred.resolve({ status: 403 })
 
             let state = await stateUpdate(store) 
@@ -415,7 +415,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(authenticate(credentials.email, credentials.password))
+            const requestId = store.dispatch(postAuthentication(credentials.email, credentials.password))
             deferred.resolve({ status: 404 })
 
             let state = await stateUpdate(store)
@@ -453,7 +453,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(authenticate(credentials.email, credentials.password))
+            const requestId = store.dispatch(postAuthentication(credentials.email, credentials.password))
             deferred.resolve({ status: 500 })
 
             let state = await stateUpdate(store)
@@ -491,7 +491,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(authenticate(credentials.email, credentials.password))
+            const requestId = store.dispatch(postAuthentication(credentials.email, credentials.password))
             deferred.resolve({ throws: new TypeError('Fetch failed!')})
 
 
@@ -515,7 +515,7 @@ describe('in client/state/authentication.js', function() {
 
     })
 
-    describe('logout()', function() {
+    describe('deleteAuthentication()', function() {
 
         afterEach(function() {
             fetchMock.restore()
@@ -544,7 +544,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(logout())
+            const requestId = store.dispatch(deleteAuthentication())
             let state = store.getState() 
 
             const expectedRequestTracker = {
@@ -575,7 +575,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(logout())
+            const requestId = store.dispatch(deleteAuthentication())
             deferred.resolve({ status: 200 })
 
             let state = await stateUpdate(store) 
@@ -612,7 +612,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(logout())
+            const requestId = store.dispatch(deleteAuthentication())
             deferred.resolve({ status: 404 })
 
             let state = await stateUpdate(store)
@@ -649,7 +649,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(logout())
+            const requestId = store.dispatch(deleteAuthentication())
             deferred.resolve({ status: 500 })
 
             let state = await stateUpdate(store)
@@ -686,7 +686,7 @@ describe('in client/state/authentication.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(logout())
+            const requestId = store.dispatch(deleteAuthentication())
             deferred.resolve({ throws: new TypeError('Fetch failed!')})
 
 

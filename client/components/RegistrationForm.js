@@ -4,13 +4,13 @@ import { useNavigate } from 'react-router'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { postUsers, cleanupRequest as cleanupUsersRequest } from '../state/users'
-import { authenticate, cleanupRequest as cleanupAuthenticationRequest } from '../state/authentication'
+import { postAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '../state/authentication'
 
 import Spinner from './Spinner'
 
 /**
  * A user registration form that will allow a user to register themselves and
- * then will authenticate them on a successful registration.
+ * then will postAuthentication them on a successful registration.
  *
  * @param {object} props - An empty object, takes no props.
  */
@@ -25,7 +25,7 @@ const RegistrationForm = function(props) {
     const [passwordConfirmationError, setPasswordConfirmationError] = useState('')
 
     const [postUsersRequestId, setPostUsersRequestId] = useState(null)
-    const [authenticateRequestId, setAuthenticateRequestId] = useState(null)
+    const [postAuthenticationRequestId, setAuthenticateRequestId] = useState(null)
 
     const dispatch = useDispatch()
     const navigate = useNavigate()
@@ -39,8 +39,8 @@ const RegistrationForm = function(props) {
         }
     })
     const authenticationRequest = useSelector(function(state) {
-        if (authenticateRequestId) {
-            return state.authentication.requests[authenticateRequestId]
+        if (postAuthenticationRequestId) {
+            return state.authentication.requests[postAuthenticationRequestId]
         } else {
             return null
         }
@@ -77,25 +77,25 @@ const RegistrationForm = function(props) {
     useEffect(function() {
         // If we have a user logged in, at all, then we want to navigate away
         // to the home page.  This works whether we're nagivating away to the
-        // home page after we've authenticated a newly registered user or
-        // navigating away to the homepage after an already authenticated user
+        // home page after we've postAuthenticationd a newly registered user or
+        // navigating away to the homepage after an already postAuthenticationd user
         // somehow winds up on the registration page.  Either way, we don't
         // want to be here.
         if ( currentUser ) {
 
             // Make sure we cleanup our authentication request before we go.
-            dispatch(cleanupAuthenticationRequest({requestId: authenticateRequestId}))
+            dispatch(cleanupAuthenticationRequest({requestId: postAuthenticationRequestId}))
 
             navigate("/", {replace: true})
         }
 
-        // If we've successfully created our user, then we want to authenticate them.
+        // If we've successfully created our user, then we want to postAuthentication them.
         if ( postUsersRequest && postUsersRequest.state == 'fulfilled') {
             // At this point, we're done with the postUsers request, so clean
             // it up.
             dispatch(cleanupUsersRequest({requestId: postUsersRequestId}))
 
-            setAuthenticateRequestId(dispatch(authenticate(email, password)))
+            setAuthenticateRequestId(dispatch(postAuthentication(email, password)))
         } 
     })
 

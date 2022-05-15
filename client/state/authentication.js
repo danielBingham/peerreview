@@ -123,7 +123,7 @@ export const authenticationSlice = createSlice({
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getAuthenticatedUser = function() {
+export const getAuthentication = function() {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
@@ -183,7 +183,7 @@ export const getAuthenticatedUser = function() {
  *
  * @returns {string} A uuid requestId we can use to track this request.
  */
-export const authenticate = function(email, password) {
+export const postAuthentication = function(email, password) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
@@ -240,7 +240,7 @@ export const authenticate = function(email, password) {
  *
  * @returns {string} A uuid requestId that we can use to track this request.
  */
-export const logout = function() {
+export const deleteAuthentication = function() {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()

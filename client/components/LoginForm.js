@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { authenticate, cleanupRequest } from '../state/authentication'
+import { postAuthentication, cleanupRequest } from '../state/authentication'
 
 import Spinner from './Spinner'
 
 /**
- * A login form allowing the user to authenticate using an email and a password.
+ * A login form allowing the user to postAuthentication using an email and a password.
  *
  * @param {object} props - An empty object, takes no props.
  */
@@ -33,14 +33,14 @@ const LoginForm = function(props) {
     })
 
     /**
-     * Handle the form's submission by attempting to authenticate the user.
+     * Handle the form's submission by attempting to postAuthentication the user.
      * Store the requestId so that we can track the request and respond to
      * errors.
      */
     const onSubmit = function(event) {
         event.preventDefault();
 
-        setRequestId(dispatch(authenticate(email, password)))
+        setRequestId(dispatch(postAuthentication(email, password)))
     }
 
     // Make sure to do our cleanup in a useEffect so that we do it after

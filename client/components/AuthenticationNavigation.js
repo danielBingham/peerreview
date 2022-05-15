@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getAuthenticatedUser, cleanupRequest, logout } from '../state/authentication'
+import { getAuthentication, cleanupRequest, deleteAuthentication } from '../state/authentication'
 
 
 /**
@@ -12,8 +12,8 @@ import { getAuthenticatedUser, cleanupRequest, logout } from '../state/authentic
  * No props.
  */
 const AuthenticationNavigation = function(props) {
-    const [ getAuthenticatedUserRequestId, setGetAuthenticatedUserRequestId ] = useState(null)
-    const [ logoutRequestId, setLogoutRequestId ] = useState(null)
+    const [ getAuthenticationRequestId, setGetAuthenticationRequestId ] = useState(null)
+    const [ deleteAuthenticationRequestId, setLogoutRequestId ] = useState(null)
 
     const dispatch = useDispatch()
 
@@ -22,16 +22,16 @@ const AuthenticationNavigation = function(props) {
     })
 
     const authenticationRequest = useSelector(function(state) {
-        if (getAuthenticatedUserRequestId) {
-            return state.authentication.requests[getAuthenticatedUserRequestId]
+        if (getAuthenticationRequestId) {
+            return state.authentication.requests[getAuthenticationRequestId]
         } else {
             return null
         }
     })
 
-    const logoutRequest = useSelector(function(state) {
-        if (logoutRequestId) {
-            return state.authentication.requests[logoutRequestId]
+    const deleteAuthenticationRequest = useSelector(function(state) {
+        if (deleteAuthenticationRequestId) {
+            return state.authentication.requests[deleteAuthenticationRequestId]
         } else {
             return null
         }
@@ -39,10 +39,10 @@ const AuthenticationNavigation = function(props) {
 
     // We need to request the authenticated user from the backend to determine
     // whether or not we have an existing session.  We only want to do this
-    // once, so we'll hang on to the getAuthenticatedUserRequestId to track the request -- and
+    // once, so we'll hang on to the getAuthenticationRequestId to track the request -- and
     // after we're done to remember that we've made the request.
-    if ( ! currentUser && ! getAuthenticatedUserRequestId ) {
-        setGetAuthenticatedUserRequestId(dispatch(getAuthenticatedUser()))
+    if ( ! currentUser && ! getAuthenticationRequestId ) {
+        setGetAuthenticationRequestId(dispatch(getAuthentication()))
     } 
 
 
@@ -50,7 +50,7 @@ const AuthenticationNavigation = function(props) {
     /**
      * Handle a Logout request by dispatching the appropriate action.
      *
-     * TODO Track this request and show an error if the attempt to logout
+     * TODO Track this request and show an error if the attempt to deleteAuthentication
      * fails.  Cleanup the request when we're done.
      *
      * @param {object} event - Standard event object.
@@ -58,7 +58,7 @@ const AuthenticationNavigation = function(props) {
     const handleLogout = function(event) {
         event.preventDefault()
 
-        setLogoutRequestId(dispatch(logout()))
+        setLogoutRequestId(dispatch(deleteAuthentication()))
     }
 
 
@@ -69,11 +69,11 @@ const AuthenticationNavigation = function(props) {
         // If we've made the request and it still exists, but is complete, then
         // we need to cleanup.  
         if (  authenticationRequest && authenticationRequest.state == "fulfilled") {
-            dispatch(cleanupRequest({ requestId: getAuthenticatedUserRequestId }))
+            dispatch(cleanupRequest({ requestId: getAuthenticationRequestId }))
         }
 
-        if (  logoutRequest && logoutRequest.state == "fulfilled") {
-            dispatch(cleanupRequest({ requestId: logoutRequestId }))
+        if (  deleteAuthenticationRequest && deleteAuthenticationRequest.state == "fulfilled") {
+            dispatch(cleanupRequest({ requestId: deleteAuthenticationRequestId }))
         }
     })
 
