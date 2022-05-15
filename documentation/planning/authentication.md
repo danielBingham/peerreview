@@ -6,6 +6,7 @@ allow me to have ownership of my papers, comments, and votes.
 As a developer, I want to use an authentication and authorization system to
 ensure users may only perform the actions they are allowed to.
 
+
 ## Background and Description
 *On a high level, what do we want to achieve? Why are we doing it and what
 related things have we done before?*
@@ -18,6 +19,7 @@ only perform the actions they are allowed to.
 
 This is generally one of the first things we need to create when starting a new
 web app.
+
 
 ## Acceptance Criteria
 *How will we know when the milestone has been achieved?  These should be
@@ -41,9 +43,11 @@ verifiable, testable statements.*
 - Users are presented with links to view their profile and logout in the main navigation when logged in.
 - Users who are logged in may log out.
 
+
 ## What do we need to do?
 *Here's where you can brainstorm and document what we need to do to achieve
 this milestone and how we can go about doing it.*
+
 
 ### Users API
 First, we'll need to define the **Users API**.
@@ -70,11 +74,15 @@ Then we need to define the end points.  We'll use the verbs `GET`, `POST`,
 `PUT`, `PATCH`, and `DELETE` with both the singular and plural endpoints.
 Unless otherwise noted, the request body and return will be `json`.
 
+
+
 #### `/users` Endpoint
 
 > **NOTE**: The user's password hash should **never** be returned from any of
 > this endpoints.  It should be stripped out from all `users` returned in
 > responses.
+
+
 
 `GET /users`: 
 
@@ -90,6 +98,8 @@ objects, or an empty array if there are no users.
 - Returns `500` and `unknown-error` on server error.
 
 **Authorization**: Anyone.
+
+
 
 `POST /users`:
 
@@ -118,6 +128,8 @@ containing `user` objects.
 **Authorization**: If no user is logged in, then the request is limited to a
 single user.  Admin users may submit multiple users.
 
+
+
 `PUT /users`:
 
 Create or overwrite one or more users.
@@ -145,6 +157,8 @@ containing `user` objects.
 number of users.  Other users may only submit a single user, and it must be
 themselves.
 
+
+
 `PATCH /users`:
 
 Update one or more users with a partial set of fields.
@@ -170,6 +184,8 @@ empty array if none were modified.
 single user, and it must be themselves.  Admin users may submit an arbitrary
 numbers of users.
 
+
+
 `DELETE /users`: 
 
 Delete one or more users.
@@ -193,11 +209,15 @@ users, or an empty array.
 single user and it must be themselves.  Admin users may submit an arbitrary
 number of users.
 
+
+
 #### `/user/:id` Endpoint
 
 > **NOTE**: The user's password hash should **never** be returned from any of
 > this endpoints.  It should be stripped out from all `users` returned in
 > responses.
+
+
 
 `GET /user/:id`: 
 
@@ -213,6 +233,8 @@ Get the user identified by `:id`.
 - Returns `500` and `unknown-error` on server error.
 
 **Authorization**: Anyone.
+
+
 
 `POST /user/:id`:
 
@@ -236,6 +258,8 @@ identified by `:id` with the provided `user` object.
 
 **Authorization**:  Anyone. 
 
+
+
 `PUT /user/:id`:
 
 Overwrite the user identified by `:id`.
@@ -257,6 +281,8 @@ Overwrite the user identified by `:id`.
 
 **Authorization**: User must be logged in. Non-admin users may only modify
 themselves. Admin users may modify any user.
+
+
 
 `PATCH /user/:id`:
 
@@ -280,6 +306,8 @@ in the database as identified by `:id`, overwriting the database.
 **Authorization**: Users must be logged in.  Non-admin users may only modify
 themselves.  Admin users may modify anyone. 
 
+
+
 `DELETE /user/:id`: 
 
 Delete the user identified by `:id`.
@@ -298,11 +326,17 @@ Delete the user identified by `:id`.
 **Authorization**: User must be logged in. Non-admin users may only delete
 themselves.  Admin users may delete any user.
 
+
+
 ### Authentication API
 
 We're also going to need to define the **Authentication API**.
 
+
+
 #### '/authentication` Endpoint
+
+
 
 `GET /authentication`: 
 
@@ -320,6 +354,8 @@ currently authenticated user or `204` if no currently authenticated user.
 - Returns `500` and `unknown-error` on server error.
 
 **Authorization**: Anyone.
+
+
 
 `POST /authentication`:
 
@@ -343,6 +379,8 @@ the user.
 
 **Authorization**: Anyone.
 
+
+
 `DELETE /authentication`:
 
 Destroy the currently authenticated user's session, logging them out.
@@ -358,6 +396,8 @@ Destroy the currently authenticated user's session, logging them out.
 **Response**: Empty response. 
 
 **Authorization**: User must be logged in.
+
+
 
 ### Tokens 
 
@@ -412,9 +452,13 @@ Possible reset password flow:
    WIP
 
 
-#### `GET /token/:token`
+
+
+`GET /token/:token`
 
 Determine whether a token is valid.
+
+
 
 
 ### Users Redux Slice
@@ -448,6 +492,8 @@ need a specific complete method of the form
 In this case, we only need a `completeDeleteUserRequest`, all other methods
 should return either an array of `user` objects or a single `user` object.
 
+
+
 ### Authentication Redux Slice
 
 Create an authentication slice for the **Authentication API** with thunks for
@@ -470,6 +516,8 @@ We shouldn't need any specific `complete` methods, since each endpoint will
 either return a user object or `null`, which will have the effect of either
 setting the `currentUser` or unsetting them.
 
+
+
 ### AuthenticationNavigation Component
 
 We'll need a component to live in the navigation header and present navigation
@@ -482,6 +530,8 @@ determine if there is a current user session.  If there is, show that view,
 otherwise show the default view.  It needs to store a record of having made
 that request, so that it doesn't remake it on every load and end up render
 looping.
+
+
 
 ### RegistrationForm Component
 
@@ -501,6 +551,8 @@ call the `getAuthentication` endpoint and create the session.
 
 - Email: Keep it simple, just validate the precense of an `@`, we'll validate
 - that the email actually exists on the backend.GET /authentication
+
+
 
 ## How should we break up the work?
 *Break the work up into small, clearly scoped, releasable stories.*
