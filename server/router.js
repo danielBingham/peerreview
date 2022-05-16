@@ -68,5 +68,41 @@ module.exports = function(database, config) {
         authenticationController.deleteAuthentication(request, response);
     });
 
+    /******************************************************************************
+     *          Paper REST Routes
+     ******************************************************************************/
+
+    const PaperController = require('./controllers/papers');
+    const paperController = new PaperController(database);
+
+    // Get a list of all papers.
+    router.get('/papers', function(request, response) {
+        paperController.getPapers(request, response);
+    });
+
+    // Create a new paper 
+    router.post('/papers', function(request, response) {
+        paperController.postPapers(request, response);
+    });
+
+    // Get the details of a single paper 
+    router.get('/paper/:id', function(request, response) {
+        paperController.getPaper(request, response);
+    });
+
+    // Replace a paper wholesale.
+    router.put('/papers/:id', function(request, response) {
+        paperController.putPaper(request, response);
+    });
+        
+    // Edit an existing paper with partial data.
+    router.patch('/papers/:id', function(request, response) {
+        paperController.patchPaper(request, response);
+    });
+
+    // Delete an existing paper.
+    router.delete('/papers/:id', function(request, response) {
+        paperController.deletePaper(request, response);
+    });
     return router;
 };
