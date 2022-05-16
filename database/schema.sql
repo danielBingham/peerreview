@@ -22,3 +22,19 @@ CREATE TABLE root.users (
     created_date  TIMESTAMP,
     updated_date  TIMESTAMP
 );
+
+CREATE TABLE root.papers {
+    id  BIGSERIAL PRIMARY KEY,
+    title   VARCHAR(1024),
+    file_path   VARCHAR(1024),
+    owner_id    BIGINT REFERENCES root.users(id),
+    created_date    TIMESTAMP,
+    updated_date    TIMESTAMP
+};
+
+CREATE TABLE paper_authors {
+    paper_id    BIGINT REFERENCES root.papers(id),
+    user_id     BIGINT REFERENCES root.users(id),
+    PRIMARY_KEY (paper_id, user_id)
+};
+
