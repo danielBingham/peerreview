@@ -41,9 +41,8 @@ module.exports = class PaperController {
                 'INSERT INTO root.papers (title, file_path, owner_id, created_date, updated_date) VALUES ($1, $2, $3, now(), now()) RETURNING *', 
                 [ paper.title, paper.file_path, paper.owner_id ]
             );
-            const returned_user = results.rows[0];
-            delete returned_user.password;
-            return response.status(201).json(returned_user);
+            const returned_paper= results.rows[0];
+            return response.status(201).json(returned_paper);
         } catch (error) {
             console.error(error);
             return response.status(500).json({error: 'unknown'});
