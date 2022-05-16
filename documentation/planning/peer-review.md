@@ -56,7 +56,7 @@ reputation to the reviewer.  Rejecting it doesn't.
 We'll need a table for the papers themselves:
 
 ```sql
-CREATE TABLE papers {
+CREATE TABLE papers (
     id BIGSERIAL PRIMARY KEY, 
     title VARCHAR(512), /* The paper's title, may need to be longer.  Will eventually need to be indexed. */
     path VARCHAR(512), /* The path to the paper's PDF in local storage or S3. */
@@ -64,22 +64,22 @@ CREATE TABLE papers {
     created_date TIMESTAMP,
     updated_date TIMESTAMP,
 
-}
+)
 ```
 
 We'll also need a paper authors table:
 
 ```sql
-CREATE TABLE paper_authors {
+CREATE TABLE paper_authors (
     paper_id BIGINT, /* The id of the paper. */
     user_id BIGINT /* The id of the user. */
-}
+)
 ```
 
 We'll need a table for reviews:
 
 ```sql
-CREATE TABLE paper_review {
+CREATE TABLE paper_review (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT, /* The id of the user who authored this review. */
     paper_id BIGINT, /* The id of the paper this review is for, foreign key. */
@@ -88,20 +88,20 @@ CREATE TABLE paper_review {
     summary TEXT, /* The review's summary. */
     created_date TIMESTAMP,
     updated_date TIMESTAMP
-}
+)
 ```
 
 And then we'll need a table for review comments:
 
 ```sql
-CREATE TABLE paper_review_comment {
+CREATE TABLE paper_review_comment (
    id BIGSERIAL PRIMARY KEY,
    user_id BIGINT, /* The id of the user who authored this comment, often the same as the reviews author, but not always. */
    review_id BIGINT,
    content TEXT,
    created_date TIMESTAMP,
    updated_date TIMESTAMP
-}
+)
 ```
 
 ### Paper API
@@ -122,8 +122,6 @@ populated user objects.
     ]
 }
 ```
-
-
 
 
 #### `GET /papers`

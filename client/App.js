@@ -7,9 +7,9 @@ import {
 } from 'react-router-dom'
 
 import HomePage from './components/HomePage'
-import UserProfile from './components/UserProfile'
-import RegistrationForm from './components/RegistrationForm'
-import LoginForm from './components/LoginForm'
+import UserProfile from './components/authentication/UserProfile'
+import RegistrationForm from './components/authentication/RegistrationForm'
+import LoginForm from './components/authentication/LoginForm'
 import AuthenticationNavigation from './components/AuthenticationNavigation'
 
 import './app.css';
@@ -24,39 +24,29 @@ import './app.css';
  * <App />
  * ```
  */
-export default class App extends React.Component {
-
-    /**
-     * Takes no props.
-     */
-    constructor(props) {
-        super(props)
-
-    }
+const App = function(props) {
 
     /**
      * Render the header, navigation.
      */
-    render() {
-        return (
+    return (
         <Router>
-            <section className="navigation">
-                <AuthenticationNavigation />
-            </section>
-            <section className="app">
-                <header>
-                    <h1>Peer Review</h1>
-                </header>
-                <main>
-                    <Routes>
-                        <Route path="/" element={ <HomePage /> } />
-                        <Route path="/register" element={ <RegistrationForm /> } />
-                        <Route path="/login" element={ <LoginForm /> } />
-                        <Route path="/user/:id" element={ <UserProfile /> } />
-                    </Routes>
-                </main>
-            </section>
+            <header>
+                <section className="navigation">
+                    <AuthenticationNavigation />
+                </section>
+                <h1>Peer Review</h1>
+            </header>
+            <main>
+                <Routes>
+                    <Route path="/" element={ <HomePage /> } />
+                    <Route path="/register" element={ <RegistrationForm /> } />
+                    <Route path="/login" element={ <LoginForm /> } />
+                    <Route path="/user/:id" element={ <UserProfile /> } />
+                </Routes>
+            </main>
         </Router>
-        );
-    }
+    );
 }
+
+export default App

@@ -36,17 +36,17 @@ module.exports = function(database, config) {
     });
 
     // Replace a user wholesale.
-    router.put('/users/:id', function(request, response) {
+    router.put('/user/:id', function(request, response) {
         userController.putUser(request, response);
     });
         
     // Edit an existing user with partial data.
-    router.patch('/users/:id', function(request, response) {
+    router.patch('/user/:id', function(request, response) {
         userController.patchUser(request, response);
     });
 
     // Delete an existing user.
-    router.delete('/users/:id', function(request, response) {
+    router.delete('/user/:id', function(request, response) {
         userController.deleteUser(request, response);
     });
 
@@ -91,17 +91,17 @@ module.exports = function(database, config) {
     });
 
     // Replace a paper wholesale.
-    router.put('/papers/:id', function(request, response) {
+    router.put('/paper/:id', function(request, response) {
         paperController.putPaper(request, response);
     });
         
     // Edit an existing paper with partial data.
-    router.patch('/papers/:id', function(request, response) {
+    router.patch('/paper/:id', function(request, response) {
         paperController.patchPaper(request, response);
     });
 
     // Delete an existing paper.
-    router.delete('/papers/:id', function(request, response) {
+    router.delete('/paper/:id', function(request, response) {
         paperController.deletePaper(request, response);
     });
     return router;

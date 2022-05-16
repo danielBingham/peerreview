@@ -25,13 +25,11 @@ describe('UserController', function() {
             id: 1,
             name: 'John Doe',
             email: 'john.doe@university.edu',
-            password: auth.hashPassword('p4ssw0rd')
         },
         {
             id: 2,
             name: 'Jane Doe',
             email: 'jane.doe@university.edu',
-            password: auth.hashPassword('different-password')
         }
     ];
 
@@ -80,20 +78,6 @@ describe('UserController', function() {
     });
 
    describe('.postUsers()', function() {
-        it('should remove password and add id to the returned user result', async function() {
-            connection.query.mockReturnValueOnce({rowCount: 0, rows: []}).mockReturnValue({rowCount:1, rows: [database[0]]})
-            const request = {
-                body: submittedUsers[0]
-            };
-
-            const response = new Response();
-            const userController = new UserController(connection);
-            await userController.postUsers(request, response);
-
-            expect(response.status.mock.calls[0][0]).toEqual(201);
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-        });
-
        it('should hash the password', async function() {
 
            connection.query.mockReturnValueOnce({rowCount: 0, rows: []}).mockReturnValue({rowCount:1, rows: [database[0]]})
@@ -231,7 +215,7 @@ describe('UserController', function() {
             const userController = new UserController(connection);
             await userController.patchUser(request, response);
 
-            const expectedSQL = 'UPDATE root.users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3 RETURNING *';
+            const expectedSQL = 'UPDATE users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3 RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate"';
             const expectedParams = [ 'John Doe', 'john.doe@email.com', 1 ];
 
             const databaseCall = connection.query.mock.calls[0];
@@ -263,7 +247,7 @@ describe('UserController', function() {
             const userController = new UserController(connection);
             await userController.patchUser(request, response);
 
-            const expectedSQL = 'UPDATE root.users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3 RETURNING *';
+            const expectedSQL = 'UPDATE users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3 RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate"';
             const expectedParams = [ 'John Doe', 'john.doe@email.com', 1 ];
 
             const databaseCall = connection.query.mock.calls[0];
@@ -299,7 +283,7 @@ describe('UserController', function() {
             const userController = new UserController(connection);
             await userController.patchUser(request, response);
 
-            const expectedSQL = 'UPDATE root.users SET password = $1 and updated_date = now() WHERE id = $2 RETURNING *';
+            const expectedSQL = 'UPDATE users SET password = $1 and updated_date = now() WHERE id = $2 RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate"';
 
             const databaseCall = connection.query.mock.calls[0];
             expect(databaseCall[0]).toEqual(expectedSQL);

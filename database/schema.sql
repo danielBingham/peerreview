@@ -1,20 +1,18 @@
 /* Initial permissions set up. */
 
-REVOKE ALL ON DATABASE peer_review FROM public;
+REVOKE ALL ON SCHEMA public FROM PUBLIC ;
 GRANT CONNECT ON DATABASE peer_review to app;
 
-CREATE SCHEMA root;
+GRANT USAGE ON SCHEMA public TO app;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO app;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO app;
 
-GRANT USAGE ON SCHEMA root TO app;
-GRANT ALL ON ALL TABLES IN SCHEMA root TO app;
-GRANT ALL ON ALL SEQUENCES IN SCHEMA root TO app;
-
-ALTER DEFAULT PRIVILEGES IN SCHEMA root GRANT ALL ON TABLES TO app;
-ALTER DEFAULT PRIVILEGES IN SCHEMA root GRANT ALL ON SEQUENCES TO app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app;
 
 /* Peer Review Schema file */
 
-CREATE TABLE root.users (
+CREATE TABLE users (
     id    BIGSERIAL PRIMARY KEY,
     name  VARCHAR(256),
     password  VARCHAR(64),
@@ -23,18 +21,19 @@ CREATE TABLE root.users (
     updated_date  TIMESTAMP
 );
 
-CREATE TABLE root.papers {
+CREATE TABLE papers (
     id  BIGSERIAL PRIMARY KEY,
     title   VARCHAR(1024),
-    file_path   VARCHAR(1024),
-    owner_id    BIGINT REFERENCES root.users(id),
+    filepath   VARCHAR(1024),
     created_date    TIMESTAMP,
     updated_date    TIMESTAMP
-};
+);
 
-CREATE TABLE paper_authors {
-    paper_id    BIGINT REFERENCES root.papers(id),
-    user_id     BIGINT REFERENCES root.users(id),
-    PRIMARY_KEY (paper_id, user_id)
-};
+CREATE TABLE paper_authors (
+    paper_id    BIGINT REFERENCES papers(id) ON DELETE CASCADE,
+    user_id     BIGINT REFERENCES users(id) ON DELETE CASCADE,
+    author_order    INT,
+    owner           BOOLEAN,
+    PRIMARY KEY (paper_id, user_id)
+);
 

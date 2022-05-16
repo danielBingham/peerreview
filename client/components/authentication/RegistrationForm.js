@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postUsers, cleanupRequest as cleanupUsersRequest } from '../state/users'
-import { postAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '../state/authentication'
+import { postUsers, cleanupRequest as cleanupUsersRequest } from '../../state/users'
+import { postAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '../../state/authentication'
 
-import Spinner from './Spinner'
+import Spinner from '../Spinner'
 
 /**
  * A user registration form that will allow a user to register themselves and

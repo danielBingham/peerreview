@@ -3,8 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getUser, cleanupRequest } from '../state/users'
-import Spinner from './Spinner'
+import { getUser, cleanupRequest } from '../../state/users'
+import Spinner from '../Spinner'
 
 const UserProfile = function(props) {
     const [ getUserRequestId, setGetUserRequestId ] = useState(null)

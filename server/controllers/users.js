@@ -21,10 +21,9 @@ module.exports = class UserController {
      */
     async getUsers(request, response) {
         try {
-            const results = await this.database.query('select * from root.users');
-            results.rows.forEach(function(user) {
-                delete user.password;
-            });
+            const results = await this.database.query(`
+                select id, name, email, created_date as "createdDate", updated_date as "updatedDate" from users
+            `);
             return response.status(200).json(results.rows);
 
         } catch (error) {
@@ -47,7 +46,7 @@ module.exports = class UserController {
         //
         try {
             const userExistsResults = await this.database.query(
-                'SELECT id, email FROM root.users WHERE email=$1',
+                'SELECT id, email FROM users WHERE email=$1',
                 [ user.email ]
             );
 
@@ -57,13 +56,15 @@ module.exports = class UserController {
 
             user.password = this.auth.hashPassword(user.password);
 
-            const results = await this.database.query(
-                'INSERT INTO root.users (name, email, password, created_date, updated_date) VALUES ($1, $2, $3, now(), now()) RETURNING *', 
+            const results = await this.database.query(`
+                    INSERT INTO users (name, email, password, created_date, updated_date) 
+                        VALUES ($1, $2, $3, now(), now()) 
+                        RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate" 
+
+                `, 
                 [ user.name, user.email, user.password ]
             );
-            const returnedUser = results.rows[0];
-            delete returnedUser.password;
-            return response.status(201).json(returnedUser);
+            return response.status(201).json(results.rows[0]);
         } catch (error) {
             console.error(error);
             return response.status(500).json({error: 'unknown'});
@@ -78,8 +79,9 @@ module.exports = class UserController {
     async getUser(request, response) {
 
         try {
-           const results = await this.database.query(
-                'select * from root.users where id=$1', 
+           const results = await this.database.query(`
+                    select id, name, email, created_date as "createdDate", updated_date as "updatedDate" from users where id=$1
+               `, 
                [request.params.id] 
            );
 
@@ -87,10 +89,7 @@ module.exports = class UserController {
                 return response.status(404).json({});
             }
 
-            const user = results.rows[0];
-            delete user.password;
-
-            return response.status(200).json(user);
+            return response.status(200).json(results.rows[0]);
         } catch (error) {
             console.error(error);
             return response.status(500).send();
@@ -107,8 +106,11 @@ module.exports = class UserController {
             const user = request.body;
             user.password = this.auth.hashPassword(user.password);
 
-            const results = await this.database.query(
-                'UPDATE root.users SET name = $1 AND email = $2 AND password = $3 AND updated_date = now() WHERE id = $4 RETURNING *',
+            const results = await this.database.query(`
+                    UPDATE users SET name = $1 AND email = $2 AND password = $3 AND updated_date = now() 
+                        WHERE id = $4 
+                        RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate" 
+                `,
                 [ user.name, user.email, user.password, request.params.id ]
             );
 
@@ -116,9 +118,7 @@ module.exports = class UserController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const returnedUser = results.rows[0];
-            delete returnedUser.password;
-            return response.status(200).json(returnedUser);
+            return response.status(200).json(results.rows[0]);
         } catch (error) {
             console.error(error);
             response.status(500).json({error: 'unknown'});
@@ -134,7 +134,7 @@ module.exports = class UserController {
         let user = request.body;
         delete user.id;
 
-        let sql = 'UPDATE root.users SET ';
+        let sql = 'UPDATE users SET ';
         let params = [];
         let count = 1;
         for(let key in user) {
@@ -152,7 +152,8 @@ module.exports = class UserController {
             params.push(user[key]);
             count = count + 1;
         }
-        sql += 'updated_date = now() WHERE id = $' + count + ' RETURNING *';
+        sql += 'updated_date = now() WHERE id = $' + count;
+        sql += ' RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate"';
 
         params.push(request.params.id);
 
@@ -163,9 +164,7 @@ module.exports = class UserController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const returnedUser = results.rows[0];
-            delete returnedUser.password;
-            return response.status(200).json(returnedUser);
+            return response.status(200).json(results.rows[0]);
         } catch (error) {
             console.error(error);
             response.status(500).json({error: 'unknown'})
@@ -181,7 +180,7 @@ module.exports = class UserController {
 
         try {
             const results = await this.database.query(
-                'delete from root.users where id = $1',
+                'delete from users where id = $1',
                 [ request.params.id ]
             );
 

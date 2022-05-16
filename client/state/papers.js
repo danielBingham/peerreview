@@ -4,10 +4,11 @@ import { v4 as uuidv4 } from 'uuid'
 import configuration from '../configuration'
 import logger from '../logger'
 
+import { addUsers } from './users'
 import RequestTracker from './helpers/requestTracker'
 
-export const usersSlice = createSlice({
-    name: 'users',
+export const papersSlice = createSlice({
+    name: 'papers',
     initialState: {
         /**
          * A dictionary of requests in progress or that we've made and completed,
@@ -18,82 +19,61 @@ export const usersSlice = createSlice({
         requests: {},
 
         /**
-         * A dictionary of users we've retrieved from the backend, keyed by
-         * user.id.
+         * A dictionary of papers we've retrieved from the backend, keyed by
+         * paper.id.
          *
          * @type {object}
          */
-        users: {},
+        papers: {},
     },
     reducers: {
+        // ========== GET /papers ==================
 
         /**
-         * Add one or more users to the user state.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object|object[]} action.payload - The payload sent with the
-         * action, must either be an array of users or a user.
-         */
-        addUsers: function(state, action) {
-            if (Array.isArray(action.payload)) {
-                action.payload.forEach(function(user) {
-                    state.users[user.id] = user
-                })
-            } else if( action.payload.id ) {
-                state.users[action.payload.id] = action.payload
-            } else {
-                throw new TypeError('Payload must be an array of users or a user.')
-            }
-        },
-
-        // ========== GET /users ==================
-
-        /**
-         * The GET request to /users succeeded.
+         * The GET request to /papers succeeded.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
          * @param {object} action.payload - The payload sent with the action.
          * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.users - An array of populated user objects
+         * @param {object} action.payload.papers - An array of populated paper objects
          */
-        completeGetUsersRequest: function(state, action) {
+        completeGetPapersRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            action.payload.users.forEach(function(user) {
-                state.users[user.id] = user
+            action.payload.papers.forEach(function(paper) {
+                state.papers[paper.id] = paper
             })
         },
 
-        // ========== DELETE /user/:id =================
+        // ========== DELETE /paper/:id =================
 
         /**
-         * Finish the DELETE /user/:id call.  In this case, the call returns
-         * the id of the deleted user and we need to delete them from state on
+         * Finish the DELETE /paper/:id call.  In this case, the call returns
+         * the id of the deleted paper and we need to delete them from state on
          * our side.  
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
          * @param {object} action.payload - The payload sent with the action.
          * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.userId - The id of the deleted user
+         * @param {object} action.payload.paperId - The id of the deleted paper
          */
-        completeDeleteUserRequest: function(state, action) {
+        completeDeletePaperRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            delete state.users[action.payload.userId]
+            delete state.papers[action.payload.paperId]
         },
 
         // ========== Generic Request Methods =============
         // Use these methods when no extra logic is needed.  If additional
         // logic is needed for a particular request, make a reducer of the form
         // [make/fail/complete/cleanup][method][endpoint]Request().  For
-        // example, makePostUsersRequest().  The reducer should take an object
+        // example, makePostPapersRequest().  The reducer should take an object
         // with at least requestId defined, along with whatever all inputs it
         // needs.
 
         /**
-         * Make a request to a user or users endpoint.
+         * Make a request to a paper or papers endpoint.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
@@ -108,7 +88,7 @@ export const usersSlice = createSlice({
         },
 
         /**
-         * Fail a request to a user or users endpoint, usually with an error.
+         * Fail a request to a paper or papers endpoint, usually with an error.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
@@ -122,20 +102,20 @@ export const usersSlice = createSlice({
         },
 
         /**
-         * Complete a request to a user or users endpoint by setting the user
-         * sent back by the backend in the users hash.
+         * Complete a request to a paper or papers endpoint by setting the paper
+         * sent back by the backend in the papers hash.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
          * @param {object} action.payload - The payload sent with the action.
          * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.user - A populated user object, must have `id` defined
+         * @param {object} action.payload.paper - A populated paper object, must have `id` defined
          */
         completeRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            const user = action.payload.user
-            state.users[user.id] = user 
+            const paper = action.payload.paper
+            state.papers[paper.id] = paper 
 
         },
 
@@ -156,27 +136,27 @@ export const usersSlice = createSlice({
 
 
 /**
- * GET /users
+ * GET /papers
  *
- * Get all users in the database.  Populates state.users.
+ * Get all papers in the database.  Populates state.papers.
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getUsers = function() {
+export const getPapers = function() {
     return function(dispatch, getState) {
 
         const requestId = uuidv4() 
-        const endpoint = '/users'
+        const endpoint = '/papers'
 
         let payload = {
             requestId: requestId
         }
 
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'GET',
             headers: {
@@ -189,9 +169,14 @@ export const getUsers = function() {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(users) {
-            payload.users = users
-            dispatch(usersSlice.actions.completeGetUsersRequest(payload))
+        }).then(function(papers) {
+            papers.forEach(function(paper) {
+                paper.authors.forEach(function(author) {
+                    dispatch(addUsers(author.user))
+                })
+            })
+            payload.papers = papers
+            dispatch(papersSlice.actions.completeGetPapersRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -199,7 +184,7 @@ export const getUsers = function() {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(papersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -207,34 +192,34 @@ export const getUsers = function() {
 }
 
 /**
- * POST /users
+ * POST /papers
  *
- * Create a new user.
+ * Create a new paper.
  *  
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} user - A populated user object, minus the `id` member.
+ * @param {object} paper - A populated paper object, minus the `id` member.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const postUsers = function(user) {
+export const postPapers = function(paper) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/users'
+        const endpoint = '/papers'
 
         const payload = {
             requestId: requestId
         }
 
-        dispatch(usersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
+        dispatch(papersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(user)
+            body: JSON.stringify(paper)
         }).then(function(response) {
             payload.status = response.status
             if ( response.ok ) {
@@ -242,9 +227,14 @@ export const postUsers = function(user) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(returnedUser) {
-            payload.user = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
+        }).then(function(returnedPaper) {
+            const state = getState()
+            returnedPaper.authors.forEach(function(author) {
+                author.user = state.users.users[author.id]
+                delete author.id
+            })
+            payload.paper = returnedPaper
+            dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -252,7 +242,7 @@ export const postUsers = function(user) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(papersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -260,28 +250,28 @@ export const postUsers = function(user) {
 }
 
 /**
- * GET /user/:id
+ * GET /paper/:id
  *
- * Get a single user.
+ * Get a single paper.
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {int} id - The id of the user we want to retrieve.
+ * @param {int} id - The id of the paper we want to retrieve.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getUser = function(id) {
+export const getPaper = function(id) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/user/' + id
+        const endpoint = '/paper/' + id
 
         const payload = {
             requestId: requestId
         }
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'GET',
             headers: {
@@ -294,9 +284,12 @@ export const getUser = function(id) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(user) {
-            payload.user = user
-            dispatch(usersSlice.actions.completeRequest(payload))
+        }).then(function(paper) {
+            paper.authors.forEach(function(author) {
+                dispatch(addUsers(author.user))
+            })
+            payload.paper = paper
+            dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -304,7 +297,7 @@ export const getUser = function(id) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(papersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -312,34 +305,34 @@ export const getUser = function(id) {
 }
 
 /**
- * PUT /user/:id
+ * PUT /paper/:id
  *
- * Replace a user wholesale. 
+ * Replace a paper wholesale. 
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} user - A populated user object.
+ * @param {object} paper - A populated paper object.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const putUser = function(user) {
+export const putPaper = function(paper) {
     return function(dispatch, getState) {
     
         const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
+        const endpoint = '/paper/' + paper.id
 
         const payload = {
             requestId: requestId
         }
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
+        dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(user)
+            body: JSON.stringify(paper)
         }).then(function(response) {
             payload.status = response.status
             if ( response.ok ) {
@@ -349,9 +342,9 @@ export const putUser = function(user) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
 
-        }).then(function(returnedUser) {
-            payload.user = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
+        }).then(function(returnedPaper) {
+            payload.paper = returnedPaper
+            dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -359,7 +352,7 @@ export const putUser = function(user) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(papersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -367,34 +360,34 @@ export const putUser = function(user) {
 }
 
 /**
- * PATCH /user/:id
+ * PATCH /paper/:id
  *
- * Update a user from a partial `user` object. 
+ * Update a paper from a partial `paper` object. 
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} user - A populate user object.
+ * @param {object} paper - A populate paper object.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const patchUser = function(user) {
+export const patchPaper = function(paper) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
+        const endpoint = '/paper/' + paper.id
 
         const payload = {
             requestId: requestId
         }
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
+        dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(user)
+            body: JSON.stringify(paper)
         }).then(function(response) {
             payload.status = response.status
             if ( response.ok ) {
@@ -402,9 +395,9 @@ export const patchUser = function(user) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(returnedUser) {
-            payload.user = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
+        }).then(function(returnedPaper) {
+            payload.paper = returnedPaper
+            dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -412,7 +405,7 @@ export const patchUser = function(user) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(papersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -420,29 +413,29 @@ export const patchUser = function(user) {
 }
 
 /**
- * DELETE /user/:id
+ * DELETE /paper/:id
  *
- * Delete a user. 
+ * Delete a paper. 
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} user - A populated user object.
+ * @param {object} paper - A populated paper object.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const deleteUser = function(user) {
+export const deletePaper = function(paper) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
+        const endpoint = '/paper/' + paper.id
 
         const payload = {
             requestId: requestId,
-            userId: user.id
+            paperId: paper.id
         }
         
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
+        dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'DELETE',
             headers: {
@@ -451,7 +444,7 @@ export const deleteUser = function(user) {
         }).then(function(response) {
             payload.status = response.status
             if( response.ok ) {
-                dispatch(usersSlice.actions.completeDeleteUserRequest(payload))
+                dispatch(papersSlice.actions.completeDeletePaperRequest(payload))
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
@@ -462,7 +455,7 @@ export const deleteUser = function(user) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(papersSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -470,6 +463,6 @@ export const deleteUser = function(user) {
 } 
 
 
-export const { addUsers, completeGetUsersRequest, completeDeleteUserRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = usersSlice.actions
+export const { completeGetPapersRequest, completeDeletePaperRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = papersSlice.actions
 
-export default usersSlice.reducer
+export default papersSlice.reducer

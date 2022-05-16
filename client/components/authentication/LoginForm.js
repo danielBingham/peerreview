@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postAuthentication, cleanupRequest } from '../state/authentication'
+import { postAuthentication, cleanupRequest } from '../../state/authentication'
 
-import Spinner from './Spinner'
+import Spinner from '../Spinner'
 
 /**
  * A login form allowing the user to postAuthentication using an email and a password.
