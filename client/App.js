@@ -36,7 +36,7 @@ const App = function(props) {
                 <section id="navigation">
                     <UserNavigation />
                 </section>
-                <h1>Peer Review</h1>
+                <Link to="/"><h1>Peer Review</h1></Link>
             </header>
             <main>
                 <Routes>
