@@ -10,7 +10,8 @@ import HomePage from './components/HomePage'
 import UserProfile from './components/authentication/UserProfile'
 import RegistrationForm from './components/authentication/RegistrationForm'
 import LoginForm from './components/authentication/LoginForm'
-import AuthenticationNavigation from './components/AuthenticationNavigation'
+import UserNavigation from './components/UserNavigation'
+import SubmitDraftForm from './components/peer-review/SubmitDraftForm'
 
 import './app.css';
 
@@ -32,8 +33,8 @@ const App = function(props) {
     return (
         <Router>
             <header>
-                <section className="navigation">
-                    <AuthenticationNavigation />
+                <section id="navigation">
+                    <UserNavigation />
                 </section>
                 <h1>Peer Review</h1>
             </header>
@@ -43,6 +44,7 @@ const App = function(props) {
                     <Route path="/register" element={ <RegistrationForm /> } />
                     <Route path="/login" element={ <LoginForm /> } />
                     <Route path="/user/:id" element={ <UserProfile /> } />
+                    <Route path="/publish" element={ <SubmitDraftForm /> } />
                 </Routes>
             </main>
         </Router>

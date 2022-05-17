@@ -452,6 +452,11 @@ We shouldn't need any specific `complete` methods, since each endpoint will
 either return a user object or `null`, which will have the effect of either
 setting the `currentUser` or unsetting them.
 
+**TODO**: Authentication is probably one place where we only want a single request
+running at a time.  After all there's only a single session to retrieve, and if
+we're already retrieving it, then we don't need to kick off another request for
+it.
+
 
 
 ### AuthenticationNavigation Component

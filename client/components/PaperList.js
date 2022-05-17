@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
+import { Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -19,7 +20,7 @@ const PaperListItem = function(props) {
     }
 
     return (
-        <li id={paper.id} >{paper.title} by {authorList}</li>
+        <li id={paper.id} >[{Math.floor(Math.random() * 100)} votes] [{Math.floor(Math.random()*10)} responses] {paper.title} by {authorList} [physics] [particle-physics]</li>
     )
 }
 
@@ -65,6 +66,22 @@ const PaperList = function(props) {
 
     return (
         <section className="paper-list">
+            <section id="search">
+                <div>Search: _________________</div>
+                <div>Or Browse: <Link to="/fields">fields</Link>&nbsp;<Link to="/users">users</Link></div>
+            </section>
+            <section id="filters">
+                <h2>Filters</h2>
+                <section id="only-fields">
+                    Show Only Fields: ______________
+                </section>
+                <section id="highlight-fields">
+                    Highlight Fields: _______________
+                </section>
+                <section id="ignore-fields">
+                    Ignore Fields: ________________
+                </section>
+            </section>
             <div className="error"> {request && request.error} </div>
             <ul>
                 {listItems}

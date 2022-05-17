@@ -11,7 +11,7 @@ import { getAuthentication, cleanupRequest, deleteAuthentication } from '../stat
  *
  * No props.
  */
-const AuthenticationNavigation = function(props) {
+const UserNavigation = function(props) {
     const [ getAuthenticationRequestId, setGetAuthenticationRequestId ] = useState(null)
     const [ deleteAuthenticationRequestId, setLogoutRequestId ] = useState(null)
 
@@ -80,10 +80,17 @@ const AuthenticationNavigation = function(props) {
     // ============= RENDER =======================
     if ( currentUser ) {
         return (
-            <section className="authentication">
-                <Link to={`/user/${currentUser.id}`}>{ currentUser.name }</Link>
-                &nbsp;
-                <a href="" onClick={handleLogout} >logout</a>
+            <section className="user-navigation">
+                <section className="user-controls">
+                    <Link to="/submissions">submissions</Link>
+                    &nbsp;
+                    <Link to="/publish">publish</Link>
+                </section>
+                <section className="authentication">
+                    <Link to={`/user/${currentUser.id}`}>{ currentUser.name }</Link>
+                    &nbsp;
+                    <a href="" onClick={handleLogout} >logout</a>
+                </section>
             </section>
         )
     } else {
@@ -98,4 +105,4 @@ const AuthenticationNavigation = function(props) {
 
 }
 
-export default AuthenticationNavigation
+export default UserNavigation 
