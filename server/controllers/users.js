@@ -15,6 +15,39 @@ module.exports = class UserController {
     }
 
     /**
+     * GET /users/query
+     *
+     * Search through the users in the database using a query defined in the
+     * query string parameters.
+     */
+    async queryUsers(request, response) {
+        if ( request.query.name && request.query.name.length > 0) {
+            try {
+                const results = await this.database.query(`
+                        SELECT 
+                            id, name, email, created_date as "createdDate", updated_date as "updatedDate"
+                        FROM users
+                        WHERE name ILIKE $1
+                    `,
+                    [ request.query.name+"%" ]
+                );
+
+                if (results.rows.length > 0) {
+                    return response.status(200).json(results.rows);
+                } else {
+                    return response.status(200).json([]);
+                }
+            } catch (error) {
+                console.error(error);
+                return response.status(500).json({ error: 'unknown' });
+            }
+
+        } else {
+            return response.status(400).json({ error: 'no-query' });
+        }
+    }
+
+    /**
      * GET /users
      *
      * Return a JSON array of all users in thethis.database.

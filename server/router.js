@@ -10,6 +10,7 @@
  * of the api as we make changes and leave past versions still accessible.
  **************************************************************************************************/
 const express = require('express');
+const multer = require('multer');
 
 module.exports = function(database, config) {
     const router = express.Router();
@@ -19,6 +20,11 @@ module.exports = function(database, config) {
      ******************************************************************************/
     const UserController = require('./controllers/users');
     const userController = new UserController(database);
+
+    // Run a query against users
+    router.get('/users/query', function(request, response) {
+        userController.queryUsers(request, response);
+    });
 
     // Get a list of all users.
     router.get('/users', function(request, response) {
@@ -75,6 +81,9 @@ module.exports = function(database, config) {
     const PaperController = require('./controllers/papers');
     const paperController = new PaperController(database);
 
+    const upload = new multer({ dest: 'public/uploads/tmp' });
+
+
     // Get a list of all papers.
     router.get('/papers', function(request, response) {
         paperController.getPapers(request, response);
@@ -83,6 +92,11 @@ module.exports = function(database, config) {
     // Create a new paper 
     router.post('/papers', function(request, response) {
         paperController.postPapers(request, response);
+    });
+
+    // Upload a version of the paper.
+    router.post('/paper/:id/upload', upload.single('paperVersion'), function(request, response) {
+        paperController.uploadPaper(request, response);
     });
 
     // Get the details of a single paper 

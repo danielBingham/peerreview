@@ -46,9 +46,11 @@ const PaperList = function(props) {
         }
     })
 
-    if ( ! requestId && ! request ) {
-        setRequestId(dispatch(getPapers()))
-    }
+    useEffect(function() {
+        if ( ! requestId && ! request ) {
+            setRequestId(dispatch(getPapers()))
+        }
+    })
 
     // ====================== Render ==========================================
 
@@ -57,37 +59,42 @@ const PaperList = function(props) {
         return (
             <Spinner />
         )
-    }
+    } else if (request && request.state == 'fulfilled') {
 
-    const listItems = []
-    for (let id in papers) {
-        listItems.push(<PaperListItem paper={papers[id]} key={id} />)
-    }
+        const listItems = []
+        for (let id in papers) {
+            listItems.push(<PaperListItem paper={papers[id]} key={id} />)
+        }
 
-    return (
-        <section className="paper-list">
-            <section id="search">
-                <div>Search: _________________</div>
-                <div>Or Browse: <Link to="/fields">fields</Link>&nbsp;<Link to="/users">users</Link></div>
+        return (
+            <section className="paper-list">
+                <section id="search">
+                    <div>Search: _________________</div>
+                    <div>Or Browse: <Link to="/fields">fields</Link>&nbsp;<Link to="/users">users</Link></div>
+                </section>
+                <section id="filters">
+                    <h2>Filters</h2>
+                    <section id="only-fields">
+                        Show Only Fields: ______________
+                    </section>
+                    <section id="highlight-fields">
+                        Highlight Fields: _______________
+                    </section>
+                    <section id="ignore-fields">
+                        Ignore Fields: ________________
+                    </section>
+                </section>
+                <div className="error"> {request && request.error} </div>
+                <ul>
+                    {listItems}
+                </ul>
             </section>
-            <section id="filters">
-                <h2>Filters</h2>
-                <section id="only-fields">
-                    Show Only Fields: ______________
-                </section>
-                <section id="highlight-fields">
-                    Highlight Fields: _______________
-                </section>
-                <section id="ignore-fields">
-                    Ignore Fields: ________________
-                </section>
-            </section>
-            <div className="error"> {request && request.error} </div>
-            <ul>
-                {listItems}
-            </ul>
-        </section>
-    )
+        )
+    } else {
+        return (
+            <Spinner />
+        )
+    }
 }
 
 export default PaperList 

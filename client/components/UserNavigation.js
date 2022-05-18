@@ -37,15 +37,6 @@ const UserNavigation = function(props) {
         }
     })
 
-    // We need to request the authenticated user from the backend to determine
-    // whether or not we have an existing session.  We only want to do this
-    // once, so we'll hang on to the getAuthenticationRequestId to track the request -- and
-    // after we're done to remember that we've made the request.
-    if ( ! currentUser && ! getAuthenticationRequestId ) {
-        setGetAuthenticationRequestId(dispatch(getAuthentication()))
-    } 
-
-
 
     /**
      * Handle a Logout request by dispatching the appropriate action.
@@ -65,6 +56,14 @@ const UserNavigation = function(props) {
     // Do our cleanup in a useEffect so that we do it after rendering has
     // finished and don't cause unintended consequences or render thrashing.
     useEffect(function() {
+
+        // We need to request the authenticated user from the backend to determine
+        // whether or not we have an existing session.  We only want to do this
+        // once, so we'll hang on to the getAuthenticationRequestId to track the request -- and
+        // after we're done to remember that we've made the request.
+        if ( ! currentUser && ! getAuthenticationRequestId ) {
+            setGetAuthenticationRequestId(dispatch(getAuthentication()))
+        } 
 
         // If we've made the request and it still exists, but is complete, then
         // we need to cleanup.  

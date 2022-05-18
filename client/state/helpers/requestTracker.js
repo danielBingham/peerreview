@@ -8,7 +8,7 @@ export default {
             state: 'none',
             error: null,
             status: null,
-
+            result: null
         }
     },
 
@@ -34,6 +34,7 @@ export default {
 
         requestTracker.error = null
         requestTracker.status = action.payload.status
+        requestTracker.result = action.payload
     }
 
 }

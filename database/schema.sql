@@ -4,6 +4,8 @@ REVOKE ALL ON SCHEMA public FROM PUBLIC ;
 GRANT CONNECT ON DATABASE peer_review to app;
 
 GRANT USAGE ON SCHEMA public TO app;
+GRANT ALL ON SCHEMA public TO app;
+
 GRANT ALL ON ALL TABLES IN SCHEMA public TO app;
 GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO app;
 
@@ -24,9 +26,16 @@ CREATE TABLE users (
 CREATE TABLE papers (
     id  BIGSERIAL PRIMARY KEY,
     title   VARCHAR(1024),
-    filepath   VARCHAR(1024),
+    is_draft   BOOLEAN,
     created_date    TIMESTAMP,
     updated_date    TIMESTAMP
+);
+
+CREATE TABLE paper_versions (
+    paper_id    BIGINT REFERENCES papers(id) on DELETE CASCADE,
+    version     SERIAL,
+    filepath    VARCHAR(512),
+    PRIMARY KEY (paper_id, version)
 );
 
 CREATE TABLE paper_authors (

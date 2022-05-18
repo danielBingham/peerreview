@@ -46,6 +46,25 @@ export const papersSlice = createSlice({
             })
         },
 
+        // ========== POST /paper/:id/upload ===========
+        
+        /**
+         * Finish the call to /paper/:id/upload by storing the newly created
+         * version.
+         *
+         * @param {object} state - The redux state slice.
+         * @param {object} action - The redux action we're reducing.
+         * @param {object} action.payload - The payload sent with the action.
+         * @param {string} action.payload.requestId - A uuid for the request.
+         * @param {int}    action.payload.paper_id - The id of the paper we uploaded a version for.
+         * @param {object} action.payload.version - The populated version object. 
+         */
+        completeUploadPaperRequest: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+
+            state.papers[action.payload.paper_id].versions.unshift(action.payload.version)
+        },
+
         // ========== DELETE /paper/:id =================
 
         /**
@@ -235,6 +254,61 @@ export const postPapers = function(paper) {
             })
             payload.paper = returnedPaper
             dispatch(papersSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(papersSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
+
+/**
+ * POST /paper/:id/upload
+ *
+ * Upload a new version of a paper.
+ *  
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {object} paper - A populated paper object, minus the `id` member.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const uploadPaper = function(id, file) {
+    return function(dispatch, getState) {
+
+        const requestId = uuidv4()
+        const endpoint = '/paper/' + id + '/upload'
+
+        const payload = {
+            requestId: requestId,
+            paper_id: id
+        }
+
+        var formData = new FormData()
+        formData.append('paperVersion', file)
+
+        dispatch(papersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'POST',
+            body: formData 
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(version) {
+            payload.version = version 
+            dispatch(papersSlice.actions.completeUploadPaperRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()

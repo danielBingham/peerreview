@@ -24,6 +24,15 @@ export const usersSlice = createSlice({
          * @type {object}
          */
         users: {},
+
+        /** 
+         * A list of users returned from /users/query.  We need to use a list
+         * here, because we need to preserve the order returned from the
+         * backend.  The query can include a `sort` parameter.  We can only run
+         * one query at a time, subsequent queries will be assumed to build on
+         * it. If you need to start a new query, call the `newQuery` action.
+         */
+        query: []
     },
     reducers: {
 
@@ -47,7 +56,40 @@ export const usersSlice = createSlice({
             }
         },
 
-        // ========== GET /users ==================
+        /**
+         * Reset the query, so that you can run a new one.
+         *
+         * @param {Object} state - The redux state slice.
+         * @param {Object} action - The redux action we're reducing.
+         */
+        newQuery: function(state, action) {
+            state.query = []
+        },
+
+        // ========== GET /users/query?... ====================================
+
+        /**
+         * The GET request to /users/query?... succeeded.  We need to process the users into
+         * both the dictionary and the query list.
+         *
+         * @param {object} state - The redux state slice.
+         * @param {object} action - the redux action we're reducing.
+         * @param {object} action.payload - The payload sent with the action. 
+         * @param {object} action.payload.requestId - A uuid for the request we're completing.
+         * @param {object[]} action.payload.users - An array of populated user objects.
+         */
+        completeQueryUsersRequest: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+
+            if ( action.payload.users.length > 0 ) {
+                for(const user of action.payload.users) {
+                    state.users[user.id] = user
+                    state.query.push(user)
+                }
+            }
+        },
+
+        // ========== GET /users ==============================================
 
         /**
          * The GET request to /users succeeded.
@@ -153,6 +195,50 @@ export const usersSlice = createSlice({
         }
     }
 })
+
+export const queryUsers = function(name) {
+    return function(dispatch, getState) {
+
+        const params = new URLSearchParams({ name: name })
+
+        const requestId = uuidv4() 
+        const endpoint = '/users/query?' + params.toString()
+
+        let payload = {
+            requestId: requestId
+        }
+
+
+        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(users) {
+            payload.users = users
+            dispatch(usersSlice.actions.completeQueryUsersRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(usersSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+
+}
 
 
 /**
@@ -470,6 +556,6 @@ export const deleteUser = function(user) {
 } 
 
 
-export const { addUsers, completeGetUsersRequest, completeDeleteUserRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = usersSlice.actions
+export const { addUsers, newQuery, completeQueryUsersRequest, completeGetUsersRequest, completeDeleteUserRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = usersSlice.actions
 
 export default usersSlice.reducer
