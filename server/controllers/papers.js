@@ -26,22 +26,8 @@ module.exports = class PaperController {
      */
     async getPapers(request, response) {
         try {
-            const results = await this.database.query(`
-               SELECT 
-                    papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft", papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
-                    paper_authors.user_id as author_id, paper_authors.author_order as author_order, paper_authors.owner as author_owner,
-                    users.name as author_name, users.email as author_email, users.created_date as "author_createdDate", users.updated_date as "author_updatedDate",
-                    paper_versions.version as paper_version, paper_versions.filepath as paper_filepath
-                FROM papers 
-                    JOIN paper_authors ON papers.id = paper_authors.paper_id
-                    JOIN users ON users.id = paper_authors.user_id
-                    JOIN paper_versions on papers.id = paper_versions.paper_id
-                    ORDER BY papers.id asc, paper_authors.author_order asc, paper_versions.version desc
-            `);
-
-            const resultObjects = this.processRows(results.rows);
-            return response.status(200).json(resultObjects);
-
+            const papers = await this.selectPapers();
+            return response.status(200).json(papers);
         } catch (error) {
             console.error(error);
             response.status(500).json({ error: 'unknown' });
@@ -61,17 +47,26 @@ module.exports = class PaperController {
             const results = await this.database.query(`
                 INSERT INTO papers (title, is_draft, created_date, updated_date) 
                     VALUES ($1, $2, now(), now()) 
-                    RETURNING id, title, is_draft as "isDraft", created_date as "createdDate", updated_date as "updatedDate"
+                    RETURNING id
                 `, 
                 [ paper.title, paper.isDraft ]
             );
+            if ( results.rows.length == 0 ) {
+                console.error('Failed to insert a paper.');
+                return response.status(500).json({error: 'unknown'});
+            }
+            console.log(results.rows);
 
-            const returnedPaper = results.rows[0];
-            console.log(returnedPaper);
-            paper.id = returnedPaper.id;
-            returnedPaper.authors = await this.insertAuthors(paper); 
-            console.log(returnedPaper);
-            return response.status(201).json(returnedPaper);
+            paper.id = results.rows[0].id;
+
+            await this.insertAuthors(paper); 
+
+            console.log(paper);
+
+            const returnPaper = await this.selectPapers(paper.id);
+            console.log('postPapers: returnPaper');
+            console.log(returnPaper);
+            return response.status(201).json(returnPaper);
         } catch (error) {
             console.error(error);
             return response.status(500).json({error: 'unknown'});
@@ -85,7 +80,6 @@ module.exports = class PaperController {
      */
     async uploadPaper(request, response) {
         try {
-            console.log(request.file);
             const titleResults = await this.database.query(`
                 SELECT
                     title
@@ -121,34 +115,34 @@ module.exports = class PaperController {
             const version = versionResults.rows[0].version;
 
             const title = titleResults.rows[0].title;
-            let titleFilename = title.replaceAll(/\s/, '-');
+            let titleFilename = title.replaceAll(/\s/g, '-');
             titleFilename = titleFilename.toLowerCase();
             titleFilename = sanitizeFilename(titleFilename);
 
-            const filename = request.params.id + '-' + version + '-' + titleFilename;
-            const filepath = 'public/uploads/papers/' + filename;
-            fs.copyFileSync(request.file.path, filepath); 
+            const base = 'public'
+            // TODO Properly check the MIME type and require PDF.  Possibly use Node Mime.
+            const filename = request.params.id + '-' + version + '-' + titleFilename + '.pdf';
+            const filepath = '/uploads/papers/' + filename;
+            fs.copyFileSync(request.file.path, base+filepath); 
 
             const updateResults = await this.database.query(`
                 UPDATE paper_versions SET
                     filepath = $1
                 WHERE paper_id = $2 and version = $3
-                RETURNING paper_id, version, filepath
                 `,
                 [ filepath, request.params.id, version ]
             );
 
-            if (updateResults.rowCount == 0 || updateResults.rows.length == 0) {
+            if (updateResults.rowCount == 0) {
                 console.error('Failed to update paper version with new filepath: ' + filepath);
-                fs.rmSync(filepath);
+                fs.rmSync(base + filepath);
                 return response.status(500).json({ error: 'failed-filepath-update' });
             }
 
             fs.rmSync(request.file.path);
-            return response.status(200).json({
-                version: updateResults.rows[0].version,
-                filepath: updateResults.rows[0].filepath
-            });
+
+            const returnPaper = await this.selectPapers(request.params.id);
+            return response.status(200).json(returnPaper);
         } catch (error) {
             console.error(error);
             return response.status(500).json({ error: 'unknown' });
@@ -163,27 +157,7 @@ module.exports = class PaperController {
     async getPaper(request, response) {
 
         try {
-           const results = await this.database.query(`
-               SELECT 
-                    papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft", papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
-                    paper_authors.user_id as author_id, paper_authors.author_order as author_order, paper_authors.owner as author_owner,
-                    users.name as author_name, users.email as author_email, users.created_date as "author_createdDate", users.updated_date as "author_updatedDate",
-                    paper_versions.version as paper_version, paper_versions.filepath as paper_filepath
-                FROM papers 
-                    JOIN paper_authors ON papers.id = paper_authors.paper_id
-                    JOIN users ON users.id = paper_authors.user_id
-                    JOIN paper_versions ON papers.id = paper_versions.paper_id
-                WHERE papers.id=$1
-                ORDER BY paper_authors.author_order asc, paper_versions.version desc
-                `, 
-               [request.params.id] 
-           );
-
-            if (results.rows.length == 0) {
-                return response.status(404).json({});
-            }
-
-            const paper = this.processRows(results.rows)[0];
+            const paper = await this.selectPapers(request.params.id);
             return response.status(200).json(paper);
         } catch (error) {
             console.error(error);
@@ -196,11 +170,25 @@ module.exports = class PaperController {
      *
      * Replace an existing paper wholesale with the provided JSON.
      *
-     * TODO Account for paper_versions.
+     * TODO Account for paper_versions
      */
     async putPaper(request, response) {
         try {
             const paper = request.body;
+            paper.id = request.params.id;
+
+            // Update the paper.
+            const results = await this.database.query(`
+                UPDATE papers 
+                    SET title = $1 AND is_draft=$2 AND updated_date = now() 
+                WHERE id = $3 
+                `,
+                [ paper.title, paper.isDraft, paper.id ]
+            );
+
+            if (results.rowCount == 0 ) {
+                return response.status(404).json({error: 'no-resource'});
+            }
 
             // Delete the authors so we can recreate them from the request.
             const deletionResults = await this.database.query(`
@@ -209,26 +197,11 @@ module.exports = class PaperController {
                 [ paper.id ]
             );
 
-            // Update the paper.
-            const results = await this.database.query(`
-                UPDATE papers 
-                    SET title = $1 AND filepath = $2 AND updated_date = now() 
-                WHERE id = $3 
-                RETURNING id, title, filepath, created_date as "createdDate", updated_date as "updatedDate"
-                `,
-                [ paper.title, paper.filepath, request.params.id ]
-            );
-
-            if (results.rowCount == 0 && results.rows.length == 0) {
-                return response.status(404).json({error: 'no-resource'});
-            }
-
-            const returnedPaper = results.rows[0];
-
             // Reinsert the authors.
-            returnedPaper.authors = await this.insertAuthors(paper);
+            await this.insertAuthors(paper);
 
-            return response.status(200).json(returnedPaper);
+            const returnPaper = await this.selectPapers(paper.id);
+            return response.status(200).json(returnPaper);
         } catch (error) {
             console.error(error);
             response.status(500).json({error: 'unknown'});
@@ -266,18 +239,16 @@ module.exports = class PaperController {
             count = count + 1;
         }
         sql += 'updated_date = now() WHERE id = $' + count;
-        sql += ' RETURNING id, title, filepath, created_date as "createdDate", updated_date as "updatedDate"';
 
         params.push(paper.id);
 
         try {
             const results = await this.database.query(sql, params);
 
-            if ( results.rowCount == 0 && results.rows.length == 0) {
+            if ( results.rowCount == 0 ) {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const returnedPaper = results.rows[0];
             if ( paper.authors ) {
                 // Delete the authors so we can recreate them from the request.
                 const deletionResults = await this.database.query(`
@@ -285,11 +256,11 @@ module.exports = class PaperController {
                     `,
                     [ paper.id ]
                 );
-                returnedPaper.authors = await this.insertAuthors(paper);
-            } else {
-                returnedPaper.authors = await this.getAuthors(paper);
-            }
-            return response.status(200).json(returnedPaper);
+                await this.insertAuthors(paper);
+            } 
+
+            const returnPaper = await this.selectPaper(paper.id);
+            return response.status(200).json(returnPaper);
         } catch (error) {
             console.error(error);
             response.status(500).json({error: 'unknown'})
@@ -327,9 +298,9 @@ module.exports = class PaperController {
      *
      * @return {Object[]}   The data parsed into one or more objects.
      */
-    processRows(rows) {
+    hydratePapers(rows) {
         if ( rows.length == 0 ) {
-            return []
+            return null 
         }
 
         const papers = {};
@@ -374,13 +345,54 @@ module.exports = class PaperController {
                 filepath: row.paper_filepath,
                 version: row.paper_version
             };
-            if ( ! papers[paper.id].versions.find((element) => element.version == paper_version.version)) {
+            if (paper_version.version && ! papers[paper.id].versions.find((element) => element.version == paper_version.version)) {
                 papers[paper.id].versions.push(paper_version);
             }
         });
 
-        
-        return Object.values(papers);
+        return papers;
+    }
+
+    async selectPapers(id) {
+        let where = '';
+        if (id) {
+            where = 'WHERE papers.id=$1';
+        }
+        console.log(id);
+
+        const sql = `
+               SELECT 
+                    papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft", papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
+                    paper_authors.user_id as author_id, paper_authors.author_order as author_order, paper_authors.owner as author_owner,
+                    users.name as author_name, users.email as author_email, users.created_date as "author_createdDate", users.updated_date as "author_updatedDate",
+                    paper_versions.version as paper_version, paper_versions.filepath as paper_filepath
+                FROM papers 
+                    LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
+                    LEFT OUTER JOIN users ON users.id = paper_authors.user_id
+                    LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
+                ${where} 
+                ORDER BY paper_authors.author_order asc, paper_versions.version desc
+        `;
+
+        const params = [];
+        if (id) {
+            params.push(id)
+        }
+
+        const results = await this.database.query(sql, params);
+
+        console.log(results.rows);
+
+        if ( results.rows.length == 0 ) {
+            return null
+        } else {
+            const papers = this.hydratePapers(results.rows)
+            if (id ) {
+                return papers[id];
+            } else {
+                return Object.values(papers);
+            }
+        }
     }
 
     /**
@@ -389,62 +401,20 @@ module.exports = class PaperController {
      * @throws Error Doesn't catch errors, so any errors returned by the database will bubble up.
      */
     async insertAuthors(paper) {
-        const authorsReturned = [];
+        let sql =  `INSERT INTO paper_authors (paper_id, user_id, author_order, owner) VALUES `;
+        let params = [];
+
+        let count = 1;
         for (const author of paper.authors) {
-            const results = await this.database.query(`
-                    INSERT INTO paper_authors (paper_id, user_id, author_order, owner)
-                        VALUES ($1, $2, $3, $4)
-                        RETURNING user_id as id, author_order as order, owner
-                    `,
-                [ paper.id, author.id, author.order, author.owner ]
-            );
-
-            if (results.rowCount == 0 || results.rows.length == 0) {
-                throw new Error('Something went wrong with the author insertion.');
-            }
-
-            authorsReturned.push(results.rows[0]);
-        }
-        authorsReturned.sort(function(a,b) {
-            return a.order - b.order;
-        });
-        return authorsReturned;
-    }
-
-    /**
-     * Get authors for a paper.
-     */
-    async getAuthors(paper) {
-        const results = await this.database.query(`
-            SELECT
-                paper_authors.author_order as order, paper_authors.owner as owner 
-                users.id as user_id, users.name as user_name, users.email as user_email, users.created_date as "user_createdDate", users.updated_date as "user_updatedDate"
-             FROM paper_authors
-                JOIN users on users.id = paper_authors.user_id
-             WHERE paper_authors.paper_id = $1
-             ORDER BY paper_authors.author_order asc
-             `,
-            [ paper.id ]
-        );
-
-        if ( results.rowCount == 0 && results.rows.length == 0 ) {
-            throw new Error('Something went wrong.  Paper had no authors.');
+            sql += `($${count}, $${count+1}, $${count+2}, $${count+3})` + (count < paper.authors.length ? ', ' : '');
+            params.push(paper.id, author.user.id, author.order, author.owner)
+            count = count+4;
         }
 
-        const authors = [];
-        results.rows.forEach(function(row) {
-            authors.push({
-                order: row.order,
-                owner: row.owner,
-                user: {
-                    id: row.user_id,
-                    name: row.user_name,
-                    email: row.user_email,
-                    createdDate: row.user_createdDate,
-                    updatedDate: row.user_updatedDate
-                }
-            });
-        });
-        return authors;
+        const results = await this.database.query(sql, params);
+
+        if (results.rowCount == 0 )  {
+            throw new Error('Something went wrong with the author insertion.');
+        }
     }
 }; 

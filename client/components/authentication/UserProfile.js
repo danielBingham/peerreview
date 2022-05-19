@@ -25,11 +25,11 @@ const UserProfile = function(props) {
         return state.authentication.currentUser
     })
 
-    if ( ! user && ! getUserRequestId ) {
-        setGetUserRequestId(dispatch(getUser(id)))
-    }
 
     useEffect(function() {
+        if ( ! user && ! getUserRequestId ) {
+            setGetUserRequestId(dispatch(getUser(id)))
+        }
     
         if ( user && getUserRequestId ) {
             dispatch(cleanupRequest(getUserRequestId))

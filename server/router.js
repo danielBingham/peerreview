@@ -106,12 +106,14 @@ module.exports = function(database, config) {
 
     // Replace a paper wholesale.
     router.put('/paper/:id', function(request, response) {
-        paperController.putPaper(request, response);
+        return response.status(501);
+        //paperController.putPaper(request, response);
     });
         
     // Edit an existing paper with partial data.
     router.patch('/paper/:id', function(request, response) {
-        paperController.patchPaper(request, response);
+        return response.status(501);
+        //paperController.patchPaper(request, response);
     });
 
     // Delete an existing paper.

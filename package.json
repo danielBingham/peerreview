@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node ./server/bin/www",
     "build": "webpack --mode production",
-    "client": "webpack-dev-server --mode development --devtool inline-source-map --hot",
+    "client": "webpack-dev-server --mode development --devtool inline-source-map --no-hot --no-live-reload",
     "server": "nodemon ./server/bin/www",
     "dev": "export NODE_ENV=hot-dev && concurrently \"npm run server\" \"npm run client\"",
     "test": "jest test"
@@ -24,8 +24,10 @@
     "express-session": "^1.17.2",
     "hbs": "^4.2.0",
     "http-errors": "^2.0.0",
+    "lodash.debounce": "^4.0.8",
     "morgan": "^1.10.0",
     "multer": "^1.4.4",
+    "pdfjs-dist": "^2.14.305",
     "pg": "^8.7.3",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
@@ -33,7 +35,8 @@
     "react-router-dom": "^6.3.0",
     "redux": "^4.2.0",
     "redux-thunk": "^2.4.1",
-    "sanitize-filename": "^1.6.3"
+    "sanitize-filename": "^1.6.3",
+    "worker-loader": "^3.0.8"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.10",

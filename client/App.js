@@ -12,6 +12,7 @@ import RegistrationForm from './components/authentication/RegistrationForm'
 import LoginForm from './components/authentication/LoginForm'
 import UserNavigation from './components/UserNavigation'
 import SubmitDraftForm from './components/peer-review/SubmitDraftForm'
+import ViewSubmission from './components/peer-review/ViewSubmission'
 
 import './app.css';
 
@@ -41,10 +42,15 @@ const App = function(props) {
             <main>
                 <Routes>
                     <Route path="/" element={ <HomePage /> } />
+
+                    { /* ========= Authentication ========================= */ }
                     <Route path="/register" element={ <RegistrationForm /> } />
                     <Route path="/login" element={ <LoginForm /> } />
                     <Route path="/user/:id" element={ <UserProfile /> } />
+
+                    { /* ========= Peer Review ============================ */ }
                     <Route path="/publish" element={ <SubmitDraftForm /> } />
+                    <Route path="/submission/:id" element={ <ViewSubmission /> }  />
                 </Routes>
             </main>
         </Router>
