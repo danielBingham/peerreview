@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState, useLayoutEffect } from 'react'
 import {
     BrowserRouter as Router,
     Routes,
@@ -6,13 +6,19 @@ import {
     Link
 } from 'react-router-dom'
 
+import { useDispatch, useSelector } from 'react-redux'
+
+import { getAuthentication, cleanupRequest } from './state/authentication'
+
 import HomePage from './components/HomePage'
 import UserProfile from './components/authentication/UserProfile'
 import RegistrationForm from './components/authentication/RegistrationForm'
 import LoginForm from './components/authentication/LoginForm'
 import UserNavigation from './components/UserNavigation'
 import SubmitDraftForm from './components/peer-review/SubmitDraftForm'
+import SubmissionList from './components/peer-review/SubmissionList'
 import ViewSubmission from './components/peer-review/ViewSubmission'
+import Spinner from './components/Spinner'
 
 import './app.css';
 
@@ -28,33 +34,62 @@ import './app.css';
  */
 const App = function(props) {
 
-    /**
-     * Render the header, navigation.
-     */
-    return (
-        <Router>
-            <header>
-                <section id="navigation">
-                    <UserNavigation />
-                </section>
-                <Link to="/"><h1>Peer Review</h1></Link>
-            </header>
-            <main>
-                <Routes>
-                    <Route path="/" element={ <HomePage /> } />
+    const [requestId, setRequestId] = useState(null)
 
-                    { /* ========= Authentication ========================= */ }
-                    <Route path="/register" element={ <RegistrationForm /> } />
-                    <Route path="/login" element={ <LoginForm /> } />
-                    <Route path="/user/:id" element={ <UserProfile /> } />
+    const dispatch = useDispatch()
 
-                    { /* ========= Peer Review ============================ */ }
-                    <Route path="/publish" element={ <SubmitDraftForm /> } />
-                    <Route path="/submission/:id" element={ <ViewSubmission /> }  />
-                </Routes>
-            </main>
-        </Router>
-    );
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
+    useLayoutEffect(function() {
+        if ( ! currentUser && ! requestId ) {
+            setRequestId(dispatch(getAuthentication()))
+        }
+
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest(requestId))
+            }
+        }
+
+    }, [ currentUser, requestId ])
+
+
+    if ( ! currentUser && ! requestId ) {
+        return (
+            <Spinner />
+        )
+    } else {   
+        /**
+         * Render the header, navigation.
+         */
+        return (
+            <Router>
+                <header>
+                    <section id="navigation">
+                        <UserNavigation />
+                    </section>
+                    <Link to="/"><h1>Peer Review</h1></Link>
+                </header>
+                <main>
+                    <Routes>
+                        <Route path="/" element={ <HomePage /> } />
+
+                        { /* ========= Authentication ========================= */ }
+                        <Route path="/register" element={ <RegistrationForm /> } />
+                        <Route path="/login" element={ <LoginForm /> } />
+                        <Route path="/user/:id" element={ <UserProfile /> } />
+
+                        { /* ========= Peer Review ============================ */ }
+                        <Route path="/publish" element={ <SubmitDraftForm /> } />
+                        <Route path="/submissions/" element={ <SubmissionList /> } />
+                        <Route path="/submission/:paperId" element={ <ViewSubmission /> }  />
+                    </Routes>
+                </main>
+            </Router>
+        )
+    }
 }
 
 export default App

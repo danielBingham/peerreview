@@ -4,6 +4,7 @@ import { combineReducers } from 'redux'
 import systemReducer from './system'
 import usersReducer from './users'
 import papersReducer from './papers'
+import reviewsReducer from './reviews'
 import authenticationReducer from './authentication'
 
 
@@ -11,7 +12,8 @@ const reducers = combineReducers({
     system: systemReducer,
     users: usersReducer,
     authentication: authenticationReducer,
-    papers: papersReducer
+    papers: papersReducer,
+    reviews: reviewsReducer
 })
 
 const rootReducer = function(state, action) {

@@ -25,6 +25,16 @@ export const reviewsSlice = createSlice({
          * @type {object}
          */
         dictionary: {},
+
+        /**
+         * A list of the reviews we've retrieved.  Contains the same objects as
+         * the dictionary, this just allows for quick and easy searching of the
+         * objects we've losted using `filter` and other array processing
+         * methods.
+         *
+         * @type {Object[]}
+         */
+        list: []
     },
     reducers: {
         // ========== GET /reviews ==================
@@ -41,9 +51,11 @@ export const reviewsSlice = createSlice({
         completeGetReviewsRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            if ( action.payload.result ) {
+            if ( action.payload.result && action.payload.result.length > 0) {
                 for ( const review of action.payload.result ) {
-                    state.reviews[review.id] = review
+                    state.dictionary[review.id] = review
+                    state.list = state.list.filter((r) => r.id !== review.id)
+                    state.list.push(review)
                 }
             }
         },
@@ -63,7 +75,8 @@ export const reviewsSlice = createSlice({
          */
         completeDeleteReviewRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            delete state.reviews[action.payload.result] 
+            delete state.dictionary[action.payload.result] 
+            state.list = state.list.filter((review) => review.id !== action.payload.result)
         },
 
         // ========== Generic Request Methods =============
@@ -116,7 +129,9 @@ export const reviewsSlice = createSlice({
         completeRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            state.reviews[action.payload.result.id] = action.payload.result
+            state.dictionary[action.payload.result.id] = action.payload.result
+            state.list = state.list.filter((review) => review.id != action.payload.result.id)
+            state.list.push(action.payload.result)
         },
 
         /**
@@ -198,6 +213,9 @@ export const getReviews = function(paperId) {
  */
 export const postReviews = function(review) {
     return function(dispatch, getState) {
+        console.log('Review recieved.')
+        console.log(review)
+
         const requestId = uuidv4()
         const endpoint = `/paper/${review.paperId}/reviews`
 
@@ -443,6 +461,58 @@ export const deleteReview = function(review) {
         return requestId
     }
 } 
+
+/**
+ * POST /paper/:paper_id/review/:review_id/comments
+ *
+ * Add a comment to a review.
+ *  
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {object} review - A populated review object.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const postReviewComments = function(paperId, reviewId, comment) {
+    return function(dispatch, getState) {
+        const requestId = uuidv4()
+        const endpoint = `/paper/${paperId}/review/${reviewId}/comments`
+
+        const payload = {
+            requestId: requestId
+        }
+
+        dispatch(reviewsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(comment)
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(returnedReview) {
+            payload.result = returnedReview
+            dispatch(reviewsSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(reviewsSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
 
 
 export const { completeGetReviewsRequest, completeDeleteReviewRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = reviewsSlice.actions

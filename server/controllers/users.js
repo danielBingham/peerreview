@@ -91,8 +91,8 @@ module.exports = class UserController {
                 throw new Error('Insert user failed.')
             }
 
-            const user = await this.userService.selectUsers('WHERE id=$1', [results.rows[0].id]);
-            return response.status(201).json(user);
+            const returnUser = await this.userService.selectUsers('WHERE id=$1', [results.rows[0].id]);
+            return response.status(201).json(returnUser);
         } catch (error) {
             console.error(error);
             return response.status(500).json({error: 'unknown'});
@@ -113,13 +113,13 @@ module.exports = class UserController {
                [request.params.id] 
            );
 
-            const user = await this.userService.selectUsers('WHERE id = $1', [request.params.id])
+            const returnUsers = await this.userService.selectUsers('WHERE id = $1', [request.params.id])
 
-            if ( ! user ) {
+            if ( ! returnUsers ) {
                 return response.status(404).json({});
             }
 
-            return response.status(200).json(user);
+            return response.status(200).json(returnUsers[0]);
         } catch (error) {
             console.error(error);
             return response.status(500).send();
@@ -148,8 +148,8 @@ module.exports = class UserController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const user = await this.userService.selectUsers('WHERE id=$1', results.rows[0].id)
-            return response.status(200).json(results.rows[0]);
+            const returnUser = await this.userService.selectUsers('WHERE id=$1', results.rows[0].id)
+            return response.status(200).json(returnUser);
         } catch (error) {
             console.error(error);
             response.status(500).json({error: 'unknown'});
@@ -162,13 +162,17 @@ module.exports = class UserController {
      * Update an existing user given a partial set of fields in JSON.
      */
     async patchUser(request, response) {
-        let user = request.body;
-        delete user.id;
+        const user = request.body;
+        user.id = request.params.id
 
         let sql = 'UPDATE users SET ';
         let params = [];
         let count = 1;
         for(let key in user) {
+            if ( key == 'id' ) {
+                continue
+            }
+
             sql += key + ' = $' + count + ' and ';
 
             if ( key == 'password' ) {
@@ -184,18 +188,17 @@ module.exports = class UserController {
             count = count + 1;
         }
         sql += 'updated_date = now() WHERE id = $' + count;
-        sql += ' RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate"';
-
-        params.push(request.params.id);
+        params.push(user.id);
 
         try {
             const results = await this.database.query(sql, params);
 
-            if ( results.rowCount == 0 && results.rows.length == 0) {
+            if ( results.rowCount == 0 ) {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            return response.status(200).json(results.rows[0]);
+            const returnUser = await this.userService.selectUsers('WHERE id=$1', [user.id])
+            return response.status(200).json(returnUser);
         } catch (error) {
             console.error(error);
             response.status(500).json({error: 'unknown'})

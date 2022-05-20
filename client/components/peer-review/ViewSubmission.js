@@ -6,17 +6,21 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import * as PDFLib from 'pdfjs-dist/webpack'
 
-import { getPaper, cleanupRequest } from '../../state/papers'
+import { getPaper, cleanupRequest as cleanupPaperRequest } from '../../state/papers'
+import { getReviews, patchReview, cleanupRequest as cleanupReviewRequest } from '../../state/reviews'
 
+import ReviewCommentForm from './ReviewCommentForm'
+import SubmissionPage from './SubmissionPage'
 import Spinner from '../Spinner'
 
 const ViewSubmission = function(props) {
     const [ paperRequestId, setPaperRequestId ] = useState(null)
-    const [ numberOfPages, setNumberOfPages ] = useState(0)
-    const [ pdf, setPdf ] = useState(null)
-    const [ comments, setComments ] = useState([])
+    const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
+    const [ patchReviewRequestId, setPatchReviewRequestId ] = useState(null)
 
-    const { id } = useParams() 
+    const [ pages, setPages ] = useState([])
+
+    const { paperId } = useParams() 
 
     const dispatch = useDispatch()
 
@@ -28,85 +32,87 @@ const ViewSubmission = function(props) {
         }
     })
 
-    const paper = useSelector(function(state) {
-        if ( ! state.papers.dictionary[id] ) {
+    const reviewsRequest = useSelector(function(state) {
+        if ( ! reviewsRequestId ) {
             return null
         } else {
-            return state.papers.dictionary[id]
+            return state.reviews.requests[reviewsRequestId]
         }
     })
 
-    const handleClick = function(event) {
-        console.log('X: ' + event.clientX + 'Y: ' + event.clientY)
-        const style = { 
-            background: 'white',
-            border: 'thin solid black',
-            position: 'absolute',
-            top: event.pageY + 'px',
-            left: event.pageX + 'px'
+    const patchReviewRequest = useSelector(function(state) {
+        if ( ! patchReviewRequestId ) {
+            return null
+        } else {
+            return state.reviews.requests[patchReviewRequestId]
         }
-        const key = event.clientY + '-' + event.clientX
-        const comment = <div key={key} style={style}>This is a comment</div>
-        setComments([ ...comments, comment ])
+    })
+
+    const paper = useSelector(function(state) {
+        if ( ! state.papers.dictionary[paperId] ) {
+            return null
+        } else {
+            return state.papers.dictionary[paperId]
+        }
+    })
+
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
+    const reviewInProgress = useSelector(function(state) {
+        return state.reviews.list.filter((review) => review.paperId == paperId && review.userId == currentUser.id && review.status == 'in-progress')
+    })
+
+    const finishReview = function(event) {
+        event.preventDefault()
+
+        reviewInProgress.status = 'approved'
+        setPatchReviewRequestId(dispatch(patchReview(reviewInProgress)))
     }
 
     useEffect(function() {
-
         if ( ( ! paper || paper.versions.length == 0 ) && ! paperRequest ) {
-            setPaperRequestId(dispatch(getPaper(id)))
-        } else if ( paper && paperRequest && paperRequest.state == 'fulfilled' ) {
-            dispatch(cleanupRequest(paperRequestId))
+            setPaperRequestId(dispatch(getPaper(paperId)))
+        } 
+
+        return function cleanup() {
+            if ( paperRequest ) {
+                dispatch(cleanupPaperRequest(paperRequestId))
+            }
         }
 
-    }, [id])
+    }, [paperId])
 
     useEffect(function() {
-        if ( paper && paper.versions.length > 0 ) {
-            console.log('We get here.')
+        if ( paper && ! reviewsRequestId ) {
+            setReviewsRequestId(dispatch(getReviews(paper.id)))
+        }
+
+        return function cleanup() {
+            if ( reviewsRequest) {
+                dispatch(cleanupReviewRequest(reviewsRequestId))
+            }
+        }
+
+    }, [ paper, reviewsRequestId ])
+
+    useEffect(function() {
+        if ( paper && paper.versions.length > 0 && reviewsRequest && reviewsRequest.state == "fulfilled") {
             const loadingTask = PDFLib.getDocument('http://' + window.location.host + paper.versions[0].filepath)
             loadingTask.promise.then(function(pdf) {
-                setNumberOfPages(pdf.numPages) 
-                setPdf(pdf)
+                const newPages = []
+                for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+                    const pageKey = `page-${pageNumber}`
+                    newPages.push(<SubmissionPage key={pageKey} pageNumber={pageNumber} pdf={pdf} />)
+                }
+                setPages(newPages)
             }).catch(function(error) {
                 console.error(error)
             })
         }
 
-    }, [ paper ])
-
-    useEffect(function() {
-        for (let pageNumber = 1; pageNumber <= numberOfPages; pageNumber++) {
-            pdf.getPage(pageNumber).then(function(page) {
-                var scale = 1.5;
-                var viewport = page.getViewport({ scale: scale, });
-                // Support HiDPI-screens.
-                var outputScale = window.devicePixelRatio || 1;
-
-                var canvas = document.getElementById(`page-${pageNumber}`);
-                var context = canvas.getContext('2d');
-
-                canvas.width = Math.floor(viewport.width * outputScale);
-                canvas.height = Math.floor(viewport.height * outputScale);
-                canvas.style.width = Math.floor(viewport.width) + "px";
-                canvas.style.height =  Math.floor(viewport.height) + "px";
-
-                var transform = outputScale !== 1
-                    ? [outputScale, 0, 0, outputScale, 0, 0]
-                    : null;
-
-                var renderContext = {
-                    canvasContext: context,
-                    transform: transform,
-                    viewport: viewport
-                };
-                page.render(renderContext);
-            }).catch(function(error) {
-                console.error(error)
-            })
-        }
-
-    }, [ pdf ])
-
+    }, [ paper, reviewsRequest ])
 
     if ( ! paper ) {
         return ( <Spinner /> )
@@ -116,22 +122,11 @@ const ViewSubmission = function(props) {
             authorString += author.user.name + ( author.order < paper.authors.length ? ',' : '')
         }
 
-        let pages = []
-        if ( numberOfPages > 0 ) {
-            for (let page = 1; page <= numberOfPages; page++) {
-                const pageId = `page-${page}`
-                pages.push(<section className="page-wrapper" key={pageId}>
-                    <canvas id={pageId} onClick={handleClick}></canvas>
-                </section>)
-            }
-        }
-
-
         return (
             <section id={paper.id} className="paper-submission">
                 <h2 className="paper-submission-title">{paper.title}</h2>
                 <div className="paper-submission-authors">{authorString}</div>
-                {comments}
+                { reviewInProgress ?  <button onClick={finishReview}>Finish Review</button> : <button>Start a Review</button> }
                 { pages }
             </section>
         )

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -8,9 +8,24 @@ import { getUserPapers, cleanupRequest } from '../../state/users'
 
 import Spinner from '../Spinner'
 
-const SubmissionList = function(props) {
-    const [requestId, setRequestId] = useState(null)
+const PaperListItem = function(props) {
+    const paper = props.paper
 
+    let authorList = ''
+    for (let i = 0; i < paper.authors.length; i++) {
+        authorList += paper.authors[i].user.name 
+        if (i < paper.authors.length-1) {
+            authorList += ', '
+        }
+    }
+
+        const paperPath = `/submission/${paper.id}`
+    return (
+        <li id={paper.id} >[{Math.floor(Math.random() * 100)} votes] [{Math.floor(Math.random()*10)} responses] <Link to={paperPath}>{paper.title}</Link> by {authorList} [physics] [particle-physics]</li>
+    )
+}
+
+const SubmissionList = function(props) {
     const dispatch = useDispatch()
     const navigate = useNavigate()
     
@@ -18,77 +33,36 @@ const SubmissionList = function(props) {
         return state.authentication.currentUser
     })
 
-    const request = useSelector(function(state) {
-        if ( ! requestId ) {
-            return null
-        } else {
-            return state.users.requests[requestId]
-        }
-    })
 
-
+    // TODO We'll need to make sure currentUser is up to date.  If we just
+    // published a new paper, it won't be on current user yet.
     useEffect(function() {
         if ( ! currentUser ) {
             navigate("/")
         }
     }, [ currentUser ])
 
-    useEffect(function() {
-        if ( currentUser && ! request ) {
-            setRequestId(dispatch(getUserPapers(currentUser.id)))
-        }
-
-        return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(requestId))
-            }
-        }
-    }, [ currentUser, request ])
-
     // ====================== Render ==========================================
 
-    // Show a spinner if the request we made is still in progress.
-    if (request && request.state == 'pending') {
+    if ( ! currentUser ) {
         return (
             <Spinner />
         )
-    } else if (request && request.state == 'fulfilled') {
-
+    } else {
         const listItems = []
-        for (let id in papers) {
-            listItems.push(<PaperListItem paper={papers[id]} key={id} />)
+        for (let id in currentUser.papers) {
+            listItems.push(<PaperListItem paper={currentUser.papers[id]} key={id} />)
         }
 
         return (
             <section className="paper-list">
-                <section id="search">
-                    <div>Search: _________________</div>
-                    <div>Or Browse: <Link to="/fields">fields</Link>&nbsp;<Link to="/users">users</Link></div>
-                </section>
-                <section id="filters">
-                    <h2>Filters</h2>
-                    <section id="only-fields">
-                        Show Only Fields: ______________
-                    </section>
-                    <section id="highlight-fields">
-                        Highlight Fields: _______________
-                    </section>
-                    <section id="ignore-fields">
-                        Ignore Fields: ________________
-                    </section>
-                </section>
-                <div className="error"> {request && request.error} </div>
                 <ul>
                     {listItems}
                 </ul>
             </section>
         )
-    } else {
-        return (
-            <Spinner />
-        )
     }
 
 }
 
-export default ViewSubmission
+export default SubmissionList 

@@ -124,13 +124,12 @@ module.exports = function(database, config) {
     router.delete('/paper/:id', function(request, response) {
         paperController.deletePaper(request, response);
     });
-    return router;
 
     /**************************************************************************
      *      Paper Review REST Routes
      *************************************************************************/
 
-    const ReviewController = require('./controllers/review');
+    const ReviewController = require('./controllers/reviews');
     const reviewController = new ReviewController(database);
 
     router.get('/paper/:paper_id/reviews', function(request, response) {
@@ -154,9 +153,14 @@ module.exports = function(database, config) {
     });
 
     router.delete('/paper/:paper_id/review/:id', function(request, response) {
-
+        reviewController.deleteReview(request, response);
     });
 
+    router.post('/paper/:paper_id/review/:review_id/comments', function(request, response) {
+        reviewController.postComments(request, response);
+    });
+
+    return router;
 };
 
 

@@ -6,12 +6,16 @@
  * ***************************************************************************/
 
 const AuthenticationService = require('../services/authentication');
+const UserService = require('../services/user');
+const PaperService = require('../services/paper');
 
 module.exports = class AuthenticationController {
 
     constructor(database) {
         this.database = database;
         this.auth = new AuthenticationService();
+        this.userService = new UserService(database);
+        this.paperService = new PaperService(database);
     }
 
     getAuthentication(request, response) {
@@ -37,10 +41,16 @@ module.exports = class AuthenticationController {
 
             if (results.rows.length == 1 ) {
                 const userMatch = results.rows[0];
-                const passwords_match = this.auth.checkPassword(credentials.password, user.password);
+                const passwords_match = this.auth.checkPassword(credentials.password, userMatch.password);
                 if (passwords_match) {
-                    const user = this.userService.selectUsers(userMatch.id);
-                    user.papers = this.userService.selectUserPapers(user.id);
+                    const users = await this.userService.selectUsers('WHERE id=$1', [userMatch.id]);
+                    const user = users[0]
+                    const paperIds = await this.userService.selectUserPapers(user.id);
+                    if ( paperIds ) {
+                        user.papers = await this.paperService.selectPapers(paperIds);
+                    } else {
+                        user.papers = null
+                    }
                     request.session.user = user;
                     response.status(200).json(user);
                     return;

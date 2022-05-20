@@ -16,7 +16,12 @@ module.exports = class ReviewController {
     async getReviews(request, response) {
         try {
             const reviews = await this.selectReviews(request.params.paper_id);
-            return response.status(200).json(reviews);
+            console.log(reviews)
+            if ( reviews && ! Array.isArray(reviews)) {
+                return response.status(200).json([reviews]);
+            } else {
+                return response.status(200).json(reviews);
+            }
         } catch (error) {
             console.error(error);
             response.status(500).json({ error: 'unknown' });
@@ -35,11 +40,11 @@ module.exports = class ReviewController {
 
         try {
             const results = await this.database.query(`
-                INSERT INTO reviews (paper_id, summary, status, created_date, updated_date) 
-                    VALUES ($1, $2, $3, now(), now()) 
+                INSERT INTO reviews (paper_id, user_id, summary, status, created_date, updated_date) 
+                    VALUES ($1, $2, $3, $4, now(), now()) 
                     RETURNING id
                 `, 
-                [ review.paperId, review.summary, review.status ]
+                [ review.paperId, review.userId, review.summary, review.status ]
             );
             if ( results.rows.length == 0 ) {
                 console.error('Failed to insert a review.');
@@ -48,7 +53,7 @@ module.exports = class ReviewController {
 
             review.id = results.rows[0].id;
 
-            await this.insertComments(review); 
+            await this.insertComments(review.id, review.comments); 
 
             const returnReview = await this.selectReviews(review.paperId, review.id);
             return response.status(201).json(returnReview);
@@ -124,13 +129,14 @@ module.exports = class ReviewController {
     async patchReview(request, response) {
         let review = request.body;
 
-        // We want to use the params.id over any id in the body.
+        // We want to use the ids in params over any id in the body.
         review.id = request.params.id
+        review.paperId = request.params.paper_id
 
         // We'll ignore these fields when assembling the patch SQL.  These are
         // fields that either need more processing (authors) or that we let the
         // database handle (date fields, id, etc)
-        const ignoredFields = [ 'id', 'authors', 'createdDate', 'updatedDate' ];
+        const ignoredFields = [ 'id', 'comments', 'createdDate', 'updatedDate' ];
 
         let sql = 'UPDATE reviews SET ';
         let params = [];
@@ -155,17 +161,17 @@ module.exports = class ReviewController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            if ( review.authors ) {
+            if ( review.comments ) {
                 // Delete the authors so we can recreate them from the request.
                 const deletionResults = await this.database.query(`
-                    DELETE FROM review_authors WHERE review_id = $1
+                    DELETE FROM review_comments WHERE review_id = $1
                     `,
                     [ review.id ]
                 );
-                await this.insertAuthors(review);
+                await this.insertComments(review.id, review.comments);
             } 
 
-            const returnReview = await this.selectReview(review.id);
+            const returnReview = await this.selectReviews(review.id);
             return response.status(200).json(returnReview);
         } catch (error) {
             console.error(error);
@@ -196,6 +202,22 @@ module.exports = class ReviewController {
         }
     }
 
+    async postComments(request, response) {
+        try {
+            const comment = request.body
+            const paperId = request.params.paper_id
+            const reviewId = request.params.review_id
+
+            await this.insertComments(reviewId, [comment])
+
+            const review = await this.selectReviews(paperId, reviewId)
+            return response.status(200).json(review)
+        } catch (error) {
+            console.log(error)
+            return response.status(500).json({error: 'unknown'})
+        }
+    }
+
     /**
      * Translate the database rows returned by our join queries into objects.
      *
@@ -213,6 +235,7 @@ module.exports = class ReviewController {
             const review = {
                 id: row.review_id,
                 paperId: row.review_paperId,
+                userId: row.review_userId,
                 summary: row.review_summary,
                 status: row.review_status,
                 createdDate: row.review_createdDate,
@@ -221,14 +244,14 @@ module.exports = class ReviewController {
             }
 
             const comment = {
-                id: comment_id,
-                parentId: comment_parentId,
-                page: comment_page,
-                pinX: comment_pinX,
-                pinY: comment_pinY,
-                content: comment_content,
-                createdDate: comment_createdDate,
-                updatedDate: comment_updatedDate
+                id: row.comment_id,
+                parentId: row.comment_parentId,
+                page: row.comment_page,
+                pinX: row.comment_pinX,
+                pinY: row.comment_pinY,
+                content: row.comment_content,
+                createdDate: row.comment_createdDate,
+                updatedDate: row.comment_updatedDate
             }
             review.comments.push(comment)
             
@@ -260,12 +283,12 @@ module.exports = class ReviewController {
 
         const sql = `
             SELECT
-              reviews.id as review_id, reviews.paper_id, as "review_paperId", reviews.summary as review_summary, reviews.status as review_status, reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
+              reviews.id as review_id, reviews.paper_id as "review_paperId", reviews.user_id as "review_userId", reviews.summary as review_summary, reviews.status as review_status, reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
               review_comments.id as comment_id, review_comments.parent_id as "comment_parentId", review_comments.page as comment_page, review_comments.pin_x as "comment_pinX", review_comments.pin_y as "comment_pinY", review_comments.content as comment_content, review_comments.created_date as "comment_createdDate", review_comments.updated_date as "comment_updatedDate"
             FROM reviews
                 LEFT OUTER JOIN review_comments on reviews.id = review_comments.review_id
             WHERE paper_id = $1${review_where} 
-            ORDER BY updated_date DESC
+            ORDER BY reviews.updated_date DESC, review_comments.updated_date DESC
         `
 
         const results = await this.database.query(sql, params)
@@ -283,22 +306,22 @@ module.exports = class ReviewController {
      *
      * @throws Error Doesn't catch errors, so any errors returned by the database will bubble up.
      */
-    async insertComments(review) {
-        if ( review.comments.length == 0) {
+    async insertComments(reviewId, comments) {
+        if ( comments.length == 0) {
             return
         }
 
-        let sql = `INSERT INTO review_comments (review_id, parent_id, pin_x, pin_y, content, created_date, updated_date) VALUES `
+        let sql = `INSERT INTO review_comments (review_id, parent_id, page, pin_x, pin_y, content, created_date, updated_date) VALUES `
         const params = []
 
         let count = 1
         let commentCount = 1
 
-        for( const comment of review.comments ) {
-            sql += `($${count}, $${count+1}, $${count+2}, $${count+3}, $${count+4}, now(), now())` + (commentCount < review.comments.length ? ', ' : '')
+        for( const comment of comments ) {
+            sql += `($${count}, $${count+1}, $${count+2}, $${count+3}, $${count+4}, $${count+5}, now(), now())` + (commentCount < comments.length ? ', ' : '')
 
-            params.push(review.id, comment.parentId, comment.pinX, comment.pinY, comment.content) 
-            count = count + 5
+            params.push(reviewId, comment.parentId, comment.page, comment.pinX, comment.pinY, comment.content) 
+            count = count + 6
             commentCount++
         }
 

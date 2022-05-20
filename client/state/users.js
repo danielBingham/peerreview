@@ -213,6 +213,8 @@ export const usersSlice = createSlice({
     }
 })
 
+// TODO These need to update currentUser when the user returned == current user.
+
 export const queryUsers = function(name) {
     return function(dispatch, getState) {
 

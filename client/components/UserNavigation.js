@@ -12,21 +12,12 @@ import { getAuthentication, cleanupRequest, deleteAuthentication } from '../stat
  * No props.
  */
 const UserNavigation = function(props) {
-    const [ getAuthenticationRequestId, setGetAuthenticationRequestId ] = useState(null)
     const [ deleteAuthenticationRequestId, setLogoutRequestId ] = useState(null)
 
     const dispatch = useDispatch()
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
-    })
-
-    const authenticationRequest = useSelector(function(state) {
-        if (getAuthenticationRequestId) {
-            return state.authentication.requests[getAuthenticationRequestId]
-        } else {
-            return null
-        }
     })
 
     const deleteAuthenticationRequest = useSelector(function(state) {
@@ -56,21 +47,6 @@ const UserNavigation = function(props) {
     // Do our cleanup in a useEffect so that we do it after rendering has
     // finished and don't cause unintended consequences or render thrashing.
     useEffect(function() {
-
-        // We need to request the authenticated user from the backend to determine
-        // whether or not we have an existing session.  We only want to do this
-        // once, so we'll hang on to the getAuthenticationRequestId to track the request -- and
-        // after we're done to remember that we've made the request.
-        if ( ! currentUser && ! getAuthenticationRequestId ) {
-            setGetAuthenticationRequestId(dispatch(getAuthentication()))
-        } 
-
-        // If we've made the request and it still exists, but is complete, then
-        // we need to cleanup.  
-        if (  authenticationRequest && authenticationRequest.state == "fulfilled") {
-            dispatch(cleanupRequest({ requestId: getAuthenticationRequestId }))
-        }
-
         if (  deleteAuthenticationRequest && deleteAuthenticationRequest.state == "fulfilled") {
             dispatch(cleanupRequest({ requestId: deleteAuthenticationRequestId }))
         }

@@ -48,10 +48,11 @@ CREATE TABLE paper_authors (
     PRIMARY KEY (paper_id, user_id)
 );
 
-CREATE TYPE review_status AS ENUM('rejected', 'changes-requested', 'approved');
+CREATE TYPE review_status AS ENUM('in-progress', 'rejected', 'changes-requested', 'approved');
 CREATE TABLE reviews (
     id          bigserial PRIMARY KEY,
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+    user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
     summary     text,
     status      review_status,
     created_date    timestamp,
