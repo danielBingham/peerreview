@@ -35,7 +35,6 @@ export const usersSlice = createSlice({
         query: []
     },
     reducers: {
-
         /**
          * Add one or more users to the user state.
          *
@@ -124,6 +123,24 @@ export const usersSlice = createSlice({
         completeDeleteUserRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
             delete state.users[action.payload.userId]
+        },
+
+        // ========== GET /user/:id/papers ==============================================
+
+        /**
+         * The GET request to /user/:id/papers succeeded.
+         *
+         * @param {object} state - The redux state slice.
+         * @param {object} action - The redux action we're reducing.
+         * @param {object} action.payload - The payload sent with the action.
+         * @param {string} action.payload.requestId - A uuid for the request.
+         * @param {object} action.payload.userId - The of the user we requested papers for.
+         * @param {object} action.payload.result - A populated list of papers the user was an author on.
+         */
+        completeGetUserPapersRequest: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+
+            state.users[action.payload.userId].papers = action.payload.result
         },
 
         // ========== Generic Request Methods =============
@@ -555,6 +572,57 @@ export const deleteUser = function(user) {
     }
 } 
 
+/**
+ * GET /user/:id/papers
+ *
+ * Get the papers a user is an author on..
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {int} id - The id of the user we want to retrieve.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const getUserPapers = function(id) {
+    return function(dispatch, getState) {
+        const requestId = uuidv4()
+        const endpoint = `/user/${id}/papers`
+
+        const payload = {
+            requestId: requestId,
+            userId: id
+        }
+
+        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(papers) {
+            payload.result = papers 
+            dispatch(usersSlice.actions.completeGetUserPapersRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(usersSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
 
 export const { addUsers, newQuery, completeQueryUsersRequest, completeGetUsersRequest, completeDeleteUserRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = usersSlice.actions
 

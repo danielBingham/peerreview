@@ -56,6 +56,10 @@ module.exports = function(database, config) {
         userController.deleteUser(request, response);
     });
 
+    router.get('/user/:id/papers', function(request, response) {
+        userController.getUserPapers(request, response);
+    });
+
     /******************************************************************************
      *          Authentication REST Routes
      ******************************************************************************/
@@ -121,4 +125,38 @@ module.exports = function(database, config) {
         paperController.deletePaper(request, response);
     });
     return router;
+
+    /**************************************************************************
+     *      Paper Review REST Routes
+     *************************************************************************/
+
+    const ReviewController = require('./controllers/review');
+    const reviewController = new ReviewController(database);
+
+    router.get('/paper/:paper_id/reviews', function(request, response) {
+        reviewController.getReviews(request, response);
+    });
+
+    router.post('/paper/:paper_id/reviews', function(request, response) {
+        reviewController.postReviews(request, response);
+    });
+
+    router.get('/paper/:paper_id/review/:id', function(request, response) {
+        reviewController.getReview(request, response);
+    });
+
+    router.put('/paper/:paper_id/review/:id', function(request, response) {
+        reviewController.putReview(request, response);
+    });
+
+    router.patch('/paper/:paper_id/review/:id', function(request, response) {
+        reviewController.patchReview(request, response);
+    });
+
+    router.delete('/paper/:paper_id/review/:id', function(request, response) {
+
+    });
+
 };
+
+

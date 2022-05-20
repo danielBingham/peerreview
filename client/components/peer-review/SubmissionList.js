@@ -1,54 +1,41 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { Link } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getPapers, cleanupRequest } from '../state/papers'
+import { getUserPapers, cleanupRequest } from '../../state/users'
 
-import Spinner from './Spinner'
+import Spinner from '../Spinner'
 
-const PaperListItem = function(props) {
-    const paper = props.paper
-
-    let authorList = ''
-    for (let i = 0; i < paper.authors.length; i++) {
-        authorList += paper.authors[i].user.name 
-        if (i < paper.authors.length-1) {
-            authorList += ', '
-        }
-    }
-
-    return (
-        <li id={paper.id} >[{Math.floor(Math.random() * 100)} votes] [{Math.floor(Math.random()*10)} responses] {paper.title} by {authorList} [physics] [particle-physics]</li>
-    )
-}
-
-/**
- * A list displaying the papers that have been posted. 
- *
- * @param {object} props - An empty object, takes no props.
- */
-const PaperList = function(props) { 
-    const [requestId, setRequestId ] = useState(null)
+const SubmissionList = function(props) {
+    const [requestId, setRequestId] = useState(null)
 
     const dispatch = useDispatch()
-
-    const papers = useSelector(function(state) {
-        return state.papers.dictionary
+    const navigate = useNavigate()
+    
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
     })
 
     const request = useSelector(function(state) {
-        if (requestId) {
-            return state.papers.requests[requestId]
+        if ( ! requestId ) {
+            return null
         } else {
-            null
+            return state.users.requests[requestId]
         }
     })
 
+
     useEffect(function() {
-        if ( ! requestId && ! request ) {
-            setRequestId(dispatch(getPapers()))
+        if ( ! currentUser ) {
+            navigate("/")
+        }
+    }, [ currentUser ])
+
+    useEffect(function() {
+        if ( currentUser && ! request ) {
+            setRequestId(dispatch(getUserPapers(currentUser.id)))
         }
 
         return function cleanup() {
@@ -56,7 +43,7 @@ const PaperList = function(props) {
                 dispatch(cleanupRequest(requestId))
             }
         }
-    }, [ requestId, request ])
+    }, [ currentUser, request ])
 
     // ====================== Render ==========================================
 
@@ -101,6 +88,7 @@ const PaperList = function(props) {
             <Spinner />
         )
     }
+
 }
 
-export default PaperList 
+export default ViewSubmission

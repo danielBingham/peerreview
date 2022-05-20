@@ -134,6 +134,7 @@ describe('in client/state/users.js', function() {
                 requestMethod: 'GET',
                 requestEndpoint: endpoint,
                 state: 'pending',
+                result: null,
                 error: null,
                 status: null
             }
@@ -166,14 +167,19 @@ describe('in client/state/users.js', function() {
                 state = await stateUpdate(store)
             }
 
+            const expectedState = expectedUserState.allUsers
             const expectedRequestTracker = {
                 requestMethod: 'GET',
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
+                result: {
+                    requestId: requestId,
+                    status: 200,
+                    users: database 
+                },
                 error: null,
                 status: 200
             }
-            const expectedState = expectedUserState.allUsers
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
             expect(state.users.users).toEqual(expectedState)

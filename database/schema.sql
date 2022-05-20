@@ -15,34 +15,57 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app;
 /* Peer Review Schema file */
 
 CREATE TABLE users (
-    id    BIGSERIAL PRIMARY KEY,
-    name  VARCHAR(256),
-    password  VARCHAR(64),
-    email     VARCHAR(256),
-    created_date  TIMESTAMP,
-    updated_date  TIMESTAMP
+    id    bigserial PRIMARY KEY,
+    name  varchar(256),
+    password  varchar(64),
+    email     varchar(256),
+    created_date  timestamp,
+    updated_date timestamp 
 );
 
 CREATE TABLE papers (
-    id  BIGSERIAL PRIMARY KEY,
-    title   VARCHAR(1024),
-    is_draft   BOOLEAN,
-    created_date    TIMESTAMP,
-    updated_date    TIMESTAMP
+    id  bigserial PRIMARY KEY,
+    title   varchar(1024),
+    is_draft   boolean,
+    created_date    timestamp,
+    updated_date    timestamp
 );
 
 CREATE TABLE paper_versions (
-    paper_id    BIGINT REFERENCES papers(id) on DELETE CASCADE,
-    version     SERIAL,
-    filepath    VARCHAR(512),
+    paper_id    bigint REFERENCES papers(id) on DELETE CASCADE,
+    version     serial,
+    filepath    varchar(512),
+    created_date    timestamp,
+    updated_date    timestamp,
     PRIMARY KEY (paper_id, version)
 );
 
 CREATE TABLE paper_authors (
-    paper_id    BIGINT REFERENCES papers(id) ON DELETE CASCADE,
-    user_id     BIGINT REFERENCES users(id) ON DELETE CASCADE,
-    author_order    INT,
-    owner           BOOLEAN,
+    paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+    user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
+    author_order    int,
+    owner           boolean,
     PRIMARY KEY (paper_id, user_id)
 );
 
+CREATE TYPE review_status AS ENUM('rejected', 'changes-requested', 'approved');
+CREATE TABLE reviews (
+    id          bigserial PRIMARY KEY,
+    paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+    summary     text,
+    status      review_status,
+    created_date    timestamp,
+    updated_date    timestamp
+);
+
+CREATE TABLE review_comments (
+    id          bigserial PRIMARY KEY,
+    review_id   bigint REFERENCES reviews(id) ON DELETE CASCADE,
+    parent_id   bigint REFERENCES reviews(id) ON DELETE CASCADE,
+    page        int, 
+    pin_x       int,
+    pin_y       int,
+    content     text,
+    created_date    timestamp,
+    updated_date    timestamp
+);

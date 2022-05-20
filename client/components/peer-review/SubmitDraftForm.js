@@ -144,7 +144,7 @@ const SubmitDraftForm = function(props) {
 
             let newAuthorSuggestions = []
             for(let id in users) {
-                if (users[id].name.includes(currentAuthor) ) {
+                if (users[id].name.toLowerCase().includes(currentAuthor.toLowerCase()) ) {
                     newAuthorSuggestions.push(users[id])
                 }
             }
@@ -196,7 +196,7 @@ const SubmitDraftForm = function(props) {
         if (queryUsersRequest && queryUsersRequest.state == 'fulfilled') {
             let newAuthorSuggestions = []
             for(let id in users) {
-                if (users[id].name.includes(currentAuthor) ) {
+                if (users[id].name.toLowerCase().includes(currentAuthor.toLowerCase()) ) {
                     newAuthorSuggestions.push(users[id])
                 }
             }
@@ -210,7 +210,7 @@ const SubmitDraftForm = function(props) {
             console.log('Post Papers request is finished.')
             if ( ! uploadPaperRequest ) {
                 console.log('Triggering upload paper.')
-                const paper = postPapersRequest.result.paper
+                const paper = postPapersRequest.result
                 setPaper(paper)
                 setUploadPaperRequestId(dispatch(uploadPaper(paper.id, file)))
             } else if ( uploadPaperRequest.state == 'fulfilled') {

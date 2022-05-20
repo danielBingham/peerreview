@@ -31,15 +31,16 @@ module.exports = class AuthenticationController {
 
         try {
             const results = await this.database.query(
-                'select * from users where email = $1',
+                'select id,password from users where email = $1',
                 [ credentials.email ]
             );
 
             if (results.rows.length == 1 ) {
-                const user = results.rows[0];
+                const userMatch = results.rows[0];
                 const passwords_match = this.auth.checkPassword(credentials.password, user.password);
                 if (passwords_match) {
-                    delete user.password
+                    const user = this.userService.selectUsers(userMatch.id);
+                    user.papers = this.userService.selectUserPapers(user.id);
                     request.session.user = user;
                     response.status(200).json(user);
                     return;

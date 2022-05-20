@@ -34,7 +34,7 @@ export default {
 
         requestTracker.error = null
         requestTracker.status = action.payload.status
-        requestTracker.result = action.payload
+        requestTracker.result = action.payload.result
     }
 
 }

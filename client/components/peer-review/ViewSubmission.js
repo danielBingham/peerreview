@@ -29,10 +29,10 @@ const ViewSubmission = function(props) {
     })
 
     const paper = useSelector(function(state) {
-        if ( ! state.papers.papers[id] ) {
+        if ( ! state.papers.dictionary[id] ) {
             return null
         } else {
-            return state.papers.papers[id]
+            return state.papers.dictionary[id]
         }
     })
 

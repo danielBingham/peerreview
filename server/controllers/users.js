@@ -6,12 +6,16 @@
  ******************************************************************************/
 
 const AuthenticationService = require('../services/authentication');
+const PaperService = require('../services/paper');
+const UserService = require('../services/user');
 
 module.exports = class UserController {
 
     constructor(database) {
         this.database = database;
         this.auth = new AuthenticationService();
+        this.paperService = new PaperService(database);
+        this.userService = new UserService(database);
     }
 
     /**
@@ -23,20 +27,8 @@ module.exports = class UserController {
     async queryUsers(request, response) {
         if ( request.query.name && request.query.name.length > 0) {
             try {
-                const results = await this.database.query(`
-                        SELECT 
-                            id, name, email, created_date as "createdDate", updated_date as "updatedDate"
-                        FROM users
-                        WHERE name ILIKE $1
-                    `,
-                    [ request.query.name+"%" ]
-                );
-
-                if (results.rows.length > 0) {
-                    return response.status(200).json(results.rows);
-                } else {
-                    return response.status(200).json([]);
-                }
+                const users = await this.userService.selectUsers('WHERE name ILIKE $1', [ request.query.name+"%" ]);
+                return response.status(200).json(users);
             } catch (error) {
                 console.error(error);
                 return response.status(500).json({ error: 'unknown' });
@@ -54,11 +46,8 @@ module.exports = class UserController {
      */
     async getUsers(request, response) {
         try {
-            const results = await this.database.query(`
-                select id, name, email, created_date as "createdDate", updated_date as "updatedDate" from users
-            `);
-            return response.status(200).json(results.rows);
-
+            const users = await this.userService.selectUsers()
+            return response.status(200).json();
         } catch (error) {
             console.error(error);
             response.status(500).json({ error: 'unknown' });
@@ -92,12 +81,18 @@ module.exports = class UserController {
             const results = await this.database.query(`
                     INSERT INTO users (name, email, password, created_date, updated_date) 
                         VALUES ($1, $2, $3, now(), now()) 
-                        RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate" 
+                        RETURNING id
 
                 `, 
                 [ user.name, user.email, user.password ]
             );
-            return response.status(201).json(results.rows[0]);
+
+            if ( results.rowCount == 0 ) {
+                throw new Error('Insert user failed.')
+            }
+
+            const user = await this.userService.selectUsers('WHERE id=$1', [results.rows[0].id]);
+            return response.status(201).json(user);
         } catch (error) {
             console.error(error);
             return response.status(500).json({error: 'unknown'});
@@ -118,11 +113,13 @@ module.exports = class UserController {
                [request.params.id] 
            );
 
-            if (results.rowCount == 0) {
+            const user = await this.userService.selectUsers('WHERE id = $1', [request.params.id])
+
+            if ( ! user ) {
                 return response.status(404).json({});
             }
 
-            return response.status(200).json(results.rows[0]);
+            return response.status(200).json(user);
         } catch (error) {
             console.error(error);
             return response.status(500).send();
@@ -142,7 +139,7 @@ module.exports = class UserController {
             const results = await this.database.query(`
                     UPDATE users SET name = $1 AND email = $2 AND password = $3 AND updated_date = now() 
                         WHERE id = $4 
-                        RETURNING id, name, email, created_date as "createdDate", updated_date as "updatedDate" 
+                        RETURNING id
                 `,
                 [ user.name, user.email, user.password, request.params.id ]
             );
@@ -151,6 +148,7 @@ module.exports = class UserController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
+            const user = await this.userService.selectUsers('WHERE id=$1', results.rows[0].id)
             return response.status(200).json(results.rows[0]);
         } catch (error) {
             console.error(error);
@@ -227,4 +225,24 @@ module.exports = class UserController {
             return response.status(500).json({error: 'unknown'});
         }
     }
+
+    /**
+     * GET /user/:id/papers
+     *
+     * Get the papers a user is an author on.
+     */
+    async getUserPapers(request, response) {
+        try {
+            const userId = request.params.id
+            const paperIds = await this.userService.selectUserPapers(userId)
+            const papers = await this.paperService.selectPapers(paperIds)
+            return response.status(200).json(papers)
+        } catch (error) {
+            console.error(error)
+            return response.status(500).json({error: 'unknown'})
+        }
+        
+    }
+
+
 }; 
