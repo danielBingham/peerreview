@@ -24,6 +24,7 @@ const ViewSubmission = function(props) {
 
     const dispatch = useDispatch()
 
+    // ================= Request Tracking =====================================
     const paperRequest = useSelector(function(state) {
         if ( ! paperRequestId) {
             return null
@@ -48,6 +49,8 @@ const ViewSubmission = function(props) {
         }
     })
 
+    // ================= Redux State ==========================================
+
     const paper = useSelector(function(state) {
         if ( ! state.papers.dictionary[paperId] ) {
             return null
@@ -63,6 +66,8 @@ const ViewSubmission = function(props) {
     const reviewInProgress = useSelector(function(state) {
         return state.reviews.list.filter((review) => review.paperId == paperId && review.userId == currentUser.id && review.status == 'in-progress')
     })
+    
+    // ================= User Action Handling  ================================
 
     const finishReview = function(event) {
         event.preventDefault()
@@ -71,6 +76,10 @@ const ViewSubmission = function(props) {
         setPatchReviewRequestId(dispatch(patchReview(reviewInProgress)))
     }
 
+    /**
+     * If we haven't retrieved the paper we're viewing yet, go ahead and
+     * retrieve it from the paper endpoint to get full and up to date data.
+     */
     useEffect(function() {
         if ( ( ! paper || paper.versions.length == 0 ) && ! paperRequest ) {
             setPaperRequestId(dispatch(getPaper(paperId)))
@@ -84,6 +93,9 @@ const ViewSubmission = function(props) {
 
     }, [paperId])
 
+    /**
+     * Once we've retrieved the papers, retrieve the reviews.
+     */
     useEffect(function() {
         if ( paper && ! reviewsRequestId ) {
             setReviewsRequestId(dispatch(getReviews(paper.id)))
@@ -97,6 +109,10 @@ const ViewSubmission = function(props) {
 
     }, [ paper, reviewsRequestId ])
 
+    /**
+     * Once we have the paper and the reviews, load the PDFs so we can display
+     * them.
+     */
     useEffect(function() {
         if ( paper && paper.versions.length > 0 && reviewsRequest && reviewsRequest.state == "fulfilled") {
             const loadingTask = PDFLib.getDocument('http://' + window.location.host + paper.versions[0].filepath)
@@ -114,6 +130,8 @@ const ViewSubmission = function(props) {
 
     }, [ paper, reviewsRequest ])
 
+    // ================= Render ===============================================
+    
     if ( ! paper ) {
         return ( <Spinner /> )
     } else {
