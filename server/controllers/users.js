@@ -47,7 +47,7 @@ module.exports = class UserController {
     async getUsers(request, response) {
         try {
             const users = await this.userService.selectUsers()
-            return response.status(200).json();
+            return response.status(200).json(users);
         } catch (error) {
             console.error(error);
             response.status(500).json({ error: 'unknown' });
@@ -92,7 +92,7 @@ module.exports = class UserController {
             }
 
             const returnUser = await this.userService.selectUsers('WHERE id=$1', [results.rows[0].id]);
-            return response.status(201).json(returnUser);
+            return response.status(201).json(returnUser[0]);
         } catch (error) {
             console.error(error);
             return response.status(500).json({error: 'unknown'});
@@ -107,22 +107,16 @@ module.exports = class UserController {
     async getUser(request, response) {
 
         try {
-           const results = await this.database.query(`
-                    select id, name, email, created_date as "createdDate", updated_date as "updatedDate" from users where id=$1
-               `, 
-               [request.params.id] 
-           );
-
             const returnUsers = await this.userService.selectUsers('WHERE id = $1', [request.params.id])
 
             if ( ! returnUsers ) {
-                return response.status(404).json({});
+                return response.status(404).json([]);
             }
 
             return response.status(200).json(returnUsers[0]);
         } catch (error) {
             console.error(error);
-            return response.status(500).send();
+            return response.status(500).json({ error: 'unknown'});
         }
     }
 
@@ -149,7 +143,10 @@ module.exports = class UserController {
             }
 
             const returnUser = await this.userService.selectUsers('WHERE id=$1', results.rows[0].id)
-            return response.status(200).json(returnUser);
+            if ( ! returnUser ) {
+                throw new Error('Updated user somehow does not exist.')
+            }
+            return response.status(200).json(returnUser[0]);
         } catch (error) {
             console.error(error);
             response.status(500).json({error: 'unknown'});
@@ -198,7 +195,10 @@ module.exports = class UserController {
             }
 
             const returnUser = await this.userService.selectUsers('WHERE id=$1', [user.id])
-            return response.status(200).json(returnUser);
+            if ( ! returnUser ) {
+                throw new Error('Updated user somehow does not exist!')
+            }
+            return response.status(200).json(returnUser[0]);
         } catch (error) {
             console.error(error);
             response.status(500).json({error: 'unknown'})

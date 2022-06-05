@@ -16,11 +16,13 @@ export default {
     makeRequest: function(requestTracker, action) {
         requestTracker.state = 'pending' 
         requestTracker.error = null
+        requestTracker.result = null
     },
 
     failRequest: function(requestTracker, action) {
         requestTracker.state = 'failed' 
         requestTracker.status = action.payload.status
+        requestTracker.result = null
 
         if ( action.payload.error ) {
             requestTracker.error = action.payload.error

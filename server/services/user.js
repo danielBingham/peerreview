@@ -52,7 +52,7 @@ module.exports = class UserService {
         const results = await this.database.query(sql, params);
 
         if ( results.rows.length == 0 ) {
-            return [] 
+            return null 
         } else {
             const users = this.hydrateUsers(results.rows)
             return Object.values(users);

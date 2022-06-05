@@ -80,8 +80,8 @@ export const usersSlice = createSlice({
         completeQueryUsersRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            if ( action.payload.users.length > 0 ) {
-                for(const user of action.payload.users) {
+            if ( action.payload.result.length > 0 ) {
+                for(const user of action.payload.result) {
                     state.users[user.id] = user
                     state.query.push(user)
                 }
@@ -102,9 +102,9 @@ export const usersSlice = createSlice({
         completeGetUsersRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            action.payload.users.forEach(function(user) {
+            for ( const user of action.payload.result ) {
                 state.users[user.id] = user
-            })
+            }
         },
 
         // ========== DELETE /user/:id =================
@@ -122,7 +122,7 @@ export const usersSlice = createSlice({
          */
         completeDeleteUserRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            delete state.users[action.payload.userId]
+            delete state.users[action.payload.result]
         },
 
         // ========== GET /user/:id/papers ==============================================
@@ -193,7 +193,7 @@ export const usersSlice = createSlice({
         completeRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            const user = action.payload.user
+            const user = action.payload.result
             state.users[user.id] = user 
 
         },
@@ -242,7 +242,7 @@ export const queryUsers = function(name) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(users) {
-            payload.users = users
+            payload.result = users
             dispatch(usersSlice.actions.completeQueryUsersRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -295,7 +295,7 @@ export const getUsers = function() {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(users) {
-            payload.users = users
+            payload.result = users
             dispatch(usersSlice.actions.completeGetUsersRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -348,7 +348,7 @@ export const postUsers = function(user) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedUser) {
-            payload.user = returnedUser
+            payload.result = returnedUser
             dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -400,7 +400,7 @@ export const getUser = function(id) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
-            payload.user = user
+            payload.result = user
             dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -455,7 +455,7 @@ export const putUser = function(user) {
             }
 
         }).then(function(returnedUser) {
-            payload.user = returnedUser
+            payload.result = returnedUser
             dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -508,7 +508,7 @@ export const patchUser = function(user) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedUser) {
-            payload.user = returnedUser
+            payload.result = returnedUser
             dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -544,7 +544,7 @@ export const deleteUser = function(user) {
 
         const payload = {
             requestId: requestId,
-            userId: user.id
+            result: user.id
         }
         
         dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))

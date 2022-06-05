@@ -1,4 +1,79 @@
+body {
+    padding: 0;
+    margin: 0;
+}
+
 section.page-wrapper {
     margin: 10px auto;
     text-align: center;
+}
+
+a:link, a:active, a:visited, a:hover {
+    text-decoration: none;
+    color: black;
+}
+
+
+header {
+    margin: 0 0 50px 0;
+    padding: 10px 50px;
+    border-bottom: thin solid #ddd;
+}
+
+header h1 {
+    font-family: Georgia, serif;
+    font-size: 18px;
+    font-weight: bold;
+    padding: 5px;
+    margin: 0;
+}
+
+header section {
+    display: inline-block;
+}
+
+
+header section#navigation {
+    float: right;
+}
+
+header .basic-navigation {
+    padding-right: 50px;
+}
+
+header a:link, header a:active, header a:visited, header a:hover {
+    text-decoration: none;
+    color: black;
+    padding: 5px;
+    margin: 0 5px;
+}
+
+main {
+    width: 1600px;
+    margin: 50px auto;
+    padding: 50px;
+}
+
+.paper-list {
+    width: 100%;
+    border: thin solid black;
+}
+
+.filters {
+    margin: 20px auto;
+    width: 90%;
+    padding: 20px;
+    border: thin solid black;
+}
+
+.search {
+    width: 90%;
+    margin: 50px auto;
+    padding: 20px;
+    border: thin solid black;
+}
+
+.search input {
+    width: 80%;
+    margin: 0 10px;
 }

@@ -74,19 +74,18 @@ const PaperList = function(props) {
 
         return (
             <section className="paper-list">
-                <section id="search">
-                    <div>Search: _________________</div>
-                    <div>Or Browse: <Link to="/fields">fields</Link>&nbsp;<Link to="/users">users</Link></div>
+                <section className="search">
+                    <div>Search: <input type="text" name="search" /></div>
                 </section>
-                <section id="filters">
+                <section className="filters">
                     <h2>Filters</h2>
-                    <section id="only-fields">
+                    <section className="only-fields">
                         Show Only Fields: ______________
                     </section>
-                    <section id="highlight-fields">
+                    <section className="highlight-fields">
                         Highlight Fields: _______________
                     </section>
-                    <section id="ignore-fields">
+                    <section className="ignore-fields">
                         Ignore Fields: ________________
                     </section>
                 </section>

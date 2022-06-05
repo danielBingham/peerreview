@@ -86,8 +86,10 @@ describe('in client/state/authentication.js', function() {
                 requestMethod: 'GET',
                 requestEndpoint: endpoint,
                 state: 'pending',
+                result: null,
                 error: null,
-                status: null
+                status: null,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -122,8 +124,10 @@ describe('in client/state/authentication.js', function() {
                 requestMethod: 'GET',
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
+                result: expectedState,
                 error: null,
-                status: 200
+                status: 200,
+                result: database[0]
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -159,8 +163,10 @@ describe('in client/state/authentication.js', function() {
                 requestMethod: 'GET',
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
+                result: null,
                 error: null,
-                status: 204
+                status: 204,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -197,7 +203,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -233,8 +240,10 @@ describe('in client/state/authentication.js', function() {
                 requestMethod: 'GET',
                 requestEndpoint: endpoint,
                 state: 'failed',
+                result: null,
                 error: 'Error: Request failed with status: 500',
-                status: 500 
+                status: 500,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -271,8 +280,10 @@ describe('in client/state/authentication.js', function() {
                 requestMethod: 'GET',
                 requestEndpoint: endpoint,
                 state: 'failed',
+                result: null,
                 error: 'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -315,8 +326,10 @@ describe('in client/state/authentication.js', function() {
                 requestMethod: 'POST',
                 requestEndpoint: endpoint,
                 state: 'pending',
+                result: null,
                 error: null,
-                status: null
+                status: null,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -352,8 +365,10 @@ describe('in client/state/authentication.js', function() {
                 requestMethod: 'POST',
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
+                result: expectedState,
                 error: null,
-                status: 200
+                status: 200,
+                result: database[0]
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -390,8 +405,10 @@ describe('in client/state/authentication.js', function() {
                 requestMethod: 'POST',
                 requestEndpoint: endpoint,
                 state: 'failed',
+                result: null,
                 error: 'Error: Attempt to authenticate "' + credentials.email + '" failed.',
-                status: 403 
+                status: 403,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -429,7 +446,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -467,7 +485,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 500',
-                status: 500 
+                status: 500,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -506,7 +525,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -524,7 +544,7 @@ describe('in client/state/authentication.js', function() {
 
         beforeEach(function() {
             store.dispatch(makeRequest({ requestId: 1, method: 'POST', endpoint: '/authentication'}))
-            store.dispatch(completeRequest({ requestId: 1, status: 200, user: database[0] }))
+            store.dispatch(completeRequest({ requestId: 1, status: 200, result: database[0] }))
         })
 
         it('should add a pending RequestTracker to the store when called', async function() {
@@ -552,7 +572,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'pending',
                 error: null,
-                status: null
+                status: null,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -589,7 +610,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
                 error: null,
-                status: 200
+                status: 200,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -626,7 +648,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -663,7 +686,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 500',
-                status: 500 
+                status: 500,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)
@@ -701,7 +725,8 @@ describe('in client/state/authentication.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.authentication.requests[requestId]).toEqual(expectedRequestTracker)

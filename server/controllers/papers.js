@@ -59,6 +59,7 @@ module.exports = class PaperController {
             }
             paper.id = results.rows[0].id;
             await this.insertAuthors(paper); 
+            await this.insertFields(paper);
 
             const returnPaper = await this.paperService.selectPapers(paper.id);
             return response.status(201).json(returnPaper);
@@ -186,14 +187,21 @@ module.exports = class PaperController {
             }
 
             // Delete the authors so we can recreate them from the request.
-            const deletionResults = await this.database.query(`
+            const authorDeletionResults = await this.database.query(`
                 DELETE FROM paper_authors WHERE paper_id = $1
+                `,
+                [ paper.id ]
+            );
+
+            const fieldDeletionResults = await this.database.query(`
+                DELETE FROM paper_fields WHERE paper_id = $1
                 `,
                 [ paper.id ]
             );
 
             // Reinsert the authors.
             await this.insertAuthors(paper);
+            await this.insertFields(paper);
 
             const returnPaper = await this.paperService.selectPapers(paper.id);
             return response.status(200).json(returnPaper);
@@ -309,6 +317,31 @@ module.exports = class PaperController {
 
         if (results.rowCount == 0 )  {
             throw new Error('Something went wrong with the author insertion.');
+        }
+    }
+
+    /**
+     * Insert fields for the paper.  Assumes the field already exists, only inserts the ids into the tagging table.
+     *
+     * @throws Error Doesn't catch errors, so any errors thrown by the database will bubble up.
+     */
+    async insertFields(paper) {
+        let sql = `INSERT INTO paper_fields (field_id, paper_id) VALUES `;
+        let params = []
+
+        let count = 1;
+        let fieldCount = 1;
+        for (const field of paper.fields) {
+            sql += `($${count}, $${count+1})` + (fieldCount < paper.fields.length ? ', ' : '')
+            params.push(paper.id, field.id)
+            count = count+2
+            fieldCount++
+        }
+
+        const results = await this.database.query(sql, params)
+
+        if ( results.rowCount == 0) {
+            throw new Error('Something went wrong with field insertion.')
         }
     }
 }; 

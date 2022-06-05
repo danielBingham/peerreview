@@ -23,6 +23,17 @@ CREATE TABLE users (
     updated_date timestamp 
 );
 
+CREATE TABLE fields (
+    id      bigserial PRIMARY KEY,
+    name    varchar(512),
+    parent_id   bigint REFERENCES fields(id) ON DELETE CASCADE,
+    created_date    timestamp,
+    updated_date    timestamp
+);
+
+INSERT INTO fields (name, parent_id) VALUES ('biology', null), ('physics', null), ('chemistry', null), ('earth-science', null), ('space-science', null), ('anthropology', null), ('archaeology', null), ('economics', null), ('geography', null), ('political-science', null), ('psychology', null), ('sociology', null), ('social-work', null);
+
+
 CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
     title   varchar(1024),
@@ -48,6 +59,12 @@ CREATE TABLE paper_authors (
     PRIMARY KEY (paper_id, user_id)
 );
 
+CREATE TABLE paper_fields (
+    paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+    field_id    bigint REFERENCES fields(id) ON DELETE CASCADE,
+    PRIMARY KEY (paper_id, field_id)
+);
+
 CREATE TYPE review_status AS ENUM('in-progress', 'rejected', 'changes-requested', 'approved');
 CREATE TABLE reviews (
     id          bigserial PRIMARY KEY,
@@ -70,3 +87,4 @@ CREATE TABLE review_comments (
     created_date    timestamp,
     updated_date    timestamp
 );
+

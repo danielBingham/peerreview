@@ -172,11 +172,7 @@ describe('in client/state/users.js', function() {
                 requestMethod: 'GET',
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
-                result: {
-                    requestId: requestId,
-                    status: 200,
-                    users: database 
-                },
+                result:  database,
                 error: null,
                 status: 200
             }
@@ -215,7 +211,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -253,7 +250,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -295,7 +293,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'pending',
                 error: null,
-                status: null
+                status: null,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -333,7 +332,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
                 error: null,
-                status: 200
+                status: 200,
+                result: database[0]
             }
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
             expect(state.users.users).toEqual(expectedState)
@@ -371,7 +371,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error:  'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -410,7 +411,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error:  'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -452,7 +454,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'pending',
                 error: null,
-                status: null
+                status: null,
+                result: null
             }
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
         })
@@ -489,7 +492,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
                 error: null,
-                status: 200
+                status: 200,
+                result: database[0]
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -527,7 +531,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -566,7 +571,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -609,7 +615,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'pending',
                 error: null,
-                status: null
+                status: null,
+                result: null
             }
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
         })
@@ -647,7 +654,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
                 error: null,
-                status: 200
+                status: 200,
+                result: database[0]
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -686,7 +694,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -727,7 +736,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -771,7 +781,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'pending',
                 error: null,
-                status: null
+                status: null,
+                result: null
             }
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
         })
@@ -809,7 +820,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
                 error: null,
-                status: 200
+                status: 200,
+                result: database[0]
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -848,7 +860,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -888,7 +901,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -930,7 +944,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'pending',
                 error: null,
-                status: null
+                status: null,
+                result: null
             }
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
         })
@@ -995,7 +1010,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'fulfilled',
                 error: null,
-                status: 200
+                status: 200,
+                result: database[0].id
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -1033,7 +1049,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'Error: Request failed with status: 404',
-                status: 404
+                status: 404,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
@@ -1072,7 +1089,8 @@ describe('in client/state/users.js', function() {
                 requestEndpoint: endpoint,
                 state: 'failed',
                 error: 'TypeError: Fetch failed!',
-                status: undefined
+                status: undefined,
+                result: null
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)

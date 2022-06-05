@@ -94,7 +94,7 @@ export const authenticationSlice = createSlice({
         completeRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
 
-            state.currentUser = action.payload.user
+            state.currentUser = action.payload.result
         },
 
 
@@ -154,7 +154,7 @@ export const getAuthentication = function() {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
-            payload.user = user
+            payload.result = user
             dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -213,7 +213,7 @@ export const postAuthentication = function(email, password) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
-            payload.user = user
+            payload.result = user
             dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -258,6 +258,7 @@ export const deleteAuthentication = function() {
             }
         }).then(function(response) {
             payload.status = response.status
+            payload.result = null
             if (response.ok) {
                 dispatch(authenticationSlice.actions.completeGetLogoutRequest(payload))
             } else {

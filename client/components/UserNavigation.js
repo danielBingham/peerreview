@@ -70,7 +70,7 @@ const UserNavigation = function(props) {
         )
     } else {
         return (
-            <section className="authentication">
+            <section className="user-navigation">
                 <Link to="login">login</Link>
                 &nbsp;
                 <Link to="register">register</Link>

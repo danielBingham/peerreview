@@ -124,7 +124,8 @@ module.exports = class ReviewController {
      *
      * Update an existing review given a partial set of fields in JSON.
      *
-     * TODO Account for review_versions.
+     * Only changes the top level resource (reviews, in this case).  Does
+     * nothing with children (comments).
      */
     async patchReview(request, response) {
         let review = request.body;
@@ -160,16 +161,6 @@ module.exports = class ReviewController {
             if ( results.rowCount == 0 ) {
                 return response.status(404).json({error: 'no-resource'});
             }
-
-            if ( review.comments ) {
-                // Delete the authors so we can recreate them from the request.
-                const deletionResults = await this.database.query(`
-                    DELETE FROM review_comments WHERE review_id = $1
-                    `,
-                    [ review.id ]
-                );
-                await this.insertComments(review.id, review.comments);
-            } 
 
             const returnReview = await this.selectReviews(review.id);
             return response.status(200).json(returnReview);

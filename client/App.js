@@ -68,9 +68,14 @@ const App = function(props) {
             <Router>
                 <header>
                     <section id="navigation">
+                        <section className="basic-navigation">
+                            <Link to="/about">about</Link>
+                            <Link to="/fields">fields</Link>
+                            <Link to="/users">users</Link>
+                        </section>
                         <UserNavigation />
                     </section>
-                    <Link to="/"><h1>Peer Review</h1></Link>
+                    <h1><Link to="/">Peer Review</Link></h1>
                 </header>
                 <main>
                     <Routes>
