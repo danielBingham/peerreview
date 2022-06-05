@@ -52,7 +52,7 @@ module.exports = class UserService {
         const results = await this.database.query(sql, params);
 
         if ( results.rows.length == 0 ) {
-            return null 
+            return  
         } else {
             const users = this.hydrateUsers(results.rows)
             return Object.values(users);
@@ -61,7 +61,6 @@ module.exports = class UserService {
 
     async selectUserPapers(id) {
 
-        console.log('selectUserPapers');
         const sql = `
             SELECT DISTINCT
                 papers.id

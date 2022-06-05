@@ -11,8 +11,9 @@ const UserService = require('../services/user');
 
 module.exports = class UserController {
 
-    constructor(database) {
+    constructor(database, logger) {
         this.database = database;
+        this.logger = logger;
         this.auth = new AuthenticationService();
         this.paperService = new PaperService(database);
         this.userService = new UserService(database);
@@ -30,7 +31,7 @@ module.exports = class UserController {
                 const users = await this.userService.selectUsers('WHERE name ILIKE $1', [ request.query.name+"%" ]);
                 return response.status(200).json(users);
             } catch (error) {
-                console.error(error);
+                this.logger.error(error);
                 return response.status(500).json({ error: 'unknown' });
             }
 
@@ -49,7 +50,7 @@ module.exports = class UserController {
             const users = await this.userService.selectUsers()
             return response.status(200).json(users);
         } catch (error) {
-            console.error(error);
+            this.logger.error(error);
             response.status(500).json({ error: 'unknown' });
             return;
         }
@@ -94,7 +95,7 @@ module.exports = class UserController {
             const returnUser = await this.userService.selectUsers('WHERE id=$1', [results.rows[0].id]);
             return response.status(201).json(returnUser[0]);
         } catch (error) {
-            console.error(error);
+            this.logger.error(error);
             return response.status(500).json({error: 'unknown'});
         }
     }
@@ -115,7 +116,7 @@ module.exports = class UserController {
 
             return response.status(200).json(returnUsers[0]);
         } catch (error) {
-            console.error(error);
+            this.logger.error(error);
             return response.status(500).json({ error: 'unknown'});
         }
     }
@@ -148,7 +149,7 @@ module.exports = class UserController {
             }
             return response.status(200).json(returnUser[0]);
         } catch (error) {
-            console.error(error);
+            this.logger.error(error);
             response.status(500).json({error: 'unknown'});
         }
     }
@@ -176,7 +177,7 @@ module.exports = class UserController {
                 try {
                     user[key] = await this.auth.hashPassword(user[key]);
                 } catch (error) {
-                    console.error(error);
+                    this.logger.error(error);
                     return response.status(500).json({error: 'unknown'});
                 }
             }
@@ -200,7 +201,7 @@ module.exports = class UserController {
             }
             return response.status(200).json(returnUser[0]);
         } catch (error) {
-            console.error(error);
+            this.logger.error(error);
             response.status(500).json({error: 'unknown'})
         }
     }
@@ -224,7 +225,7 @@ module.exports = class UserController {
 
             return response.status(200).json({userId: request.params.id});
         } catch (error) {
-            console.error(error);
+            this.logger.error(error);
             return response.status(500).json({error: 'unknown'});
         }
     }
@@ -241,7 +242,7 @@ module.exports = class UserController {
             const papers = await this.paperService.selectPapers(paperIds)
             return response.status(200).json(papers)
         } catch (error) {
-            console.error(error)
+            this.logger.error(error)
             return response.status(500).json({error: 'unknown'})
         }
         

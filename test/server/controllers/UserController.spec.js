@@ -1,9 +1,13 @@
-const UserController = require('../../../server/controllers/users.js');
-const AuthenticationService = require('../../../server/services/authentication.js');
+const UserController = require('../../../server/controllers/users');
+const AuthenticationService = require('../../../server/services/authentication');
+const Logger = require('../../../server/logger')
 
 describe('UserController', function() {
     
     const auth = new AuthenticationService();
+    const logger = new Logger()
+    // Disable logging.
+    logger.level = -1
 
     // ====================== Fixture Data ====================================
 
@@ -66,6 +70,7 @@ describe('UserController', function() {
         query: jest.fn()
     };
 
+
     beforeEach(function() {
         connection.query.mockReset();
     });
@@ -74,7 +79,7 @@ describe('UserController', function() {
         it('should return 200 and the users', async function() {
             connection.query.mockReturnValueOnce({ rowCount: 2, rows: database }); 
 
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
 
             const response = new Response();
             await userController.getUsers(null, response);
@@ -89,7 +94,7 @@ describe('UserController', function() {
                 throw new Error('Something went wrong!')
             })
 
-            const userController = new UserController(connection)
+            const userController = new UserController(connection, logger)
 
             const response = new Response()
             await userController.getUsers(null, response)
@@ -115,7 +120,7 @@ describe('UserController', function() {
            };
 
            const response = new Response();
-           const userController = new UserController(connection);
+           const userController = new UserController(connection, logger);
            await userController.postUsers(request, response);
 
            const databaseCall = connection.query.mock.calls[1];
@@ -137,7 +142,7 @@ describe('UserController', function() {
             };
 
             const response = new Response()
-            const userController = new UserController(connection)
+            const userController = new UserController(connection, logger)
             await userController.postUsers(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(500);
@@ -156,7 +161,7 @@ describe('UserController', function() {
             };
 
             const response = new Response();
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
             await userController.getUser(request, response);
 
             expect(response.status.mock.calls[0][0]).toEqual(200);
@@ -172,7 +177,7 @@ describe('UserController', function() {
             };
 
             const response = new Response();
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
             await userController.getUser(request, response);
 
             expect(response.status.mock.calls[0][0]).toEqual(404);
@@ -191,7 +196,7 @@ describe('UserController', function() {
             };
 
             const response = new Response()
-            const userController = new UserController(connection)
+            const userController = new UserController(connection, logger)
             await userController.getUser(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(500);
@@ -212,7 +217,7 @@ describe('UserController', function() {
                }
            };
            const response = new Response();
-           const userController = new UserController(connection);
+           const userController = new UserController(connection, logger);
            await userController.putUser(request, response);
 
            expect(response.status.mock.calls[0][0]).toEqual(200);
@@ -233,7 +238,7 @@ describe('UserController', function() {
             };
             const response = new Response();
 
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
             await userController.putUser(request, response);
 
             const databaseCall = connection.query.mock.calls[0];
@@ -264,7 +269,7 @@ describe('UserController', function() {
           };
           const response = new Response();
 
-          const userController = new UserController(connection);
+          const userController = new UserController(connection, logger);
           await userController.putUser(request, response);
 
           const databaseCall = connection.query.mock.calls[0];
@@ -287,7 +292,7 @@ describe('UserController', function() {
             };
 
             const response = new Response();
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
             await userController.getUser(request, response);
 
             expect(response.status.mock.calls[0][0]).toEqual(404);
@@ -308,7 +313,7 @@ describe('UserController', function() {
             };
 
             const response = new Response()
-            const userController = new UserController(connection)
+            const userController = new UserController(connection, logger)
             await userController.getUser(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(500);
@@ -334,7 +339,7 @@ describe('UserController', function() {
             };
             const response = new Response();
 
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
             await userController.patchUser(request, response);
 
             const expectedSQL = 'UPDATE users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3';
@@ -366,7 +371,7 @@ describe('UserController', function() {
             };
 
             const response = new Response();
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
             await userController.patchUser(request, response);
 
             const expectedSQL = 'UPDATE users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3';
@@ -402,7 +407,7 @@ describe('UserController', function() {
             };
 
             const response = new Response();
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
             await userController.patchUser(request, response);
 
             const expectedSQL = 'UPDATE users SET password = $1 and updated_date = now() WHERE id = $2';
@@ -429,7 +434,7 @@ describe('UserController', function() {
 
             const response = new Response();
 
-            const userController = new UserController(connection);
+            const userController = new UserController(connection, logger);
             await userController.deleteUser(request, response);
 
             expect(response.status.mock.calls[0][0]).toEqual(200);

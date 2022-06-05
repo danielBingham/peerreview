@@ -12,14 +12,14 @@
 const express = require('express');
 const multer = require('multer');
 
-module.exports = function(database, config) {
+module.exports = function(database, logger, config) {
     const router = express.Router();
 
     /******************************************************************************
      *          User REST Routes
      ******************************************************************************/
     const UserController = require('./controllers/users');
-    const userController = new UserController(database);
+    const userController = new UserController(database, logger);
 
     // Run a query against users
     router.get('/users/query', function(request, response) {

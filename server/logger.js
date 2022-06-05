@@ -1,25 +1,17 @@
-import config from './configuration'
 
-/**
- * Use NPM's logging levels.
- */
-export const levels = {
-    error: 0,
-    warn: 1,
-    info: 2,
-    http: 3,
-    verbose: 4,
-    debug: 5,
-    silly: 6
-}
-
-
-export class Logger  {
+module.exports = class Logger  {
     /**
-     * Convenience property to allow easy access to the levels.
+     * Use NPM's logging levels.
      */
-    static levels = levels
-
+    static levels = {
+        error: 0,
+        warn: 1,
+        info: 2,
+        http: 3,
+        verbose: 4,
+        debug: 5,
+        silly: 6
+    }
 
     constructor(level) {
         if (Number.isInteger(level)) {
@@ -45,7 +37,7 @@ export class Logger  {
 
     log(level, message) {
         if ( level <= this.level ) {
-            if ( level == levels.error) {
+            if ( level == Logger.levels.error) {
                 console.error(message)
             } else {
                 console.log(message)
@@ -54,33 +46,31 @@ export class Logger  {
     }
 
     error(message) {
-        this.log(levels.error, message)    
+        this.log(Logger.levels.error, message)    
     }
 
     warn(message) {
-        this.log(levels.warn, message)
+        this.log(Logger.levels.warn, message)
     }
 
     info(message) {
-        this.log(levels.info, message)
+        this.log(Logger.levels.info, message)
     }
 
     http(message) {
-        this.log(levels.http, message)
+        this.log(Logger.levels.http, message)
     }
 
     verbose(message) {
-        this.log(levels.verbose, message)
+        this.log(Logger.levels.verbose, message)
     }
 
     debug(message) {
-        this.log(levels.debug, message)
+        this.log(Logger.levels.debug, message)
     }
 
     silly(message) {
-        this.log(levels.silly, message)
+        this.log(Logger.levels.silly, message)
     }
 
 }
-
-export default new Logger(config.log_level)

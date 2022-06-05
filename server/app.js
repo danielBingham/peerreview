@@ -12,8 +12,9 @@ var path = require('path');
 var logger = require('morgan');
 var { Client, Pool } = require('pg');
 var session = require('express-session');
-var pgSession= require('connect-pg-simple')(session);
+var pgSession = require('connect-pg-simple')(session);
 
+const Logger = requre('./logger');
 
 // Load our configuration file.  Loads the index.js file from the config/ directory which
 // then uses the NODE_ENV variable to determine what environment we're running in and
@@ -22,6 +23,8 @@ var pgSession= require('connect-pg-simple')(session);
 //
 // For sturcture, see config/default.js
 var config = require('./config');
+
+const logger = new Logger(config.log_level)
 
 const connection = new Pool({
     host: config.database.host,
@@ -69,7 +72,7 @@ app.use(session({
 }));
 
 // Get the api router, pre-wired up to the controllers.
-const router = require('./router')(connection, config);
+const router = require('./router')(connection, logger, config);
 
 // Load our router at the ``/api/v0/`` route.  This allows us to version our api. If,
 // in the future, we want to release an updated version of the api, we can load it at
