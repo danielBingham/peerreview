@@ -1,9 +1,9 @@
 # Peer Review 
 
 Peer Review is an open access, reputation based scientific publishing system
-that has the potential to replace the journal system with a single,
-community run website.  It is free to publish, free to access, and the plan is
-to support it with donations and (eventually, hopefully) institutional support.
+that has the potential to replace the journal system with a single, community
+run website.  It is free to publish, free to access, and the plan is to support
+it with donations and (eventually, hopefully) institutional support.
 
 It allows academic authors to submit a draft of a paper for review by peers in
 their field, and then to publish it for public consumption once they are ready.
@@ -33,8 +33,7 @@ Rationale](./rationale.md).
 ## Contributing 
 
 The tech stack is Nodejs and Express on the backend, React and Redux on the
-frontend, and Postgres as a database. For now we're just using ES6 rather than
-Typescript, because it's easier and faster for a small team.
+frontend, and Postgres as a database. 
 
 There is a Github Project setup with issues and Milestones, however, these are
 a bit out of date.  There are planning documents partially written in
