@@ -63,8 +63,9 @@ module.exports = class PaperService {
             const paper_field = {
                 id: row.field_id,
                 name: row.field_name,
+                parentId: row.field_parentId,
                 createdDate: row.field_createdDate,
-                updateDate: row.field_updatedDate
+                updatedDate: row.field_updatedDate
             }
 
             if ( ! papers[paper.id].fields.find((f) => f.id == paper_field.id)) {

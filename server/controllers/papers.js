@@ -1,6 +1,6 @@
-const fs = require('fs');
-const sanitizeFilename = require('sanitize-filename');
-const PaperService = require('../services/paper.js');
+const fs = require('fs')
+const sanitizeFilename = require('sanitize-filename')
+const PaperService = require('../services/paper.js')
 
 /******************************************************************************
  *     PaperController 
@@ -15,9 +15,10 @@ const PaperService = require('../services/paper.js');
  */
 module.exports = class PaperController {
 
-    constructor(database) {
-        this.database = database;
-        this.paperService = new PaperService(database);
+    constructor(database, logger) {
+        this.database = database
+        this.logger = logger
+        this.paperService = new PaperService(database)
     }
 
 
@@ -28,12 +29,12 @@ module.exports = class PaperController {
      */
     async getPapers(request, response) {
         try {
-            const papers = await this.paperService.selectPapers();
-            return response.status(200).json(papers);
+            const papers = await this.paperService.selectPapers()
+            return response.status(200).json(papers)
         } catch (error) {
-            console.error(error);
-            response.status(500).json({ error: 'unknown' });
-            return;
+            this.logger.error(error)
+            response.status(500).json({ error: 'unknown' })
+            return
         }
     }
 
@@ -43,7 +44,7 @@ module.exports = class PaperController {
      * Create a new paper in the database from the provided JSON.
      */
     async postPapers(request, response) {
-        const paper = request.body;
+        const paper = request.body
 
         try {
             const results = await this.database.query(`
@@ -52,20 +53,20 @@ module.exports = class PaperController {
                     RETURNING id
                 `, 
                 [ paper.title, paper.isDraft ]
-            );
+            )
             if ( results.rows.length == 0 ) {
-                console.error('Failed to insert a paper.');
-                return response.status(500).json({error: 'unknown'});
+                this.logger.error('Failed to insert a paper.')
+                return response.status(500).json({error: 'unknown'})
             }
-            paper.id = results.rows[0].id;
-            await this.insertAuthors(paper); 
-            await this.insertFields(paper);
+            paper.id = results.rows[0].id
+            await this.insertAuthors(paper) 
+            await this.insertFields(paper)
 
-            const returnPaper = await this.paperService.selectPapers(paper.id);
-            return response.status(201).json(returnPaper);
+            const returnPaper = await this.paperService.selectPapers(paper.id)
+            return response.status(201).json(returnPaper)
         } catch (error) {
-            console.error(error);
-            return response.status(500).json({error: 'unknown'});
+            this.logger.error(error)
+            return response.status(500).json({error: 'unknown'})
         }
     }
 
@@ -83,12 +84,12 @@ module.exports = class PaperController {
                 WHERE id = $1
                 `,
                 [ request.params.id ]
-            );
+            )
 
             if ( titleResults.rows.length == 0 ) {
-                console.error('Attempt to upload paper that does not exist.');
-                fs.rmSync(request.file.path);
-                return response.status(404).json({ error: 'no-paper' });
+                this.logger.error('Attempt to upload paper that does not exist.')
+                fs.rmSync(request.file.path)
+                return response.status(404).json({ error: 'no-paper' })
             }
 
             const versionResults = await this.database.query(`
@@ -100,26 +101,26 @@ module.exports = class PaperController {
                     paper_id, version, filepath
                 `,
                 [request.params.id, request.file.path]
-            );
+            )
 
             if (versionResults.rows.length == 0) {
-                console.error('Insert paper version failed silently for ' + paper_id + ' and ' + request.file.path);
-                fs.rmSync(request.file.path);
-                return response.status(500).json({ error: 'unknown' });
+                this.logger.error('Insert paper version failed silently for ' + paper_id + ' and ' + request.file.path)
+                fs.rmSync(request.file.path)
+                return response.status(500).json({ error: 'unknown' })
             }
 
-            const version = versionResults.rows[0].version;
+            const version = versionResults.rows[0].version
 
-            const title = titleResults.rows[0].title;
-            let titleFilename = title.replaceAll(/\s/g, '-');
-            titleFilename = titleFilename.toLowerCase();
-            titleFilename = sanitizeFilename(titleFilename);
+            const title = titleResults.rows[0].title
+            let titleFilename = title.replaceAll(/\s/g, '-')
+            titleFilename = titleFilename.toLowerCase()
+            titleFilename = sanitizeFilename(titleFilename)
 
             const base = 'public'
             // TODO Properly check the MIME type and require PDF.  Possibly use Node Mime.
-            const filename = request.params.id + '-' + version + '-' + titleFilename + '.pdf';
-            const filepath = '/uploads/papers/' + filename;
-            fs.copyFileSync(request.file.path, base+filepath); 
+            const filename = request.params.id + '-' + version + '-' + titleFilename + '.pdf'
+            const filepath = '/uploads/papers/' + filename
+            fs.copyFileSync(request.file.path, base+filepath) 
 
             const updateResults = await this.database.query(`
                 UPDATE paper_versions SET
@@ -127,21 +128,21 @@ module.exports = class PaperController {
                 WHERE paper_id = $2 and version = $3
                 `,
                 [ filepath, request.params.id, version ]
-            );
+            )
 
             if (updateResults.rowCount == 0) {
-                console.error('Failed to update paper version with new filepath: ' + filepath);
-                fs.rmSync(base + filepath);
-                return response.status(500).json({ error: 'failed-filepath-update' });
+                this.logger.error('Failed to update paper version with new filepath: ' + filepath)
+                fs.rmSync(base + filepath)
+                return response.status(500).json({ error: 'failed-filepath-update' })
             }
 
-            fs.rmSync(request.file.path);
+            fs.rmSync(request.file.path)
 
-            const returnPaper = await this.paperService.selectPapers(request.params.id);
-            return response.status(200).json(returnPaper);
+            const returnPaper = await this.paperService.selectPapers(request.params.id)
+            return response.status(200).json(returnPaper)
         } catch (error) {
-            console.error(error);
-            return response.status(500).json({ error: 'unknown' });
+            this.logger.error(error)
+            return response.status(500).json({ error: 'unknown' })
         }
     }
 
@@ -151,13 +152,17 @@ module.exports = class PaperController {
      * Get details for a single paper in the database.
      */
     async getPaper(request, response) {
-
         try {
-            const paper = await this.paperService.selectPapers(request.params.id);
-            return response.status(200).json(paper);
+            const paper = await this.paperService.selectPapers(request.params.id)
+
+            if ( ! paper ) {
+                return response.status(404).json({})
+            }
+
+            return response.status(200).json(paper)
         } catch (error) {
-            console.error(error);
-            return response.status(500).send();
+            this.logger.error(error)
+            return response.status(500).json({ error: 'unknown' })
         }
     }
 
@@ -170,8 +175,8 @@ module.exports = class PaperController {
      */
     async putPaper(request, response) {
         try {
-            const paper = request.body;
-            paper.id = request.params.id;
+            const paper = request.body
+            paper.id = request.params.id
 
             // Update the paper.
             const results = await this.database.query(`
@@ -180,10 +185,10 @@ module.exports = class PaperController {
                 WHERE id = $3 
                 `,
                 [ paper.title, paper.isDraft, paper.id ]
-            );
+            )
 
             if (results.rowCount == 0 ) {
-                return response.status(404).json({error: 'no-resource'});
+                return response.status(404).json({error: 'no-resource'})
             }
 
             // Delete the authors so we can recreate them from the request.
@@ -191,23 +196,23 @@ module.exports = class PaperController {
                 DELETE FROM paper_authors WHERE paper_id = $1
                 `,
                 [ paper.id ]
-            );
+            )
 
             const fieldDeletionResults = await this.database.query(`
                 DELETE FROM paper_fields WHERE paper_id = $1
                 `,
                 [ paper.id ]
-            );
+            )
 
             // Reinsert the authors.
-            await this.insertAuthors(paper);
-            await this.insertFields(paper);
+            await this.insertAuthors(paper)
+            await this.insertFields(paper)
 
-            const returnPaper = await this.paperService.selectPapers(paper.id);
-            return response.status(200).json(returnPaper);
+            const returnPaper = await this.paperService.selectPapers(paper.id)
+            return response.status(200).json(returnPaper)
         } catch (error) {
-            console.error(error);
-            response.status(500).json({error: 'unknown'});
+            this.logger.error(error)
+            response.status(500).json({error: 'unknown'})
         }
     }
 
@@ -219,7 +224,7 @@ module.exports = class PaperController {
      * TODO Account for paper_versions.
      */
     async patchPaper(request, response) {
-        let paper = request.body;
+        let paper = request.body
 
         // We want to use the params.id over any id in the body.
         paper.id = request.params.id
@@ -227,29 +232,29 @@ module.exports = class PaperController {
         // We'll ignore these fields when assembling the patch SQL.  These are
         // fields that either need more processing (authors) or that we let the
         // database handle (date fields, id, etc)
-        const ignoredFields = [ 'id', 'authors', 'createdDate', 'updatedDate' ];
+        const ignoredFields = [ 'id', 'authors', 'fields', 'versions', 'createdDate', 'updatedDate' ]
 
-        let sql = 'UPDATE papers SET ';
-        let params = [];
-        let count = 1;
+        let sql = 'UPDATE papers SET '
+        let params = []
+        let count = 1
         for(let key in paper) {
             if (ignoredFields.includes(key)) {
-                continue;
+                continue
             }
-            sql += key + ' = $' + count + ' and ';
+            sql += key + ' = $' + count + ' and '
 
-            params.push(paper[key]);
-            count = count + 1;
+            params.push(paper[key])
+            count = count + 1
         }
-        sql += 'updated_date = now() WHERE id = $' + count;
+        sql += 'updated_date = now() WHERE id = $' + count
 
-        params.push(paper.id);
+        params.push(paper.id)
 
         try {
-            const results = await this.database.query(sql, params);
+            const results = await this.database.query(sql, params)
 
             if ( results.rowCount == 0 ) {
-                return response.status(404).json({error: 'no-resource'});
+                return response.status(404).json({error: 'no-resource'})
             }
 
             if ( paper.authors ) {
@@ -258,14 +263,14 @@ module.exports = class PaperController {
                     DELETE FROM paper_authors WHERE paper_id = $1
                     `,
                     [ paper.id ]
-                );
-                await this.insertAuthors(paper);
+                )
+                await this.insertAuthors(paper)
             } 
 
-            const returnPaper = await this.selectPaper(paper.id);
-            return response.status(200).json(returnPaper);
+            const returnPaper = await this.selectPaper(paper.id)
+            return response.status(200).json(returnPaper)
         } catch (error) {
-            console.error(error);
+            this.logger.error(error)
             response.status(500).json({error: 'unknown'})
         }
     }
@@ -276,21 +281,20 @@ module.exports = class PaperController {
      * Delete an existing paper.
      */
     async deletePaper(request, response) {
-
         try {
             const results = await this.database.query(
                 'delete from papers where id = $1',
                 [ request.params.id ]
-            );
+            )
 
             if ( results.rowCount == 0) {
-                return response.status(404).json({error: 'no-resource'});
+                return response.status(404).json({error: 'no-resource'})
             }
 
-            return response.status(200).json({paperId: request.params.id});
+            return response.status(200).json({paperId: request.params.id})
         } catch (error) {
-            console.error(error);
-            return response.status(500).json({error: 'unknown'});
+            this.logger.error(error)
+            return response.status(500).json({error: 'unknown'})
         }
     }
 
@@ -301,11 +305,11 @@ module.exports = class PaperController {
      * @throws Error Doesn't catch errors, so any errors returned by the database will bubble up.
      */
     async insertAuthors(paper) {
-        let sql =  `INSERT INTO paper_authors (paper_id, user_id, author_order, owner) VALUES `;
-        let params = [];
+        let sql =  `INSERT INTO paper_authors (paper_id, user_id, author_order, owner) VALUES `
+        let params = []
 
-        let count = 1;
-        let authorCount = 1;
+        let count = 1
+        let authorCount = 1
         for (const author of paper.authors) {
             sql += `($${count}, $${count+1}, $${count+2}, $${count+3})` + (authorCount < paper.authors.length ? ', ' : '')
             params.push(paper.id, author.user.id, author.order, author.owner)
@@ -313,24 +317,25 @@ module.exports = class PaperController {
             authorCount++
         }
 
-        const results = await this.database.query(sql, params);
+        const results = await this.database.query(sql, params)
 
         if (results.rowCount == 0 )  {
-            throw new Error('Something went wrong with the author insertion.');
+            throw new Error('Something went wrong with the author insertion.')
         }
     }
 
     /**
-     * Insert fields for the paper.  Assumes the field already exists, only inserts the ids into the tagging table.
+     * Insert fields for the paper.  Assumes the field already exists, only
+     * inserts the ids into the tagging table.
      *
      * @throws Error Doesn't catch errors, so any errors thrown by the database will bubble up.
      */
     async insertFields(paper) {
-        let sql = `INSERT INTO paper_fields (field_id, paper_id) VALUES `;
+        let sql = `INSERT INTO paper_fields (field_id, paper_id) VALUES `
         let params = []
 
-        let count = 1;
-        let fieldCount = 1;
+        let count = 1
+        let fieldCount = 1
         for (const field of paper.fields) {
             sql += `($${count}, $${count+1})` + (fieldCount < paper.fields.length ? ', ' : '')
             params.push(paper.id, field.id)
@@ -344,4 +349,4 @@ module.exports = class PaperController {
             throw new Error('Something went wrong with field insertion.')
         }
     }
-}; 
+} 
