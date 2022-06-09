@@ -35,15 +35,23 @@ Rationale](./rationale.md).
 The tech stack is Nodejs and Express on the backend, React and Redux on the
 frontend, and Postgres as a database. 
 
-There is a Github Project setup with issues and Milestones, however, these are
-a bit out of date.  There are planning documents partially written in
-[Planning](./documentation/planning/), however, these are only partially
-completed.
+There is a [Github Project](
+https://github.com/users/danielBingham/projects/6/views/1) setup with issues
+and Milestones, however, these are a bit out of date.  There are planning
+documents partially written in [Planning](./documentation/planning/), however,
+these are only partially completed.
 
 Right now, it's a one developer show and it will probably remain that way until
 we reach an alpha prototype of the MVP.  Then we'll take stock, do more
 detailed planning and break out tasks that will be easier for contributors to
 pick up.
+
+### Documentation
+
+Documentation is partial and incomplete, but will be fleshed out over time.
+
+- [API](./documentation/api/)
+- [Planning](./documentation/planning)
 
 ### Running Locally
 
