@@ -19,9 +19,14 @@ const PaperListItem = function(props) {
         }
     }
 
-        const paperPath = `/submission/${paper.id}`
+    let fieldList = ''
+    for( const field of paper.fields ) {
+        fieldList += `[${field.name}] `
+    }
+
+    const paperPath = `/submission/${paper.id}`
     return (
-        <li id={paper.id} >[{Math.floor(Math.random() * 100)} votes] [{Math.floor(Math.random()*10)} responses] <Link to={paperPath}>{paper.title}</Link> by {authorList} [physics] [particle-physics]</li>
+        <li id={paper.id} >[{Math.floor(Math.random() * 100)} votes] [{Math.floor(Math.random()*10)} responses] <Link to={paperPath}>{paper.title}</Link> by {authorList} {fieldList}</li>
     )
 }
 
