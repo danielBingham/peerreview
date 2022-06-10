@@ -217,7 +217,6 @@ export const usersSlice = createSlice({
 
 export const queryUsers = function(name) {
     return function(dispatch, getState) {
-
         const params = new URLSearchParams({ name: name })
 
         const requestId = uuidv4() 
@@ -226,7 +225,6 @@ export const queryUsers = function(name) {
         let payload = {
             requestId: requestId
         }
-
 
         dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {

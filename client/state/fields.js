@@ -7,7 +7,7 @@ import logger from '../logger'
 import RequestTracker from './helpers/requestTracker'
 
 export const fieldsSlice = createSlice({
-    name: 'field',
+    name: 'fields',
     initialState: {
         /**
          * A dictionary of requests in progress or that we've made and completed,
@@ -24,8 +24,52 @@ export const fieldsSlice = createSlice({
          * @type {object}
          */
         dictionary: {},
+
+        /** 
+         * A list of fields returned from /fields/query.  We need to use a list
+         * here, because we need to preserve the order returned from the
+         * backend.  The query can include a `sort` parameter.  We can only run
+         * one query at a time, subsequent queries will be assumed to build on
+         * it. If you need to start a new query, call the `newQuery` action.
+         */
+        query: [] 
     },
     reducers: {
+
+        /**
+         * Reset the query so that you can start a new one.
+         *
+         * Doesn't take a payload.
+         *
+         * @param {object} state - the redux state slice.
+         * @param {object} action - the redux action we're reducing.
+         */
+        newQuery: function(state, acton) {
+            state.query = []
+        },
+
+        // ========== GET /fields/query?... ==================
+
+        /**
+         * The GET request to /fields/query?... succeeded.
+         *
+         * @param {object} state - The redux state slice.
+         * @param {object} action - The redux action we're reducing.
+         * @param {object} action.payload - The payload sent with the action.
+         * @param {string} action.payload.requestId - A uuid for the request.
+         * @param {object} action.payload.result - An array of populated field objects
+         */
+        completeQueryFieldsRequest: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+
+            if ( action.payload.result && action.payload.result.length > 0 ) {
+                for (const field of action.payload.result) {
+                    state.dictionary[field.id] = field
+                    state.query.push(field)
+                }
+            }
+        },
+
         // ========== GET /fields ==================
 
         /**
@@ -132,6 +176,60 @@ export const fieldsSlice = createSlice({
         }
     }
 })
+
+/**
+ * GET /fields/query?...
+ *
+ * Run a query against the fields in the database, getting back an ordered
+ * array.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const queryFields = function(name) {
+    return function(dispatch, getState) {
+        const params = new URLSearchParams({ name: name })
+
+        const requestId = uuidv4() 
+        const endpoint = '/fields/query?' + params.toString()
+
+        let payload = {
+            requestId: requestId
+        }
+
+
+        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(fields) {
+            payload.result = fields
+            dispatch(fieldsSlice.actions.completeQueryFieldsRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(fieldsSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
 
 
 /**
@@ -449,6 +547,6 @@ export const deleteField = function(field) {
 } 
 
 
-export const { completeGetFieldsRequest, completeDeleteFieldRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
+export const { newQuery, completeQueryFieldsRequest, completeGetFieldsRequest, completeDeleteFieldRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
 
 export default fieldsSlice.reducer

@@ -18,19 +18,19 @@ module.exports = class Logger  {
             this.level = level
         } else {
             if (level == 'error') {
-                this.level = levels.error
+                this.level = Logger.levels.error
             } else if (level == 'warn') {
-                this.level = levels.warn
+                this.level = Logger.levels.warn
             } else if (level == 'info') {
-                this.level = levels.info
+                this.level = Logger.levels.info
             } else if (level == 'http') {
-                this.level = levels.http
+                this.level = Logger.levels.http
             } else if (level == 'verbose') {
-                this.level = levels.verbose
+                this.level = Logger.levels.verbose
             } else if (level == 'debug') {
-                this.level = levels.debug
+                this.level = Logger.levels.debug
             } else if (level == 'silly') {
-                this.level = levels.silly
+                this.level = Logger.levels.silly
             }
         }
     }

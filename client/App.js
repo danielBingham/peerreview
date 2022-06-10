@@ -15,9 +15,9 @@ import UserProfile from './components/authentication/UserProfile'
 import RegistrationForm from './components/authentication/RegistrationForm'
 import LoginForm from './components/authentication/LoginForm'
 import UserNavigation from './components/UserNavigation'
-import SubmitDraftForm from './components/peer-review/SubmitDraftForm'
-import SubmissionList from './components/peer-review/SubmissionList'
-import ViewSubmission from './components/peer-review/ViewSubmission'
+import SubmitDraftForm from './components/papers/SubmitDraftForm'
+import SubmissionList from './components/reviews/SubmissionList'
+import ViewSubmission from './components/reviews/ViewSubmission'
 import Spinner from './components/Spinner'
 
 import './app.css';

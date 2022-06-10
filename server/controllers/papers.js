@@ -45,6 +45,7 @@ module.exports = class PaperController {
      */
     async postPapers(request, response) {
         const paper = request.body
+        console.log(paper)
 
         try {
             const results = await this.database.query(`
@@ -59,6 +60,7 @@ module.exports = class PaperController {
                 return response.status(500).json({error: 'unknown'})
             }
             paper.id = results.rows[0].id
+            console.log(paper)
             await this.insertAuthors(paper) 
             await this.insertFields(paper)
 
@@ -331,6 +333,10 @@ module.exports = class PaperController {
      * @throws Error Doesn't catch errors, so any errors thrown by the database will bubble up.
      */
     async insertFields(paper) {
+        if ( ! paper.fields ) {
+            return
+        }
+
         let sql = `INSERT INTO paper_fields (field_id, paper_id) VALUES `
         let params = []
 
@@ -338,7 +344,7 @@ module.exports = class PaperController {
         let fieldCount = 1
         for (const field of paper.fields) {
             sql += `($${count}, $${count+1})` + (fieldCount < paper.fields.length ? ', ' : '')
-            params.push(paper.id, field.id)
+            params.push(field.id, paper.id)
             count = count+2
             fieldCount++
         }

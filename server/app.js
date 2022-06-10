@@ -9,12 +9,12 @@
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-var logger = require('morgan');
+var morgan = require('morgan');
 var { Client, Pool } = require('pg');
 var session = require('express-session');
 var pgSession = require('connect-pg-simple')(session);
 
-const Logger = requre('./logger');
+const Logger = require('./logger');
 
 // Load our configuration file.  Loads the index.js file from the config/ directory which
 // then uses the NODE_ENV variable to determine what environment we're running in and
@@ -48,8 +48,8 @@ var app = express();
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'hbs');
 
-// Use a development logger.
-app.use(logger('dev'));
+// Use a development http logger.
+app.use(morgan('dev'));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

@@ -16,21 +16,21 @@ module.exports = class FieldService {
             return null 
         }
 
-        const fields = {};
+        const fields = {}
 
         for(const row of rows) {
             const field = {
                 id: row.id,
                 name: row.name,
                 parentId: row.parentId
-            };
+            }
 
             if ( ! fields[field.id] ) {
-                fields[field.id] = field;
+                fields[field.id] = field
             }
         }
 
-        return fields;
+        return fields
     }
 
     async selectFields(where, params) {
@@ -42,19 +42,15 @@ module.exports = class FieldService {
                     id, name, parent_id as "parentId", created_date as "createdDate", updated_date as "updatedDate"
                 FROM fields 
                 ${where} 
-        `;
+        `
 
-        const results = await this.database.query(sql, params);
+        const results = await this.database.query(sql, params)
 
         if ( results.rows.length == 0 ) {
             return null
         } else {
             const fields = this.hydrateFields(results.rows)
-            if ( ids && ! Array.isArray(ids) ) {
-                return fields[ids];
-            } else {
-                return Object.values(fields);
-            }
+            return Object.values(fields)
         }
     }
 
