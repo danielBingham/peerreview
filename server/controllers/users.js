@@ -110,7 +110,7 @@ module.exports = class UserController {
         try {
             const returnUsers = await this.userService.selectUsers('WHERE id = $1', [request.params.id])
 
-            if ( ! returnUsers ) {
+            if ( returnUsers.length == 0 ) {
                 return response.status(404).json([]);
             }
 
@@ -144,7 +144,7 @@ module.exports = class UserController {
             }
 
             const returnUser = await this.userService.selectUsers('WHERE id=$1', results.rows[0].id)
-            if ( ! returnUser ) {
+            if ( returnUser.length == 0 ) {
                 throw new Error('Updated user somehow does not exist.')
             }
             return response.status(200).json(returnUser[0]);
