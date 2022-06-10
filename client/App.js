@@ -42,6 +42,14 @@ const App = function(props) {
         return state.authentication.currentUser
     })
 
+    const request = useSelector(function(state) {
+        if ( ! requestId ) {
+            return null
+        } else {
+            return state.authentication.requests[requestId]
+        }
+    })
+
     useLayoutEffect(function() {
         if ( ! currentUser && ! requestId ) {
             setRequestId(dispatch(getAuthentication()))
@@ -57,6 +65,10 @@ const App = function(props) {
 
 
     if ( ! currentUser && ! requestId ) {
+        return (
+            <Spinner />
+        )
+    } else if (request && request.state != 'fulfilled') {
         return (
             <Spinner />
         )

@@ -19,8 +19,13 @@ const PaperListItem = function(props) {
         }
     }
 
+    let fieldList = ''
+    for (const field of paper.fields) {
+        fieldList += `[${field.name}]`
+    }
+
     return (
-        <li id={paper.id} >[{Math.floor(Math.random() * 100)} votes] [{Math.floor(Math.random()*10)} responses] {paper.title} by {authorList} [physics] [particle-physics]</li>
+        <li id={paper.id} >[{Math.floor(Math.random() * 100)} votes] [{Math.floor(Math.random()*10)} responses] {paper.title} by {authorList} {fieldList}</li>
     )
 }
 
