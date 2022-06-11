@@ -6,21 +6,18 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import * as PDFLib from 'pdfjs-dist/webpack'
 
-import { getPaper, cleanupRequest as cleanupPaperRequest } from '../../state/papers'
-import { getReviews, patchReview, cleanupRequest as cleanupReviewRequest } from '../../state/reviews'
+import { getPaper, postVotes, cleanupRequest as cleanupPaperRequest } from '../../state/papers'
 
-import ReviewCommentForm from './ReviewCommentForm'
-import SubmissionPage from './SubmissionPage'
+import PublishedPaperPDFPageView from './PublishedPaperPDFPageView'
 import Spinner from '../Spinner'
 
-const ViewSubmission = function(props) {
+const PublishedPaperPDFView = function(props) {
     const [ paperRequestId, setPaperRequestId ] = useState(null)
-    const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
-    const [ patchReviewRequestId, setPatchReviewRequestId ] = useState(null)
+    const [ voteRequestId, setVoteRequestId] = useState(null)
 
     const [ pages, setPages ] = useState([])
 
-    const { paperId } = useParams() 
+    const { id } = useParams() 
 
     const dispatch = useDispatch()
 
@@ -33,29 +30,21 @@ const ViewSubmission = function(props) {
         }
     })
 
-    const reviewsRequest = useSelector(function(state) {
-        if ( ! reviewsRequestId ) {
+    const voteRequest = useSelector(function(state) {
+        if ( ! voteRequestId ) {
             return null
         } else {
-            return state.reviews.requests[reviewsRequestId]
-        }
-    })
-
-    const patchReviewRequest = useSelector(function(state) {
-        if ( ! patchReviewRequestId ) {
-            return null
-        } else {
-            return state.reviews.requests[patchReviewRequestId]
+            return state.papers.requests[voteRequestId]
         }
     })
 
     // ================= Redux State ==========================================
 
     const paper = useSelector(function(state) {
-        if ( ! state.papers.dictionary[paperId] ) {
+        if ( ! state.papers.dictionary[id] ) {
             return null
         } else {
-            return state.papers.dictionary[paperId]
+            return state.papers.dictionary[id]
         }
     })
 
@@ -63,17 +52,38 @@ const ViewSubmission = function(props) {
         return state.authentication.currentUser
     })
 
-    const reviewInProgress = useSelector(function(state) {
-        return state.reviews.list.filter((review) => review.paperId == paperId && review.userId == currentUser.id && review.status == 'in-progress')
-    })
+
+    let vote = null
+    if ( currentUser && paper && paper.votes.length > 0 ) {
+        vote = paper.votes.find((v) => v.userId == currentUser.id)
+    }
     
     // ================= User Action Handling  ================================
 
-    const finishReview = function(event) {
+    const voteUp = function(event) {
         event.preventDefault()
 
-        reviewInProgress.status = 'approved'
-        setPatchReviewRequestId(dispatch(patchReview(reviewInProgress)))
+        if ( ! vote ) {
+            vote = {
+                paperId: id,
+                userId: currentUser.id,
+                score: 1
+            }
+            setVoteRequestId(dispatch(postVotes(vote)))
+        }
+    }
+
+    const voteDown = function(event) {
+        event.preventDefault()
+
+        if ( ! vote ) {
+            vote = {
+                paperId: id,
+                userId: currentUser.id,
+                score: -1
+            }
+            setVoteRequestId(dispatch(postVotes(vote)))
+        }
     }
 
     /**
@@ -81,46 +91,31 @@ const ViewSubmission = function(props) {
      * retrieve it from the paper endpoint to get full and up to date data.
      */
     useEffect(function() {
-        if ( ( ! paper || paper.versions.length == 0 ) && ! paperRequest ) {
-            setPaperRequestId(dispatch(getPaper(paperId)))
+        if ( ! paperRequest ) {
+            setPaperRequestId(dispatch(getPaper(id)))
         } 
 
         return function cleanup() {
             if ( paperRequest ) {
                 dispatch(cleanupPaperRequest(paperRequestId))
             }
+
         }
 
-    }, [paperId])
-
-    /**
-     * Once we've retrieved the papers, retrieve the reviews.
-     */
-    useEffect(function() {
-        if ( paper && ! reviewsRequestId ) {
-            setReviewsRequestId(dispatch(getReviews(paper.id)))
-        }
-
-        return function cleanup() {
-            if ( reviewsRequest) {
-                dispatch(cleanupReviewRequest(reviewsRequestId))
-            }
-        }
-
-    }, [ paper, reviewsRequestId ])
+    }, [id])
 
     /**
      * Once we have the paper and the reviews, load the PDFs so we can display
      * them.
      */
     useEffect(function() {
-        if ( paper && paper.versions.length > 0 && reviewsRequest && reviewsRequest.state == "fulfilled") {
+        if ( paper && paper.versions.length > 0 ) {
             const loadingTask = PDFLib.getDocument('http://' + window.location.host + paper.versions[0].filepath)
             loadingTask.promise.then(function(pdf) {
                 const newPages = []
                 for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                     const pageKey = `page-${pageNumber}`
-                    newPages.push(<SubmissionPage key={pageKey} pageNumber={pageNumber} pdf={pdf} />)
+                    newPages.push(<PublishedPaperPDFPageView key={pageKey} pageNumber={pageNumber} pdf={pdf} />)
                 }
                 setPages(newPages)
             }).catch(function(error) {
@@ -128,7 +123,7 @@ const ViewSubmission = function(props) {
             })
         }
 
-    }, [ paper, reviewsRequest ])
+    }, [ paper ])
 
     // ================= Render ===============================================
     
@@ -140,11 +135,29 @@ const ViewSubmission = function(props) {
             authorString += author.user.name + ( author.order < paper.authors.length ? ',' : '')
         }
 
+        let fieldString = ''
+        for(const field of paper.fields) {
+            fieldString += `[${field.name}] ` 
+        }
+
+        let score = 0
+        let user_vote = 0
+        for(const vote of paper.votes) {
+            if ( currentUser && vote.userId == currentUser.id ) {
+                user_vote = vote
+            }
+            score += vote.score
+        }
+
         return (
-            <section id={paper.id} className="paper-submission">
-                <h2 className="paper-submission-title">{paper.title}</h2>
-                <div className="paper-submission-authors">{authorString}</div>
-                { reviewInProgress ?  <button onClick={finishReview}>Finish Review</button> : <button>Start a Review</button> }
+            <section id={paper.id} className="paper">
+                <h2 className="paper-title">{paper.title}</h2>
+                <div className="paper-authors">{authorString}</div>
+                <div className="paper-fields">{fieldString}</div>
+                <div className="paper-votes">
+                    <a href="" className={ vote && vote.score==1 ? 'highlight' : '' } onClick={voteUp} >+</a>
+                    {score}
+                    <a href="" className={ vote && vote.scor==-1 ? 'highlight' : '' } onClick={voteDown} >-</a></div>
                 { pages }
             </section>
         )
@@ -152,4 +165,4 @@ const ViewSubmission = function(props) {
 
 }
 
-export default ViewSubmission
+export default PublishedPaperPDFView 

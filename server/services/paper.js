@@ -28,7 +28,8 @@ module.exports = class PaperService {
                 updatedDate: row.paper_updatedDate,
                 authors: [],
                 fields: [],
-                versions: [] 
+                versions: [],
+                votes: []
             };
 
             if ( ! papers[paper.id] ) {
@@ -71,6 +72,16 @@ module.exports = class PaperService {
             if ( ! papers[paper.id].fields.find((f) => f.id == paper_field.id)) {
                 papers[paper.id].fields.push(paper_field)
             }
+
+            const paper_vote = {
+                paper_id: row.vote_paperId,
+                user_id: row.vote_userId,
+                score: row.vote_score
+            }
+
+            if ( ! papers[paper.id].votes.find((v) => v.paperId == paper_vote.paperId && v.userId == paper_vote.userId) ) {
+                papers[paper.id].votes.push(paper_vote)
+            }
         })
 
         return papers;
@@ -94,13 +105,15 @@ module.exports = class PaperService {
                     paper_authors.user_id as author_id, paper_authors.author_order as author_order, paper_authors.owner as author_owner,
                     users.name as author_name, users.email as author_email, users.created_date as "author_createdDate", users.updated_date as "author_updatedDate",
                     paper_versions.version as paper_version, paper_versions.filepath as paper_filepath,
-                    fields.id as field_id, fields.name as field_name, fields.parent_id as "field_parentId", fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate"
+                    fields.id as field_id, fields.name as field_name, fields.parent_id as "field_parentId", fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
+                    paper_votes.paper_id as "vote_paperId", paper_votes.user_id as "vote_userId", paper_votes.score as vote_score
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
                     LEFT OUTER JOIN users ON users.id = paper_authors.user_id
                     LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
                     LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
+                    LEFT OUTER JOIN paper_votes ON paper_votes.paper_id = papers.id
                 ${where} 
                 ORDER BY paper_authors.author_order asc, paper_versions.version desc
         `;

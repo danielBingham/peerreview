@@ -23,9 +23,20 @@ const PaperListItem = function(props) {
     for (const field of paper.fields) {
         fieldList += `[${field.name}]`
     }
+    let score = 0
+    for (const vote of paper.votes) {
+        score += vote.score
+    }
 
     return (
-        <li id={paper.id} >[{Math.floor(Math.random() * 100)} votes] [{Math.floor(Math.random()*10)} responses] {paper.title} by {authorList} {fieldList}</li>
+        <div id={paper.id} className="paper">
+            <span className="votes">{score}<br /> <span className="label">votes</span></span> 
+            <span className="responses">0 <br /><span className="label">responses</span></span>
+            <div className="wrapper">
+                <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title} </Link></div> 
+                <div><span className="author-list">by {authorList}</span> <span className="field-list"> {fieldList}</span></div>
+            </div>
+        </div>
     )
 }
 
@@ -95,9 +106,9 @@ const PaperList = function(props) {
                     </section>
                 </section>
                 <div className="error"> {request && request.error} </div>
-                <ul>
+                <div>
                     {listItems}
-                </ul>
+                </div>
             </section>
         )
     } else {

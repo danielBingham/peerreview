@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import configuration from '../configuration'
 import logger from '../logger'
 
+import { addFields } from './fields'
 import { addUsers } from './users'
 import RequestTracker from './helpers/requestTracker'
 
@@ -64,6 +65,30 @@ export const papersSlice = createSlice({
         completeDeletePaperRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
             delete state.dictionary[action.payload.result]
+        },
+
+        // ======== POST /paper/:id/votes =====================================
+
+        /**
+         * Finish the POST /paper/:id/votes request by adding the vote to the
+         * paper's vote array in the database.
+         *
+         * TECHDEBT Assumes we're posting votes on a paper we've already pulled
+         * to the frontend.  Not necessarily a safe assumption.
+         */
+        completePostVotesRequest: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+            state.dictionary[action.payload.result.paper_id].votes.push(action.payload.result)
+        },
+
+        // TECHDEBT Assumes we're never getting votes for a paper we haven't
+        // already queried into the database. Not necessarily a safe
+        // assumption.
+        completeGetVotesRequest: function(state, action) {
+            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+            for(const vote of action.payload.result) {
+                state.dictionary[vote.paper_id].votes.push(vote)
+            }
         },
 
         // ========== Generic Request Methods =============
@@ -513,7 +538,110 @@ export const deletePaper = function(paper) {
     }
 } 
 
+/**
+ * GET /paper/:paper_id/votes
+ *
+ * Get all votes on this paper from the database.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const getVotes = function(paper_id) {
+    return function(dispatch, getState) {
+        const requestId = uuidv4() 
+        const endpoint = `/paper/${paper_id}/votes`
 
-export const { completeGetPapersRequest, completeDeletePaperRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = papersSlice.actions
+        let payload = {
+            requestId: requestId
+        }
+
+        dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(votes) {
+            payload.result = votes
+            dispatch(papersSlice.actions.completeGetVotesRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(papersSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
+
+/**
+ * POST /paper/:id/votes
+ *
+ * Add a vote to a paper.
+ *  
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {object} vote - A populated vote object.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const postVotes = function(vote) {
+    return function(dispatch, getState) {
+
+        const requestId = uuidv4()
+        const endpoint = `/paper/${vote.paperId}/votes`
+
+        const payload = {
+            requestId: requestId
+        }
+
+        dispatch(papersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(vote)
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(returnedVote) {
+            payload.result = returnedVote 
+            dispatch(papersSlice.actions.completePostVotesRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(papersSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
+
+export const { completeGetPapersRequest, completeDeletePaperRequest, completePostVotesRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = papersSlice.actions
 
 export default papersSlice.reducer

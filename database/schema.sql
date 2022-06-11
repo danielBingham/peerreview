@@ -15,24 +15,47 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app;
 /* Peer Review Schema file */
 
 CREATE TABLE users (
-    id    bigserial PRIMARY KEY,
-    name  varchar(256),
-    password  varchar(64),
-    email     varchar(256),
-    created_date  timestamp,
+    id bigserial PRIMARY KEY,
+    blind_id varchar(64), 
+    name varchar(256),
+    password varchar(256),
+    email varchar(256),
+    initial_reputation int,
+    reputation int,
+    created_date timestamp,
     updated_date timestamp 
 );
 
 CREATE TABLE fields (
-    id      bigserial PRIMARY KEY,
-    name    varchar(512),
-    parent_id   bigint REFERENCES fields(id) ON DELETE CASCADE,
-    created_date    timestamp,
-    updated_date    timestamp
+    id bigserial PRIMARY KEY,
+    name varchar(512),
+    parent_id bigint REFERENCES fields(id) ON DELETE CASCADE,
+    created_date timestamp,
+    updated_date timestamp
 );
 
-INSERT INTO fields (name, parent_id) VALUES ('biology', null), ('physics', null), ('chemistry', null), ('earth-science', null), ('space-science', null), ('anthropology', null), ('archaeology', null), ('economics', null), ('geography', null), ('political-science', null), ('psychology', null), ('sociology', null), ('social-work', null);
+INSERT INTO fields (name, parent_id, created_date, updated_date) 
+    VALUES 
+        ('biology', null, now(), now()), 
+        ('physics', null, now(), now()),
+        ('chemistry', null, now(), now()),
+        ('earth-science', null, now(), now()),
+        ('space-science', null, now(), now()), 
+        ('anthropology', null, now(), now()), 
+        ('archaeology', null, now(), now()), 
+        ('economics', null, now(), now()), 
+        ('geography', null, now(), now()), 
+        ('political-science', null, now(), now()), 
+        ('psychology', null, now(), now()), 
+        ('sociology', null, now(), now()), 
+        ('social-work', null, now(), now());
 
+CREATE TABLE user_reputation (
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    field_id bigint REFERENCES fields(id) ON DELETE CASCADE,
+    reputation int,
+    PRIMARY KEY (user_id, field_id)
+);
 
 CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
@@ -63,6 +86,13 @@ CREATE TABLE paper_fields (
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
     field_id    bigint REFERENCES fields(id) ON DELETE CASCADE,
     PRIMARY KEY (paper_id, field_id)
+);
+
+CREATE TABLE paper_votes (
+    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    score int,
+    PRIMARY KEY (paper_id, user_id)
 );
 
 CREATE TYPE review_status AS ENUM('in-progress', 'rejected', 'changes-requested', 'approved');

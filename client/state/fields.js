@@ -37,6 +37,21 @@ export const fieldsSlice = createSlice({
     reducers: {
 
         /**
+         * Add fields to the dictionary, or update fields already in the
+         * dictionary.
+         *
+         * @param {object} state    The redux state slice.
+         * @param {object} action   The redux action we're reducing.
+         * @param {object} action   The action payload to be reduced, in this
+         * case a list of field objects to be added to the store.
+         */
+        addFields: function(state, action) {
+            for(const field in action.payload) {
+                state.dictionary[field.id] = field
+            }
+        },
+
+        /**
          * Reset the query so that you can start a new one.
          *
          * Doesn't take a payload.
@@ -547,6 +562,6 @@ export const deleteField = function(field) {
 } 
 
 
-export const { newQuery, completeQueryFieldsRequest, completeGetFieldsRequest, completeDeleteFieldRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
+export const { addFields, newQuery, completeQueryFieldsRequest, completeGetFieldsRequest, completeDeleteFieldRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
 
 export default fieldsSlice.reducer

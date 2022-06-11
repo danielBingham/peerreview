@@ -17,7 +17,8 @@ import LoginForm from './components/authentication/LoginForm'
 import UserNavigation from './components/UserNavigation'
 import SubmitDraftForm from './components/papers/SubmitDraftForm'
 import SubmissionList from './components/reviews/SubmissionList'
-import ViewSubmission from './components/reviews/ViewSubmission'
+import PDFPaperDraftReviewView from './components/reviews/PDFPaperDraftReviewView'
+import PublishedPaperPDFView from './components/papers/PublishedPaperPDFView'
 import Spinner from './components/Spinner'
 
 import './app.css';
@@ -101,7 +102,10 @@ const App = function(props) {
                         { /* ========= Peer Review ============================ */ }
                         <Route path="/publish" element={ <SubmitDraftForm /> } />
                         <Route path="/submissions/" element={ <SubmissionList /> } />
-                        <Route path="/submission/:paperId" element={ <ViewSubmission /> }  />
+                        <Route path="/submission/:paperId" element={ <PDFPaperDraftReviewView /> }  />
+
+                        { /* ========= Published Papers ===================== */ }
+                        <Route path="/paper/:id" element={ <PublishedPaperPDFView /> } />
                     </Routes>
                 </main>
             </Router>

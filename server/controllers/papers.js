@@ -222,8 +222,6 @@ module.exports = class PaperController {
      * PATCH /paper/:id
      *
      * Update an existing paper given a partial set of fields in JSON.
-     *
-     * TODO Account for paper_versions.
      */
     async patchPaper(request, response) {
         let paper = request.body
@@ -243,7 +241,12 @@ module.exports = class PaperController {
             if (ignoredFields.includes(key)) {
                 continue
             }
-            sql += key + ' = $' + count + ' and '
+
+            if ( key == 'isDraft') {
+                sql += 'is_draft = $' + count + ', '
+            } else {
+                sql += key + ' = $' + count + ', '
+            }
 
             params.push(paper[key])
             count = count + 1
@@ -259,17 +262,7 @@ module.exports = class PaperController {
                 return response.status(404).json({error: 'no-resource'})
             }
 
-            if ( paper.authors ) {
-                // Delete the authors so we can recreate them from the request.
-                const deletionResults = await this.database.query(`
-                    DELETE FROM paper_authors WHERE paper_id = $1
-                    `,
-                    [ paper.id ]
-                )
-                await this.insertAuthors(paper)
-            } 
-
-            const returnPaper = await this.selectPaper(paper.id)
+            const returnPaper = await this.paperService.selectPapers(paper.id)
             return response.status(200).json(returnPaper)
         } catch (error) {
             this.logger.error(error)

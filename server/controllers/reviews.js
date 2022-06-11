@@ -146,13 +146,19 @@ module.exports = class ReviewController {
             if (ignoredFields.includes(key)) {
                 continue;
             }
-            sql += key + ' = $' + count + ' and ';
+
+            if ( key == 'paperId' ) {
+                sql += 'paper_id = $' + count + ', ';
+            } else if ( key == 'userId' ) {
+                sql += 'user_id = $' + count + ', ';
+            } else {
+                sql += key + ' = $' + count + ', ';
+            }
 
             params.push(review[key]);
             count = count + 1;
         }
         sql += 'updated_date = now() WHERE id = $' + count;
-
         params.push(review.id);
 
         try {

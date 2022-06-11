@@ -79,6 +79,49 @@ module.exports = function(database, logger, config) {
     })
 
     /******************************************************************************
+     *          Field REST Routes
+     ******************************************************************************/
+
+    const FieldController = require('./controllers/fields')
+    const fieldController = new FieldController(database)
+
+    router.get('/fields/query', function(request, response) {
+        fieldController.queryFields(request, response)
+    })
+
+    // Get a list of all fields.
+    router.get('/fields', function(request, response) {
+        fieldController.getFields(request, response)
+    })
+
+    // Create a new field 
+    router.post('/fields', function(request, response) {
+        fieldController.postFields(request, response)
+    })
+
+    // Get the details of a single field 
+    router.get('/field/:id', function(request, response) {
+        fieldController.getField(request, response)
+    })
+
+    // Replace a field wholesale.
+    router.put('/field/:id', function(request, response) {
+        return response.status(501).send()
+        //fieldController.putField(request, response)
+    })
+        
+    // Edit an existing field with partial data.
+    router.patch('/field/:id', function(request, response) {
+        return response.status(501).send()
+        //fieldController.patchField(request, response)
+    })
+
+    // Delete an existing field.
+    router.delete('/field/:id', function(request, response) {
+        fieldController.deleteField(request, response)
+    })
+
+    /******************************************************************************
      *          Paper REST Routes
      ******************************************************************************/
 
@@ -110,20 +153,21 @@ module.exports = function(database, logger, config) {
 
     // Replace a paper wholesale.
     router.put('/paper/:id', function(request, response) {
-        return response.status(501)
-        //paperController.putPaper(request, response)
+        paperController.putPaper(request, response)
     })
         
     // Edit an existing paper with partial data.
     router.patch('/paper/:id', function(request, response) {
-        return response.status(501)
-        //paperController.patchPaper(request, response)
+        paperController.patchPaper(request, response)
     })
 
     // Delete an existing paper.
     router.delete('/paper/:id', function(request, response) {
         paperController.deletePaper(request, response)
     })
+
+
+
 
     /**************************************************************************
      *      Paper Review REST Routes
@@ -160,47 +204,40 @@ module.exports = function(database, logger, config) {
         reviewController.postComments(request, response)
     })
 
-    /******************************************************************************
-     *          Field REST Routes
-     ******************************************************************************/
+    /**************************************************************************
+     *  Vote REST Routes
+     */
+    const VoteController = require('./controllers/votes.js')
+    const voteController = new VoteController(database, logger)
 
-    const FieldController = require('./controllers/fields')
-    const fieldController = new FieldController(database)
-
-    router.get('/fields/query', function(request, response) {
-        fieldController.queryFields(request, response)
+    // Get a list of all votes on a paper.
+    router.get('/paper/:paper_id/votes', function(request, response) {
+        voteController.getVotes(request, response)
     })
 
-    // Get a list of all fields.
-    router.get('/fields', function(request, response) {
-        fieldController.getFields(request, response)
+    // Create a new vote on a paper 
+    router.post('/paper/:paper_id/votes', function(request, response) {
+        voteController.postVotes(request, response)
     })
 
-    // Create a new field 
-    router.post('/fields', function(request, response) {
-        fieldController.postFields(request, response)
+    // Get the details of a single vote on a paper 
+    router.get('/paper/:paper_id/user/:user_id/vote', function(request, response) {
+        voteController.getVote(request, response)
     })
 
-    // Get the details of a single field 
-    router.get('/field/:id', function(request, response) {
-        fieldController.getField(request, response)
-    })
-
-    // Replace a field wholesale.
-    router.put('/field/:id', function(request, response) {
-        return response.status(501)
-        //fieldController.putField(request, response)
+    // Replace a vote on a paper.
+    router.put('/paper/:paper_id/user/:user_id/vote', function(request, response) {
+        voteController.putVote(request, response)
     })
         
-    // Edit an existing field with partial data.
-    router.patch('/field/:id', function(request, response) {
-        return response.status(501)
-        //fieldController.patchField(request, response)
+    // Edit an existing paper with partial data.
+    router.patch('/paper/:paper_id/user/:user_id/vote', function(request, response) {
+        return response.status(501).send()
     })
 
-    // Delete an existing field.
-    router.delete('/field/:id', function(request, response) {
-        fieldController.deleteField(request, response)
+    // Delete an existing paper.
+    router.delete('/paper/:paper_id/user/:user_id/vote', function(request, response) {
+        voteController.deleteVote(request, response)
     })
 
     return router
