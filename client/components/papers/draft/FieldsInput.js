@@ -4,9 +4,9 @@ import debounce from 'lodash.debounce'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { queryFields, newQuery, cleanupRequest } from '../../state/fields'
+import { queryFields, newQuery, cleanupRequest } from '../../../state/fields'
 
-import Spinner from '../Spinner'
+import Spinner from '../../Spinner'
 
 const FieldsInput = function(props) {
 

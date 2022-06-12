@@ -6,11 +6,10 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import * as PDFLib from 'pdfjs-dist/webpack'
 
-import Spinner from '../Spinner'
+import Spinner from '/components/Spinner'
 
 
 const PublishedPaperPDFPageView = function(props) {
-    const { paperId } = useParams()
 
     useEffect(function() {
         props.pdf.getPage(props.pageNumber).then(function(page) {

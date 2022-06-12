@@ -78,7 +78,7 @@ export const papersSlice = createSlice({
          */
         completePostVotesRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            state.dictionary[action.payload.result.paper_id].votes.push(action.payload.result)
+            state.dictionary[action.payload.result.paperId].votes.push(action.payload.result)
         },
 
         // TECHDEBT Assumes we're never getting votes for a paper we haven't
@@ -626,6 +626,7 @@ export const postVotes = function(vote) {
             }
         }).then(function(returnedVote) {
             payload.result = returnedVote 
+            console.log(payload)
             dispatch(papersSlice.actions.completePostVotesRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {

@@ -50,14 +50,16 @@ module.exports = class VoteController {
                     VALUES ($1, $2, $3) 
                 RETURNING paper_id as "paperId", user_id as "userId", score
                 `, 
-                [ request.params.paper_id, vote.user_id, vote.score]
+                [ request.params.paper_id, vote.userId, vote.score]
             )
             if ( results.rows.length == 0 ) {
                 this.logger.error('Failed to insert a vote.')
                 return response.status(500).json({error: 'unknown'})
             }
 
-            const returnVote = results.rows 
+            const returnVote = results.rows[0]
+            console.log('returnVote: ')
+            console.log(returnVote)
             return response.status(201).json(returnVote)
         } catch (error) {
             this.logger.error(error)

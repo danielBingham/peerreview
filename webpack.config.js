@@ -11,6 +11,9 @@ module.exports = {
       filename: 'bundle.js',
       publicPath: '/'
   },
+  resolve: {
+      roots: [__dirname+'/client/']
+  },
   module: {
     rules: [
       {

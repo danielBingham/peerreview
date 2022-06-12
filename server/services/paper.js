@@ -74,8 +74,8 @@ module.exports = class PaperService {
             }
 
             const paper_vote = {
-                paper_id: row.vote_paperId,
-                user_id: row.vote_userId,
+                paperId: row.vote_paperId,
+                userId: row.vote_userId,
                 score: row.vote_score
             }
 

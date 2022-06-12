@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getAuthentication, cleanupRequest, deleteAuthentication } from '../state/authentication'
+import { cleanupRequest, deleteAuthentication } from '/state/authentication'
 
 
 /**
@@ -11,7 +11,7 @@ import { getAuthentication, cleanupRequest, deleteAuthentication } from '../stat
  *
  * No props.
  */
-const UserNavigation = function(props) {
+const AuthenticationNavigation = function(props) {
     const [ deleteAuthenticationRequestId, setLogoutRequestId ] = useState(null)
 
     const dispatch = useDispatch()
@@ -43,34 +43,28 @@ const UserNavigation = function(props) {
         setLogoutRequestId(dispatch(deleteAuthentication()))
     }
 
-
-    // Do our cleanup in a useEffect so that we do it after rendering has
-    // finished and don't cause unintended consequences or render thrashing.
     useEffect(function() {
-        if (  deleteAuthenticationRequest && deleteAuthenticationRequest.state == "fulfilled") {
-            dispatch(cleanupRequest({ requestId: deleteAuthenticationRequestId }))
+
+        return function cleanup() {
+            if (  deleteAuthenticationRequest ) {
+                dispatch(cleanupRequest(deleteAuthenticationRequest))
+            }
         }
-    })
+
+    }, [])
 
     // ============= RENDER =======================
     if ( currentUser ) {
         return (
-            <section className="user-navigation">
-                <section className="user-controls">
-                    <Link to="/submissions">submissions</Link>
-                    &nbsp;
-                    <Link to="/publish">publish</Link>
-                </section>
-                <section className="authentication">
-                    <Link to={`/user/${currentUser.id}`}>{ currentUser.name }</Link>
-                    &nbsp;
-                    <a href="" onClick={handleLogout} >logout</a>
-                </section>
+            <section id="authentication-navigation" className="navigation-block">
+                <Link to={`/user/${currentUser.id}`}>{ currentUser.name }</Link>
+                &nbsp;
+                <a href="" onClick={handleLogout} >logout</a>
             </section>
         )
     } else {
         return (
-            <section className="user-navigation">
+            <section id="authentication-navigation" className="navigation-block">
                 <Link to="login">login</Link>
                 &nbsp;
                 <Link to="register">register</Link>
@@ -80,4 +74,4 @@ const UserNavigation = function(props) {
 
 }
 
-export default UserNavigation 
+export default AuthenticationNavigation 

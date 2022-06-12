@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 
-import PaperList from './PaperList'
+import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
 
 const HomePage = function(props) {
 
     return (
-        <section className="home">
-            <PaperList />
+        <section id="home-page" >
+            <PublishedPaperList />
         </section>
     )
 }

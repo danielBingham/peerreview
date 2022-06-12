@@ -1,6 +1,9 @@
 body {
     padding: 0;
     margin: 0;
+
+    font-family: Georgia, serif;
+    font-size: 14px;
 }
 
 section.page-wrapper {
@@ -14,39 +17,6 @@ a:link, a:active, a:visited, a:hover {
 }
 
 
-header {
-    margin: 0 0 50px 0;
-    padding: 10px 50px;
-    border-bottom: thin solid #ddd;
-}
-
-header h1 {
-    font-family: Georgia, serif;
-    font-size: 18px;
-    font-weight: bold;
-    padding: 5px;
-    margin: 0;
-}
-
-header section {
-    display: inline-block;
-}
-
-
-header section#navigation {
-    float: right;
-}
-
-header .basic-navigation {
-    padding-right: 50px;
-}
-
-header a:link, header a:active, header a:visited, header a:hover {
-    text-decoration: none;
-    color: black;
-    padding: 5px;
-    margin: 0 5px;
-}
 
 main {
     width: 1600px;
@@ -54,60 +24,8 @@ main {
     padding: 50px;
 }
 
-.paper-list {
-    width: 100%;
-    border: thin solid black;
-}
-
-.filters {
-    margin: 20px auto;
-    width: 90%;
-    padding: 20px;
-    border: thin solid black;
-}
-
-.search {
-    width: 90%;
-    margin: 50px auto;
-    padding: 20px;
-    border: thin solid black;
-}
-
-.search input {
-    width: 80%;
-    margin: 0 10px;
-}
-
-.paper-list .paper {
-    margin: 10px auto;
-    width: 90%;
-}
-.paper-list .votes, .paper-list .responses {
-    display: inline-block;
-    height: 54px;
-    width: 54px; 
-    margin: 0;
-    padding: 5px 5px 5px 5px;
-    text-align: center;
-    vertical-align: center; 
-    font-size: 20px;
-}
 .votes .label, .responses .label {
     font-size: 9px;
-}
-.paper-list .paper .wrapper {
-    display: inline-block;
-    margin: 0 10px;
-    padding: 5px;
-}
-.paper-list .paper .title {
-    font-size: 25px; 
-}
-.paper-list .paper .author-list {
-    font-size: 20px;
-}
-.paper-list .paper .field-list {
-    font-size: 20px;
 }
 
 .paper .paper-votes .highlight {

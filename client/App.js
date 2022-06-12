@@ -8,18 +8,29 @@ import {
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getAuthentication, cleanupRequest } from './state/authentication'
+import { getAuthentication, cleanupRequest } from '/state/authentication'
 
-import HomePage from './components/HomePage'
-import UserProfile from './components/authentication/UserProfile'
-import RegistrationForm from './components/authentication/RegistrationForm'
-import LoginForm from './components/authentication/LoginForm'
-import UserNavigation from './components/UserNavigation'
-import SubmitDraftForm from './components/papers/SubmitDraftForm'
-import SubmissionList from './components/reviews/SubmissionList'
-import PDFPaperDraftReviewView from './components/reviews/PDFPaperDraftReviewView'
-import PublishedPaperPDFView from './components/papers/PublishedPaperPDFView'
-import Spinner from './components/Spinner'
+import Header from '/components/header/Header'
+
+import HomePage from '/pages/HomePage'
+
+import RegistrationPage from '/pages/authentication/RegistrationPage'
+import LoginPage from '/pages/authentication/LoginPage'
+
+import UsersListPage from '/pages/users/UsersListPage'
+import UserProfilePage from '/pages/users/UserProfilePage'
+
+import FieldsListPage from '/pages/fields/FieldsListPage'
+import FieldPage from '/pages/fields/FieldPage'
+
+import PublishPage from '/pages/papers/PublishPage'
+import DraftPaperPage from '/pages/papers/DraftPaperPage'
+
+import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
+
+import PublishedPaperPage from '/pages/papers/PublishedPaperPage'
+
+import Spinner from '/components/Spinner'
 
 import './app.css';
 
@@ -79,33 +90,30 @@ const App = function(props) {
          */
         return (
             <Router>
-                <header>
-                    <section id="navigation">
-                        <section className="basic-navigation">
-                            <Link to="/about">about</Link>
-                            <Link to="/fields">fields</Link>
-                            <Link to="/users">users</Link>
-                        </section>
-                        <UserNavigation />
-                    </section>
-                    <h1><Link to="/">Peer Review</Link></h1>
-                </header>
+                <Header />
                 <main>
                     <Routes>
                         <Route path="/" element={ <HomePage /> } />
 
-                        { /* ========= Authentication ========================= */ }
-                        <Route path="/register" element={ <RegistrationForm /> } />
-                        <Route path="/login" element={ <LoginForm /> } />
-                        <Route path="/user/:id" element={ <UserProfile /> } />
+                        { /* ========== Authentication Controls =============== */ }
+                        <Route path="/register" element={ <RegistrationPage /> } />
+                        <Route path="/login" element={ <LoginPage /> } />
 
-                        { /* ========= Peer Review ============================ */ }
-                        <Route path="/publish" element={ <SubmitDraftForm /> } />
-                        <Route path="/submissions/" element={ <SubmissionList /> } />
-                        <Route path="/submission/:paperId" element={ <PDFPaperDraftReviewView /> }  />
+                        { /* ========== Users ================================= */ }
+                        <Route path="/users" element={ <UsersListPage /> } />
+                        <Route path="/user/:id" element={ <UserProfilePage /> } />
+
+                        { /* ========== fields ================================= */ }
+                        <Route path="/fields" element={ <FieldsListPage /> } />
+                        <Route path="/field/:id" element={ <FieldPage /> } />
+
+                        { /* ========= Draft Papers  ============================ */ }
+                        <Route path="/publish" element={ <PublishPage /> } />
+                        <Route path="/submissions/" element={ <DraftPapersListPage /> } />
+                        <Route path="/submission/:paperId" element={ <DraftPaperPage /> }  />
 
                         { /* ========= Published Papers ===================== */ }
-                        <Route path="/paper/:id" element={ <PublishedPaperPDFView /> } />
+                        <Route path="/paper/:id" element={ <PublishedPaperPage /> } />
                     </Routes>
                 </main>
             </Router>

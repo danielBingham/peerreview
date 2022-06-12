@@ -1,0 +1,26 @@
+.field {
+    display: inline-block;
+    padding: 5px;
+    margin: 5px;
+    background-color: #ddd;
+    box-shadow: 1px 1px 1px #999;
+}
+.field:hover {
+    background-color: #eee;
+}
+
+.field.biology {
+    color: white;
+    background-color: #468A4A;
+}
+.field.biology:hover {
+    background-color: #6BA66F;
+}
+.field.chemistry {
+    color: white;
+    background-color: #38646C;
+}
+.field.physics {
+    color: white;
+    background-color: #AF5B59;
+}
