@@ -4,30 +4,31 @@ header {
     border-bottom: thin solid #ddd;
 }
 
-header h1 {
-    font-family: Georgia, serif;
-    font-size: 18px;
-    font-weight: bold;
-    padding: 5px;
-    margin: 0;
-}
-
-header section {
+header #site-title {
     display: inline-block;
+
+    font-size: 24px;
+    font-weight: bold;
+
+    text-align: left;
+    width: 50%;
 }
 
+header #navigation {
+    display: inline-block; 
+    text-align: right;
 
-header section#navigation {
-    float: right;
+    font-size: 18px;
+    padding: 3px 0;
+    width: 50%;
 }
 
-header .basic-navigation {
-    padding-right: 50px;
+header .navigation-block {
+    display: inline-block;
+    margin-left: 25px;
 }
 
 header a:link, header a:active, header a:visited, header a:hover {
-    text-decoration: none;
-    color: black;
     padding: 5px;
     margin: 0 5px;
 }

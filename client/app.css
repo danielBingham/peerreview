@@ -11,10 +11,17 @@ section.page-wrapper {
     text-align: center;
 }
 
-a:link, a:active, a:visited, a:hover {
+a:link, a:active, a:visited {
     text-decoration: none;
     color: black;
 }
+
+a:hover {
+    text-decoration: none;
+    color: #666;
+}
+
+
 
 
 

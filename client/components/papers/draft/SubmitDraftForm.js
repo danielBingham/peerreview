@@ -124,7 +124,7 @@ const SubmitDraftForm = function(props) {
                 setPaper(paper)
                 setUploadPaperRequestId(dispatch(uploadPaper(paper.id, file)))
             } else if ( uploadPaperRequest.state == 'fulfilled') {
-                const path = "/submission/" + paper.id
+                const path = "/draft/" + paper.id
                 navigate(path)
             }
         }

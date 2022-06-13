@@ -6,14 +6,14 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import * as PDFLib from 'pdfjs-dist/webpack'
 
-import { getPaper, patchPaper, cleanupRequest as cleanupPaperRequest } from '../../state/papers'
-import { getReviews, patchReview, cleanupRequest as cleanupReviewRequest } from '../../state/reviews'
+import { getPaper, patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
+import { getReviews, patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
-import ReviewCommentForm from './ReviewCommentForm'
-import SubmissionPage from './SubmissionPage'
-import Spinner from '../Spinner'
+import ReviewCommentForm from '../review/ReviewCommentForm'
+import DraftPaperPDFPageView from './DraftPaperPDFPageView'
+import Spinner from '/components/Spinner'
 
-const PDFPaperDraftReviewView = function(props) {
+const DraftPaperPDFView = function(props) {
     const [ paperRequestId, setPaperRequestId ] = useState(null)
     const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
     const [ patchReviewRequestId, setPatchReviewRequestId ] = useState(null)
@@ -165,7 +165,7 @@ const PDFPaperDraftReviewView = function(props) {
                 const newPages = []
                 for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                     const pageKey = `page-${pageNumber}`
-                    newPages.push(<SubmissionPage key={pageKey} pageNumber={pageNumber} pdf={pdf} />)
+                    newPages.push(<DraftPaperPDFPageView key={pageKey} pageNumber={pageNumber} pdf={pdf} />)
                 }
                 setPages(newPages)
             }).catch(function(error) {
@@ -198,4 +198,4 @@ const PDFPaperDraftReviewView = function(props) {
 
 }
 
-export default PDFPaperDraftReviewView
+export default DraftPaperPDFView 

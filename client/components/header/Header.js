@@ -17,12 +17,12 @@ const Header = function(props) {
 
     return (
         <header>
+            <section id="site-title"><Link to="/">Peer Review</Link></section>
             <section id="navigation">
                 <MainNavigation />
                 { currentUser && <UserNavigation /> }
                 <AuthenticationNavigation />
             </section>
-            <div id="site-title"><Link to="/">Peer Review</Link></div>
         </header>
     )
 

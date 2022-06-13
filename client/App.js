@@ -109,8 +109,8 @@ const App = function(props) {
 
                         { /* ========= Draft Papers  ============================ */ }
                         <Route path="/publish" element={ <PublishPage /> } />
-                        <Route path="/submissions/" element={ <DraftPapersListPage /> } />
-                        <Route path="/submission/:paperId" element={ <DraftPaperPage /> }  />
+                        <Route path="/drafts/" element={ <DraftPapersListPage /> } />
+                        <Route path="/draft/:paperId" element={ <DraftPaperPage /> }  />
 
                         { /* ========= Published Papers ===================== */ }
                         <Route path="/paper/:id" element={ <PublishedPaperPage /> } />

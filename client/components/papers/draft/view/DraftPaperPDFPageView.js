@@ -6,11 +6,11 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import * as PDFLib from 'pdfjs-dist/webpack'
 
-import ReviewCommentForm from './ReviewCommentForm'
-import Spinner from '../Spinner'
+import ReviewCommentForm from '../review/ReviewCommentForm'
+import Spinner from '/components/Spinner'
 
 
-const SubmissionPage = function(props) {
+const DraftPaperPDFPageView = function(props) {
     const [commentFormElement, setCommentFormElement] = useState(null)
 
     const { paperId } = useParams()
@@ -99,4 +99,4 @@ const SubmissionPage = function(props) {
 
 }
 
-export default SubmissionPage
+export default DraftPaperPDFPageView 

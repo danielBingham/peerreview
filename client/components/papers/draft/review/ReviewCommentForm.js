@@ -4,9 +4,9 @@ import { useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postReviews, postReviewComments, cleanupRequest } from '../../state/reviews'
+import { postReviews, postReviewComments, cleanupRequest } from '/state/reviews'
 
-import Spinner from '../Spinner'
+import Spinner from '/components/Spinner'
 
 const ReviewCommentForm = function(props) {
     const [postReviewsRequestId, setPostReviewsRequestId] = useState(null)

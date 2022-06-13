@@ -58,7 +58,6 @@ const AuthenticationNavigation = function(props) {
         return (
             <section id="authentication-navigation" className="navigation-block">
                 <Link to={`/user/${currentUser.id}`}>{ currentUser.name }</Link>
-                &nbsp;
                 <a href="" onClick={handleLogout} >logout</a>
             </section>
         )
@@ -66,7 +65,6 @@ const AuthenticationNavigation = function(props) {
         return (
             <section id="authentication-navigation" className="navigation-block">
                 <Link to="login">login</Link>
-                &nbsp;
                 <Link to="register">register</Link>
             </section>
         )

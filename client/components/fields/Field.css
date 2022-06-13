@@ -4,6 +4,7 @@
     margin: 5px;
     background-color: #ddd;
     box-shadow: 1px 1px 1px #999;
+    font-size: 12px;
 }
 .field:hover {
     background-color: #eee;
@@ -16,11 +17,27 @@
 .field.biology:hover {
     background-color: #6BA66F;
 }
+
 .field.chemistry {
     color: white;
     background-color: #38646C;
 }
+.field.chemistry:hover {
+    background-color: #557982;
+}
+
 .field.physics {
     color: white;
     background-color: #AF5B59;
+}
+.field.physics:hover {
+    background-color: #D28987;
+}
+
+.field.next {
+    color: white;
+    background-color: #AF8359;
+}
+.field.next:hover {
+    background-color: #D2AC87;
 }
