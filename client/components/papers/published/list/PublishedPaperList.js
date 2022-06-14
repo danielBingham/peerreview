@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getPapers, cleanupRequest } from '/state/papers'
+import { clearList, getPapers, cleanupRequest } from '/state/papers'
 
 import Spinner from '/components/Spinner'
 
@@ -23,8 +23,8 @@ const PublishedPaperList = function(props) {
 
     const dispatch = useDispatch()
 
-    const papers = useSelector(function(state) {
-        return state.papers.dictionary
+    const paperList = useSelector(function(state) {
+        return state.papers.list
     })
 
     const request = useSelector(function(state) {
@@ -36,8 +36,9 @@ const PublishedPaperList = function(props) {
     })
 
     useEffect(function() {
-        if ( ! requestId && ! request ) {
-            setRequestId(dispatch(getPapers()))
+        if ( ! requestId ) {
+            dispatch(clearList())
+            setRequestId(dispatch(getPapers({ isDraft: false })))
         }
 
         return function cleanup() {
@@ -48,17 +49,11 @@ const PublishedPaperList = function(props) {
     }, [ requestId, request ])
 
     // ====================== Render ==========================================
-
-    // Show a spinner if the request we made is still in progress.
-    if (request && request.state == 'pending') {
-        return (
-            <Spinner />
-        )
-    } else if (request && request.state == 'fulfilled') {
+    if ( request && request.state == 'fulfilled') { 
 
         const listItems = []
-        for (let id in papers) {
-            listItems.push(<PublishedPaperListItem paper={papers[id]} key={id} />)
+        for (const paper of paperList) {
+            listItems.push(<PublishedPaperListItem paper={paper} key={paper.id} />)
         }
 
         return (
@@ -70,6 +65,8 @@ const PublishedPaperList = function(props) {
             </section>
         )
     } else {
+        // Show a spinner if we haven't made the request yet or the request is not
+        // fulfilled. 
         return (
             <Spinner />
         )

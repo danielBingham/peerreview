@@ -31,10 +31,3 @@ main {
     padding: 50px;
 }
 
-.votes .label, .responses .label {
-    font-size: 9px;
-}
-
-.paper .paper-votes .highlight {
-    color: red;
-}

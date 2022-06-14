@@ -1,6 +1,6 @@
 import React from 'react'
 
-import SubmitDraftForm from '/components/papers/draft/SubmitDraftForm'
+import SubmitDraftForm from '/components/papers/draft/submit/SubmitDraftForm'
 
 const PublishPage = function(props) {
 

@@ -29,7 +29,7 @@ export const reviewsSlice = createSlice({
         /**
          * A list of the reviews we've retrieved.  Contains the same objects as
          * the dictionary, this just allows for quick and easy searching of the
-         * objects we've losted using `filter` and other array processing
+         * objects we've loaded using `filter` and other array processing
          * methods.
          *
          * @type {Object[]}

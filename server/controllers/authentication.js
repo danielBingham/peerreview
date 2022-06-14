@@ -7,7 +7,6 @@
 
 const AuthenticationService = require('../services/authentication')
 const UserService = require('../services/user')
-const PaperService = require('../services/paper')
 
 module.exports = class AuthenticationController {
 
@@ -15,7 +14,6 @@ module.exports = class AuthenticationController {
         this.database = database
         this.auth = new AuthenticationService()
         this.userService = new UserService(database)
-        this.paperService = new PaperService(database)
     }
 
     getAuthentication(request, response) {
@@ -44,23 +42,18 @@ module.exports = class AuthenticationController {
                 const passwords_match = this.auth.checkPassword(credentials.password, userMatch.password)
                 if (passwords_match) {
                     const users = await this.userService.selectUsers('WHERE id=$1', [userMatch.id])
-                    const user = users[0]
-                    const paperIds = await this.userService.selectUserPapers(user.id)
-                    if ( paperIds ) {
-                        user.papers = await this.paperService.selectPapers(paperIds)
+                    if ( ! users ) {
+                        this.logger.error('Failed to get authenticated user!')
+                        return response.status(403).json({ error: 'authentication-failed' })
                     } else {
-                        user.papers = null
+                        request.session.user = users[0]
+                        return response.status(200).json(request.session.user)
                     }
-                    request.session.user = user
-                    response.status(200).json(user)
-                    return
                 } else {
-                    response.status(403).json({error: 'authentication-failed'})
-                    return
+                    return response.status(403).json({error: 'authentication-failed'})
                 } 
             } else {
-                response.status(403).json({error: 'authentication-failed'})
-                return
+                return response.status(403).json({error: 'authentication-failed'})
             }
 
         } catch (error) {

@@ -26,12 +26,13 @@ const PublishedPaperListItem = function(props) {
     }
 
     return (
-        <div id={paper.id} className="paper">
-            <span className="votes">{score}<br /> <span className="label">votes</span></span> 
-            <span className="responses">0 <br /><span className="label">responses</span></span>
+        <div id={paper.id} className="published-paper">
+            <div className="votes">{score}<br /> <span className="label">votes</span></div> 
+            <div className="responses">0 <br /><span className="label">responses</span></div>
             <div className="wrapper">
                 <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title} </Link></div> 
-                <div><span className="author-list">by {authorList}</span> <span className="field-list"> {fields}</span></div>
+                <div className="authors">by {authorList}</div>
+                <div className="fields">{fields}</div>
             </div>
         </div>
     )

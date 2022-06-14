@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router'
-import { useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -9,14 +7,27 @@ import * as PDFLib from 'pdfjs-dist/webpack'
 import ReviewCommentForm from '../review/ReviewCommentForm'
 import Spinner from '/components/Spinner'
 
-
+/**
+ * TODO
+ * ReviewCommentThreadView (thread wrapper)
+ * ReviewCommentView (for each comment)
+ * ReviewCommentThreadReplyForm (for thread replies)
+ * DraftPaperPageView -- A wrapper for the page independent of page type.
+ * Renders most of the comments.
+ *
+ * In Database:
+ * review_comment_pdf_pin -- To track the pin on PDF documents.
+ * paper_version.type -- To record what type of document this verison of the paper is.
+ *
+ *
+ */
 const DraftPaperPDFPageView = function(props) {
     const [commentFormElement, setCommentFormElement] = useState(null)
 
-    const { paperId } = useParams()
+    const dispatch = useDispatch()
 
     const comments = useSelector(function(state) {
-        const reviews = state.reviews.list.filter((review) => review.paperId == paperId )
+        const reviews = state.reviews.list.filter((review) => review.paperId == props.paper.id)
         const results = []
         for (const review of reviews ) {
             results.push(...review.comments.filter((comment) => comment.page == props.pageNumber))
@@ -34,7 +45,7 @@ const DraftPaperPDFPageView = function(props) {
 
         if ( ! commentFormElement ) {
             const key = event.clientY + '-' + event.clientX
-            setCommentFormElement(<ReviewCommentForm close={closeReviewCommentForm} paperId={paperId} pageNumber={props.pageNumber} x={event.pageX} y={event.pageY} />)
+            setCommentFormElement(<ReviewCommentForm close={closeReviewCommentForm} paperId={props.paper.id} pageNumber={props.pageNumber} x={event.pageX} y={event.pageY} />)
         }
     }
 

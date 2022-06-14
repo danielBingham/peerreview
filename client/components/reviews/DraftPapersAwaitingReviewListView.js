@@ -8,9 +8,10 @@ import { clearList, getPapers, cleanupRequest } from '/state/papers'
 
 import Spinner from '/components/Spinner'
 
-import DraftPapersListItemView from './DraftPapersListItemView'
+import DraftPapersAwaitingReviewListItemView from './DraftPapersAwaitingReviewListItemView'
+import './DraftPapersAwaitingReviewListView.css'
 
-const DraftPapersListView = function(props) {
+const DraftPapersAwaitingReviewListView = function(props) {
     const [requestId, setRequestId] = useState(null)
 
     const dispatch = useDispatch()
@@ -41,7 +42,7 @@ const DraftPapersListView = function(props) {
     useEffect(function() {
         if ( currentUser && ! requestId) {
             dispatch(clearList())
-            setRequestId(dispatch(getPapers({ authorId: currentUser.id, isDraft: true })))
+            setRequestId(dispatch(getPapers({ isDraft: true })))
         }
 
         return function cleanup() {
@@ -58,7 +59,9 @@ const DraftPapersListView = function(props) {
     if ( currentUser && request && request.state == 'fulfilled') {
         const listItems = []
         for (const paper of paperList) {
-            listItems.push(<DraftPapersListItemView paper={paper} key={paper.id} />)
+            if ( ! paper.authors.find((a) => a.user.id == currentUser.id) ) {
+                listItems.push(<DraftPapersAwaitingReviewListItemView paper={paper} key={paper.id} />)
+            }
         }
 
         return (
@@ -74,4 +77,4 @@ const DraftPapersListView = function(props) {
 
 }
 
-export default DraftPapersListView 
+export default DraftPapersAwaitingReviewListView 

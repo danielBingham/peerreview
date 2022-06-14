@@ -4,9 +4,9 @@ import debounce from 'lodash.debounce'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { queryFields, newQuery, cleanupRequest } from '../../../state/fields'
+import { queryFields, newQuery, cleanupRequest } from '/state/fields'
 
-import Spinner from '../../Spinner'
+import Spinner from '/components/Spinner'
 
 const FieldsInput = function(props) {
 
@@ -56,13 +56,15 @@ const FieldsInput = function(props) {
                 setQueryFieldsRequestId(dispatch(queryFields(fieldName)))
             }
 
-            let newFieldSuggestions = []
-            for(let id in fields) {
-                if (fields[id].name.toLowerCase().includes(currentField.toLowerCase()) ) {
-                    newFieldSuggestions.push(fields[id])
+            if ( Object.keys(fields).length > 0 ) {
+                let newFieldSuggestions = []
+                for(let id in fields) {
+                    if (fields[id].name.toLowerCase().includes(currentField.toLowerCase()) ) {
+                        newFieldSuggestions.push(fields[id])
+                    }
                 }
+                setFieldSuggestions(newFieldSuggestions)
             }
-            setFieldSuggestions(newFieldSuggestions)
 
         } else {
             setFieldSuggestions([])

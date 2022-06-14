@@ -1,16 +1,18 @@
-.published-paper {
+.draft-paper {
     margin: 0px auto;
     padding: 10px 0;
     width: 90%;
     border-top: thin solid #ddd;
     border-bottom: thin solid #ddd;
 }
-.published-paper .wrapper {
+
+.draft-paper .wrapper {
     display: inline-block;
     margin: 0 10px;
     padding: 5px;
 }
-.published-paper .votes, .published-paper .responses {
+
+.draft-paper .reviews {
     display: inline-block;
     height: 54px;
     width: 54px; 
@@ -20,18 +22,17 @@
     vertical-align: center; 
     font-size: 20px;
 }
-.published-paper .votes .label, .published-paper .responses .label {
-    font-size: 9px;
-}
 
-.published-paper .title {
+.draft-paper .title {
     font-size: 20px; 
 }
-.published-paper .authors {
+.draft-paper .authors {
     font-size: 16px;
 }
-.published-paper .fields {
+.draft-paper .fields {
     font-size: 16px;
     margin-left: -5px;
 }
-
+.draft-paper .reviews .label {
+    font-size: 9px;
+}

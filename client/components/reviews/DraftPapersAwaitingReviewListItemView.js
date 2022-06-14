@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useParams, Link } from 'react-router-dom'
@@ -10,9 +9,9 @@ import { getUserPapers, cleanupRequest } from '/state/users'
 import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
 
-import './DraftPapersListItemView.css'
+import './DraftPapersAwaitingReviewListItemView.css'
 
-const DraftPapersListItemView = function(props) {
+const DraftPapersAwaitingReviewListItemView = function(props) {
     const paper = props.paper
 
     let authorList = ''
@@ -41,4 +40,4 @@ const DraftPapersListItemView = function(props) {
     )
 }
 
-export default DraftPapersListItemView
+export default DraftPapersAwaitingReviewListItemView

@@ -17,7 +17,7 @@ module.exports = class PaperService {
             return null 
         }
 
-        const papers = {};
+        const papers = {}
 
         rows.forEach(function(row) {
             const paper = {
@@ -30,10 +30,10 @@ module.exports = class PaperService {
                 fields: [],
                 versions: [],
                 votes: []
-            };
+            }
 
             if ( ! papers[paper.id] ) {
-                papers[paper.id] = paper;
+                papers[paper.id] = paper
             }
 
             const author = {
@@ -46,19 +46,19 @@ module.exports = class PaperService {
                 },
                 order: row.author_order,
                 owner: row.author_owner
-            };
+            }
 
             if ( ! papers[paper.id].authors.find((a) => a.user.id == author.user.id)) {
-                papers[paper.id].authors.push(author);
+                papers[paper.id].authors.push(author)
             }
 
             const paper_version = {
                 filepath: row.paper_filepath,
                 version: row.paper_version
-            };
+            }
             // Ignore versions that haven't finished uploading.
             if (paper_version.version && ! papers[paper.id].versions.find((v) => v.version == paper_version.version)) {
-                papers[paper.id].versions.push(paper_version);
+                papers[paper.id].versions.push(paper_version)
             }
 
             const paper_field = {
@@ -84,20 +84,12 @@ module.exports = class PaperService {
             }
         })
 
-        return papers;
+        return papers
     }
 
-    async selectPapers(ids) {
-        let where = '';
-        const params = [];
-        if ( ids ) {
-            where = 'WHERE papers.id = ANY($1::int[])';
-            if ( Array.isArray(ids) ) {
-                params.push(ids)
-            } else {
-                params.push([ids])
-            }
-        }
+    async selectPapers(where, params) {
+        where = (where ? where : '')
+        params = (params ? params : [])
 
         const sql = `
                SELECT 
@@ -116,19 +108,15 @@ module.exports = class PaperService {
                     LEFT OUTER JOIN paper_votes ON paper_votes.paper_id = papers.id
                 ${where} 
                 ORDER BY paper_authors.author_order asc, paper_versions.version desc
-        `;
-
-        const results = await this.database.query(sql, params);
+        `
+        console.log(sql)
+        const results = await this.database.query(sql, params)
 
         if ( results.rows.length == 0 ) {
             return null
         } else {
             const papers = this.hydratePapers(results.rows)
-            if ( ids && ! Array.isArray(ids) ) {
-                return papers[ids];
-            } else {
-                return Object.values(papers);
-            }
+            return Object.values(papers)
         }
     }
 

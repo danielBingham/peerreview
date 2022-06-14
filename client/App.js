@@ -26,6 +26,7 @@ import FieldPage from '/pages/fields/FieldPage'
 import PublishPage from '/pages/papers/PublishPage'
 import DraftPaperPage from '/pages/papers/DraftPaperPage'
 
+import ReviewPapersListPage from '/pages/papers/ReviewPapersListPage'
 import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
 
 import PublishedPaperPage from '/pages/papers/PublishedPaperPage'
@@ -109,6 +110,7 @@ const App = function(props) {
 
                         { /* ========= Draft Papers  ============================ */ }
                         <Route path="/publish" element={ <PublishPage /> } />
+                        <Route path="/review" element={ <ReviewPapersListPage /> } />
                         <Route path="/drafts/" element={ <DraftPapersListPage /> } />
                         <Route path="/draft/:paperId" element={ <DraftPaperPage /> }  />
 

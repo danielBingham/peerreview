@@ -29,7 +29,37 @@ module.exports = class PaperController {
      */
     async getPapers(request, response) {
         try {
-            const papers = await this.paperService.selectPapers()
+            let where = 'WHERE'
+            const params = []
+            let count = 0
+            let and = ''
+            if ( request.query.isDraft ) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                where += `${and} papers.is_draft=$${count}`
+                params.push(request.query.isDraft)
+            }
+            if ( request.query.authorId ) {
+                const results = await this.database.query('SELECT paper_id from paper_authors where user_id=$1', [ request.query.authorId ])
+                if ( results.rows.length > 0) {
+                    count += 1
+                    and = ( count > 1 ? ' AND ' : '' )
+                    where += `${and} papers.id = ANY($${count}::int[])`
+
+                    const paper_ids = []
+                    for(let row of results.rows) {
+                        paper_ids.push(row.paper_id)
+                    }
+                    params.push(paper_ids)
+                } else {
+                    return response.status(200).json([])
+                }
+            }
+            // We don't actually have any query parameters.
+            if ( count < 1 ) {
+                where = ''
+            }
+            const papers = await this.paperService.selectPapers(where, params)
             return response.status(200).json(papers)
         } catch (error) {
             this.logger.error(error)
@@ -64,8 +94,13 @@ module.exports = class PaperController {
             await this.insertAuthors(paper) 
             await this.insertFields(paper)
 
-            const returnPaper = await this.paperService.selectPapers(paper.id)
-            return response.status(201).json(returnPaper)
+            const returnPapers = await this.paperService.selectPapers("WHERE papers.id=$1", [paper.id])
+            if ( returnPapers ) {
+                return response.status(201).json(returnPapers[0])
+            } else {
+                this.logger.error('Paper does not exist after insert.')
+                return response.status(500).json({ error: 'server-error' })
+            }
         } catch (error) {
             this.logger.error(error)
             return response.status(500).json({error: 'unknown'})
@@ -140,8 +175,13 @@ module.exports = class PaperController {
 
             fs.rmSync(request.file.path)
 
-            const returnPaper = await this.paperService.selectPapers(request.params.id)
-            return response.status(200).json(returnPaper)
+            const returnPapers = await this.paperService.selectPapers('WHERE papers.id=$1', [request.params.id])
+            if ( ! returnPapers ) {
+                this.logger.error('Failed to find paper after upload.')
+                return response.status(500).json({ error: 'server-error' })
+            } else {
+                return response.status(200).json(returnPapers[0])
+            }
         } catch (error) {
             this.logger.error(error)
             return response.status(500).json({ error: 'unknown' })
@@ -155,13 +195,13 @@ module.exports = class PaperController {
      */
     async getPaper(request, response) {
         try {
-            const paper = await this.paperService.selectPapers(request.params.id)
+            const papers = await this.paperService.selectPapers('WHERE papers.id=$1', [request.params.id])
 
-            if ( ! paper ) {
+            if ( ! papers ) {
                 return response.status(404).json({})
             }
 
-            return response.status(200).json(paper)
+            return response.status(200).json(papers[0])
         } catch (error) {
             this.logger.error(error)
             return response.status(500).json({ error: 'unknown' })
@@ -210,8 +250,13 @@ module.exports = class PaperController {
             await this.insertAuthors(paper)
             await this.insertFields(paper)
 
-            const returnPaper = await this.paperService.selectPapers(paper.id)
-            return response.status(200).json(returnPaper)
+            const returnPapers = await this.paperService.selectPapers('WHERE papers.id=$1', [paper.id])
+            if ( ! returnPapers ) {
+                this.logger.error('Failed to find modified paper.')
+                return response.status(500).json({ error: 'server-error' })
+            } else {
+                return response.status(200).json(returnPapers[0])
+            }
         } catch (error) {
             this.logger.error(error)
             response.status(500).json({error: 'unknown'})
@@ -262,8 +307,13 @@ module.exports = class PaperController {
                 return response.status(404).json({error: 'no-resource'})
             }
 
-            const returnPaper = await this.paperService.selectPapers(paper.id)
-            return response.status(200).json(returnPaper)
+            const returnPapers = await this.paperService.selectPapers('WHERE papers.id=$1', [paper.id])
+            if ( ! returnPapers ) {
+                this.logger.error('Failed to find patched paper!')
+                return response.status(500).json({ error: 'server-error' })
+            } else {
+                return response.status(200).json(returnPapers[0])
+            }
         } catch (error) {
             this.logger.error(error)
             response.status(500).json({error: 'unknown'})

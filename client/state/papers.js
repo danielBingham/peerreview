@@ -26,45 +26,87 @@ export const papersSlice = createSlice({
          * @type {object}
          */
         dictionary: {},
-    },
-    reducers: {
-        // ========== GET /papers ==================
 
         /**
-         * The GET request to /papers succeeded.
+         * A list of papers retrieved from the GET /papers endpoint, or added
+         * with appendPapersToList, preserving order.
+         *
+         * @type {object[]}
+         */
+        list: []
+    },
+    reducers: {
+
+        /**
+         * Add one or more papers to the state dictionary.  
+         *
+         * Does NOT add them to the list.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.result - An array of populated paper objects
+         * @param {object[] | object} action.payload - The papers we want to add.  Can
+         * either be an array of papers or a single paper object.
          */
-        completeGetPapersRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            if ( action.payload.result ) {
-                for (const paper of action.payload.result) {
+        addPapersToDictionary: function(state, action) {
+            if ( action.payload && action.payload.length ) {
+                for( const paper of action.payload) {
                     state.dictionary[paper.id] = paper
                 }
+            } else {
+                state.dictionary[action.payload.id] = action.payload
             }
         },
 
-        // ========== DELETE /paper/:id =================
-
         /**
-         * Finish the DELETE /paper/:id call.  In this case, the call returns
-         * the id of the deleted paper and we need to delete them from state on
-         * our side.  
+         * Append one or more papers to the list.
+         *
+         * DOES add to them to the dictionary as well.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.result - The id of the deleted paper
+         * @param {object[] | object} action.payload - The papers we want to
+         * add.  Can be either an array of papers or a single paper.
          */
-        completeDeletePaperRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            delete state.dictionary[action.payload.result]
+        appendPapersToList: function(state, action) {
+            if ( action.payload && action.payload.length ) {
+                for (const paper of action.payload) {
+                    state.list.push(paper)
+                    state.dictionary[paper.id] = paper
+                }
+            } else {
+                state.list.push(action.payload)
+                state.dictionary[action.payload.id] = action.payload
+            }
+        },
+
+        /**
+         * Remove papers from the dictionary and the list.
+         *
+         * @param {object} state - The redux state slice.
+         * @param {object} action - The redux action we're reducing.
+         * @param {object[] | object} action.payload - An array of papers or a
+         * single paper that we'd like to remove.
+         */
+        removePapers: function(state, action) {
+            if ( action.payload && action.payload.length ) {
+                for(const paper of action.payload ) {
+                    delete state.dictionary[paper.id]
+                    state.list = state.list.filter((p) => p.id !== paper.id)
+                }
+            } else {
+                delete state.dictionary[action.payload.id]
+                state.list = state.list.filter((p) => p.id !== action.payload.id)
+            }
+        },
+
+        /**
+         * Clear the list, as when you want to start a new ordered query.
+         *
+         * @param {object} state - The redux state slice.
+         * @param {object} action - The redux action we're reducing.
+         */
+        clearList: function(state, action) {
+            state.list = []
         },
 
         // ======== POST /paper/:id/votes =====================================
@@ -140,8 +182,6 @@ export const papersSlice = createSlice({
          */
         completeRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            state.dictionary[action.payload.result.id] = action.payload.result
         },
 
         /**
@@ -170,15 +210,16 @@ export const papersSlice = createSlice({
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getPapers = function() {
+export const getPapers = function(params) {
     return function(dispatch, getState) {
+        const queryString = new URLSearchParams(params)
+
         const requestId = uuidv4() 
-        const endpoint = '/papers'
+        const endpoint = '/papers' + ( params ? '?' + queryString.toString() : '')
 
         let payload = {
             requestId: requestId
         }
-
 
         dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -194,15 +235,17 @@ export const getPapers = function() {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(papers) {
-            if ( papers ) {
-                papers.forEach(function(paper) {
-                    paper.authors.forEach(function(author) {
+            if ( papers && papers.length ) {
+                for (const paper of papers) {
+                    for (const author of paper.authors) {
                         dispatch(addUsers(author.user))
-                    })
-                })
-            }
+                    }
+                    dispatch(addFields(paper.fields))
+                }
+                dispatch(papersSlice.actions.appendPapersToList(papers))
+            } 
             payload.result = papers
-            dispatch(papersSlice.actions.completeGetPapersRequest(payload))
+            dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -231,7 +274,6 @@ export const getPapers = function() {
  */
 export const postPapers = function(paper) {
     return function(dispatch, getState) {
-
         const requestId = uuidv4()
         const endpoint = '/papers'
 
@@ -254,6 +296,7 @@ export const postPapers = function(paper) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedPaper) {
+            dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
             payload.result = returnedPaper
             dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -308,6 +351,11 @@ export const uploadPaper = function(id, file) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(paper) {
+            for(const author of paper.authors) {
+                dispatch(addUsers(author.user))
+            }
+            dispatch(addFields(paper.fields))
+            dispatch(papersSlice.actions.addPapersToDictionary(paper))
             payload.result = paper 
             dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -364,6 +412,7 @@ export const getPaper = function(id) {
                 dispatch(addUsers(author.user))
             }
             dispatch(addFields(paper.fields))
+            dispatch(papersSlice.actions.addPapersToDictionary(paper))
             payload.result = paper
             dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -419,6 +468,11 @@ export const putPaper = function(paper) {
             }
 
         }).then(function(returnedPaper) {
+            for(const author of returnedPaper.authors) {
+                dispatch(addUsers(author.user))
+            }
+            dispatch(addFields(returnedPaper.fields))
+            dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
             payload.result = returnedPaper
             dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -472,6 +526,11 @@ export const patchPaper = function(paper) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedPaper) {
+            for(const author of returnedPaper.authors) {
+                dispatch(addUsers(author.user))
+            }
+            dispatch(addFields(returnedPaper.fields))
+            dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
             payload.result = returnedPaper
             dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -520,7 +579,8 @@ export const deletePaper = function(paper) {
         }).then(function(response) {
             payload.status = response.status
             if( response.ok ) {
-                dispatch(papersSlice.actions.completeDeletePaperRequest(payload))
+                dispatch(papersSlice.actions.removePapers(paper))
+                dispatch(papersSlice.actions.completeRequest(payload))
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
@@ -643,6 +703,6 @@ export const postVotes = function(vote) {
 }
 
 
-export const { completeGetPapersRequest, completeDeletePaperRequest, completePostVotesRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = papersSlice.actions
+export const {  addPapersToDictionary, appendPapersToList, removePapers, clearList, completePostVotesRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = papersSlice.actions
 
 export default papersSlice.reducer

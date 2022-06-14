@@ -166,6 +166,11 @@ module.exports = function(database, logger, config) {
         paperController.deletePaper(request, response)
     })
 
+    /******************************************************************************
+     *          Draft REST Routes
+     ******************************************************************************/
+
+
 
 
 

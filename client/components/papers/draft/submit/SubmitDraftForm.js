@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postPapers, uploadPaper, cleanupRequest as cleanupPapersRequest } from '../../../state/papers'
+import { postPapers, uploadPaper, cleanupRequest as cleanupPapersRequest } from '/state/papers'
 
 import AuthorsInput from './AuthorsInput'
 import FieldsInput from './FieldsInput'
-import Spinner from '../../Spinner'
+import Spinner from '/components/Spinner'
 
 /**
  * A login form allowing the user to postAuthentication using an email and a password.

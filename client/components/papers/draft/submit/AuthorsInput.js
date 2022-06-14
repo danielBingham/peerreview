@@ -4,9 +4,9 @@ import debounce from 'lodash.debounce'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { queryUsers, newQuery, cleanupRequest as cleanupUsersRequest } from '../../../state/users'
+import { queryUsers, newQuery, cleanupRequest as cleanupUsersRequest } from '/state/users'
 
-import Spinner from '../../Spinner'
+import Spinner from '/components/Spinner'
 
 const AuthorsInput = function(props) {
 
