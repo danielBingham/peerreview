@@ -4,21 +4,13 @@ import { useDispatch, useSelector } from 'react-redux'
 import {  patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import {  patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
-const ReviewControlView = function(props) {
+const DraftPaperControlView = function(props) {
     const [ patchPaperRequestId, setPatchPaperRequestId ] = useState(null)
-    const [ patchReviewRequestId, setPatchReviewRequestId ] = useState(null)
 
     const dispatch = useDispatch()
 
     // ================= Request Tracking =====================================
-    const patchReviewRequest = useSelector(function(state) {
-        if ( ! patchReviewRequestId ) {
-            return null
-        } else {
-            return state.reviews.requests[patchReviewRequestId]
-        }
-    })
-
+    
     const patchPaperRequest = useSelector(function(state) {
         if ( ! patchPaperRequestId ) {
             return null
@@ -26,8 +18,8 @@ const ReviewControlView = function(props) {
             return state.papers.requests[patchPaperRequestId]
         }
     })
+   
     // ================= Redux State ==========================================
-    //
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
@@ -37,17 +29,6 @@ const ReviewControlView = function(props) {
     const isOwner = (currentUser && isAuthor && props.paper.authors.find((a) => a.user.id == currentUser.id).owner ? true : false)
 
     // ================= User Action Handling  ================================
-
-    const finishReview = function(event) {
-        event.preventDefault()
-
-        const reviewPatch = {
-            id: props.reviewInProgress.id,
-            paperId: props.paper.id,
-            status: 'approved'
-        }
-        setPatchReviewRequestId(dispatch(patchReview(reviewPatch)))
-    }
 
     const publishPaper = function(event) {
         event.preventDefault()
@@ -75,26 +56,18 @@ const ReviewControlView = function(props) {
     })
 
     let contents = ''
-    if ( props.reviewInProgress && ! isAuthor) {
-        contents = (
-            <button onClick={finishReview}>Finish Review</button> 
-        )
-    } else if ( ! props.reviewInProgress && ! isAuthor ) {
-        contents = (
-            <button>Start a Review</button>
-        )
-    } else if ( isAuthor ) {
+     if ( isAuthor ) {
         contents = (
             <button onClick={publishPaper}>Publish</button>
         )
     }
 
     return (
-        <div className="review-controls">
+        <div className="draft-paper-controls">
             { contents }
         </div>
     )
 
 }
 
-export default ReviewControlView
+export default DraftPaperControlView

@@ -1,0 +1,7 @@
+.draft-paper-pdf-page {
+
+}
+
+.draft-paper-pdf-page canvas {
+    border: thin solid #DDD;
+}

@@ -1,4 +1,4 @@
-module.exports = class FieldService {
+module.exports = class FieldDAO {
 
     constructor(database) {
         this.database = database
@@ -22,7 +22,8 @@ module.exports = class FieldService {
             const field = {
                 id: row.id,
                 name: row.name,
-                parentId: row.parentId
+                parentId: row.parentId,
+                type: row.type
             }
 
             if ( ! fields[field.id] ) {
@@ -39,7 +40,7 @@ module.exports = class FieldService {
 
         const sql = `
                SELECT 
-                    id, name, parent_id as "parentId", created_date as "createdDate", updated_date as "updatedDate"
+                    id, name, parent_id as "parentId", type, created_date as "createdDate", updated_date as "updatedDate"
                 FROM fields 
                 ${where} 
         `

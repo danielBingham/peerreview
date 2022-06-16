@@ -112,7 +112,7 @@ const App = function(props) {
                         <Route path="/publish" element={ <PublishPage /> } />
                         <Route path="/review" element={ <ReviewPapersListPage /> } />
                         <Route path="/drafts/" element={ <DraftPapersListPage /> } />
-                        <Route path="/draft/:paperId" element={ <DraftPaperPage /> }  />
+                        <Route path="/draft/:id" element={ <DraftPaperPage /> }  />
 
                         { /* ========= Published Papers ===================== */ }
                         <Route path="/paper/:id" element={ <PublishedPaperPage /> } />

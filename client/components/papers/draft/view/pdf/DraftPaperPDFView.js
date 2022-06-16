@@ -9,11 +9,11 @@ import * as PDFLib from 'pdfjs-dist/webpack'
 import { getPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import { getReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
-import ReviewControlView from '../review/widgets/ReviewControlView'
-import ReviewCommentForm from '../review/ReviewCommentForm'
 import DraftPaperPDFPageView from './DraftPaperPDFPageView'
 
 import Spinner from '/components/Spinner'
+
+import './DraftPaperPDFView.css'
 
 const DraftPaperPDFView = function(props) {
     const [ pages, setPages ] = useState(null)
@@ -44,10 +44,11 @@ const DraftPaperPDFView = function(props) {
 
     // ================= Render ===============================================
     if ( pages ) {
+        const id = `paper-${props.paper.id}-content`
         return (
-            <section className="draft-paper-pdf">
+            <article id={id} className="draft-paper-pdf">
                 { pages }
-            </section>
+            </article>
         )
     } else {
         return (

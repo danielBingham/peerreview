@@ -1,0 +1,9 @@
+.review-list-item {
+    border: thin solid #ddd;
+    min-height: 100px;
+    padding: 5px;
+    background-color: #fafafa;
+}
+.review-list-item.selected {
+    background-color: white;
+}

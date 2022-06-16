@@ -6,8 +6,8 @@
  ******************************************************************************/
 
 const AuthenticationService = require('../services/authentication');
-const PaperService = require('../services/paper');
-const UserService = require('../services/user');
+const PaperDAO = require('../daos/paper');
+const UserDAO = require('../daos/user');
 
 module.exports = class UserController {
 
@@ -15,8 +15,8 @@ module.exports = class UserController {
         this.database = database;
         this.logger = logger;
         this.auth = new AuthenticationService();
-        this.paperService = new PaperService(database);
-        this.userService = new UserService(database);
+        this.paperDAO = new PaperDAO(database);
+        this.userDAO = new UserDAO(database);
     }
 
     /**
@@ -28,7 +28,7 @@ module.exports = class UserController {
     async queryUsers(request, response) {
         if ( request.query.name && request.query.name.length > 0) {
             try {
-                const users = await this.userService.selectUsers('WHERE name ILIKE $1', [ request.query.name+"%" ]);
+                const users = await this.userDAO.selectUsers('WHERE name ILIKE $1', [ request.query.name+"%" ]);
                 return response.status(200).json(users);
             } catch (error) {
                 this.logger.error(error);
@@ -47,7 +47,7 @@ module.exports = class UserController {
      */
     async getUsers(request, response) {
         try {
-            const users = await this.userService.selectUsers()
+            const users = await this.userDAO.selectUsers()
             return response.status(200).json(users);
         } catch (error) {
             this.logger.error(error);
@@ -92,7 +92,7 @@ module.exports = class UserController {
                 throw new Error('Insert user failed.')
             }
 
-            const returnUser = await this.userService.selectUsers('WHERE id=$1', [results.rows[0].id]);
+            const returnUser = await this.userDAO.selectUsers('WHERE id=$1', [results.rows[0].id]);
             return response.status(201).json(returnUser[0]);
         } catch (error) {
             this.logger.error(error);
@@ -108,7 +108,7 @@ module.exports = class UserController {
     async getUser(request, response) {
 
         try {
-            const returnUsers = await this.userService.selectUsers('WHERE id = $1', [request.params.id])
+            const returnUsers = await this.userDAO.selectUsers('WHERE id = $1', [request.params.id])
 
             if ( returnUsers.length == 0 ) {
                 return response.status(404).json([]);
@@ -143,7 +143,7 @@ module.exports = class UserController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const returnUser = await this.userService.selectUsers('WHERE id=$1', results.rows[0].id)
+            const returnUser = await this.userDAO.selectUsers('WHERE id=$1', results.rows[0].id)
             if ( returnUser.length == 0 ) {
                 throw new Error('Updated user somehow does not exist.')
             }
@@ -195,7 +195,7 @@ module.exports = class UserController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const returnUser = await this.userService.selectUsers('WHERE id=$1', [user.id])
+            const returnUser = await this.userDAO.selectUsers('WHERE id=$1', [user.id])
             if ( ! returnUser ) {
                 throw new Error('Updated user somehow does not exist!')
             }
@@ -238,8 +238,8 @@ module.exports = class UserController {
     async getUserPapers(request, response) {
         try {
             const userId = request.params.id
-            const paperIds = await this.userService.selectUserPapers(userId)
-            const papers = await this.paperService.selectPapers(paperIds)
+            const paperIds = await this.userDAO.selectUserPapers(userId)
+            const papers = await this.paperDAO.selectPapers(paperIds)
             return response.status(200).json(papers)
         } catch (error) {
             this.logger.error(error)

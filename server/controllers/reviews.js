@@ -40,11 +40,11 @@ module.exports = class ReviewController {
 
         try {
             const results = await this.database.query(`
-                INSERT INTO reviews (paper_id, user_id, summary, status, created_date, updated_date) 
-                    VALUES ($1, $2, $3, $4, now(), now()) 
+                INSERT INTO reviews (paper_id, user_id, summary, recommendation, status, created_date, updated_date) 
+                    VALUES ($1, $2, $3, $4, $5, now(), now()) 
                     RETURNING id
                 `, 
-                [ review.paperId, review.userId, review.summary, review.status ]
+                [ review.paperId, review.userId, review.summary, review.recommendation, review.status ]
             );
             if ( results.rows.length == 0 ) {
                 console.error('Failed to insert a review.');
@@ -52,10 +52,15 @@ module.exports = class ReviewController {
             }
 
             review.id = results.rows[0].id;
+            console.log('Post insert: ')
+            console.log(review)
 
             await this.insertComments(review.id, review.comments); 
 
+            console.log(`Getting review: /paper/${review.paperId}/review/${review.id}`)
+
             const returnReview = await this.selectReviews(review.paperId, review.id);
+            console.log(returnReview)
             return response.status(201).json(returnReview);
         } catch (error) {
             console.error(error);
@@ -168,7 +173,7 @@ module.exports = class ReviewController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const returnReview = await this.selectReviews(review.id);
+            const returnReview = await this.selectReviews(review.paperId, review.id);
             return response.status(200).json(returnReview);
         } catch (error) {
             console.error(error);
@@ -229,35 +234,35 @@ module.exports = class ReviewController {
 
         const reviews = {}
         for ( const row of rows ) {
-            const review = {
-                id: row.review_id,
-                paperId: row.review_paperId,
-                userId: row.review_userId,
-                summary: row.review_summary,
-                status: row.review_status,
-                createdDate: row.review_createdDate,
-                updatedDate: row.review_updatedDate,
-                comments: []
+
+            if ( ! reviews[row.review_id] ) {
+                const review = {
+                    id: row.review_id,
+                    paperId: row.review_paperId,
+                    userId: row.review_userId,
+                    summary: row.review_summary,
+                    recommendation: row.review_recommendation,
+                    status: row.review_status,
+                    createdDate: row.review_createdDate,
+                    updatedDate: row.review_updatedDate,
+                    comments: []
+                }
+                reviews[review.id] = review
             }
 
-            const comment = {
-                id: row.comment_id,
-                parentId: row.comment_parentId,
-                page: row.comment_page,
-                pinX: row.comment_pinX,
-                pinY: row.comment_pinY,
-                content: row.comment_content,
-                createdDate: row.comment_createdDate,
-                updatedDate: row.comment_updatedDate
-            }
-            review.comments.push(comment)
-            
-            if ( ! reviews[review.id] ) {
-                reviews[review.id] = review
-            } else {
-                if ( ! reviews[review.id].comments.find((c) => c.id == comment.id)) {
-                    reviews[review.id].comments.push(comment)
+            if ( row.comment_id != null && ! reviews[row.review_id].comments.find((c) => c.id == row.comment_id) ) {
+                const comment = {
+                    id: row.comment_id,
+                    reviewId: row.comment_reviewId,
+                    parentId: row.comment_parentId,
+                    page: row.comment_page,
+                    pinX: row.comment_pinX,
+                    pinY: row.comment_pinY,
+                    content: row.comment_content,
+                    createdDate: row.comment_createdDate,
+                    updatedDate: row.comment_updatedDate
                 }
+                reviews[row.review_id].comments.push(comment)
             }
         }
 
@@ -273,18 +278,18 @@ module.exports = class ReviewController {
         let review_where = ''
         const params = [ paperId ]
         if ( id ) {
-            review_where = ` AND review_id = $2`
+            review_where = ` AND reviews.id = $2`
             params.push(id)
         }
         
 
         const sql = `
             SELECT
-              reviews.id as review_id, reviews.paper_id as "review_paperId", reviews.user_id as "review_userId", reviews.summary as review_summary, reviews.status as review_status, reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
-              review_comments.id as comment_id, review_comments.parent_id as "comment_parentId", review_comments.page as comment_page, review_comments.pin_x as "comment_pinX", review_comments.pin_y as "comment_pinY", review_comments.content as comment_content, review_comments.created_date as "comment_createdDate", review_comments.updated_date as "comment_updatedDate"
+              reviews.id as review_id, reviews.paper_id as "review_paperId", reviews.user_id as "review_userId", reviews.summary as review_summary, reviews.recommendation as review_recommendation, reviews.status as review_status, reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
+              review_comments.id as comment_id, review_comments.review_id as "comment_reviewId", review_comments.parent_id as "comment_parentId", review_comments.page as comment_page, review_comments.pin_x as "comment_pinX", review_comments.pin_y as "comment_pinY", review_comments.content as comment_content, review_comments.created_date as "comment_createdDate", review_comments.updated_date as "comment_updatedDate"
             FROM reviews
                 LEFT OUTER JOIN review_comments on reviews.id = review_comments.review_id
-            WHERE paper_id = $1${review_where} 
+            WHERE reviews.paper_id = $1${review_where} 
             ORDER BY reviews.updated_date DESC, review_comments.updated_date DESC
         `
 
@@ -304,9 +309,13 @@ module.exports = class ReviewController {
      * @throws Error Doesn't catch errors, so any errors returned by the database will bubble up.
      */
     async insertComments(reviewId, comments) {
+        console.log('Inserting comments: ')
+        console.log(comments)
         if ( comments.length == 0) {
+            console.log('Bailing, no comments.')
             return
         }
+        console.log('Inserting...')
 
         let sql = `INSERT INTO review_comments (review_id, parent_id, page, pin_x, pin_y, content, created_date, updated_date) VALUES `
         const params = []

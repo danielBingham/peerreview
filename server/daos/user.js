@@ -1,5 +1,5 @@
 
-module.exports = class UserService {
+module.exports = class UserDAO {
 
 
     constructor(database) {

@@ -4,14 +4,14 @@
  * Restful routes for manipulating fields.
  *
  ******************************************************************************/
-const FieldService = require('../services/field')
+const FieldDAO = require('../daos/field')
 
 
 module.exports = class FieldController {
 
     constructor(database) {
         this.database = database;
-        this.fieldService = new FieldService(database)
+        this.fieldDAO = new FieldDAO(database)
     }
 
     /**
@@ -23,7 +23,7 @@ module.exports = class FieldController {
     async queryFields(request, response) {
         if ( request.query.name && request.query.name.length > 0) {
             try {
-                const fields = await this.fieldService.selectFields('WHERE name ILIKE $1', [ request.query.name+"%" ]);
+                const fields = await this.fieldDAO.selectFields('WHERE name ILIKE $1', [ request.query.name+"%" ]);
                 return response.status(200).json(fields);
             } catch (error) {
                 console.error(error);
@@ -42,7 +42,7 @@ module.exports = class FieldController {
      */
     async getFields(request, response) {
         try {
-            const fields = await this.fieldService.selectFields()
+            const fields = await this.fieldDAO.selectFields()
             return response.status(200).json(fields);
         } catch (error) {
             console.error(error);
@@ -84,7 +84,7 @@ module.exports = class FieldController {
                 throw new Error('Insert field failed.')
             }
 
-            const returnField = await this.fieldService.selectFields('WHERE id=$1', [results.rows[0].id]);
+            const returnField = await this.fieldDAO.selectFields('WHERE id=$1', [results.rows[0].id]);
             return response.status(201).json(returnField);
         } catch (error) {
             console.error(error);
@@ -99,7 +99,7 @@ module.exports = class FieldController {
      */
     async getField(request, response) {
         try {
-            const returnFields = await this.fieldService.selectFields('WHERE id = $1', [request.params.id])
+            const returnFields = await this.fieldDAO.selectFields('WHERE id = $1', [request.params.id])
 
             if ( ! returnFields ) {
                 return response.status(404).json({});
@@ -132,7 +132,7 @@ module.exports = class FieldController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const returnField = await this.fieldService.selectFields('WHERE id=$1', results.rows[0].id)
+            const returnField = await this.fieldDAO.selectFields('WHERE id=$1', results.rows[0].id)
             return response.status(200).json(returnField);
         } catch (error) {
             console.error(error);
@@ -172,7 +172,7 @@ module.exports = class FieldController {
                 return response.status(404).json({error: 'no-resource'});
             }
 
-            const returnField = await this.fieldService.selectFields('WHERE id=$1', [field.id])
+            const returnField = await this.fieldDAO.selectFields('WHERE id=$1', [field.id])
             return response.status(200).json(returnField);
         } catch (error) {
             console.error(error);
@@ -208,11 +208,11 @@ module.exports = class FieldController {
      * GET /field/:id/papers
      *
      * Get the papers a field is an author on.
-     */
+     *
     async getFieldPapers(request, response) {
         try {
             const fieldId = request.params.id
-            const paperIds = await this.fieldService.selectFieldPapers(fieldId)
+            const paperIds = await this.fieldDAO.selectFieldPapers(fieldId)
             const papers = await this.paperService.selectPapers(paperIds)
             return response.status(200).json(papers)
         } catch (error) {
@@ -220,7 +220,7 @@ module.exports = class FieldController {
             return response.status(500).json({error: 'unknown'})
         }
         
-    }
+    }*/
 
 
 }; 

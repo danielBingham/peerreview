@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -15,16 +14,6 @@ const ReviewCommentForm = function(props) {
     const [content, setContent] = useState('')
 
     const dispatch = useDispatch()
-
-    const { paperId } = useParams()
-
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
-
-    const reviewInProgress = useSelector(function(state) {
-        return state.reviews.list.find((review) => review.userId == currentUser.id && review.paperId == paperId)
-    })
 
     const postReviewsRequest = useSelector(function(state) {
         if ( postReviewsRequestId ) {
@@ -43,6 +32,15 @@ const ReviewCommentForm = function(props) {
 
     })
 
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
+    const reviewInProgress = useSelector(function(state) {
+        return state.reviews.inProgress[props.paper.id]
+    })
+
+
     const onContentChange = function(event) {
         event.preventDefault()
         setContent(event.target.value)
@@ -60,10 +58,11 @@ const ReviewCommentForm = function(props) {
 
         if ( ! reviewInProgress ) {
             const review = {
-                paperId: paperId,
+                paperId: props.paper.id,
                 userId: currentUser.id,
                 summary: '',
                 status: 'in-progress',
+                recommendation: 'request-changes',
                 comments: [comment]
             }
             setPostReviewsRequestId(dispatch(postReviews(review)))
@@ -103,7 +102,7 @@ const ReviewCommentForm = function(props) {
     }
 
     return (
-        <section className="commentForm" style={ style } >
+        <section className="comment-form" style={ style } >
             <form onSubmit={onSubmit}>
                 <textarea name="content" rows="10" columns="80" onChange={onContentChange} value={content}></textarea>
                 <input type="submit" name="submit" value={ ( reviewInProgress ? "Add Comment" : "Start Review" ) } />

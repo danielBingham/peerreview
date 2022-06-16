@@ -1,0 +1,9 @@
+.review-list {
+    grid-column: 1 / 2;
+    grid-row: 1 / 3; 
+}
+#show-all-reviews {
+    min-height: 0px;
+    padding: 20px 5px;
+    text-align: center;
+}

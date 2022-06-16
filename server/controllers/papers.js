@@ -1,13 +1,13 @@
-const fs = require('fs')
-const sanitizeFilename = require('sanitize-filename')
-const PaperService = require('../services/paper.js')
-
 /******************************************************************************
  *     PaperController 
  *
  * Restful routes for manipulating papers.
  *
  ******************************************************************************/
+
+const fs = require('fs')
+const sanitizeFilename = require('sanitize-filename')
+const PaperDAO = require('../daos/paper.js')
 
 
 /**
@@ -18,7 +18,7 @@ module.exports = class PaperController {
     constructor(database, logger) {
         this.database = database
         this.logger = logger
-        this.paperService = new PaperService(database)
+        this.paperDAO = new PaperDAO(database)
     }
 
 
@@ -59,7 +59,7 @@ module.exports = class PaperController {
             if ( count < 1 ) {
                 where = ''
             }
-            const papers = await this.paperService.selectPapers(where, params)
+            const papers = await this.paperDAO.selectPapers(where, params)
             return response.status(200).json(papers)
         } catch (error) {
             this.logger.error(error)
@@ -94,7 +94,7 @@ module.exports = class PaperController {
             await this.insertAuthors(paper) 
             await this.insertFields(paper)
 
-            const returnPapers = await this.paperService.selectPapers("WHERE papers.id=$1", [paper.id])
+            const returnPapers = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
             if ( returnPapers ) {
                 return response.status(201).json(returnPapers[0])
             } else {
@@ -129,24 +129,32 @@ module.exports = class PaperController {
                 return response.status(404).json({ error: 'no-paper' })
             }
 
+            const maxVersionResults = await this.database.query(
+                'SELECT MAX(version)+1 as version FROM paper_versions WHERE paper_id=$1', 
+                [ request.params.id ]
+            )
+            let version = 1
+            if ( maxVersionResults.rows.length > 0 && maxVersionResults.rows[0].version) {
+                version = maxVersionResults.rows[0].version
+            }
+
             const versionResults = await this.database.query(`
                 INSERT INTO paper_versions
-                    (paper_id, filepath)
+                    (paper_id, version, filepath)
                 VALUES
-                    ($1, $2)
+                    ($1, $2, $3)
                 RETURNING 
                     paper_id, version, filepath
                 `,
-                [request.params.id, request.file.path]
+                [request.params.id, version, request.file.path]
             )
+
 
             if (versionResults.rows.length == 0) {
                 this.logger.error('Insert paper version failed silently for ' + paper_id + ' and ' + request.file.path)
                 fs.rmSync(request.file.path)
                 return response.status(500).json({ error: 'unknown' })
             }
-
-            const version = versionResults.rows[0].version
 
             const title = titleResults.rows[0].title
             let titleFilename = title.replaceAll(/\s/g, '-')
@@ -175,7 +183,7 @@ module.exports = class PaperController {
 
             fs.rmSync(request.file.path)
 
-            const returnPapers = await this.paperService.selectPapers('WHERE papers.id=$1', [request.params.id])
+            const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [request.params.id])
             if ( ! returnPapers ) {
                 this.logger.error('Failed to find paper after upload.')
                 return response.status(500).json({ error: 'server-error' })
@@ -195,7 +203,7 @@ module.exports = class PaperController {
      */
     async getPaper(request, response) {
         try {
-            const papers = await this.paperService.selectPapers('WHERE papers.id=$1', [request.params.id])
+            const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [request.params.id])
 
             if ( ! papers ) {
                 return response.status(404).json({})
@@ -250,7 +258,7 @@ module.exports = class PaperController {
             await this.insertAuthors(paper)
             await this.insertFields(paper)
 
-            const returnPapers = await this.paperService.selectPapers('WHERE papers.id=$1', [paper.id])
+            const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paper.id])
             if ( ! returnPapers ) {
                 this.logger.error('Failed to find modified paper.')
                 return response.status(500).json({ error: 'server-error' })
@@ -307,7 +315,7 @@ module.exports = class PaperController {
                 return response.status(404).json({error: 'no-resource'})
             }
 
-            const returnPapers = await this.paperService.selectPapers('WHERE papers.id=$1', [paper.id])
+            const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paper.id])
             if ( ! returnPapers ) {
                 this.logger.error('Failed to find patched paper!')
                 return response.status(500).json({ error: 'server-error' })

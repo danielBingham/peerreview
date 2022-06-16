@@ -11,6 +11,22 @@ export const reviewsSlice = createSlice({
     name: 'reviews',
     initialState: {
         /**
+         * A hash of reviews current in progress, keyed by paperId - one review
+         * for each paper.
+         *
+         * @type {object}
+         */
+        inProgress: {},
+
+        /**
+         * A hash of reviews current selected, keyed by paperId, one review for
+         * each paper.
+         *
+         * @type {object}
+         */
+        selected: {},
+
+        /**
          * A dictionary of requests in progress or that we've made and completed,
          * keyed with a uuid requestId.
          *
@@ -19,64 +35,104 @@ export const reviewsSlice = createSlice({
         requests: {},
 
         /**
-         * A dictionary of reviews we've retrieved from the backend, keyed by
-         * review.id.
+         * A two dimensional dictionary of reviews, the first layer is keyed by
+         * paper.id, the second by review.id
          *
          * @type {object}
          */
         dictionary: {},
 
         /**
-         * A list of the reviews we've retrieved.  Contains the same objects as
-         * the dictionary, this just allows for quick and easy searching of the
-         * objects we've loaded using `filter` and other array processing
-         * methods.
+         * A dictionary, keyed by paper.id, of lists of reviews we've retrieved
+         * for each paper.  The lists preserve order.
          *
          * @type {Object[]}
          */
-        list: []
+        list: {} 
     },
     reducers: {
-        // ========== GET /reviews ==================
+        setInProgress: function(state, action) {
+            const review = action.payload
+
+            state.inProgress[review.paperId] = review
+        },
+
+        setSelected: function(state, action) {
+            const review = action.payload
+
+            state.selected[review.paperId] = review
+        },
+
+        clearSelected: function(state, action) {
+            const paperId = action.payload
+            state.selected[paperId] = null
+        },
 
         /**
-         * The GET request to /reviews succeeded.
-         *
-         * @param {object} state - The redux state slice.
+         * @param {object} state - The redux slice.
          * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.reviews - An array of populated review objects
+         * @param {object} action.payload - Either a single review object or a
+         * list of review objects.
          */
-        completeGetReviewsRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
+        addReviewsToDictionary: function(state, action) {
+            if (action.payload.length ) {
+                for(const review of action.payload ) {
+                    if ( ! state.dictionary[review.paperId] ) {
+                        state.dictionary[review.paperId] = {}
+                    }
+                    state.dictionary[review.paperId][review.id] = review
+                }
+            } else {
+                const review = action.payload
+                if ( ! state.dictionary[review.paperId] ) {
+                    state.dictionary[review.paperId] = {}
+                }
+                state.dictionary[review.paperId][review.id] = review 
+            }
+        },
 
-            if ( action.payload.result && action.payload.result.length > 0) {
-                for ( const review of action.payload.result ) {
-                    state.dictionary[review.id] = review
-                    state.list = state.list.filter((r) => r.id !== review.id)
-                    state.list.push(review)
+        appendReviewsToList: function(state, action) {
+            if ( action.payload.length ) {
+                for ( const review of action.payload ) {
+                    if ( ! state.dictionary[review.paperId] ) {
+                        state.dictionary[review.paperId] = {}
+                    }
+                    if ( ! state.list[review.paperId] ) {
+                        state.list[review.paperId] = []
+                    }
+                    state.dictionary[review.paperId][review.id] = review
+                    if ( ! state.list[review.paperId].find((r) => r.id == review.id) ) {
+                        state.list[review.paperId].push(review)
+                    }
+                }
+            } else {
+                const review = action.payload
+                if ( ! state.dictionary[review.paperId] ) {
+                    state.dictionary[review.paperId] = {}
+                }
+                if ( ! state.list[review.paperId] ) {
+                    state.list[review.paperId] = []
+                }
+                state.dictionary[review.paperId][review.id] = review
+                if ( ! state.list[review.paperId].find((r) => r.id == review.id)) {
+                    state.list[review.paperId].push(review)
                 }
             }
         },
 
-        // ========== DELETE /review/:id =================
+        removeReview: function(state, action) {
+            const review = action.payload
+            if ( state.list[review.paperId] ) {
+                state.list[review.paperId] = state.list[review.paperId].filter((r) => r.id !== review.id)
+            }
+            if ( state.dictionary[review.paperId] ) {
+                delete state.dictionary[review.paperId][review.id]
+            }
+        },
 
-        /**
-         * Finish the DELETE /review/:id call.  In this case, the call returns
-         * the id of the deleted review and we need to delete them from state on
-         * our side.  
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.reviewId - The id of the deleted review
-         */
-        completeDeleteReviewRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            delete state.dictionary[action.payload.result] 
-            state.list = state.list.filter((review) => review.id !== action.payload.result)
+        clearList: function(state, action) {
+            const review = action.payload
+            state.list[review.paperId] = [] 
         },
 
         // ========== Generic Request Methods =============
@@ -128,10 +184,6 @@ export const reviewsSlice = createSlice({
          */
         completeRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            state.dictionary[action.payload.result.id] = action.payload.result
-            state.list = state.list.filter((review) => review.id != action.payload.result.id)
-            state.list.push(action.payload.result)
         },
 
         /**
@@ -183,8 +235,22 @@ export const getReviews = function(paperId) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(reviews) {
+            if ( reviews ) {
+                dispatch(reviewsSlice.actions.addReviewsToDictionary(reviews))
+                dispatch(reviewsSlice.actions.appendReviewsToList(reviews))
+
+                const state = getState()
+                if ( state.authentication.currentUser ) {
+                    for ( const review of reviews ) {
+                        if ( review.status == 'in-progress' && review.userId == state.authentication.currentUser.id) {
+                            dispatch(reviewsSlice.actions.setInProgress(review))
+                        }
+                    }
+                }
+            }
+
             payload.result = reviews
-            dispatch(reviewsSlice.actions.completeGetReviewsRequest(payload))
+            dispatch(reviewsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -213,9 +279,6 @@ export const getReviews = function(paperId) {
  */
 export const postReviews = function(review) {
     return function(dispatch, getState) {
-        console.log('Review recieved.')
-        console.log(review)
-
         const requestId = uuidv4()
         const endpoint = `/paper/${review.paperId}/reviews`
 
@@ -238,6 +301,14 @@ export const postReviews = function(review) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedReview) {
+            dispatch(reviewsSlice.actions.addReviewsToDictionary(returnedReview))
+            dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
+
+            const state = getState()
+            if ( state.authentication.currentUser && returnedReview.userId == state.authentication.currentUser.id && returnedReview.status == 'in-progress') {
+                dispatch(reviewsSlice.actions.setInProgress(returnedReview))
+            }
+
             payload.result = returnedReview
             dispatch(reviewsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -291,6 +362,16 @@ export const getReview = function(paperId, id) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(review) {
+            if ( review ) {
+                dispatch(reviewsSlice.actions.addReviewsToDictionary(review))
+                dispatch(reviewsSlice.actions.appendReviewsToList(review))
+
+                const state = getState()
+                if ( state.authentication.currentUser && review.userId == state.authentication.currentUser.id && review.status == 'in-progress') {
+                    dispatch(reviewsSlice.actions.setInProgress(review))
+                }
+            }
+
             payload.result = review
             dispatch(reviewsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -345,6 +426,14 @@ export const putReview = function(review) {
             }
 
         }).then(function(returnedReview) {
+            dispatch(reviewsSlice.actions.addReviewsToDictionary(returnedReview))
+            dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
+
+            const state = getState()
+            if ( state.authentication.currentUser && returnedReview.userId == state.authentication.currentUser.id && returnedReview.status == 'in-progress') {
+                dispatch(reviewsSlice.actions.setInProgress(returnedReview))
+            }
+
             payload.result = returnedReview
             dispatch(reviewsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -397,6 +486,14 @@ export const patchReview = function(review) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedReview) {
+            dispatch(reviewsSlice.actions.addReviewsToDictionary(returnedReview))
+            dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
+
+            const state = getState()
+            if ( state.authentication.currentUser && returnedReview.userId == state.authentication.currentUser.id && returnedReview.status == 'in-progress') {
+                dispatch(reviewsSlice.actions.setInProgress(returnedReview))
+            }
+
             payload.result = returnedReview
             dispatch(reviewsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -432,7 +529,7 @@ export const deleteReview = function(review) {
 
         const payload = {
             requestId: requestId,
-            result: review.id
+            result: review
         }
         
         dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
@@ -444,7 +541,8 @@ export const deleteReview = function(review) {
         }).then(function(response) {
             payload.status = response.status
             if( response.ok ) {
-                dispatch(reviewsSlice.actions.completeDeleteReviewRequest(payload))
+                dispatch(reviewsSlice.actions.removeReview(review))
+                dispatch(reviewsSlice.actions.completeRequest(payload))
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
@@ -515,6 +613,6 @@ export const postReviewComments = function(paperId, reviewId, comment) {
 }
 
 
-export const { completeGetReviewsRequest, completeDeleteReviewRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = reviewsSlice.actions
+export const { setSelected, clearSelected, setInProgress, completeGetReviewsRequest, completeDeleteReviewRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = reviewsSlice.actions
 
 export default reviewsSlice.reducer

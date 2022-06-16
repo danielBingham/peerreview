@@ -4,8 +4,12 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import * as PDFLib from 'pdfjs-dist/webpack'
 
-import ReviewCommentForm from '../review/ReviewCommentForm'
 import Spinner from '/components/Spinner'
+
+import ReviewCommentForm from '../review/comments/ReviewCommentForm'
+import ReviewCommentView from '../review/comments/ReviewCommentView'
+
+import './DraftPaperPDFPageView.css'
 
 /**
  * TODO
@@ -22,17 +26,24 @@ import Spinner from '/components/Spinner'
  *
  */
 const DraftPaperPDFPageView = function(props) {
+    const [ haveRendered, setHaveRendered ] = useState(false)
     const [commentFormElement, setCommentFormElement] = useState(null)
 
     const dispatch = useDispatch()
 
     const comments = useSelector(function(state) {
-        const reviews = state.reviews.list.filter((review) => review.paperId == props.paper.id)
-        const results = []
-        for (const review of reviews ) {
-            results.push(...review.comments.filter((comment) => comment.page == props.pageNumber))
+        if ( state.reviews.selected[props.paper.id] ) {
+            return state.reviews.selected[props.paper.id].comments.filter((c) => c.page == props.pageNumber)
+        } else {
+            const reviews = state.reviews.list[props.paper.id]
+            const results = []
+            if ( reviews ) {
+                for (const review of reviews ) {
+                    results.push(...review.comments.filter((c) => c.page == props.pageNumber))
+                }
+            }
+            return results
         }
-        return results
     })
 
 
@@ -45,7 +56,7 @@ const DraftPaperPDFPageView = function(props) {
 
         if ( ! commentFormElement ) {
             const key = event.clientY + '-' + event.clientX
-            setCommentFormElement(<ReviewCommentForm close={closeReviewCommentForm} paperId={props.paper.id} pageNumber={props.pageNumber} x={event.pageX} y={event.pageY} />)
+            setCommentFormElement(<ReviewCommentForm close={closeReviewCommentForm} paper={props.paper} pageNumber={props.pageNumber} x={event.pageX} y={event.pageY} />)
         }
     }
 
@@ -56,7 +67,7 @@ const DraftPaperPDFPageView = function(props) {
             // Support HiDPI-screens.
             var outputScale = window.devicePixelRatio || 1;
 
-            var canvas = document.getElementById(`page-${props.pageNumber}`);
+            var canvas = document.getElementById(`page-${props.pageNumber}-canvas`);
             var context = canvas.getContext('2d');
 
             canvas.width = Math.floor(viewport.width * outputScale);
@@ -74,6 +85,7 @@ const DraftPaperPDFPageView = function(props) {
                 viewport: viewport
             };
             page.render(renderContext);
+            setHaveRendered(true)
         }).catch(function(error) {
             console.error(error)
         })
@@ -82,29 +94,17 @@ const DraftPaperPDFPageView = function(props) {
 
     const commentElements = []
     for(const comment of comments) {
-        const style = {
-            position: 'absolute',
-            border: 'thin solid black',
-            background: 'white',
-            top: comment.pinY,
-            left: comment.pinX,
-            padding: '5px',
-            boxShadow: '1px 1px 3px #777'
-        }
-        commentElements.push(<div key={comment.id} id={comment.id} className="comment-outer" style={style}>
-            {comment.updatedDate}
-            <div className="comment-inner" style={{ padding: '5px' }} >
-                {comment.content}
-            </div>
-        </div>)
+        commentElements.push(<ReviewCommentView key={comment.id} paper={props.paper} comment={comment} />)
     }
 
+    const canvasId = `page-${props.pageNumber}-canvas`
     const pageId = `page-${props.pageNumber}`
     return (
-        <section className="page-wrapper">
+        <section id={pageId} className="draft-paper-pdf-page">
             {commentElements}
             {commentFormElement}
-            <canvas id={pageId} onClick={handleClick}></canvas>
+            <canvas id={canvasId} onClick={handleClick} style={ haveRendered ? { display: 'block' } : { display: 'none' } }></canvas>
+            { ! haveRendered && <Spinner /> }
         </section>
     )
 
