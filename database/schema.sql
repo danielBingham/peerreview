@@ -172,18 +172,19 @@ CREATE TABLE reviews (
 
 CREATE TABLE review_comment_threads (
     id bigserial PRIMARY KEY,
-    review_id bigint REFERENCES reviews(id) ON DELETE CASCADE
-);
-
-CREATE TABLE review_comments (
-    id          bigserial PRIMARY KEY,
-    review_id   bigint REFERENCES reviews(id) ON DELETE CASCADE,
-    user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
-    thread_id   bigint REFERENCES review_comment_threads ON DELETE CASCADE, 
-    thread_order int,
+    review_id bigint REFERENCES reviews(id) ON DELETE CASCADE,
     page        int, 
     pin_x       int,
-    pin_y       int,
+    pin_y       int
+);
+
+CREATE TYPE review_comment_status as ENUM('in-progress', 'posted');
+CREATE TABLE review_comments (
+    id          bigserial PRIMARY KEY,
+    thread_id   bigint REFERENCES review_comment_threads(id) ON DELETE CASCADE, 
+    user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
+    thread_order int,
+    status review_comment_status,
     content     text,
     created_date    timestamp,
     updated_date    timestamp

@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { setInProgress, clearSelected, postReviews, cleanupRequest } from '/state/reviews'
+import { setInProgress, clearSelected, newReview, cleanupRequest } from '/state/reviews'
 
 import Spinner from '/components/Spinner'
 
@@ -52,15 +52,9 @@ const ReviewListView = function(props) {
 
 
     const startReview = function(event) {
-        const newReview = {
-            paperId: props.paper.id,
-            userId: currentUser.id,
-            summary: '',
-            status: 'in-progress',
-            recommendation: 'request-changes',
-            comments: []
+        if ( ! reviewInProgress ) {
+            setPostReviewRequestId(dispatch(newReview(props.paper.id, currentUser.id)))
         }
-        setPostReviewRequestId(dispatch(postReviews(newReview)))
     }
 
     const showAll = function(event) {

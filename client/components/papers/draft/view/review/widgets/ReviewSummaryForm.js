@@ -95,6 +95,8 @@ const ReviewSummaryForm = function(props) {
                 <div className="summary">
                     <div className="summary">
                         <textarea 
+                            rows="10"
+                            cols="80"
                             onChange={(e) => setSummary(e.target.value)} 
                             onBlur={commitChange} 
                             value={summary}

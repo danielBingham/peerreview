@@ -101,9 +101,8 @@ export const reviewsSlice = createSlice({
                         state.list[review.paperId] = []
                     }
                     state.dictionary[review.paperId][review.id] = review
-                    if ( ! state.list[review.paperId].find((r) => r.id == review.id) ) {
-                        state.list[review.paperId].push(review)
-                    }
+                    state.list[review.paperId] = state.list[review.paperId].filter((r) => r.id != review.id)
+                    state.list[review.paperId].push(review)
                 }
             } else {
                 const review = action.payload
@@ -114,16 +113,15 @@ export const reviewsSlice = createSlice({
                     state.list[review.paperId] = []
                 }
                 state.dictionary[review.paperId][review.id] = review
-                if ( ! state.list[review.paperId].find((r) => r.id == review.id)) {
-                    state.list[review.paperId].push(review)
-                }
+                state.list[review.paperId] = state.list[review.paperId].filter((r) => r.id != review.id)
+                state.list[review.paperId].push(review)
             }
         },
 
         removeReview: function(state, action) {
             const review = action.payload
             if ( state.list[review.paperId] ) {
-                state.list[review.paperId] = state.list[review.paperId].filter((r) => r.id !== review.id)
+                state.list[review.paperId] = state.list[review.paperId].filter((r) => r.id != review.id)
             }
             if ( state.dictionary[review.paperId] ) {
                 delete state.dictionary[review.paperId][review.id]
@@ -201,6 +199,22 @@ export const reviewsSlice = createSlice({
     }
 })
 
+/**
+ * Start a new review.
+*/
+export const newReview = function(paperId, userId) {
+    return function(dispatch, getState) {
+        const review = {
+            paperId: paperId,
+            userId: userId, 
+            summary: '',
+            status: 'in-progress',
+            recommendation: 'request-changes',
+            threads: []
+        }
+        return dispatch(postReviews(review))
+    }
+}
 
 /**
  * GET /reviews
@@ -561,21 +575,23 @@ export const deleteReview = function(review) {
 } 
 
 /**
- * POST /paper/:paper_id/review/:review_id/comments
+ * POST /paper/:paper_id/review/:review_id/threads
  *
- * Add a comment to a review.
+ * Add a comment thread to a review.
  *  
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} review - A populated review object.
+ * @param {object} paperId - The id of the paper this review is of.
+ * @param {object} reviewId - The id of the review this thread belongs to.
+ * @param {object} threads - A single thread or an array of threads to add to this review.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const postReviewComments = function(paperId, reviewId, comment) {
+export const postReviewThreads = function(paperId, reviewId, threads) {
     return function(dispatch, getState) {
         const requestId = uuidv4()
-        const endpoint = `/paper/${paperId}/review/${reviewId}/comments`
+        const endpoint = `/paper/${paperId}/review/${reviewId}/threads`
 
         const payload = {
             requestId: requestId
@@ -587,7 +603,7 @@ export const postReviewComments = function(paperId, reviewId, comment) {
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(comment)
+            body: JSON.stringify(threads)
         }).then(function(response) {
             payload.status = response.status
             if ( response.ok ) {
@@ -596,6 +612,15 @@ export const postReviewComments = function(paperId, reviewId, comment) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedReview) {
+            console.log("Returned Review: ")
+            console.log(returnedReview)
+            dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
+
+            const state = getState()
+            if ( state.authentication.currentUser && returnedReview.userId == state.authentication.currentUser.id && returnedReview.status == 'in-progress') {
+                dispatch(reviewsSlice.actions.setInProgress(returnedReview))
+            }
+
             payload.result = returnedReview
             dispatch(reviewsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -611,6 +636,131 @@ export const postReviewComments = function(paperId, reviewId, comment) {
         return requestId
     }
 }
+
+/**
+ * POST /paper/:paper_id/review/:review_id/thread/:thread_id/comments
+ *
+ * Add a comment to a comment thread on a review.
+ *  
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ * 
+ * @param {int} paperId - The id of the paper the review is of.
+ * @param {int} reviewId - The id of the review the comment is on.
+ * @param {int} threadId - The id of the thread we're adding comments to.
+ * @param {object} comemnts - A single comment or an array of comments to add to the thread identified by threadId. 
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const postReviewComments = function(paperId, reviewId, threadId, comments) {
+    return function(dispatch, getState) {
+        const requestId = uuidv4()
+        const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comments`
+
+        const payload = {
+            requestId: requestId
+        }
+
+        dispatch(reviewsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(comments)
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(returnedReview) {
+            dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
+
+            const state = getState()
+            if ( state.authentication.currentUser && returnedReview.userId == state.authentication.currentUser.id && returnedReview.status == 'in-progress') {
+                dispatch(reviewsSlice.actions.setInProgress(returnedReview))
+            }
+
+            payload.result = returnedReview
+            dispatch(reviewsSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(reviewsSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
+/**
+ * PATCH /paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id
+ *
+ * Patch a comment.
+ *  
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ * 
+ * @param {int} paperId - The id of the paper the review is of.
+ * @param {int} reviewId - The id of the review the comment is on.
+ * @param {int} threadId - The id of the thread we're adding comments to.
+ * @param {object} comemnts - A single comment or an array of comments to add to the thread identified by threadId. 
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const patchReviewComment = function(paperId, reviewId, threadId, comment) {
+    return function(dispatch, getState) {
+        const requestId = uuidv4()
+        const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comment/${comment.id}`
+
+        const payload = {
+            requestId: requestId
+        }
+
+        dispatch(reviewsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(comment)
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(returnedReview) {
+            dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
+
+            const state = getState()
+            if ( state.authentication.currentUser && returnedReview.userId == state.authentication.currentUser.id && returnedReview.status == 'in-progress') {
+                dispatch(reviewsSlice.actions.setInProgress(returnedReview))
+            }
+
+            payload.result = returnedReview
+            dispatch(reviewsSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(reviewsSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
 
 
 export const { setSelected, clearSelected, setInProgress, completeGetReviewsRequest, completeDeleteReviewRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = reviewsSlice.actions

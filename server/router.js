@@ -205,8 +205,24 @@ module.exports = function(database, logger, config) {
         reviewController.deleteReview(request, response)
     })
 
-    router.post('/paper/:paper_id/review/:review_id/comments', function(request, response) {
+    router.post('/paper/:paper_id/review/:review_id/threads', function(request, response) {
+        reviewController.postThreads(request, response)
+    })
+
+    router.delete('/paper/:paper_id/review/:review_id/thread/:thread_id', function(request, response) {
+        reviewController.deleteThread(request,response)
+    })
+
+    router.post('/paper/:paper_id/review/:review_id/thread/:thread_id/comments', function(request, response) {
         reviewController.postComments(request, response)
+    })
+
+    router.patch('/paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id', function(request, response) {
+        reviewController.patchComment(request, response)
+    })
+
+    router.delete('/paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id', function(request, response) {
+        reviewController.deleteComment(request, response)
     })
 
     /**************************************************************************

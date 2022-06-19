@@ -1,10 +1,13 @@
+const ReviewDAO = require('../daos/review')
+
 /**
  *
  */
 module.exports = class ReviewController {
 
     constructor(database) {
-        this.database = database;
+        this.database = database
+        this.reviewDAO = new ReviewDAO(database)
     }
 
 
@@ -15,17 +18,16 @@ module.exports = class ReviewController {
      */
     async getReviews(request, response) {
         try {
-            const reviews = await this.selectReviews(request.params.paper_id);
-            console.log(reviews)
+            const reviews = await this.reviewDAO.selectReviews(request.params.paper_id)
             if ( reviews && ! Array.isArray(reviews)) {
-                return response.status(200).json([reviews]);
+                return response.status(200).json([reviews])
             } else {
-                return response.status(200).json(reviews);
+                return response.status(200).json(reviews)
             }
         } catch (error) {
-            console.error(error);
-            response.status(500).json({ error: 'unknown' });
-            return;
+            console.error(error)
+            response.status(500).json({ error: 'unknown' })
+            return
         }
     }
 
@@ -35,7 +37,7 @@ module.exports = class ReviewController {
      * Create a new review in the database from the provided JSON.
      */
     async postReviews(request, response) {
-        const review = request.body;
+        const review = request.body
         review.paperId = request.params.paper_id
 
         try {
@@ -45,26 +47,20 @@ module.exports = class ReviewController {
                     RETURNING id
                 `, 
                 [ review.paperId, review.userId, review.summary, review.recommendation, review.status ]
-            );
+            )
             if ( results.rows.length == 0 ) {
-                console.error('Failed to insert a review.');
-                return response.status(500).json({error: 'unknown'});
+                console.error('Failed to insert a review.')
+                return response.status(500).json({error: 'unknown'})
             }
 
-            review.id = results.rows[0].id;
-            console.log('Post insert: ')
-            console.log(review)
+            review.id = results.rows[0].id
+            await this.reviewDAO.insertThreads(review) 
 
-            await this.insertComments(review.id, review.comments); 
-
-            console.log(`Getting review: /paper/${review.paperId}/review/${review.id}`)
-
-            const returnReview = await this.selectReviews(review.paperId, review.id);
-            console.log(returnReview)
-            return response.status(201).json(returnReview);
+            const returnReview = await this.reviewDAO.selectReviews(review.paperId, review.id)
+            return response.status(201).json(returnReview)
         } catch (error) {
-            console.error(error);
-            return response.status(500).json({error: 'unknown'});
+            console.error(error)
+            return response.status(500).json({error: 'unknown'})
         }
     }
 
@@ -75,11 +71,11 @@ module.exports = class ReviewController {
      */
     async getReview(request, response) {
         try {
-            const review = await this.selectReviews(request.params.paper_id, request.params.id);
-            return response.status(200).json(review);
+            const review = await this.reviewDAO.selectReviews(request.params.paper_id, request.params.id)
+            return response.status(200).json(review)
         } catch (error) {
-            console.error(error);
-            return response.status(500).send();
+            console.error(error)
+            return response.status(500).send()
         }
     }
 
@@ -90,37 +86,37 @@ module.exports = class ReviewController {
      */
     async putReview(request, response) {
         try {
-            const review = request.body;
-            review.id = request.params.id;
+            const review = request.body
+            review.paperId = request.params.paper_id
+            review.id = request.params.id
 
             // Update the review.
             const results = await this.database.query(`
                 UPDATE reviews 
-                    SET title = $1 AND is_draft=$2 AND updated_date = now() 
-                WHERE id = $3 
+                    SET paper_id = $1, user_id = $2, version = $3, summary = $4, recommendation = $5, status = $6, updated_date = now() 
+                WHERE id = $7 
                 `,
-                [ review.title, review.isDraft, review.id ]
-            );
+                [ review.paperId, reivew.userId, review.version, review.summary, review.recommendation, review.status, review.id]
+            )
 
             if (results.rowCount == 0 ) {
-                return response.status(404).json({error: 'no-resource'});
+                return response.status(404).json({error: 'no-resource'})
             }
 
-            // Delete the authors so we can recreate them from the request.
+            // Delete the threads so we can recreate them from the request.
             const deletionResults = await this.database.query(`
-                DELETE FROM review_authors WHERE review_id = $1
+                DELETE FROM review_comment_threads WHERE review_id = $1
                 `,
                 [ review.id ]
-            );
+            )
 
-            // Reinsert the authors.
-            await this.insertAuthors(review);
+            await this.reviewDAO.insertThreads(reveiw)
 
-            const returnReview = await this.selectReviews(review.id);
-            return response.status(200).json(returnReview);
+            const returnReview = await this.reviewDAO.selectReviews(review.paperId, review.id)
+            return response.status(200).json(returnReview)
         } catch (error) {
-            console.error(error);
-            response.status(500).json({error: 'unknown'});
+            console.error(error)
+            response.status(500).json({error: 'unknown'})
         }
     }
 
@@ -133,7 +129,7 @@ module.exports = class ReviewController {
      * nothing with children (comments).
      */
     async patchReview(request, response) {
-        let review = request.body;
+        let review = request.body
 
         // We want to use the ids in params over any id in the body.
         review.id = request.params.id
@@ -142,41 +138,41 @@ module.exports = class ReviewController {
         // We'll ignore these fields when assembling the patch SQL.  These are
         // fields that either need more processing (authors) or that we let the
         // database handle (date fields, id, etc)
-        const ignoredFields = [ 'id', 'comments', 'createdDate', 'updatedDate' ];
+        const ignoredFields = [ 'id', 'threads', 'createdDate', 'updatedDate' ]
 
-        let sql = 'UPDATE reviews SET ';
-        let params = [];
-        let count = 1;
+        let sql = 'UPDATE reviews SET '
+        let params = []
+        let count = 1
         for(let key in review) {
             if (ignoredFields.includes(key)) {
-                continue;
+                continue
             }
 
             if ( key == 'paperId' ) {
-                sql += 'paper_id = $' + count + ', ';
+                sql += 'paper_id = $' + count + ', '
             } else if ( key == 'userId' ) {
-                sql += 'user_id = $' + count + ', ';
+                sql += 'user_id = $' + count + ', '
             } else {
-                sql += key + ' = $' + count + ', ';
+                sql += key + ' = $' + count + ', '
             }
 
-            params.push(review[key]);
-            count = count + 1;
+            params.push(review[key])
+            count = count + 1
         }
-        sql += 'updated_date = now() WHERE id = $' + count;
-        params.push(review.id);
+        sql += 'updated_date = now() WHERE id = $' + count
+        params.push(review.id)
 
         try {
-            const results = await this.database.query(sql, params);
+            const results = await this.database.query(sql, params)
 
             if ( results.rowCount == 0 ) {
-                return response.status(404).json({error: 'no-resource'});
+                return response.status(404).json({error: 'no-resource'})
             }
 
-            const returnReview = await this.selectReviews(review.paperId, review.id);
-            return response.status(200).json(returnReview);
+            const returnReview = await this.reviewDAO.selectReviews(review.paperId, review.id)
+            return response.status(200).json(returnReview)
         } catch (error) {
-            console.error(error);
+            console.error(error)
             response.status(500).json({error: 'unknown'})
         }
     }
@@ -191,150 +187,170 @@ module.exports = class ReviewController {
             const results = await this.database.query(
                 'delete from reviews where id = $1',
                 [ request.params.id ]
-            );
+            )
 
             if ( results.rowCount == 0) {
-                return response.status(404).json({error: 'no-resource'});
+                return response.status(404).json({error: 'no-resource'})
             }
 
-            return response.status(200).json({reviewId: request.params.id});
+            return response.status(200).json({reviewId: request.params.id})
         } catch (error) {
-            console.error(error);
-            return response.status(500).json({error: 'unknown'});
+            console.error(error)
+            return response.status(500).json({error: 'unknown'})
+        }
+    }
+
+    async postThreads(request, response) {
+        try {
+            console.log('=== postThreads ===')
+            const paperId = request.params.paper_id
+            const reviewId = request.params.review_id
+
+            console.log('PaperId: ' + paperId)
+            console.log('ReviewId: ' + reviewId)
+            console.log('Request Body: ')
+            console.log(request.body)
+
+            let threads = []
+            if ( ! request.body.length ) {
+                threads.push(request.body)
+            } else {
+                threads = request.body
+            }
+
+            const review = {
+                id: reviewId,
+                paperId: paperId,
+                threads: threads
+            }
+            await this.reviewDAO.insertThreads(review)
+
+            const returnReview = await this.reviewDAO.selectReviews(paperId, reviewId)
+            console.log("Return Review: ")
+            console.log(returnReview)
+            return response.status(200).json(returnReview)
+        } catch (error) {
+            console.log(error)
+            return response.status(500).json({ error: 'server-error' })
+        }
+
+    }
+
+    async deleteThread(request, response) {
+        try {
+            const threadId = request.params.thread_id
+
+            const results = await this.database.query('DELETE FROM review_comment_threads WHERE id = $1', [ threadId ])
+
+            if ( results.rowCount == 0) {
+                return response.status(404).json({ error: 'no-resource' })
+            }
+
+            return response.status(200).json({ threadId: threadId })
+        } catch (error) {
+            console.log(error)
+            return response.status(500).json({ error: 'server-error' })
         }
     }
 
     async postComments(request, response) {
         try {
-            const comment = request.body
             const paperId = request.params.paper_id
             const reviewId = request.params.review_id
+            const threadId = request.params.thread_id
 
-            await this.insertComments(reviewId, [comment])
+            let comments = []
+            if ( ! request.body.length ) {
+                comments.push(request.body)
+            } else {
+                comments = request.body
+            }
 
-            const review = await this.selectReviews(paperId, reviewId)
+            const thread = {
+                id: threadId,
+                comments: comments
+            }
+
+            await this.reviewDAO.insertComments(thread)
+
+            const review = await this.reviewDAO.selectReviews(paperId, reviewId)
             return response.status(200).json(review)
         } catch (error) {
             console.log(error)
-            return response.status(500).json({error: 'unknown'})
+            return response.status(500).json({error: 'server-error'})
         }
     }
 
-    /**
-     * Translate the database rows returned by our join queries into objects.
-     *
-     * @param {Object[]}    rows    An array of rows returned from the database.
-     *
-     * @return {Object[]}   The data parsed into one or more objects.
-     */
-    hydrateReviews(rows) {
-        if ( rows.length == 0 ) {
-            return null
-        }
+    async patchComment(request, response) {
+        try {
+            const paperId = request.params.paper_id
+            const reviewId = request.params.review_id
+            const threadId = request.params.thread_id
 
-        const reviews = {}
-        for ( const row of rows ) {
+            const comment = request.body
 
-            if ( ! reviews[row.review_id] ) {
-                const review = {
-                    id: row.review_id,
-                    paperId: row.review_paperId,
-                    userId: row.review_userId,
-                    summary: row.review_summary,
-                    recommendation: row.review_recommendation,
-                    status: row.review_status,
-                    createdDate: row.review_createdDate,
-                    updatedDate: row.review_updatedDate,
-                    comments: []
+            // We'll ignore these fields when assembling the patch SQL.  These are
+            // fields that either need more processing (authors) or that we let the
+            // database handle (date fields, id, etc)
+            const ignoredFields = [ 'id', 'createdDate', 'updatedDate' ]
+
+            let sql = 'UPDATE review_comments SET '
+            let params = []
+            let count = 1
+            for(let key in comment) {
+                if (ignoredFields.includes(key)) {
+                    continue
                 }
-                reviews[review.id] = review
+
+                if ( key == 'threadId' ) {
+                    sql += 'thread_id = $' + count + ', '
+                } else if ( key == 'userId' ) {
+                    sql += 'user_id = $' + count + ', '
+                } else if ( key == 'threadOrder' ) {
+                    sql += 'thread_order = $' + count + ', '
+                } else {
+                    sql += key + ' = $' + count + ', '
+                }
+
+                params.push(comment[key])
+                count = count + 1
+            }
+            sql += 'updated_date = now() WHERE id = $' + count
+            params.push(comment.id)
+
+            const results = await this.database.query(sql, params)
+
+            if ( results.rowCount == 0 ) {
+                return response.status(404).json({error: 'no-resource'})
             }
 
-            if ( row.comment_id != null && ! reviews[row.review_id].comments.find((c) => c.id == row.comment_id) ) {
-                const comment = {
-                    id: row.comment_id,
-                    reviewId: row.comment_reviewId,
-                    parentId: row.comment_parentId,
-                    page: row.comment_page,
-                    pinX: row.comment_pinX,
-                    pinY: row.comment_pinY,
-                    content: row.comment_content,
-                    createdDate: row.comment_createdDate,
-                    updatedDate: row.comment_updatedDate
-                }
-                reviews[row.review_id].comments.push(comment)
+            const returnReview = await this.reviewDAO.selectReviews(paperId, reviewId)
+            return response.status(200).json(returnReview)
+
+        } catch (error) {
+            console.error(error)
+            return response.status(500).json({ error: 'server-error' })
+        }
+
+    }
+
+    async deleteComment(request, response) {
+        try {
+            const commentId = request.params.comment_id
+
+            const results = await this.database.query('DELETE FROM review_comments WHERE id = $1', [ commentId ])
+
+            if ( results.rowCount == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
             }
-        }
 
-        const reviewArray = Object.values(reviews)
-        if (reviewArray.length == 1) {
-            return reviewArray[0]
-        }
-
-        return reviewArray 
-    }
-
-    async selectReviews(paperId, id) {
-        let review_where = ''
-        const params = [ paperId ]
-        if ( id ) {
-            review_where = ` AND reviews.id = $2`
-            params.push(id)
-        }
-        
-
-        const sql = `
-            SELECT
-              reviews.id as review_id, reviews.paper_id as "review_paperId", reviews.user_id as "review_userId", reviews.summary as review_summary, reviews.recommendation as review_recommendation, reviews.status as review_status, reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
-              review_comments.id as comment_id, review_comments.review_id as "comment_reviewId", review_comments.parent_id as "comment_parentId", review_comments.page as comment_page, review_comments.pin_x as "comment_pinX", review_comments.pin_y as "comment_pinY", review_comments.content as comment_content, review_comments.created_date as "comment_createdDate", review_comments.updated_date as "comment_updatedDate"
-            FROM reviews
-                LEFT OUTER JOIN review_comments on reviews.id = review_comments.review_id
-            WHERE reviews.paper_id = $1${review_where} 
-            ORDER BY reviews.updated_date DESC, review_comments.updated_date DESC
-        `
-
-        const results = await this.database.query(sql, params)
-
-        if ( results.rows.count == 0) {
-            return null
-        }
-
-        const reviews = this.hydrateReviews(results.rows)
-        return reviews
-    }
-
-    /**
-     * Insert the comments for a review.
-     *
-     * @throws Error Doesn't catch errors, so any errors returned by the database will bubble up.
-     */
-    async insertComments(reviewId, comments) {
-        console.log('Inserting comments: ')
-        console.log(comments)
-        if ( comments.length == 0) {
-            console.log('Bailing, no comments.')
-            return
-        }
-        console.log('Inserting...')
-
-        let sql = `INSERT INTO review_comments (review_id, parent_id, page, pin_x, pin_y, content, created_date, updated_date) VALUES `
-        const params = []
-
-        let count = 1
-        let commentCount = 1
-
-        for( const comment of comments ) {
-            sql += `($${count}, $${count+1}, $${count+2}, $${count+3}, $${count+4}, $${count+5}, now(), now())` + (commentCount < comments.length ? ', ' : '')
-
-            params.push(reviewId, comment.parentId, comment.page, comment.pinX, comment.pinY, comment.content) 
-            count = count + 6
-            commentCount++
-        }
-
-        const results = await this.database.query(sql, params)
-
-        if ( results.rowCount == 0 ) {
-            throw new Error('Something went wrong in insertComments().  No comments were inserted.')
+            return response.status(200).json({ commentId: commentId })
+        } catch (error) {
+            console.error(error)
+            return response.status(500).json({ error: 'server-error' })
         }
     }
-}; 
+
+
+
+} 

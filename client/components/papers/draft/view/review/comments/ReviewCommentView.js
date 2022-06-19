@@ -17,16 +17,16 @@ const ReviewCommentView = function(props) {
     })
 
     const review = useSelector(function(state) {
-        return state.reviews.dictionary[props.paper.id][props.comment.reviewId]
+        return state.reviews.dictionary[props.paper.id][props.review.id]
     })
 
     const author = useSelector(function(state) {
-        return state.users.users[review.userId]
+        return state.users.users[props.comment.userId]
     })
 
     useEffect(function() {
         if ( ! requestId ) {
-            setRequestId(dispatch(getUser(review.userId)))
+            setRequestId(dispatch(getUser(props.comment.userId)))
         }
 
         return function cleanup() {
@@ -36,14 +36,10 @@ const ReviewCommentView = function(props) {
         }
     }, [ requestId ])
 
-    const position = {
-        top: props.comment.pinY,
-        left: props.comment.pinX
-    }
 
     if ( author ) {
         return (
-            <div key={props.comment.id} id={props.comment.id} className="comment-outer" style={position}>
+            <div key={props.comment.id} id={props.comment.id} className="comment-outer">
                 <div className="author">{author.name}</div>
                 <div className="datetime">{props.comment.updatedDate}</div>
                 <div className="comment-inner" style={{ padding: '5px' }} >

@@ -1,0 +1,7 @@
+.comment-thread {
+    position: absolute;
+    border: thin solid black;
+    background: white;
+    padding: 5px;
+    box-shadow: 1px 1px 3px #777;
+}

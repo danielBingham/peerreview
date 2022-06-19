@@ -1,31 +1,23 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postReviews, postReviewComments, cleanupRequest } from '/state/reviews'
+import { patchReviewComment, cleanupRequest } from '/state/reviews'
 
 import Spinner from '/components/Spinner'
 
 const ReviewCommentForm = function(props) {
-    const [postReviewsRequestId, setPostReviewsRequestId] = useState(null)
-    const [postCommentsRequestId, setPostCommentsRequestId] = useState(null)
+    const [patchCommentRequestId, setPatchCommentRequestId] = useState(null)
 
     const [content, setContent] = useState('')
 
     const dispatch = useDispatch()
 
-    const postReviewsRequest = useSelector(function(state) {
-        if ( postReviewsRequestId ) {
-            return state.reviews.requests[postReviewsRequestId]
-        } else {
-            return null
-        }
-    })
 
-    const postCommentsRequest = useSelector(function(state) {
-        if ( postCommentsRequestId ) {
-            return state.reviews.requests[postCommentsRequestId]
+    const patchCommentRequest = useSelector(function(state) {
+        if ( patchCommentRequestId ) {
+            return state.reviews.requests[patchCommentRequestId]
         } else {
             return null
         }
@@ -36,76 +28,60 @@ const ReviewCommentForm = function(props) {
         return state.authentication.currentUser
     })
 
-    const reviewInProgress = useSelector(function(state) {
-        return state.reviews.inProgress[props.paper.id]
-    })
-
-
-    const onContentChange = function(event) {
-        event.preventDefault()
-        setContent(event.target.value)
+    const commit = function(event) {
+        const comment = {
+            id: props.comment.id,
+            threadId: props.comment.threadId,
+            userId: props.comment.userId,
+            threadOrder: props.comment.threadOrder,
+            status: 'in-progress',
+            content: content
+        }
+        setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
     }
 
     const onSubmit = function(event) {
         event.preventDefault()
         const comment = {
-            parentId: props.parentId,
-            page: props.pageNumber,
-            pinX: props.x,
-            pinY: props.y,
-            content: content,
+            id: props.comment.id,
+            threadId: props.comment.threadId,
+            userId: props.comment.userId,
+            threadOrder: props.comment.threadOrder, 
+            status: 'posted',
+            content: content
         }
-
-        if ( ! reviewInProgress ) {
-            const review = {
-                paperId: props.paper.id,
-                userId: currentUser.id,
-                summary: '',
-                status: 'in-progress',
-                recommendation: 'request-changes',
-                comments: [comment]
-            }
-            setPostReviewsRequestId(dispatch(postReviews(review)))
-        } else {
-            setPostCommentsRequestId(dispatch(postReviewComments(reviewInProgress.paperId, reviewInProgress.id, comment)))
-        }
+        setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
 
         return false
     }
 
-    useEffect(function() {
-        if ( postReviewsRequest && postReviewsRequest.state == 'fulfilled') {
-           props.close() 
-        }
+    useLayoutEffect(function() {
+        setContent(props.comment.content)
 
-        if ( postCommentsRequest && postCommentsRequest.state == 'fulfilled') {
-            props.close()
-        }
+    }, [])
+
+    useEffect(function() {
 
         return function cleanup() {
-            if ( postReviewsRequest ) {
-                dispatch(cleanupRequest(postReviewsRequestId))
-            }
-
-            if ( postCommentsRequest ) {
-                dispatch(cleanupRequest(postCommentsRequestId))
+            if ( patchCommentRequest ) {
+                dispatch(cleanupRequest(patchCommentRequest))
             }
         }
-    })
-
-    const style = { 
-        background: 'white',
-        border: 'thin solid black',
-        position: 'absolute',
-        top: props.y + 'px',
-        left: props.x + 'px'
-    }
+    }, [] )
 
     return (
-        <section className="comment-form" style={ style } >
+        <section className="comment-form" >
             <form onSubmit={onSubmit}>
-                <textarea name="content" rows="10" columns="80" onChange={onContentChange} value={content}></textarea>
-                <input type="submit" name="submit" value={ ( reviewInProgress ? "Add Comment" : "Start Review" ) } />
+                <textarea 
+                    name="content" 
+                    rows="10" 
+                    cols="40" 
+                    onBlur={commit}
+                    onChange={(e) => setContent(e.target.value)} 
+                    value={content}
+                >
+                </textarea>
+                <input type="submit" name="submit" value="Add Comment" />
             </form>
         </section>
     
