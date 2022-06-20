@@ -65,20 +65,46 @@ module.exports = class ReviewDAO {
         }
 
         const reviewArray = Object.values(reviews)
-        if (reviewArray.length == 1) {
-            return reviewArray[0]
-        }
-
         return reviewArray 
     }
 
-    async selectReviews(paperId, id) {
-        let review_where = ''
-        const params = [ paperId ]
-        if ( id ) {
-            review_where = ` AND reviews.id = $2`
-            params.push(id)
+    /**
+     * Select only the comments that should be visible to the user with userId
+     * (or to all users if userId is null).
+     *
+     * Modifies the original array and returns it.
+     *
+     * @param {int} userId The id of the user that is currently logged in, or
+     * null if no user is logged in.
+     * @param {object[]} reviews An array of reviews who's comments need to be
+     * filtered.  Will be modified (filtered in place).
+     *
+     * @return {object[]} The filter review array
+     */
+    selectVisibleComments(userId, reviews) {
+        console.log('SetVisibleComments: Before')
+        console.log('userId')
+        console.log(userId)
+        console.log('Reviews')
+        console.log(reviews)
+        for( const review of reviews) {
+            console.log(review)
+            for ( const thread of review.threads) {
+                console.log(thread)
+                thread.comments = thread.comments.filter((c) => {
+                    return c.status == "posted" || c.userId == userId
+                })
+            }
+            review.threads = review.threads.filter((t) => t.comments.length > 0)
         }
+        console.log('After: reviews')
+        console.log(reviews)
+        return reviews
+    }
+
+    async selectReviews(where, params) {
+        where = ( where ? where : '' )
+        params = ( params ? params : [])
 
         const sql = `
             SELECT
@@ -88,7 +114,7 @@ module.exports = class ReviewDAO {
             FROM reviews
                 LEFT OUTER JOIN review_comment_threads on reviews.id = review_comment_threads.review_id
                 LEFT OUTER JOIN review_comments on review_comment_threads.id = review_comments.thread_id
-            WHERE reviews.paper_id = $1${review_where} 
+            ${where}
             ORDER BY reviews.updated_date DESC, review_comments.updated_date DESC
         `
 
@@ -98,8 +124,7 @@ module.exports = class ReviewDAO {
             return null
         }
 
-        const reviews = this.hydrateReviews(results.rows)
-        return reviews
+        return this.hydrateReviews(results.rows)
     }
 
     async insertThreads(review) {
@@ -122,8 +147,6 @@ module.exports = class ReviewDAO {
 
             await this.insertComments(thread)
         }
-
-
     }
     
 

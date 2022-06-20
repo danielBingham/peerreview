@@ -18,16 +18,27 @@ module.exports = class ReviewController {
      */
     async getReviews(request, response) {
         try {
-            const reviews = await this.reviewDAO.selectReviews(request.params.paper_id)
-            if ( reviews && ! Array.isArray(reviews)) {
-                return response.status(200).json([reviews])
-            } else {
-                return response.status(200).json(reviews)
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
             }
+            let reviews = []
+
+            if ( userId ) {
+                reviews = await this.reviewDAO.selectReviews(`WHERE reviews.paper_id=$1 AND (reviews.status != 'in-progress' OR reviews.user_id =$2)`, [ request.params.paper_id, userId ])
+            } else {
+                reviews = await this.reviewDAO.selectReviews(`WHERE reviews.paper_id=$1 AND reviews.status != 'in-progress'`, [ request.params.paper_id ])
+            }
+
+            if ( ! reviews ) {
+                return response.status(200).json([])
+            }
+
+            this.reviewDAO.selectVisibleComments(userId, reviews)
+            return response.status(200).json(reviews)
         } catch (error) {
             console.error(error)
-            response.status(500).json({ error: 'unknown' })
-            return
+            return response.status(500).json({ error: 'server-error' })
         }
     }
 
@@ -40,27 +51,40 @@ module.exports = class ReviewController {
         const review = request.body
         review.paperId = request.params.paper_id
 
+        let userId = null
+        if ( request.session && request.session.user) {
+            userId = request.session.user.id
+        }
+
+        if ( ! userId ) {
+            throw new Error('Attempt to create a review when not authenticated.')
+        }
+
         try {
             const results = await this.database.query(`
                 INSERT INTO reviews (paper_id, user_id, summary, recommendation, status, created_date, updated_date) 
                     VALUES ($1, $2, $3, $4, $5, now(), now()) 
                     RETURNING id
                 `, 
-                [ review.paperId, review.userId, review.summary, review.recommendation, review.status ]
+                [ review.paperId, userId, review.summary, review.recommendation, review.status ]
             )
             if ( results.rows.length == 0 ) {
-                console.error('Failed to insert a review.')
-                return response.status(500).json({error: 'unknown'})
+                throw new Error('Failed to insert a new review.')
             }
 
             review.id = results.rows[0].id
             await this.reviewDAO.insertThreads(review) 
 
-            const returnReview = await this.reviewDAO.selectReviews(review.paperId, review.id)
-            return response.status(201).json(returnReview)
+            const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
+            if ( ! returnReviews || returnReviews.length == 0) {
+                throw new Error(`Failed to find newly inserted review ${review.id}.`)
+            }
+            console.log(returnReviews)
+            this.reviewDAO.selectVisibleComments(userId, returnReviews)
+            return response.status(201).json(returnReviews[0])
         } catch (error) {
             console.error(error)
-            return response.status(500).json({error: 'unknown'})
+            return response.status(500).json({error: 'server-error'})
         }
     }
 
@@ -71,11 +95,27 @@ module.exports = class ReviewController {
      */
     async getReview(request, response) {
         try {
-            const review = await this.reviewDAO.selectReviews(request.params.paper_id, request.params.id)
-            return response.status(200).json(review)
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
+            let reviews = []
+            if ( userId ) {
+                reviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1 AND (reviews.status != 'in-progress' OR reviews.user_id = $2)`, [ request.params.review_id, userId ])
+            } else {
+                reviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1 AND reviews.status != 'in-progress'`, [ request.params.review_id ])
+            }
+
+            if ( ! reviews || reviews.length == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
+            }
+
+            this.reviewDAO.selectVisibleComments(userId, reviews)
+            return response.status(200).json(reviews[0])
         } catch (error) {
             console.error(error)
-            return response.status(500).send()
+            return response.status(500).json({ error: 'server-error' })
         }
     }
 
@@ -86,9 +126,19 @@ module.exports = class ReviewController {
      */
     async putReview(request, response) {
         try {
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
             const review = request.body
             review.paperId = request.params.paper_id
             review.id = request.params.id
+
+            if ( userId != review.userId ) {
+                return response.status(403).json({ error: 'not-authorized' })
+            }
+
 
             // Update the review.
             const results = await this.database.query(`
@@ -112,11 +162,15 @@ module.exports = class ReviewController {
 
             await this.reviewDAO.insertThreads(reveiw)
 
-            const returnReview = await this.reviewDAO.selectReviews(review.paperId, review.id)
-            return response.status(200).json(returnReview)
+            const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
+            if ( ! returnReviews || returnReviews.length == 0) {
+                throw new Error(`Failed to find updated review ${review.id}.`)
+            }
+            this.reviewDAO.selectVisibleComments(userId, returnReviews)
+            return response.status(200).json(returnReviews[0])
         } catch (error) {
             console.error(error)
-            response.status(500).json({error: 'unknown'})
+            return response.status(500).json({error: 'server-error'})
         }
     }
 
@@ -129,51 +183,67 @@ module.exports = class ReviewController {
      * nothing with children (comments).
      */
     async patchReview(request, response) {
-        let review = request.body
-
-        // We want to use the ids in params over any id in the body.
-        review.id = request.params.id
-        review.paperId = request.params.paper_id
-
-        // We'll ignore these fields when assembling the patch SQL.  These are
-        // fields that either need more processing (authors) or that we let the
-        // database handle (date fields, id, etc)
-        const ignoredFields = [ 'id', 'threads', 'createdDate', 'updatedDate' ]
-
-        let sql = 'UPDATE reviews SET '
-        let params = []
-        let count = 1
-        for(let key in review) {
-            if (ignoredFields.includes(key)) {
-                continue
-            }
-
-            if ( key == 'paperId' ) {
-                sql += 'paper_id = $' + count + ', '
-            } else if ( key == 'userId' ) {
-                sql += 'user_id = $' + count + ', '
-            } else {
-                sql += key + ' = $' + count + ', '
-            }
-
-            params.push(review[key])
-            count = count + 1
-        }
-        sql += 'updated_date = now() WHERE id = $' + count
-        params.push(review.id)
-
         try {
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
+            let review = request.body
+
+            // We want to use the ids in params over any id in the body.
+            review.id = request.params.id
+            review.paperId = request.params.paper_id
+
+            const userCheckResults = await this.database.query(`SELECT user_id FROM reviews WHERE id = $1`, [ review.id ])
+            if ( userCheckResults.rows.length == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
+            } else if ( ! userId || userCheckResults.rows[0].user_id != userId ) {
+                return response.status(403).json({ error: 'not-authorized' })
+            }
+
+            // We'll ignore these fields when assembling the patch SQL.  These are
+            // fields that either need more processing (authors) or that we let the
+            // database handle (date fields, id, etc)
+            const ignoredFields = [ 'id', 'threads', 'createdDate', 'updatedDate' ]
+
+            let sql = 'UPDATE reviews SET '
+            let params = []
+            let count = 1
+            for(let key in review) {
+                if (ignoredFields.includes(key)) {
+                    continue
+                }
+
+                if ( key == 'paperId' ) {
+                    sql += 'paper_id = $' + count + ', '
+                } else if ( key == 'userId' ) {
+                    sql += 'user_id = $' + count + ', '
+                } else {
+                    sql += key + ' = $' + count + ', '
+                }
+
+                params.push(review[key])
+                count = count + 1
+            }
+            sql += 'updated_date = now() WHERE id = $' + count
+            params.push(review.id)
+
             const results = await this.database.query(sql, params)
 
             if ( results.rowCount == 0 ) {
                 return response.status(404).json({error: 'no-resource'})
             }
 
-            const returnReview = await this.reviewDAO.selectReviews(review.paperId, review.id)
-            return response.status(200).json(returnReview)
+            const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
+            if ( ! returnReviews || returnReviews.length == 0) {
+                throw new Error(`Failed to find patched review ${review.id}.`)
+            }
+            this.reviewDAO.selectVisibleComments(userId, returnReviews)
+            return response.status(200).json(returnReviews[0])
         } catch (error) {
             console.error(error)
-            response.status(500).json({error: 'unknown'})
+            response.status(500).json({error: 'server-error'})
         }
     }
 
@@ -184,13 +254,25 @@ module.exports = class ReviewController {
      */
     async deleteReview(request, response) {
         try {
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
+            const userCheckResults = await this.database.query(`SELECT user_id FROM reviews WHERE id = $1`, [ request.params.id ])
+            if ( userCheckResults.rows.length == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
+            } else if ( ! userId || userCheckResults.rows[0].user_id != userId ) {
+                return response.status(403).json({ error: 'not-authorized' })
+            }
+
             const results = await this.database.query(
                 'delete from reviews where id = $1',
                 [ request.params.id ]
             )
 
             if ( results.rowCount == 0) {
-                return response.status(404).json({error: 'no-resource'})
+                throw new Error(`Failed to delete review ${request.params.id}.`)
             }
 
             return response.status(200).json({reviewId: request.params.id})
@@ -202,14 +284,20 @@ module.exports = class ReviewController {
 
     async postThreads(request, response) {
         try {
-            console.log('=== postThreads ===')
             const paperId = request.params.paper_id
             const reviewId = request.params.review_id
 
-            console.log('PaperId: ' + paperId)
-            console.log('ReviewId: ' + reviewId)
-            console.log('Request Body: ')
-            console.log(request.body)
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
+            const userCheckResults = await this.database.query(`SELECT user_id FROM reviews WHERE id = $1`, [ reviewId ])
+            if ( userCheckResults.rows.length == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
+            } else if ( ! userId || userCheckResults.rows[0].user_id != userId ) {
+                return response.status(403).json({ error: 'not-authorized' })
+            }
 
             let threads = []
             if ( ! request.body.length ) {
@@ -225,10 +313,12 @@ module.exports = class ReviewController {
             }
             await this.reviewDAO.insertThreads(review)
 
-            const returnReview = await this.reviewDAO.selectReviews(paperId, reviewId)
-            console.log("Return Review: ")
-            console.log(returnReview)
-            return response.status(200).json(returnReview)
+            const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
+            if ( ! returnReviews || returnReviews.length == 0) {
+                throw new Error(`Failed to find review ${reviewId} after inserting new threads.`)
+            }
+            this.reviewDAO.selectVisibleComments(userId, returnReviews)
+            return response.status(200).json(returnReviews[0])
         } catch (error) {
             console.log(error)
             return response.status(500).json({ error: 'server-error' })
@@ -238,7 +328,21 @@ module.exports = class ReviewController {
 
     async deleteThread(request, response) {
         try {
+            const paperId = request.params.paper_id
+            const reviewId = request.params.review_id
             const threadId = request.params.thread_id
+
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
+            const userCheckResults = await this.database.query(`SELECT user_id FROM reviews WHERE id = $1`, [ reviewId ])
+            if ( userCheckResults.rows.length == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
+            } else if ( ! userId || userCheckResults.rows[0].user_id != userId ) {
+                return response.status(403).json({ error: 'not-authorized' })
+            }
 
             const results = await this.database.query('DELETE FROM review_comment_threads WHERE id = $1', [ threadId ])
 
@@ -246,7 +350,12 @@ module.exports = class ReviewController {
                 return response.status(404).json({ error: 'no-resource' })
             }
 
-            return response.status(200).json({ threadId: threadId })
+            const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
+            if ( ! returnReviews || returnReviews.length == 0) {
+                throw new Error(`Failed to find review ${reviewId} after deleting thread ${threadId}.`)
+            }
+            this.reviewDAO.selectVisibleComments(userId, returnReviews)
+            return response.status(200).json(returnReviews[0])
         } catch (error) {
             console.log(error)
             return response.status(500).json({ error: 'server-error' })
@@ -258,6 +367,22 @@ module.exports = class ReviewController {
             const paperId = request.params.paper_id
             const reviewId = request.params.review_id
             const threadId = request.params.thread_id
+
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
+            const userCheckResults = await this.database.query(`SELECT status, user_id FROM reviews WHERE id = $1`, [ reviewId ])
+
+            if ( userCheckResults.rows.length == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
+            } else {
+                const reviewPart = userCheckResults.rows[0]
+                if ( reviewPart.status == 'in-progress' && reviewPart.user_id != userId ) {
+                    return response.status(403).json({ error: 'not-authorized' })
+                }
+            }
 
             let comments = []
             if ( ! request.body.length ) {
@@ -273,8 +398,12 @@ module.exports = class ReviewController {
 
             await this.reviewDAO.insertComments(thread)
 
-            const review = await this.reviewDAO.selectReviews(paperId, reviewId)
-            return response.status(200).json(review)
+            const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
+            if ( ! returnReviews || returnReviews.length == 0) {
+                throw new Error(`Failed to find review ${reviewId} after adding comments.`)
+            }
+            this.reviewDAO.selectVisibleComments(userId, returnReviews)
+            return response.status(200).json(returnReviews[0])
         } catch (error) {
             console.log(error)
             return response.status(500).json({error: 'server-error'})
@@ -286,8 +415,23 @@ module.exports = class ReviewController {
             const paperId = request.params.paper_id
             const reviewId = request.params.review_id
             const threadId = request.params.thread_id
+            const commentId = request.params.comment_id
+
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
+            const userCheckResults = await this.database.query(`SELECT user_id FROM review_comments WHERE id = $1`, [ commentId ])
+
+            if ( userCheckResults.rows.length == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
+            } else if ( userId == null || userCheckResults.rows[0].user_id != userId) {
+                return response.status(403).json({ error: 'not-authorized' })
+            }
 
             const comment = request.body
+            comment.id = commentId
 
             // We'll ignore these fields when assembling the patch SQL.  These are
             // fields that either need more processing (authors) or that we let the
@@ -321,11 +465,15 @@ module.exports = class ReviewController {
             const results = await this.database.query(sql, params)
 
             if ( results.rowCount == 0 ) {
-                return response.status(404).json({error: 'no-resource'})
+                throw new Error(`Failed to update comment ${commentId}.`)
             }
 
-            const returnReview = await this.reviewDAO.selectReviews(paperId, reviewId)
-            return response.status(200).json(returnReview)
+            const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
+            if ( ! returnReviews || returnReviews.length == 0 ) {
+                throw new Error (`Failed to find review ${reviewId} after updating related comment ${commentId}.`)
+            }
+            this.reviewDAO.selectVisibleComments(userId, returnReviews)
+            return response.status(200).json(returnReviews[0])
 
         } catch (error) {
             console.error(error)
@@ -336,15 +484,34 @@ module.exports = class ReviewController {
 
     async deleteComment(request, response) {
         try {
+            const reviewId = request.params.review_id
             const commentId = request.params.comment_id
+
+            let userId = null
+            if ( request.session && request.session.user ) {
+                userId = request.session.user.id
+            }
+
+            const userCheckResults = await this.database.query(`SELECT user_id FROM review_comments WHERE id = $1`, [ commentId ])
+
+            if ( userCheckResults.rows.length == 0 ) {
+                return response.status(404).json({ error: 'no-resource' })
+            } else if ( userId == null || userCheckResults.rows[0].user_id != userId) {
+                return response.status(403).json({ error: 'not-authorized' })
+            }
 
             const results = await this.database.query('DELETE FROM review_comments WHERE id = $1', [ commentId ])
 
             if ( results.rowCount == 0 ) {
-                return response.status(404).json({ error: 'no-resource' })
+                throw new Error(`Failed to delete comment ${commentId}.`)
             }
 
-            return response.status(200).json({ commentId: commentId })
+            const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
+            if ( ! returnReviews || returnReviews.length == 0 ) {
+                throw new Error (`Failed to find review ${reviewId} after updating related comment ${commentId}.`)
+            }
+            this.reviewDAO.selectVisibleComments(userId, returnReviews)
+            return response.status(200).json(returnReviews[0])
         } catch (error) {
             console.error(error)
             return response.status(500).json({ error: 'server-error' })
