@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router'
 
 import { getPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 
@@ -20,6 +21,7 @@ const DraftPaperView = function(props) {
     const [ requestId, setRequestId] = useState(null)
 
     const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     // ================= Request Tracking =====================================
     const request = useSelector(function(state) {
@@ -35,6 +37,13 @@ const DraftPaperView = function(props) {
     const paper = useSelector(function(state) {
         return state.papers.dictionary[props.id]
     })
+
+    useEffect(function() {
+        if ( request && request.state == 'fulfilled' && ! paper.isDraft ) {
+            const url = `/paper/${paper.id}`
+            navigate(url)
+        }
+    }, [ request ])
 
 
     /**
@@ -57,13 +66,11 @@ const DraftPaperView = function(props) {
 
     // ================= Render ===============================================
     
-    if (request && request.state == 'fulfilled') {
+    if (request && request.state == 'fulfilled' && paper.isDraft) {
         // Error checking.
         if ( ! paper ) {
             throw new Error(`Attempt to view draft paper ${props.id} but paper doesn't exist after request.`)
-        } else if ( ! paper.isDraft) {
-            throw new Error(`Attempt to view published paper, ${paper.id}, as a draft.`)
-        }
+        } 
 
         let authorString = ''
         for(const author of paper.authors) {

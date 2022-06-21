@@ -500,10 +500,21 @@ module.exports = class ReviewController {
                 return response.status(403).json({ error: 'not-authorized' })
             }
 
-            const results = await this.database.query('DELETE FROM review_comments WHERE id = $1', [ commentId ])
+            // If this is the last comment in the thread, then we want to
+            // delete the whole thread.
+            const threadResults = await this.database.query(`SELECT count(id), thread_id FROM review_comments where thread_id in (SELECT thread_id FROM review_comments WHERE id = $1) group by thread_id`, [ commentId ])
+            if ( threadResults.rows.length > 0 && threadResults.rows[0].count == 1) {
+                const results = await this.database.query(`DELETE FROM review_comment_threads where id = $1`, [ threadResults.rows[0].thread_id ])
 
-            if ( results.rowCount == 0 ) {
-                throw new Error(`Failed to delete comment ${commentId}.`)
+                if ( results.rowCount == 0) {
+                    throw new Error(`Failed to delete thread ${threadResults.rows[0].thread_id}`)
+                }
+            } else {
+                const results = await this.database.query('DELETE FROM review_comments WHERE id = $1', [ commentId ])
+
+                if ( results.rowCount == 0 ) {
+                    throw new Error(`Failed to delete comment ${commentId}.`)
+                }
             }
 
             const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])

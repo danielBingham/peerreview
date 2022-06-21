@@ -132,9 +132,13 @@ module.exports = class ReviewDAO {
             return
         }
 
-        console.log(review)
 
         for ( const thread of review.threads) {
+
+            if ( ! thread.reviewId ) {
+                thread.reviewId = review.id
+            }
+
             let sql = `INSERT INTO review_comment_threads (review_id, page, pin_x, pin_y) 
                         VALUES ($1, $2, $3, $4) RETURNING id`
             const params = [thread.reviewId, thread.page, thread.pinX, thread.pinY]

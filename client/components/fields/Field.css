@@ -12,10 +12,10 @@
 
 .field.biology {
     color: white;
-    background-color: #468A4A;
+    background-color: #70b570;
 }
 .field.biology:hover {
-    background-color: #6BA66F;
+    background-color: #81c181;
 }
 
 .field.chemistry {

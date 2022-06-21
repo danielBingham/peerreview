@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { patchReviewComment, cleanupRequest } from '/state/reviews'
+import { deleteReviewComment, patchReviewComment, cleanupRequest } from '/state/reviews'
 
 import Spinner from '/components/Spinner'
 
 const ReviewCommentForm = function(props) {
     const [patchCommentRequestId, setPatchCommentRequestId] = useState(null)
+    const [deleteCommentRequestId, setDeleteCommentRequestId] = useState(null)
 
     const [content, setContent] = useState('')
 
@@ -24,6 +25,14 @@ const ReviewCommentForm = function(props) {
 
     })
 
+    const deleteCommentRequest = useSelector(function(state) {
+        if ( deleteCommentRequestId ) {
+            return state.reviews.requests[deleteCommentRequestId]
+        } else {
+            return null
+        }
+    })
+
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
@@ -36,6 +45,9 @@ const ReviewCommentForm = function(props) {
             threadOrder: props.comment.threadOrder,
             status: 'in-progress',
             content: content
+        }
+        if ( patchCommentRequest ) {
+            dispatch(cleanupRequest(patchCommentRequest))
         }
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
     }
@@ -50,9 +62,21 @@ const ReviewCommentForm = function(props) {
             status: 'posted',
             content: content
         }
+        if ( patchCommentRequest ) {
+            dispatch(cleanupRequest(patchCommentRequest))
+        }
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
 
         return false
+    }
+
+    const cancelComment = function(event) {
+        event.preventDefault()
+
+        if ( deleteCommentRequest ) {
+            dispatch(cleanupRequest(deleteCommentRequest))
+        }
+        setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
     }
 
     useLayoutEffect(function() {
@@ -66,12 +90,17 @@ const ReviewCommentForm = function(props) {
             if ( patchCommentRequest ) {
                 dispatch(cleanupRequest(patchCommentRequest))
             }
+
+            if ( deleteCommentRequest) {
+                dispatch(cleanupRequest(deleteCommentRequest))
+            }
         }
     }, [] )
 
     return (
         <section className="comment-form" >
             <form onSubmit={onSubmit}>
+                <div className="content">
                 <textarea 
                     name="content" 
                     rows="10" 
@@ -81,7 +110,11 @@ const ReviewCommentForm = function(props) {
                     value={content}
                 >
                 </textarea>
+            </div>
+            <div className="controls">
+                <button onClick={cancelComment}>Cancel</button>
                 <input type="submit" name="submit" value="Add Comment" />
+            </div>
             </form>
         </section>
     

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
+import { getReviews, clearList, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import Spinner from '/components/Spinner'
 
@@ -38,6 +38,7 @@ const DraftPaperReviewsWrapperView = function(props) {
      */
     useEffect(function() {
         if ( ! reviewsRequestId ) {
+            dispatch(clearList(props.paper.id))
             setReviewsRequestId(dispatch(getReviews(props.paper.id)))
         }
 
