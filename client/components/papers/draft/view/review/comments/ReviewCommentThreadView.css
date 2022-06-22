@@ -5,6 +5,7 @@
     padding: 5px;
     box-shadow: 1px 1px 3px #777;
     z-index: 1;
+    width: 300px;
 }
 .comment-thread.selected {
     z-index: 2;
@@ -16,11 +17,13 @@
 
 .comment-thread-outer .pin {
     position: absolute;
-    /*background: rgba(0, 179, 239, 0.75);*/
-    border-radius: 15px;
-    width: 15px;
-    height: 15px;
+    background: rgba(50, 50, 50, 0.75);
+    border-radius: 18px;
+    width: 16px;
+    height: 16px;
     z-index: 100;
+    margin-left: -8px;
+    margin-top: -8px;
 }
 
 .comment-thread-outer .pin.biology {
@@ -29,4 +32,17 @@
 }
 .comment-thread-outer .pin.biology:hover {
     background-color: rgba(129,193,129,0.75);
+    width: 18px;
+    height: 18px;
+    border-radius: 18px;
+    margin-left:-9px;
+    margin-top:-9px;
+}
+
+.comment-thread-outer .pin.selected {
+    width: 18px;
+    height: 18px;
+    border-radius: 18px;
+    margin-left: -9px;
+    margin-right: -9px;
 }

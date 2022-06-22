@@ -6,6 +6,8 @@ import { postVotes, cleanupRequest } from '/state/papers'
 
 import Spinner from '/components/Spinner'
 
+import './PublishedPaperVoteWidget.css'
+
 const PublishedPaperVoteWidget = function(props) {
     const [ voteRequestId, setVoteRequestId] = useState(null)
     const [ error, setError ] = useState(null)
@@ -76,11 +78,11 @@ const PublishedPaperVoteWidget = function(props) {
     }
 
     return (
-        <div className="paper-votes">
+        <div className="published-paper-vote-widget">
             { error && <div class="error">{ error }</div> }
-            <a href="" className={ vote && vote.score == 1 ? 'highlight' : '' } onClick={voteUp} >+</a>
-            {score}
-            <a href="" className={ vote && vote.score == -1 ? 'highlight' : '' } onClick={voteDown} >-</a>
+            <div className={ vote && vote.score == 1 ? 'vote-button vote-up highlight' : 'vote-up' } onClick={voteUp} ></div>
+            <div className="score">{score}</div>
+            <div className={ vote && vote.score == -1 ? 'vote-button vote-down highlight' : 'vote-down' } onClick={voteDown} ></div>
         </div>
     )
 }

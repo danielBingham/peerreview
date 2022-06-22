@@ -1,6 +1,8 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 
+import './MainNavigation.css'
+
 const MainNavigation = function(props) {
     return (
         <section id="main-navigation" className="navigation-block">

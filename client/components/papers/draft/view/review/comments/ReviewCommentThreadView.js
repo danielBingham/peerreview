@@ -47,7 +47,10 @@ const ReviewCommentThreadView = function(props) {
     }
 
     const pinClicked = function(event) {
-        console.log('Pin clicked.')
+        props.selectThread(thread)
+    }
+
+    const threadClicked = function(event) {
         props.selectThread(thread)
     }
 
@@ -90,8 +93,8 @@ const ReviewCommentThreadView = function(props) {
     const id = `comment-thread-${props.thread.id}`
     return (
         <div className="comment-thread-outer">
-            <div className={("pin "+props.paper.fields[0].type)} onClick={pinClicked} style={ pinPosition }></div> 
-            <div key={props.thread.id} id={id} className={( props.selected ? "comment-thread selected" : "comment-thread")} style={ threadPosition}>
+            <div className={( props.selected ? "pin selected "+props.paper.fields[0].type : "pin "+props.paper.fields[0].type)} onClick={pinClicked} style={ pinPosition }></div> 
+            <div key={props.thread.id} id={id} onClick={threadClicked} className={( props.selected ? "comment-thread selected" : "comment-thread")} style={ threadPosition}>
                 { commentViews }
                 { ! inProgress && <div onClick={newComment} className="reply">Post a reply...</div> }
             </div>

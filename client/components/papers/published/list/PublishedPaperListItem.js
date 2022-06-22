@@ -1,6 +1,7 @@
 import React  from 'react'
 import { Link } from 'react-router-dom'
 
+import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
 
 import './PublishedPaperListItem.css'
@@ -8,12 +9,9 @@ import './PublishedPaperListItem.css'
 const PublishedPaperListItem = function(props) {
     const paper = props.paper
 
-    let authorList = ''
-    for (let i = 0; i < paper.authors.length; i++) {
-        authorList += paper.authors[i].user.name 
-        if (i < paper.authors.length-1) {
-            authorList += ', '
-        }
+    const authors = []
+    for(const author of paper.authors) {
+        authors.push(<UserTag key={author.user.id} id={author.user.id} />)
     }
 
     const fields = []
@@ -26,12 +24,12 @@ const PublishedPaperListItem = function(props) {
     }
 
     return (
-        <div id={paper.id} className="published-paper">
+        <div id={paper.id} className="published-paper-list-item">
             <div className="votes">{score}<br /> <span className="label">votes</span></div> 
             <div className="responses">0 <br /><span className="label">responses</span></div>
             <div className="wrapper">
                 <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title} </Link></div> 
-                <div className="authors">by {authorList}</div>
+                <div className="authors">by {authors}</div>
                 <div className="fields">{fields}</div>
             </div>
         </div>

@@ -1,0 +1,7 @@
+#user-navigation a:link, 
+#user-navigation a:active, 
+#user-navigation a:visited,
+#user-navigation a:hover {
+    padding: 5px;
+    margin: 0 5px;
+}

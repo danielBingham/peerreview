@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { setSelected } from '/state/reviews'
 
+import UserTag from '/components/users/UserTag'
 import Spinner from '/components/Spinner'
 
 import './ReviewListItemView.css'
@@ -22,6 +23,7 @@ const ReviewListItemView = function(props) {
     const classes = 'review-list-item' + (props.selected ? ' selected' : '')
     return (
         <div className={classes} onClick={selectReview} >
+            <UserTag id={props.review.userId} />
             <div className="created">{props.review.createdDate}</div>
             { props.review.status !== 'in-progress' && <div className="recommendation">{props.review.recommendation}</div> }
             { props.review.status == 'in-progress' && <div className="status">{props.review.status}</div> }

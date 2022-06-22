@@ -22,7 +22,6 @@ import './ReviewListView.css'
  * displaying.
  */
 const ReviewListView = function(props) {
-    console.log('ReviewListView Firing')
     const [ postReviewsRequestId, setPostReviewRequestId ] = useState(null)
 
     const dispatch = useDispatch()
@@ -42,21 +41,14 @@ const ReviewListView = function(props) {
     const selected = useSelector(function(state) {
         return state.reviews.selected[props.paper.id]
     })
-    console.log('Selected')
-    console.log(selected)
 
     const reviews = useSelector(function(state) {
         return state.reviews.list[props.paper.id]
     })
-    console.log('Reviews')
-    console.log(reviews)
 
     const reviewInProgress = useSelector(function(state) {
         return state.reviews.inProgress[props.paper.id]
     })
-    console.log('ReviewInProgress')
-    console.log(reviewInProgress)
-
 
     const startReview = function(event) {
         if ( ! reviewInProgress ) {
@@ -84,18 +76,15 @@ const ReviewListView = function(props) {
             reviewItems.push(<ReviewListItemView key={review.id} review={review} selected={ selected && selected.id == review.id } />)
         }
     }
-    console.log('RENDERING ReviewListView')
 
     return (
         <div className="review-list">
-            <div className="review-controls">
-                { ! reviewInProgress && <button onClick={startReview}>Start Review</button> }
+            <div className="header review-list-item">
+                Reviews
             </div>
-            <div id="show-all-reviews" 
-                onClick={showAll} 
-                className={ ! selected ? "review-list-item selected" : "review-list-item" }
-            >
-                Show All
+            <div className="review-controls review-list-item">
+                <button onClick={showAll}>Show All</button>
+                { ! reviewInProgress && <button onClick={startReview}>Start Review</button> }
             </div>
             { reviewItems }
         </div>

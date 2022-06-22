@@ -1,0 +1,15 @@
+#authentication-navigation.not-authenticated a:link, 
+#authentication-navigation.not-authenticated a:active, 
+#authentication-navigation.not-authenticated a:visited,
+#authentication-navigation.not-authenticated a:hover {
+    padding: 5px;
+    margin: 0 5px;
+}
+
+#authentication-navigation a.logout:link, 
+#authentication-navigation a.logout:active, 
+#authentication-navigation a.logout:visited,
+#authentication-navigation a.logout:hover {
+    padding: 5px;
+    margin: 0 5px;
+}

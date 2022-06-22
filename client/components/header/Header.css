@@ -28,7 +28,3 @@ header .navigation-block {
     margin-left: 25px;
 }
 
-header a:link, header a:active, header a:visited, header a:hover {
-    padding: 5px;
-    margin: 0 5px;
-}

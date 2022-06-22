@@ -15,6 +15,8 @@ import PublishedPaperVoteWidget from './widgets/PublishedPaperVoteWidget'
 
 import PublishedPaperPDFView from './pdf/PublishedPaperPDFView'
 
+import './PublishedPaperView.css'
+
 
 const PublishedPaperView = function(props) {
     const [ paperRequestId, setPaperRequestId ] = useState(null)
@@ -68,12 +70,18 @@ const PublishedPaperView = function(props) {
         return ( <Spinner /> )
     } else {
         return (
-            <section id={paper.id} className="paper">
-                <h2 className="paper-title">{paper.title}</h2>
-                <PublishedPaperAuthorsWidget paper={paper} />
-                <PublishedPaperFieldsWidget paper={paper} />
-                <PublishedPaperVoteWidget paper={paper} />
-                <PublishedPaperPDFView paper={paper} />
+            <section id={paper.id} className="published-paper">
+                <div className="header">
+                    <h2 className="paper-title">{paper.title}</h2>
+                    <PublishedPaperFieldsWidget paper={paper} />
+                </div>
+                <div className="sidebar">
+                    <PublishedPaperVoteWidget paper={paper} />
+                    <PublishedPaperAuthorsWidget paper={paper} />
+                </div>
+                <div className="main">
+                    <PublishedPaperPDFView paper={paper} />
+                </div>
             </section>
         )
     }

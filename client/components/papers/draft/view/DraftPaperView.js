@@ -4,11 +4,14 @@ import { useNavigate } from 'react-router'
 
 import { getPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 
+import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
 
 import DraftPaperControlView from './DraftPaperControlView'
 import DraftPaperReviewsWrapperView from './review/DraftPaperReviewsWrapperView'
+
+import './DraftPaperView.css'
 
 /**
  * Assumes we have a current user logged in.  Leaves it to the Page object to
@@ -39,11 +42,11 @@ const DraftPaperView = function(props) {
     })
 
     useEffect(function() {
-        if ( request && request.state == 'fulfilled' && ! paper.isDraft ) {
+        if ( paper && ! paper.isDraft ) {
             const url = `/paper/${paper.id}`
             navigate(url)
         }
-    }, [ request ])
+    }, [ paper ])
 
 
     /**
@@ -72,9 +75,9 @@ const DraftPaperView = function(props) {
             throw new Error(`Attempt to view draft paper ${props.id} but paper doesn't exist after request.`)
         } 
 
-        let authorString = ''
+        let authors = [] 
         for(const author of paper.authors) {
-            authorString += author.user.name + ( author.order < paper.authors.length ? ', ' : '')
+            authors.push(<UserTag key={author.user.id} id={author.user.id} />)
         }
 
         let fields = []
@@ -86,7 +89,7 @@ const DraftPaperView = function(props) {
         return (
             <div id={id} className="draft-paper">
                 <h2 className="title">{paper.title}</h2>
-                <div className="authors">{authorString}</div>
+                <div className="authors">{authors}</div>
                 <div className="fields">{fields}</div>
                 <DraftPaperControlView paper={paper} />
                 <DraftPaperReviewsWrapperView paper={paper} />

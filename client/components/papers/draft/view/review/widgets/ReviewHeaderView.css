@@ -4,3 +4,7 @@
 
     border: thin solid #ddd;
 }
+
+.review-header .inner {
+    padding: 10px;
+}

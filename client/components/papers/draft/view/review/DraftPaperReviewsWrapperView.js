@@ -22,6 +22,7 @@ import './DraftPaperReviewsWrapperView.css'
  */
 const DraftPaperReviewsWrapperView = function(props) {
     const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
+    const [ width, setWidth ] = useState(900)
 
     const dispatch = useDispatch()
 
@@ -54,9 +55,9 @@ const DraftPaperReviewsWrapperView = function(props) {
         const id = `paper-${props.paper.id}-reviews`
         return (
             <div id={id} className="draft-paper-reviews-wrapper">
-                <ReviewHeaderView paper={props.paper} />
+                <ReviewHeaderView paper={props.paper} width={width}/>
                 <ReviewListView paper={props.paper} />
-                <DraftPaperPDFView paper={props.paper} />
+                <DraftPaperPDFView paper={props.paper} width={width} setWidth={setWidth} />
             </div>
         )
     } else {

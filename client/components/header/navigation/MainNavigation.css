@@ -1,0 +1,7 @@
+#main-navigation a:link, 
+#main-navigation a:active, 
+#main-navigation a:visited,
+#main-navigation a:hover {
+    padding: 5px;
+    margin: 0 5px;
+}

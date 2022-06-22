@@ -33,6 +33,53 @@
 .field.physics:hover {
     background-color: #D28987;
 }
+.field.earth-science {
+    background-color: #876d61;
+    color: white;
+}
+.field.earth-science:hover {
+    background-color: #91786d;
+}
+.field.space-science {
+    background-color: #1e1e1e;
+    color: white;
+}
+.field.space-science:hover {
+    background-color: #3c3c3c;
+}
+.field.archaeology {
+    background-color: #bc9f80;
+    color: white;
+}
+.field.archaeology:hover {
+    background-color: #c6ab8f;
+}
+.field.economics {
+    background-color: #d8cf6a;
+}
+.field.economics:hover {
+    background-color: #e5dc7b;
+}
+.field.geography {
+    background-color: #68c9ba;
+}
+.field.geography:hover {
+    background-color: #7ad6c8;
+}
+.field.political-science {
+    background-color: #6249a3;
+    color: white;
+}
+.field.political-science:hover {
+    background-color: #6f56ad;
+}
+.field.psychology {
+    background-color: #a50d0d;
+    color: white;
+}
+.field.psychology:hover {
+    background-color: #ba2121;
+}
 
 .field.next {
     color: white;

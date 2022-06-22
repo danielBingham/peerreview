@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router'
 
 import {  patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import {  patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
@@ -8,6 +9,7 @@ const DraftPaperControlView = function(props) {
     const [ patchPaperRequestId, setPatchPaperRequestId ] = useState(null)
 
     const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     // ================= Request Tracking =====================================
     

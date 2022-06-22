@@ -5,7 +5,9 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { cleanupRequest, deleteAuthentication } from '/state/authentication'
 
+import UserTag from '/components/users/UserTag'
 
+import './AuthenticationNavigation.css'
 /**
  * Provides an Authentication component to be used in navigation menus.  
  *
@@ -56,14 +58,14 @@ const AuthenticationNavigation = function(props) {
     // ============= RENDER =======================
     if ( currentUser ) {
         return (
-            <section id="authentication-navigation" className="navigation-block">
-                <Link to={`/user/${currentUser.id}`}>{ currentUser.name }</Link>
-                <a href="" onClick={handleLogout} >logout</a>
+            <section id="authentication-navigation" className="navigation-block authenticated">
+                <UserTag id={currentUser.id} />
+                <a href="" className="logout" onClick={handleLogout} >logout</a>
             </section>
         )
     } else {
         return (
-            <section id="authentication-navigation" className="navigation-block">
+            <section id="authentication-navigation" className="navigation-block not-authenticated">
                 <Link to="login">login</Link>
                 <Link to="register">register</Link>
             </section>

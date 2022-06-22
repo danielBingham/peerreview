@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { getUserPapers, cleanupRequest } from '/state/users'
 
+import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
 
@@ -15,15 +16,12 @@ import './DraftPapersListItemView.css'
 const DraftPapersListItemView = function(props) {
     const paper = props.paper
 
-    let authorList = ''
-    for (let i = 0; i < paper.authors.length; i++) {
-        authorList += paper.authors[i].user.name 
-        if (i < paper.authors.length-1) {
-            authorList += ', '
-        }
+    const authors = [] 
+    for (const author of paper.authors) {
+        authors.push(<UserTag key={author.user.id} id={author.user.id} />)
     }
 
-    let fields = []
+    const fields = []
     for( const field of paper.fields ) {
         fields.push(<Field key={field.id} field={field} />)
     }
@@ -34,7 +32,7 @@ const DraftPapersListItemView = function(props) {
             <div className="reviews list-score-box">0 <span className="label">reviews</span></div>
             <div className="wrapper">
                 <div className="title"> <Link to={paperPath}>{paper.title}</Link></div>
-                <div className="authors">by {authorList}</div>
+                <div className="authors">by {authors}</div>
                 <div className="fields"> {fields}</div>
             </div>
         </div>

@@ -267,6 +267,10 @@ const DraftPaperPDFPageView = function(props) {
                 canvasRef.current.style.width = Math.floor(viewport.width) + "px";
                 canvasRef.current.style.height =  Math.floor(viewport.height) + "px";
 
+                if ( props.width != canvasRef.current.width ) {
+                    props.setWidth(parseInt(canvasRef.current.width))
+                }
+
                 var transform = outputScale !== 1
                     ? [outputScale, 0, 0, outputScale, 0, 0]
                     : null;
@@ -350,7 +354,7 @@ const DraftPaperPDFPageView = function(props) {
     const canvasId = `page-${props.pageNumber}-canvas`
     const pageId = `page-${props.pageNumber}`
     return (
-        <section id={pageId} className="draft-paper-pdf-page">
+        <section id={pageId} className="draft-paper-pdf-page"  >
             <canvas id={canvasId} ref={canvasRef} onClick={handleClick} style={ haveRendered ? { display: 'block' } : { display: 'none' } }></canvas>
             {threadViews}
             { ! haveRendered && <Spinner /> }

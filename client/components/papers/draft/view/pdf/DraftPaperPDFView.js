@@ -32,7 +32,7 @@ const DraftPaperPDFView = function(props) {
                 const newPages = []
                 for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
                     const pageKey = `page-${pageNumber}`
-                    newPages.push(<DraftPaperPDFPageView key={pageKey} paper={props.paper} pageNumber={pageNumber} pdf={pdf} />)
+                    newPages.push(<DraftPaperPDFPageView key={pageKey} width={props.width} setWidth={props.setWidth} paper={props.paper} pageNumber={pageNumber} pdf={pdf} />)
                 }
                 setPages(newPages)
             }).catch(function(error) {
@@ -46,7 +46,7 @@ const DraftPaperPDFView = function(props) {
     if ( pages ) {
         const id = `paper-${props.paper.id}-content`
         return (
-            <article id={id} className="draft-paper-pdf">
+            <article id={id} className="draft-paper-pdf" style={ { width: props.width+'px' } }>
                 { pages }
             </article>
         )

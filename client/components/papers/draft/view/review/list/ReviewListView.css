@@ -7,3 +7,20 @@
     padding: 20px 5px;
     text-align: center;
 }
+
+.review-list .header {
+    min-height: 0px;
+    padding: 10px 5px;
+    text-align: center;
+    background-color: white;
+    font-weight: bold;
+    font-size: 16px;
+}
+.review-list .review-controls {
+    min-height: 0px;
+    text-align: center;
+    background-color: white;
+}
+.review-list .review-controls button {
+    margin: 0 5px;
+}

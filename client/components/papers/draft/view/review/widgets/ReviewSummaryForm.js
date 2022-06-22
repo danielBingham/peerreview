@@ -92,19 +92,18 @@ const ReviewSummaryForm = function(props) {
                 className="review-summary-form" 
                 style={ selectedReview && reviewInProgress.id == selectedReview.id ? { display: 'block' } : { display: 'none' } }
             >
-                <div className="summary">
-                    <div className="summary">
+                <div className="summary-wrapper">
+                    <div className="summary-field">
                         <textarea 
-                            rows="10"
-                            cols="80"
                             onChange={(e) => setSummary(e.target.value)} 
                             onBlur={commitChange} 
                             value={summary}
+                            style={ { width: (props.width-20)+'px' } }
                         >
                         </textarea>
                     </div>
-                    <div className="recommendation">
-                        <select name="recommendation" 
+                    <div className="recommendation-wrapper">
+                        <select name="recommendation-field" 
                             onChange={(e) => setRecommendation(e.target.value)}
                             onBlur={commitChange} 
                             value={recommendation} 
