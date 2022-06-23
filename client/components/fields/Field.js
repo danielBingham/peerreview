@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 
 import './Field.css'
 
 const Field = function(props) {
 
-    const classes = `field ${props.field.type}`
-
     return (
-        <div className={classes}>{props.field.name}</div>
+        <div className={ `field ${props.field.type}` }><Link to={ `/field/${props.field.id}` }>{props.field.name}</Link></div>
     )
 }
 

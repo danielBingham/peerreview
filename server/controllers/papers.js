@@ -8,6 +8,7 @@
 const fs = require('fs')
 const sanitizeFilename = require('sanitize-filename')
 const PaperDAO = require('../daos/paper.js')
+const FieldDAO = require('../daos/field.js')
 
 
 /**
@@ -19,6 +20,7 @@ module.exports = class PaperController {
         this.database = database
         this.logger = logger
         this.paperDAO = new PaperDAO(database)
+        this.fieldDAO = new FieldDAO(database)
     }
 
 
@@ -33,12 +35,16 @@ module.exports = class PaperController {
             const params = []
             let count = 0
             let and = ''
+
+            // Query based on isDraft 
             if ( request.query.isDraft ) {
                 count += 1
                 and = ( count > 1 ? ' AND ' : '' )
                 where += `${and} papers.is_draft=$${count}`
                 params.push(request.query.isDraft)
             }
+
+            // Query for papers by a certain author (or authors) 
             if ( request.query.authorId ) {
                 const results = await this.database.query('SELECT paper_id from paper_authors where user_id=$1', [ request.query.authorId ])
                 if ( results.rows.length > 0) {
@@ -55,6 +61,26 @@ module.exports = class PaperController {
                     return response.status(200).json([])
                 }
             }
+
+            // Query for papers tagged with certain fields and their children 
+            if ( request.query.fields && request.query.fields.length > 0) {
+                const fieldIds = await this.fieldDAO.selectFieldChildren(request.query.fields)
+                const results = await this.database.query(`SELECT paper_id from paper_fields where field_id = ANY ($1::int[])`, [ fieldIds])
+                if ( results.rows.length > 0) {
+                    count += 1
+                    and = ( count > 1 ? ' AND ' : '' )
+                    where += `${and} papers.id = ANY($${count}::int[])`
+
+                    const paper_ids = []
+                    for(let row of results.rows) {
+                        paper_ids.push(row.paper_id)
+                    }
+                    params.push(paper_ids)
+                } else {
+                    return response.status(200).json([])
+                }
+            }
+
             // We don't actually have any query parameters.
             if ( count < 1 ) {
                 where = ''

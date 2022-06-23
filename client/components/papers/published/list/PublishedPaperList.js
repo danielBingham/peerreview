@@ -36,29 +36,46 @@ const PublishedPaperList = function(props) {
     })
 
     useEffect(function() {
-        if ( ! requestId ) {
-            dispatch(clearList())
-            setRequestId(dispatch(getPapers({ isDraft: false })))
+        let query = {}
+        if ( props.query ) {
+            query = { ...props.query }
         }
+        query.isDraft = false
+
+        dispatch(clearList())
+        setRequestId(dispatch(getPapers(query)))
 
         return function cleanup() {
             if ( request ) {
                 dispatch(cleanupRequest(requestId))
             }
         }
-    }, [ requestId, request ])
+    }, [ props.query ])
 
     // ====================== Render ==========================================
     if ( request && request.state == 'fulfilled') { 
 
-        const listItems = []
+        let listItems = []
         for (const paper of paperList) {
             listItems.push(<PublishedPaperListItem paper={paper} key={paper.id} />)
         }
 
+        if ( listItems.length == 0 ) {
+            listItems = ( <div className="empty-search">No published papers to display.</div>)
+        }
+
         return (
-            <section className="paper-list">
+            <section className="published-paper-list">
                 <div className="error"> {request && request.error} </div>
+                <div className="header">
+                    <h2>Published Papers</h2>
+                    <div className="controls">
+                        <div className="sort">
+                            <div>Newest</div>
+                            <div>Active</div>
+                        </div>
+                    </div>
+                </div>
                 <div>
                     {listItems}
                 </div>

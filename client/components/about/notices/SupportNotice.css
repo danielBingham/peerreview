@@ -1,0 +1,13 @@
+.support-notice {
+    position: relative;
+    border: thin solid #5c84b2;
+    background-color: #d0ddf4;
+    padding: 15px;
+    margin: 20px auto;
+    width: 900px;
+}
+.support-notice .close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}

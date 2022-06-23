@@ -55,5 +55,36 @@ module.exports = class FieldDAO {
         }
     }
 
+    /**
+     * Select the entire tree under a single field.
+     *
+     * @param {int[]} fieldIds An array of field ids the children of which we
+     * want to select.
+     */
+    async selectFieldChildren(rootIds) {
+        console.log('rootIds')
+        console.log(rootIds)
+        const fieldIds = [ ...rootIds]
+        console.log('fieldIds')
+        console.log(fieldIds)
+        let previous = [ ...rootIds]
+        do {
+            const results = await this.database.query(`SELECT id FROM fields WHERE parent_id = ANY ($1::int[])`, [ previous ])
+
+            // We've reached the bottom of the tree.
+            if ( results.rows.length == 0) {
+               return fieldIds 
+            }
+
+            previous = []
+            for ( const row of results.rows ) {
+                fieldIds.push(row.id)
+                previous.push(row.id)
+            }
+        } while(previous.length > 0)
+
+        return fieldIds
+    }
+
 
 }

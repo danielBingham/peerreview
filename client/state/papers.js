@@ -212,10 +212,23 @@ export const papersSlice = createSlice({
  */
 export const getPapers = function(params) {
     return function(dispatch, getState) {
-        const queryString = new URLSearchParams(params)
+        console.log('Params')
+        console.log(params)
+        const queryString = new URLSearchParams()
+        for ( const key in params ) {
+            if ( Array.isArray(params[key]) ) {
+                for ( const value of params[key] ) {
+                    queryString.append(key+'[]', value)
+                }
+            } else {
+                queryString.append(key, params[key])
+            }
+        }
 
         const requestId = uuidv4() 
         const endpoint = '/papers' + ( params ? '?' + queryString.toString() : '')
+        console.log('endpoint')
+        console.log(endpoint)
 
         let payload = {
             requestId: requestId

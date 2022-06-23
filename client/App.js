@@ -13,6 +13,7 @@ import { getAuthentication, cleanupRequest } from '/state/authentication'
 import Header from '/components/header/Header'
 
 import HomePage from '/pages/HomePage'
+import AboutPage from '/pages/AboutPage'
 
 import RegistrationPage from '/pages/authentication/RegistrationPage'
 import LoginPage from '/pages/authentication/LoginPage'
@@ -95,6 +96,7 @@ const App = function(props) {
                 <main>
                     <Routes>
                         <Route path="/" element={ <HomePage /> } />
+                        <Route path="/about" element={ <AboutPage />} />
 
                         { /* ========== Authentication Controls =============== */ }
                         <Route path="/register" element={ <RegistrationPage /> } />

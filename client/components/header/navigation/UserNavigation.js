@@ -7,7 +7,7 @@ const UserNavigation = function(props) {
     return (
         <section id="user-navigation" className="navigation-block">
             <Link to="/review">review</Link>
-            <Link to="/drafts">drafts</Link>
+            <Link to="/drafts">my drafts</Link>
             <Link to="/publish">publish</Link>
         </section>
     )

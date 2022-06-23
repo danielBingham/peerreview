@@ -31,6 +31,7 @@
     "pg": "^8.7.3",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
+    "react-markdown": "^8.0.3",
     "react-redux": "^8.0.1",
     "react-router-dom": "^6.3.0",
     "redux": "^4.2.0",

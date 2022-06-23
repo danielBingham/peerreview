@@ -6,28 +6,19 @@ body {
     font-size: 14px;
 }
 
-section.page-wrapper {
-    margin: 10px auto;
-    text-align: center;
-}
-
 a:link, a:active, a:visited {
     text-decoration: none;
-    color: black;
+    color: #0796fc;
 }
 
 a:hover {
     text-decoration: none;
-    color: #666;
+    color: #74c3fc;
 }
-
-
-
 
 
 main {
     width: 1600px;
-    margin: 50px auto;
-    padding: 50px;
+    margin: 0 auto;
 }
 

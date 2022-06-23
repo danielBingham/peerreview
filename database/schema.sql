@@ -20,6 +20,9 @@ CREATE TABLE users (
     name varchar(256),
     password varchar(256),
     email varchar(256),
+    bio text,
+    location varchar(256),
+    institution varchar(256),
     initial_reputation int,
     reputation int,
     created_date timestamp,
@@ -29,6 +32,7 @@ CREATE TABLE users (
 CREATE TABLE fields (
     id bigserial PRIMARY KEY,
     name varchar(512),
+    description text,
     type varchar(512), /* Name of the top level parent, used as a class to give the tag its color. */
     parent_id bigint REFERENCES fields(id) ON DELETE CASCADE,
     created_date timestamp,
@@ -66,7 +70,6 @@ INSERT INTO fields (name, parent_id, type, created_date, updated_date)
         ('medicine', null, 'medicine', now(), now()),
         ('military-science', null, 'military-science', now(), now()),
         ('public-administration', null, 'public-administration', now(), now()),
-        ('social-work', null, 'social-work', now(), now()),
         ('transportation', null, 'transportation', now(), now()),
 
         /********** physics ********************/
@@ -90,7 +93,6 @@ INSERT INTO fields (name, parent_id, type, created_date, updated_date)
         ('mathematical-physics', 1, 'physics', now(), now()),
         ('mechanics', 1, 'physics', now(), now()),
         ('medical-physics', 1, 'physics', now(), now()),
-        ('molecular-physics', 1, 'physics', now(), now()),
         ('newtonian-dynamics', 1, 'physics', now(), now()),
         ('nuclear-physics', 1, 'physics', now(), now()),
         ('optics', 1, 'physics', now(), now()),

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useParams } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -26,7 +27,7 @@ const ReviewSummaryView = function(props) {
             <div id={id} className="review-summary">
                 <div className="datetime">{selectedReview.createdDate}</div>
                 <div className="recommendation">{selectedReview.recommendation}</div>
-                <div className="summary">{selectedReview.summary}</div>
+                <div className="summary"><ReactMarkdown>{selectedReview.summary}</ReactMarkdown></div>
             </div>
         )
     } else {
