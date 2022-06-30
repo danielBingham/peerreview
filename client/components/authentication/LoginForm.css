@@ -1,0 +1,28 @@
+.login-form {
+    display: block;
+    margin: 50px auto;
+    padding: 20px;
+    width: 500px;
+    border: thin solid #ddd;
+    background-color: white;
+}
+.login-form h2 {
+    text-align: center;
+}
+.login-form .field-wrapper {
+    padding: 10px;
+}
+.login-form label {
+    display: inline-block;
+    width: 100px;
+    padding-right: 10px;
+    text-align: right;
+}
+.login-form input[type=text], .login-form input[type=password] {
+    display: inline-block;
+    width: 310px;
+    padding: 5px;
+}
+.login-form .submit {
+    text-align: center;
+}

@@ -85,10 +85,6 @@ module.exports = function(database, logger, config) {
     const FieldController = require('./controllers/fields')
     const fieldController = new FieldController(database)
 
-    router.get('/fields/query', function(request, response) {
-        fieldController.queryFields(request, response)
-    })
-
     // Get a list of all fields.
     router.get('/fields', function(request, response) {
         fieldController.getFields(request, response)

@@ -1,0 +1,11 @@
+.authors-input .author-suggestions {
+    position: relative;
+    padding: 10px;
+    border: thin solid #ddd;
+}
+.authors-input .author-suggestions .author-suggestion {
+    padding: 10px;
+}
+.authors-input .author-suggestions .author-suggestion:hover {
+    background-color: #eee;
+}

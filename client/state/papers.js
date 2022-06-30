@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid'
 import configuration from '../configuration'
 import logger from '../logger'
 
-import { addFields } from './fields'
+import { addFieldsToDictionary } from './fields'
 import { addUsers } from './users'
 import RequestTracker from './helpers/requestTracker'
 
@@ -253,7 +253,7 @@ export const getPapers = function(params) {
                     for (const author of paper.authors) {
                         dispatch(addUsers(author.user))
                     }
-                    dispatch(addFields(paper.fields))
+                    dispatch(addFieldsToDictionary(paper.fields))
                 }
                 dispatch(papersSlice.actions.appendPapersToList(papers))
             } 
@@ -367,7 +367,7 @@ export const uploadPaper = function(id, file) {
             for(const author of paper.authors) {
                 dispatch(addUsers(author.user))
             }
-            dispatch(addFields(paper.fields))
+            dispatch(addFieldsToDictionary(paper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(paper))
             payload.result = paper 
             dispatch(papersSlice.actions.completeRequest(payload))
@@ -424,7 +424,7 @@ export const getPaper = function(id) {
             for(const author of paper.authors) {
                 dispatch(addUsers(author.user))
             }
-            dispatch(addFields(paper.fields))
+            dispatch(addFieldsToDictionary(paper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(paper))
             payload.result = paper
             dispatch(papersSlice.actions.completeRequest(payload))
@@ -484,7 +484,7 @@ export const putPaper = function(paper) {
             for(const author of returnedPaper.authors) {
                 dispatch(addUsers(author.user))
             }
-            dispatch(addFields(returnedPaper.fields))
+            dispatch(addFieldsToDictionary(returnedPaper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
             payload.result = returnedPaper
             dispatch(papersSlice.actions.completeRequest(payload))
@@ -542,7 +542,7 @@ export const patchPaper = function(paper) {
             for(const author of returnedPaper.authors) {
                 dispatch(addUsers(author.user))
             }
-            dispatch(addFields(returnedPaper.fields))
+            dispatch(addFieldsToDictionary(returnedPaper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
             payload.result = returnedPaper
             dispatch(papersSlice.actions.completeRequest(payload))

@@ -32,7 +32,7 @@ export const fieldsSlice = createSlice({
          * one query at a time, subsequent queries will be assumed to build on
          * it. If you need to start a new query, call the `newQuery` action.
          */
-        query: [] 
+        list: [] 
     },
     reducers: {
 
@@ -40,15 +40,41 @@ export const fieldsSlice = createSlice({
          * Add fields to the dictionary, or update fields already in the
          * dictionary.
          *
+         * Also adds the parents and children, linking them to their parents
+         * and children where possible.
+         *
          * @param {object} state    The redux state slice.
          * @param {object} action   The redux action we're reducing.
          * @param {object} action   The action payload to be reduced, in this
          * case a list of field objects to be added to the store.
          */
-        addFields: function(state, action) {
+        addFieldsToDictionary: function(state, action) {
             for(const field of action.payload) {
                 state.dictionary[field.id] = field
             }
+        },
+
+        appendFieldsToList: function(state, action) {
+            if ( action.payload.length ) {
+                const fields = action.payload
+                state.list.push(...fields)
+            } else {
+                state.list.push(action.payload)
+            }
+        },
+
+        updateField: function(state, action) {
+            const field = action.payload
+            state.dictionary[field.id] = field
+
+            const index = state.list.findIndex((f) => f.id == field.id)
+            state.list[index] = field
+        },
+
+        removeField: function(state, action) {
+            const field = action.payload
+            delete state.dictionary[field.id]
+            state.list = state.list.filter((f) => f.id != field.id)
         },
 
         /**
@@ -59,69 +85,8 @@ export const fieldsSlice = createSlice({
          * @param {object} state - the redux state slice.
          * @param {object} action - the redux action we're reducing.
          */
-        newQuery: function(state, acton) {
-            state.query = []
-        },
-
-        // ========== GET /fields/query?... ==================
-
-        /**
-         * The GET request to /fields/query?... succeeded.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.result - An array of populated field objects
-         */
-        completeQueryFieldsRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            if ( action.payload.result && action.payload.result.length > 0 ) {
-                for (const field of action.payload.result) {
-                    state.dictionary[field.id] = field
-                    state.query.push(field)
-                }
-            }
-        },
-
-        // ========== GET /fields ==================
-
-        /**
-         * The GET request to /fields succeeded.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.result - An array of populated field objects
-         */
-        completeGetFieldsRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            if ( action.payload.result ) {
-                for (const field of action.payload.result) {
-                    state.dictionary[field.id] = field
-                }
-            }
-        },
-
-        // ========== DELETE /field/:id =================
-
-        /**
-         * Finish the DELETE /field/:id call.  In this case, the call returns
-         * the id of the deleted field and we need to delete them from state on
-         * our side.  
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.result - The id of the deleted field
-         */
-        completeDeleteFieldRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            delete state.dictionary[action.payload.result]
+        clearList: function(state, acton) {
+            state.list = []
         },
 
         // ========== Generic Request Methods =============
@@ -192,23 +157,25 @@ export const fieldsSlice = createSlice({
     }
 })
 
+
+
 /**
- * GET /fields/query?...
+ * GET /fields or GET /fields?...
  *
- * Run a query against the fields in the database, getting back an ordered
- * array.
+ * Get all fields in the database.  Populates state.dictionary and state.list.
+ * Can be used to run queries.
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const queryFields = function(name) {
+export const getFields = function(params) {
     return function(dispatch, getState) {
-        const params = new URLSearchParams({ name: name })
+        const queryString = new URLSearchParams(params)
 
         const requestId = uuidv4() 
-        const endpoint = '/fields/query?' + params.toString()
+        const endpoint = '/fields' + ( params ? '?' + queryString.toString() : '')
 
         let payload = {
             requestId: requestId
@@ -229,60 +196,11 @@ export const queryFields = function(name) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(fields) {
+            dispatch(fieldsSlice.actions.addFieldsToDictionary(fields))
+            dispatch(fieldsSlice.actions.appendFieldsToList(fields))
+
             payload.result = fields
-            dispatch(fieldsSlice.actions.completeQueryFieldsRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(fieldsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
-    }
-}
-
-
-
-/**
- * GET /fields
- *
- * Get all fields in the database.  Populates state.fields.
- *
- * Makes the request asynchronously and returns a id that can be used to track
- * the request and retreive the results from the state slice.
- *
- * @returns {string} A uuid requestId that can be used to track this request.
- */
-export const getFields = function() {
-    return function(dispatch, getState) {
-        const requestId = uuidv4() 
-        const endpoint = '/fields'
-
-        let payload = {
-            requestId: requestId
-        }
-
-
-        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(fields) {
-            payload.result = fields
-            dispatch(fieldsSlice.actions.completeGetFieldsRequest(payload))
+            dispatch(fieldsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -334,6 +252,8 @@ export const postFields = function(field) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedField) {
+            dispatch(fieldsSlice.actions.updateField(returnedField))
+
             payload.result = returnedField
             dispatch(fieldsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -387,6 +307,8 @@ export const getField = function(id) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(field) {
+            dispatch(fieldsSlice.actions.updateField(field))
+
             payload.result = field
             dispatch(fieldsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -442,6 +364,8 @@ export const putField = function(field) {
             }
 
         }).then(function(returnedField) {
+            dispatch(fieldsSlice.actions.updateField(returnedField))
+
             payload.result = returnedField
             dispatch(fieldsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -495,6 +419,8 @@ export const patchField = function(field) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedField) {
+            dispatch(fieldsSlice.actions.updateField(returnedField))
+
             payload.result = returnedField
             dispatch(fieldsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -543,7 +469,8 @@ export const deleteField = function(field) {
         }).then(function(response) {
             payload.status = response.status
             if( response.ok ) {
-                dispatch(fieldsSlice.actions.completeDeleteFieldRequest(payload))
+                dispatch(fieldsSlice.actions.removeField(field))
+                dispatch(fieldsSlice.actions.completeRequest(payload))
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
@@ -562,6 +489,6 @@ export const deleteField = function(field) {
 } 
 
 
-export const { addFields, newQuery, completeQueryFieldsRequest, completeGetFieldsRequest, completeDeleteFieldRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
+export const { addFieldsToDictionary, addFieldsWithoutRelationshipsToDictionary, appendFieldsToList, updateField, clearList, makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
 
 export default fieldsSlice.reducer

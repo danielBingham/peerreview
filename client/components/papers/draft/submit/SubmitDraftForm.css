@@ -1,0 +1,37 @@
+.grey-background {
+    background-color: #eee;
+}
+
+.draft-paper-submission-form {
+    border: thin solid #ddd;
+    margin: 50px auto;
+    padding: 20px;
+    width: 1000px;
+    background-color: white;
+}
+.draft-paper-submission-form h2 {
+    text-align: center;
+}
+.draft-paper-submission-form .field-wrapper {
+    padding: 20px;
+}
+.draft-paper-submission-form .field-wrapper .explanation {
+    padding: 5px 0;
+}
+.draft-paper-submission-form label {
+    display: block;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+}
+.draft-paper-submission-form input[type=text] {
+    width: 948px;
+    padding: 5px;
+    border: thin solid #ddd;
+}
+
+.draft-paper-submission-form .submit {
+    text-align: center;
+}
+
+

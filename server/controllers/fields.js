@@ -15,38 +15,31 @@ module.exports = class FieldController {
     }
 
     /**
-     * GET /fields/query
-     *
-     * Search through the fields in the database using a query defined in the
-     * query string parameters.
-     */
-    async queryFields(request, response) {
-        if ( request.query.name && request.query.name.length > 0) {
-            try {
-                const fields = await this.fieldDAO.selectFields('WHERE name ILIKE $1', [ request.query.name+"%" ]);
-                return response.status(200).json(fields);
-            } catch (error) {
-                console.error(error);
-                return response.status(500).json({ error: 'unknown' });
-            }
-
-        } else {
-            return response.status(400).json({ error: 'no-query' });
-        }
-    }
-
-    /**
      * GET /fields
      *
      * Return a JSON array of all fields in thethis.database.
      */
     async getFields(request, response) {
         try {
-            const fields = await this.fieldDAO.selectFields()
+            let where = 'WHERE'
+            let params = []
+            if ( request.query ) {
+                if ( request.query.name && request.query.name.length > 0) {
+                    where += ` fields.name ILIKE $1`
+                    params.push(request.query.name+'%')
+                }
+            }
+
+            // We didn't end up adding any parameters.
+            if ( where == 'WHERE') {
+                where = ''
+            }
+
+            const fields = await this.fieldDAO.selectFields(where, params)
             return response.status(200).json(fields);
         } catch (error) {
             console.error(error);
-            response.status(500).json({ error: 'unknown' });
+            response.status(500).json({ error: 'server-error' });
             return;
         }
     }

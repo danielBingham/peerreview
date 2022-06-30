@@ -1,11 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postAuthentication, cleanupRequest } from '../../state/authentication'
+import { postAuthentication, cleanupRequest } from '/state/authentication'
 
-import Spinner from '../Spinner'
+import Spinner from '/components/Spinner'
+
+import './LoginForm.css'
 
 /**
  * A login form allowing the user to postAuthentication using an email and a password.
@@ -43,8 +45,14 @@ const LoginForm = function(props) {
         setRequestId(dispatch(postAuthentication(email, password)))
     }
 
-    // Make sure to do our cleanup in a useEffect so that we do it after
-    // rendering.
+    useLayoutEffect(function() {
+        document.body.className='grey-background'
+
+        return function cleanup() {
+            document.body.className=''
+        }
+    }, [])
+
     useEffect(function() {
         // If we're logged in then we don't want to be here.  We don't really
         // care if we were already logged in or if this is the result of a
@@ -66,22 +74,31 @@ const LoginForm = function(props) {
     }
 
     return (
-        <form onSubmit={onSubmit}>
-            {(request && request.status == 403) && <div className="authentication-error">Login failed.</div>}
+        <div className='login-form'>
+            <h2>Login</h2>
+            <form onSubmit={onSubmit}>
+                {(request && request.status == 403) && <div className="authentication-error">Login failed.</div>}
 
-            <label htmlFor="email">Email:</label>
-            <input type="text" 
-                name="email" 
-                value={email}
-                onChange={ (event) => setEmail(event.target.value) } />
+                <div className="email field-wrapper">
+                    <label htmlFor="email">Email</label>
+                    <input type="text" 
+                        name="email" 
+                        value={email}
+                        onChange={ (event) => setEmail(event.target.value) } />
+                </div>
 
-            <label htmlFor="password">Password:</label>
-            <input type="password" 
-                name="password" 
-                value={password}
-                onChange={ (event) => setPassword(event.target.value) } />
-            <input type="submit" name="login" value="Login" />
-        </form>
+                <div className="password field-wrapper">
+                    <label htmlFor="password">Password</label>
+                    <input type="password" 
+                        name="password" 
+                        value={password}
+                        onChange={ (event) => setPassword(event.target.value) } />
+                </div>
+                <div className="submit field-wrapper">
+                    <input type="submit" name="login" value="Login" />
+                </div>
+            </form>
+        </div>
     )
 }
 

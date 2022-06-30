@@ -64,8 +64,9 @@ module.exports = class PaperDAO {
             const paper_field = {
                 id: row.field_id,
                 name: row.field_name,
-                parentId: row.field_parentId,
                 type: row.field_type,
+                parents: [],
+                children: [],
                 createdDate: row.field_createdDate,
                 updatedDate: row.field_updatedDate
             }
@@ -73,6 +74,8 @@ module.exports = class PaperDAO {
             if ( ! papers[paper.id].fields.find((f) => f.id == paper_field.id)) {
                 papers[paper.id].fields.push(paper_field)
             }
+
+
 
             const paper_vote = {
                 paperId: row.vote_paperId,
@@ -98,7 +101,7 @@ module.exports = class PaperDAO {
                     paper_authors.user_id as author_id, paper_authors.author_order as author_order, paper_authors.owner as author_owner,
                     users.name as author_name, users.email as author_email, users.created_date as "author_createdDate", users.updated_date as "author_updatedDate",
                     paper_versions.version as paper_version, paper_versions.filepath as paper_filepath,
-                    fields.id as field_id, fields.name as field_name, fields.parent_id as "field_parentId", fields.type as field_type, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
+                    fields.id as field_id, fields.name as field_name, fields.type as field_type, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
                     paper_votes.paper_id as "vote_paperId", paper_votes.user_id as "vote_userId", paper_votes.score as vote_score
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id

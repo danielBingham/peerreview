@@ -86,10 +86,24 @@
     background-color: #ba2121;
 }
 
-.field.next {
+.field.physics-space-science {
+    background: linear-gradient(to right, #AF5B59, #1e1e1e);
     color: white;
-    background-color: #AF8359;
 }
-.field.next:hover {
-    background-color: #D2AC87;
+.field.physics-space-science:hover {
+    background: linear-gradient(to right, #D28987, #3c3c3c);
+}
+.field.physics-biology {
+    background: linear-gradient(to right, #AF5B59, #70b570);
+    color: white;
+}
+.field.physics-biology:hover {
+    background: linear-gradient(to right, #AF5B59, #81c181);
+}
+.field.physics-chemistry{
+    background: linear-gradient(to right, #AF5B59, #38646C);
+    color: white;
+}
+.field.physics-chemistry:hover {
+    background: linear-gradient(to right, #AF5B59, #557982);
 }

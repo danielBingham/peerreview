@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postUsers, cleanupRequest as cleanupUsersRequest } from '../../state/users'
-import { postAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '../../state/authentication'
+import { postUsers, cleanupRequest as cleanupUsersRequest } from '/state/users'
+import { postAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '/state/authentication'
 
-import Spinner from '../Spinner'
+import Spinner from '/components/Spinner'
+
+import './RegistrationForm.css'
 
 /**
  * A user registration form that will allow a user to register themselves and
@@ -71,6 +73,14 @@ const RegistrationForm = function(props) {
         setPostUsersRequestId(dispatch(postUsers(user)))
     }
 
+    useLayoutEffect(function() {
+        document.body.className='grey-background'
+        
+        return function cleanup() {
+            document.body.className=''
+        }
+    }, [])
+
 
     // Make sure to do our cleanup in a useEffect so that we do it after
     // rendering.
@@ -122,38 +132,51 @@ const RegistrationForm = function(props) {
     }
 
     return (
-        <form onSubmit={onSubmit}>
-            <div className="error"> {overallError} </div>
+        <div className="registration-form">
+            <h2>Register</h2>
+            <form onSubmit={onSubmit}>
+                <div className="error"> {overallError} </div>
 
-            <label htmlFor="name">Name:</label>
-            <input type="text" 
-                name="name" 
-                value={name} 
-                onChange={ (event) => setName(event.target.value) } />
-            <div className="error"></div>
+                <div className="name field-wrapper">
+                    <label htmlFor="name">Name:</label>
+                    <input type="text" 
+                        name="name" 
+                        value={name} 
+                        onChange={ (event) => setName(event.target.value) } />
+                    <div className="error"></div>
+                </div>
 
-            <label htmlFor="email">Email:</label>
-            <input type="text" 
-                name="email" 
-                value={email}
-                onChange={ (event) => setEmail(event.target.value) } />
-            <div className="error">{emailError}</div>
+                <div className="email field-wrapper">
+                    <label htmlFor="email">Email:</label>
+                    <input type="text" 
+                        name="email" 
+                        value={email}
+                        onChange={ (event) => setEmail(event.target.value) } />
+                    <div className="error">{emailError}</div>
+                </div>
 
-            <label htmlFor="password">Password:</label>
-            <input type="password" 
-                name="password" 
-                value={password}
-                onChange={ (event) => setPassword(event.target.value) } />
-            <div className="error"></div>
+                <div className="password field-wrapper">
+                    <label htmlFor="password">Password:</label>
+                    <input type="password" 
+                        name="password" 
+                        value={password}
+                        onChange={ (event) => setPassword(event.target.value) } />
+                    <div className="error"></div>
+                </div>
 
-            <label htmlFor="confirmPassword">Confirm Password:</label>
-            <input type="password" 
-                name="confirmPassword"
-                value={confirmPassword}
-                onChange={ (event) => setConfirmPassword(event.target.value) } />
-            <input type="submit" name="register" value="Register" />
-            <div className="error">{passwordConfirmationError}</div>
-        </form>
+                <div className="confirm-password field-wrapper">
+                    <label htmlFor="confirmPassword">Confirm Password:</label>
+                    <input type="password" 
+                        name="confirmPassword"
+                        value={confirmPassword}
+                        onChange={ (event) => setConfirmPassword(event.target.value) } />
+                    <div className="error">{passwordConfirmationError}</div>
+                </div>
+                <div className="submit field-wrapper">
+                    <input type="submit" name="register" value="Register" />
+                </div>
+            </form>
+        </div>
     )
 }
 

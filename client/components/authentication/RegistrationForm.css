@@ -1,0 +1,28 @@
+.registration-form {
+    display: block;
+    margin: 50px auto;
+    padding: 20px;
+    width: 600px;
+    border: thin solid #ddd;
+    background-color: white;
+}
+.registration-form h2 {
+    text-align: center;
+}
+.registration-form .field-wrapper {
+    padding: 10px;
+}
+.registration-form label {
+    display: inline-block;
+    width: 150px;
+    padding-right: 10px;
+    text-align: right;
+}
+.registration-form input[type=text], .registration-form input[type=password] {
+    display: inline-block;
+    width: 360px;
+    padding: 5px;
+}
+.registration-form .submit {
+    text-align: center;
+}

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import Field from '../Field'
-import { getFields, cleanupRequest } from '/state/fields'
+import { getFields, clearList, cleanupRequest } from '/state/fields'
 
 import Spinner from '/components/Spinner'
 
@@ -22,11 +22,12 @@ const FieldListView = function(props) {
     })
 
     const fields = useSelector(function(state) {
-        return state.fields.dictionary
+        return state.fields.list
     })
 
     useEffect(function() {
         if ( ! requestId ) {
+            dispatch(clearList())
             setRequestId(dispatch(getFields()))
         }
 
@@ -39,10 +40,10 @@ const FieldListView = function(props) {
 
     let fieldViews = []
     if ( fields ) {
-        for (const field of Object.values(fields)) {
-            if ( ! props.id && ! field.parentId ) {
+        for (const field of fields) {
+            if ( ! props.id && field.parents.length == 0) {
                 fieldViews.push(<Field key={field.id} field={field} />)
-            } else if ( props.id && field.parentId == props.id ) {
+            } else if ( props.id && field.parents.find((p) => p == props.id)) {
                 fieldViews.push(<Field key={field.id} field={field} />)
             }
         }

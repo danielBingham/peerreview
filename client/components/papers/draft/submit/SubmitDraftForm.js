@@ -9,6 +9,8 @@ import AuthorsInput from './AuthorsInput'
 import FieldsInput from './FieldsInput'
 import Spinner from '/components/Spinner'
 
+import './SubmitDraftForm.css'
+
 /**
  * A login form allowing the user to postAuthentication using an email and a password.
  *
@@ -141,6 +143,14 @@ const SubmitDraftForm = function(props) {
         }
     })
 
+    useEffect(function() {
+        document.body.className = 'grey-background'
+
+        return function cleanup() {
+            document.body.className = ''
+        }
+    }, [])
+
 
     // ====================== Render ==========================================
 
@@ -158,28 +168,33 @@ const SubmitDraftForm = function(props) {
     }
 
     return (
-        <form onSubmit={onSubmit}>
+        <div className="draft-paper-submission-form">
+            <h2>Submit a Paper</h2>
+            <form onSubmit={onSubmit}>
 
-            <div className="title">
-                <label htmlFor="title">Title:</label>
-                <input type="text" 
-                    name="title" 
-                    value={title}
-                    onChange={ (event) => setTitle(event.target.value) } />
-            </div>
+                <div className="title field-wrapper">
+                    <label htmlFor="title">Title</label>
+                    <div className="explanation">Enter the title of your paper. It should match the title you use in the document.</div>
+                    <input type="text" 
+                        name="title" 
+                        value={title}
+                        onChange={ (event) => setTitle(event.target.value) } />
+                </div>
 
-            <AuthorsInput authors={authors} setAuthors={setAuthors} />
-            <FieldsInput fields={fields} setFields={setFields} />
+                <AuthorsInput authors={authors} setAuthors={setAuthors} />
+                <FieldsInput fields={fields} setFields={setFields} />
 
-            <div className="upload">
-                <label htmlFor="upload">Select a file to upload:</label>
-                <input type="file"
-                    name="paper"
-                    onChange={(event) => setFile(event.target.files[0])} />
-            </div>
-
-            <input type="submit" name="submit-draft" value="Submit Draft for Peer Review" />
-        </form>
+                <div className="upload field-wrapper">
+                    <label htmlFor="upload">Select a file to upload</label>
+                    <input type="file"
+                        name="paper"
+                        onChange={(event) => setFile(event.target.files[0])} />
+                </div>
+                <div className="submit field-wrapper">
+                    <input type="submit" name="submit-draft" value="Submit Draft for Peer Review" />
+                </div>
+            </form>
+        </div>
     )
 }
 
