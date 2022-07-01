@@ -16,15 +16,15 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app;
 
 CREATE TABLE users (
     id bigserial PRIMARY KEY,
-    blind_id varchar(64), 
+    blind_id uuid DEFAULT gen_random_uuid(), 
     name varchar(256),
     password varchar(256),
     email varchar(256),
     bio text,
     location varchar(256),
     institution varchar(256),
-    initial_reputation int,
-    reputation int,
+    initial_reputation int DEFAULT 100,
+    reputation int DEFAULT 100,
     created_date timestamp,
     updated_date timestamp 
 );
@@ -34,7 +34,6 @@ CREATE TABLE fields (
     name varchar(512),
     description text,
     type varchar(512), /* Name of the top level parent, used as a class to give the tag its color. */
-    parent_id bigint REFERENCES fields(id) ON DELETE CASCADE,
     created_date timestamp,
     updated_date timestamp
 );
@@ -44,20 +43,15 @@ CREATE TABLE field_relationships (
     child_id bigint REFERENCES fields(id)
 );
 
-
-CREATE TABLE user_field_reputation (
-    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
-    field_id bigint REFERENCES fields(id) ON DELETE CASCADE,
-    reputation int,
-    PRIMARY KEY (user_id, field_id)
-);
-
-
 CREATE TABLE files (
     id bigserial PRIMARY KEY,
     filepath varchar(1024),
     type varchar(256)
 );
+
+/******************************************************************************
+ * Papers
+ *****************************************************************************/
 
 CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
@@ -98,12 +92,27 @@ CREATE TABLE paper_votes (
     PRIMARY KEY (paper_id, user_id)
 );
 
+/******************************************************************************
+ *  Reputation
+ *****************************************************************************/
+
 CREATE TABLE user_paper_reputation (
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
     reputation int,
     PRIMARY KEY (user_id, paper_id)
 );
+
+CREATE TABLE user_field_reputation (
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    field_id bigint REFERENCES fields(id) ON DELETE CASCADE,
+    reputation int,
+    PRIMARY KEY (user_id, field_id)
+);
+
+/***
+ *  Reviews 
+ ***/
 
 CREATE TYPE review_status AS ENUM('in-progress', 'submitted', 'rejected', 'accepted');
 CREATE TYPE review_recommendation as ENUM('reject', 'request-changes', 'approve');

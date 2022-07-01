@@ -1,7 +1,7 @@
 .published-paper {
     display: grid;
-    grid-template-columns: 200px auto;
-    grid-template-rows: 100px auto;
+    grid-template-columns: 300px auto;
+    grid-template-rows: auto auto;
 }
 .published-paper .header {
     grid-column: 1 / 3;
@@ -19,6 +19,7 @@
 .published-paper .main {
     grid-column: 2 / 3;
     grid-row: 2 / 3;
+    padding: 50px 20px;
 }
 
 .published-paper .paper-votes .highlight {

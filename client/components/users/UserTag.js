@@ -40,7 +40,7 @@ const UserTag = function(props) {
 
     if ( user ) {
         return (
-            <span id={ `user-tag-${user.id}` } className="user-tag" ><Link to={ `/user/${user.id}` }>{user.name}</Link> (100)</span> 
+            <span id={ `user-tag-${user.id}` } className="user-tag" ><Link to={ `/user/${user.id}` }>{user.name}</Link> ({user.reputation})</span> 
         )
     } else {
         return (<Spinner />)

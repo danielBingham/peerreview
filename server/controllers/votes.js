@@ -4,7 +4,7 @@
  * Restful routes for manipulating Votes.
  *
  ******************************************************************************/
-
+const ReputationService = require('../services/reputation')
 
 /**
  *
@@ -14,6 +14,7 @@ module.exports = class VoteController {
     constructor(database, logger) {
         this.database = database
         this.logger = logger
+        this.reputationService = new ReputationService(database, logger)
     }
 
 
@@ -57,9 +58,11 @@ module.exports = class VoteController {
                 return response.status(500).json({error: 'unknown'})
             }
 
+
             const returnVote = results.rows[0]
-            console.log('returnVote: ')
-            console.log(returnVote)
+
+            await this.reputationService.incrementReputationForPaper(returnVote.paperId, returnVote.score)
+
             return response.status(201).json(returnVote)
         } catch (error) {
             this.logger.error(error)

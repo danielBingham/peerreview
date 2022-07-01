@@ -4,10 +4,11 @@ import { Link } from 'react-router-dom'
 
 import { getUser, cleanupRequest } from '/state/users'
 
+import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
 import './UserBadge.css'
 
-const UserTag = function(props) {
+const UserBadge = function(props) {
     const [ requestId, setRequestId ] = useState(null)
 
     const dispatch = useDispatch()
@@ -39,9 +40,18 @@ const UserTag = function(props) {
 
 
     if ( user ) {
+        const fields = []
+        console.log('Showing user.')
+        console.log(user)
+        for ( const userField of user.fields) {
+            fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {userField.reputation}</div>)
+        }
+
         return (
             <div className="user-badge">
-                <div className="user-tag" ><Link to={ `/user/${user.id}` }>{user.name}</Link> (100)</div> 
+                <div className="user-tag" ><Link to={ `/user/${user.id}` }>{user.name}</Link> ({user.reputation})</div> 
+                <div className="institution">{user.institution}</div>
+                {fields}
             </div>
         )
     } else {
@@ -50,4 +60,4 @@ const UserTag = function(props) {
 
 }
 
-export default UserTag
+export default UserBadge 

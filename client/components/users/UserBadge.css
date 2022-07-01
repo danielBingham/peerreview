@@ -1,4 +1,5 @@
 .user-badge {
-    width: 200px;
+    width: 250px;
     border: thin solid #ddd;
+    padding: 15px;
 }

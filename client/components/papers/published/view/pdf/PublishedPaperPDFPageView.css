@@ -1,0 +1,6 @@
+.published-paper-page-wrapper {
+    margin: 0px auto;
+}
+.published-paper-page-wrapper canvas {
+    border: thin solid #ddd;
+}

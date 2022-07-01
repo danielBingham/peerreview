@@ -8,6 +8,7 @@ import * as PDFLib from 'pdfjs-dist/webpack'
 
 import Spinner from '/components/Spinner'
 
+import './PublishedPaperPDFPageView.css'
 
 const PublishedPaperPDFPageView = function(props) {
 
@@ -44,7 +45,7 @@ const PublishedPaperPDFPageView = function(props) {
 
     const pageId = `page-${props.pageNumber}`
     return (
-        <section className="page-wrapper">
+        <section className="published-paper-page-wrapper">
             <canvas id={pageId}></canvas>
         </section>
     )
