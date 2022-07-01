@@ -41,7 +41,7 @@ module.exports = class AuthenticationController {
                 const userMatch = results.rows[0]
                 const passwords_match = this.auth.checkPassword(credentials.password, userMatch.password)
                 if (passwords_match) {
-                    const users = await this.userDAO.selectUsers('WHERE id=$1', [userMatch.id])
+                    const users = await this.userDAO.selectUsers('WHERE users.id=$1', [userMatch.id])
                     if ( ! users ) {
                         this.logger.error('Failed to get authenticated user!')
                         return response.status(403).json({ error: 'authentication-failed' })

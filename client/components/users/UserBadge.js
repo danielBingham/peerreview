@@ -39,7 +39,7 @@ const UserBadge = function(props) {
     }, [ request ])
 
 
-    if ( user ) {
+    if ( user && user.fields ) {
         const fields = []
         console.log('Showing user.')
         console.log(user)
