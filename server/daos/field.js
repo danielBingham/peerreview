@@ -24,6 +24,7 @@ module.exports = class FieldDAO {
                 id: row.field_id,
                 name: row.field_name,
                 type: row.field_type,
+                description: row.field_description,
                 createdDate: row.field_createdDate,
                 updatedDate: row.field_updatedDate,
                 parents: [],
@@ -52,7 +53,7 @@ module.exports = class FieldDAO {
 
         const sql = `
                SELECT 
-                    fields.id as field_id, fields.name as field_name, fields.type as field_type, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
+                    fields.id as field_id, fields.name as field_name, fields.type as field_type, fields.description as field_description, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
                     parents.id as parent_id, children.id as child_id
                 FROM fields
                     LEFT OUTER JOIN field_relationships parent_connection on parent_connection.child_id = fields.id

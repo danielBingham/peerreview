@@ -5,7 +5,7 @@ import configuration from '../configuration'
 import logger from '../logger'
 
 import { addFieldsToDictionary } from './fields'
-import { addUsers } from './users'
+import { addUsersToDictionary } from './users'
 import RequestTracker from './helpers/requestTracker'
 
 export const papersSlice = createSlice({
@@ -212,6 +212,7 @@ export const papersSlice = createSlice({
  */
 export const getPapers = function(params) {
     return function(dispatch, getState) {
+        console.log(`\n\n ==== getPapers ==== `)
         console.log('Params')
         console.log(params)
         const queryString = new URLSearchParams()
@@ -251,7 +252,7 @@ export const getPapers = function(params) {
             if ( papers && papers.length ) {
                 for (const paper of papers) {
                     for (const author of paper.authors) {
-                        dispatch(addUsers(author.user))
+                        dispatch(addUsersToDictionary(author.user))
                     }
                     dispatch(addFieldsToDictionary(paper.fields))
                 }
@@ -268,6 +269,7 @@ export const getPapers = function(params) {
             logger.error(error)
             dispatch(papersSlice.actions.failRequest(payload))
         })
+        console.log(`\n\n ==== END getPapers ====`)
 
         return requestId
     }
@@ -365,7 +367,7 @@ export const uploadPaper = function(id, file) {
             }
         }).then(function(paper) {
             for(const author of paper.authors) {
-                dispatch(addUsers(author.user))
+                dispatch(addUsersToDictionary(author.user))
             }
             dispatch(addFieldsToDictionary(paper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(paper))
@@ -422,7 +424,7 @@ export const getPaper = function(id) {
             }
         }).then(function(paper) {
             for(const author of paper.authors) {
-                dispatch(addUsers(author.user))
+                dispatch(addUsersToDictionary(author.user))
             }
             dispatch(addFieldsToDictionary(paper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(paper))
@@ -482,7 +484,7 @@ export const putPaper = function(paper) {
 
         }).then(function(returnedPaper) {
             for(const author of returnedPaper.authors) {
-                dispatch(addUsers(author.user))
+                dispatch(addUsersToDictionary(author.user))
             }
             dispatch(addFieldsToDictionary(returnedPaper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
@@ -540,7 +542,7 @@ export const patchPaper = function(paper) {
             }
         }).then(function(returnedPaper) {
             for(const author of returnedPaper.authors) {
-                dispatch(addUsers(author.user))
+                dispatch(addUsersToDictionary(author.user))
             }
             dispatch(addFieldsToDictionary(returnedPaper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))

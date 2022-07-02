@@ -4,8 +4,6 @@ import { useParams, Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getUserPapers, cleanupRequest } from '/state/users'
-
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'

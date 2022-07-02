@@ -1,67 +1,76 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react'
-
-import debounce from 'lodash.debounce'
+import React, { useState, useEffect, useRef } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { queryUsers, newQuery, cleanupRequest as cleanupUsersRequest } from '/state/users'
+import { getUsers, clearList, cleanupRequest as cleanupUsersRequest } from '/state/users'
 
 import Spinner from '/components/Spinner'
 
 import './AuthorsInput.css'
 
 const AuthorsInput = function(props) {
-
     // Local state
-    const [authors, setAuthors] = useState('')
+    const [authorName, setAuthorName] = useState('')
+
     const [authorSuggestions, setAuthorSuggestions] = useState([])
+    const [highlightedSuggestion, setHighlightedSuggestion] = useState(0)
 
     // Request Tracking
-    const [queryUsersRequestId, setQueryUsersRequestId] = useState(null)
+    const [getUsersRequestId, setGetUsersRequestId] = useState(null)
 
-    console.log('#### AuthorsInput ####')
-    console.log('Props')
-    console.log(props)
-    console.log('authors')
-    console.log(authors)
-    console.log('AuthorSuggestions')
-    console.log(authorSuggestions)
+    const timeoutId = useRef(null)
+
     // Helpers
     const dispatch = useDispatch()
 
 
-    const queryUsersRequest = useSelector(function(state) {
-        if ( ! queryUsersRequestId ) {
+    const getUsersRequest = useSelector(function(state) {
+        if ( ! getUsersRequestId ) {
             return null
         } else {
-            return state.users.requests[queryUsersRequestId]
+            return state.users.requests[getUsersRequestId]
         }
     })
 
-    const users = useSelector(function(state) {
-        return state.users.users
+    const userList = useSelector(function(state) {
+        return state.users.list
     })
 
-    const handleCurrentAuthorKeyPress = function(event) {
-        console.log('=== handleCurrentAuthorKeyPress ===')
-        if ( event.key == "Enter" ) {
-            console.log('Enter pressed.')
-            event.preventDefault()
+    const suggestAuthors = function(name) {
+        if ( timeoutId.current ) {
+            clearTimeout(timeoutId.current)
+        }
+        timeoutId.current = setTimeout(function() {
+            if ( name.length > 0) {
+                if ( ! getUsersRequestId ) {
+                    dispatch(clearList())
+                    setGetUsersRequestId(dispatch(getUsers({name: name})))
+                } else if( getUsersRequest && getUsersRequest.state == 'fulfilled') {
+                    dispatch(clearList())
+                    dispatch(cleanupUsersRequest(getUsersRequest))
+                    setGetUsersRequestId(dispatch(getUsers({ name: name})))
+                }
 
-            const suggestionsWrappers = document.getElementsByClassName('author-suggestions')
-            const suggestions = suggestionsWrappers[0].children
-            if (suggestions.length > 0) {
-                suggestions[0].click()
+                if ( highlightedSuggestion >= userList.length ) {
+                    setHighlightedSuggestion(0)
+                }
+                setAuthorSuggestions(userList)
+
+            } else {
+                dispatch(clearList())
+                setHighlightedSuggestion(0)
+                setAuthorSuggestions([])
             }
-        }
-        console.log('=== END handleCurrentAuthorKeyPress ===')
+        }, 250)
+    }
+
+    const handleChange = function(event) {
+        setAuthorName(event.target.value)
+        suggestAuthors(event.target.value)
     }
 
     const appendAuthor = function(user) {
-        const lastCommaIndex = authors.lastIndexOf(', ')
-        let newAuthors = authors.substring(0, lastCommaIndex)
-        newAuthors += `, ${user.name}`
-        setAuthors(newAuthors)
+        setAuthorName('')
         setAuthorSuggestions([])
 
         const author = {
@@ -72,126 +81,77 @@ const AuthorsInput = function(props) {
         props.setAuthors([ ...props.authors,author])
     }
 
-    const suggestAuthors = debounce(function(authorList) {
-        console.log('=== SuggestAuthors ===')
-        const lastCommaIndex = authorList.lastIndexOf(', ')
-        const authorName = authorList.substring(lastCommaIndex+2)
-        console.log('Suggest Authors')
-        console.log('AuthorList')
-        console.log(authorList)
-        console.log('LastCommaIndex')
-        console.log(lastCommaIndex)
-        console.log('authorName')
-        console.log(authorName)
-
-        if ( authorName.length > 0) {
-            if ( ! queryUsersRequestId ) {
-                dispatch(newQuery())
-                setQueryUsersRequestId(dispatch(queryUsers(authorName)))
-            } else if( queryUsersRequest && queryUsersRequest.state == 'fulfilled') {
-                dispatch(newQuery())
-                dispatch(cleanupUsersRequest(queryUsersRequestId))
-                setQueryUsersRequestId(dispatch(queryUsers(authorName)))
+    const handleKeyDown = function(event) {
+        if ( event.key == "Enter" ) {
+            event.preventDefault()
+            const suggestionsWrappers = document.getElementsByClassName('author-suggestions')
+            const suggestions = suggestionsWrappers[0].children
+            if (suggestions.length > 0) {
+                suggestions[highlightedSuggestion].click()
             }
-
-            console.log('Building suggestions.')
-            console.log('Users')
-            console.log(users)
-            console.log('Author Name')
-            console.log(authorName)
-            let newAuthorSuggestions = []
-            for(let id in users) {
-                if (users[id].name.toLowerCase().includes(authorName.toLowerCase()) ) {
-                    newAuthorSuggestions.push(users[id])
-                }
+        } else if ( event.key == "ArrowDown" ) {
+            event.preventDefault()
+            let newHighlightedSuggestion = highlightedSuggestion+1
+            if ( newHighlightedSuggestion >= authorSuggestions.length) {
+                newHighlightedSuggestion = authorSuggestions.length-1
             }
-            console.log('AuthorSuggestions')
-            console.log(newAuthorSuggestions)
-            setAuthorSuggestions(newAuthorSuggestions)
-
-        } else {
-            console.log('Wiping suggestions.')
-            setAuthorSuggestions([])
-        }
-
-        console.log('=== END suggestAuthors ===')
-
-    }, 250)
-
-    useLayoutEffect(function() {
-        console.log('=== LAYOUT EFFECT(AuthorsInput) ===')
-        console.log(props.authors)
-        let authorList = '' 
-        for ( const author of props.authors) {
-            if ( author.user.id == props.authors[0].user.id ) {
-                authorList = `${author.user.name}`
-            } else {
-                authorList += `, ${author.user.name}`
+            setHighlightedSuggestion(newHighlightedSuggestion)
+        } else if ( event.key == "ArrowUp" ) {
+            event.preventDefault()
+            let newHighlightedSuggestion = highlightedSuggestion-1
+            if ( newHighlightedSuggestion < 0) {
+                newHighlightedSuggestion = 0 
             }
-        }
-        console.log(`Setting authorList to "${authorList}"`)
-        setAuthors(authorList)
-        console.log('=== END LAYOUT EFFECT ===')
-    }, [ props.authors ])
-
+            setHighlightedSuggestion(newHighlightedSuggestion)
+        } 
+    }
 
     useEffect(function() {
-        console.log('=== EFFECT(AuthorsInput) - Query returned. ===')
-        if (queryUsersRequest && queryUsersRequest.state == 'fulfilled') {
-            const lastCommaIndex = authors.lastIndexOf(', ')
-            const authorName = authors.substring(lastCommaIndex+2)
-
-            console.log('Building suggestions.')
-            console.log('users')
-            console.log(users)
-            console.log('authorName')
-            console.log(authorName)
-            let newAuthorSuggestions = []
-            if ( authorName.length > 0) {
-                for(let id in users) {
-                    if (users[id].name.toLowerCase().includes(authorName.toLowerCase()) ) {
-                        newAuthorSuggestions.push(users[id])
-                    }
-                }
+        if (getUsersRequest && getUsersRequest.state == 'fulfilled') {
+            if ( highlightedSuggestion >= userList.length) {
+                setHighlightedSuggestion(0)
             }
-            console.log('NewAuthorSuggestions')
-            console.log(newAuthorSuggestions)
-            setAuthorSuggestions(newAuthorSuggestions)
+            setAuthorSuggestions(userList)
         }
 
-        console.log('=== END EFFECT - Query Returned ===')
 
         return function cleanup() {
-            if ( queryUsersRequest ) {
-                dispatch(cleanupUsersRequest(queryUsersRequestId))
+            if ( getUsersRequest ) {
+                dispatch(cleanupUsersRequest(getUsersRequest))
             }
         }
-    }, [ queryUsersRequest ])
+    }, [ getUsersRequest ])
 
+    let authorList = '' 
+    for ( const [index, author] of props.authors.entries()) {
+        if ( index == 0 ) {
+            authorList = `${author.user.name}`
+        } else {
+            authorList += `, ${author.user.name}`
+        }
+    }
 
     let suggestedAuthorList = []
-    authorSuggestions.forEach(function(user) {
-        suggestedAuthorList.push(<div key={user.name} onClick={(event) => { appendAuthor(user) }} className="author-suggestion">{user.name}</div>)
-    })
+    for ( const [ index, user ] of authorSuggestions.entries()) {
+        suggestedAuthorList.push(<div key={user.name} onClick={(event) => { appendAuthor(user) }} className={ index == highlightedSuggestion ? "author-suggestion highlighted" : "author-suggestion" }>{user.name}</div>)
+    }
 
-    console.log('Rendering')
-    console.log('Authors')
-    console.log(authors)
-    console.log('Author Suggestions')
-    console.log(authorSuggestions)
     return (
         <div className="authors-input field-wrapper"> 
             <label htmlFor="authors">Authors</label>
             <div className="explanation">List the authors of this paper in the order in which they appear on the paper. The order will be preserved.</div>
+            <div className="authors">{authorList}</div>
             <input type="text" 
-                name="authors" 
-                value={authors}
-                onKeyPress={handleCurrentAuthorKeyPress} 
-                onChange={(event) => {
-                    suggestAuthors(event.target.value)
-                    setAuthors(event.target.value)
-                }} />
-            <div className="author-suggestions" style={ ( suggestedAuthorList.length > 0 ? { display: 'block' } : { display: 'none' } ) }>{suggestedAuthorList}</div>
+                name="authorName" 
+                value={authorName}
+                onKeyDown={handleKeyDown}
+                onChange={handleChange} 
+            />
+            <div className="author-suggestions" 
+                style={ ( suggestedAuthorList.length > 0 ? { display: 'block' } : { display: 'none' } ) }
+            >
+                {suggestedAuthorList}
+            </div>
         </div>
     )
 

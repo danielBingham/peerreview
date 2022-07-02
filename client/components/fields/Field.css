@@ -52,6 +52,13 @@
 .field.space-science:hover {
     background-color: #3c3c3c;
 }
+.field.anthropology {
+    background-color: #cca599;
+    color: white;
+}
+.field.anthropology:hover {
+    background-color: #e0c8c0;
+}
 .field.archaeology {
     background-color: #bc9f80;
     color: white;
@@ -84,6 +91,35 @@
 }
 .field.psychology:hover {
     background-color: #ba2121;
+}
+.field.sociology {
+    background-color: #2023b5;
+    color: white;
+}
+.field.sociology:hover {
+    background-color: #3b3ece;
+}
+.field.social-work {
+    background-color: #2551a3;
+    color: white;
+}
+.field.social-work:hover {
+
+    background-color: #446fbf;
+}
+.field.mathematics {
+    background-color: #08186b;
+    color: white;
+}
+.field.mathematics:hover {
+    background-color: #293b93;
+}
+.field.architecture {
+    background-color: #888888;
+    color: white;
+}
+.field.architecture:hover {
+    background-color: #AAA;
 }
 
 .field.physics-space-science {

@@ -2,10 +2,15 @@
     position: relative;
     padding: 10px;
     border: thin solid #ddd;
+    box-shadow: 2px 2px 2px #666;
+}
+.authors-input .authors {
+    padding: 10px 0;
 }
 .authors-input .author-suggestions .author-suggestion {
     padding: 10px;
 }
-.authors-input .author-suggestions .author-suggestion:hover {
+.authors-input .author-suggestions .author-suggestion:hover, .authors-input .author-suggestions .author-suggestion.highlighted {
     background-color: #eee;
 }
+

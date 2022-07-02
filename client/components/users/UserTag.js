@@ -17,8 +17,8 @@ const UserTag = function(props) {
     })
 
     const user = useSelector(function(state) {
-        if ( state.users.users[props.id] ) {
-            return state.users.users[props.id]
+        if ( state.users.dictionary[props.id] ) {
+            return state.users.dictionary[props.id]
         } else {
             return null
         }

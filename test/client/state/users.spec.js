@@ -178,7 +178,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual(expectedState)
+            expect(state.users.dictionary).toEqual(expectedState)
         })
 
         it('should handle a non-200 status as an error', async function() {
@@ -216,7 +216,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
         it('should handle a thrown error', async function() {
@@ -255,7 +255,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
     })
@@ -336,7 +336,7 @@ describe('in client/state/users.js', function() {
                 result: database[0]
             }
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual(expectedState)
+            expect(state.users.dictionary).toEqual(expectedState)
         })
 
         it('should handle a non-200 status as an error', async function() {
@@ -376,7 +376,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
         it('should handle a thrown error', async function() {
@@ -416,7 +416,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
     })
@@ -497,7 +497,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual(expectedState)
+            expect(state.users.dictionary).toEqual(expectedState)
         })
 
         it('should handle a non-200 status as an error', async function() {
@@ -536,7 +536,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
         it('should handle a thrown error', async function() {
@@ -576,7 +576,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
     })
@@ -659,7 +659,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual(expectedState)
+            expect(state.users.dictionary).toEqual(expectedState)
         })
 
         it('should handle a non-200 status as an error', async function() {
@@ -699,7 +699,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
         it('should handle a thrown error', async function() {
@@ -741,7 +741,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
 
         })
 
@@ -825,7 +825,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual(expectedState)
+            expect(state.users.dictionary).toEqual(expectedState)
         })
 
         it('should handle a non-200 status as an error', async function() {
@@ -865,7 +865,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
         it('should handle a thrown error', async function() {
@@ -906,7 +906,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
     })
@@ -1015,7 +1015,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual(expectedState)
+            expect(state.users.dictionary).toEqual(expectedState)
         })
 
         it('should handle a non-200 status as an error', async function() {
@@ -1054,7 +1054,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
         it('should handle a thrown error', async function() {
@@ -1094,7 +1094,7 @@ describe('in client/state/users.js', function() {
             }
 
             expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.users).toEqual({})
+            expect(state.users.dictionary).toEqual({})
         })
 
     })

@@ -1,5 +1,8 @@
 .user-badge {
+    display: inline-block;
     width: 250px;
+    height: 75px;
     border: thin solid #ddd;
     padding: 15px;
+    overflow: hidden;
 }

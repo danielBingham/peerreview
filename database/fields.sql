@@ -8,11 +8,14 @@
  * community.
  */
 
+INSERT INTO fields (name, type, description, created_date, updated_date)
+    VALUES
+        ('biology', 'biology', 'Biology is the scientific study of life. It is a natural science with a broad scope but has several unifying themes that tie it together as a single, coherent field. For instance, all organisms are made up of cells that process hereditary information encoded in genes, which can be transmitted to future generations. Another major theme is evolution, which explains the unity and diversity of life. Energy processing is also important to life as it allows organisms to move, grow, and reproduce. Finally, all organisms are able to regulate their own internal environments. [Read more.](https://en.wikipedia.org/wiki/Biology)', now(), now()),
+        ('physics', 'physics', 'Physics is the natural science that studies matter, its fundamental constituents, its motion and behavior through space and time, and the related entities of energy and force. Physics is one of the most fundamental scientific disciplines, with its main goal being to understand how the universe behaves. A scientist who specializes in the field of physics is called a physicist. [Read more.](https://en.wikipedia.org/wiki/Physics)', now(), now()); 
+
 INSERT INTO fields (name, type, created_date, updated_date) 
     VALUES 
-        ('physics', 'physics', now(), now()), /* 1 */
         ('chemistry', 'chemistry', now(), now()), /* 2 */
-        ('biology', 'biology', now(), now()), /* 3 */
         ('earth-science', 'earth-science', now(), now()), /* 4 */
         ('space-science', 'space-science', now(), now()), /* 5 */ 
         ('anthropology', 'anthropology', now(), now()), /* 6 */
@@ -25,6 +28,13 @@ INSERT INTO fields (name, type, created_date, updated_date)
         ('social-work', 'social-work', now(), now()), /* 13 */
         ('computer-science', 'computer-science', now(), now()), /* 14 */
         ('mathematics', 'mathematics', now(), now()), /* 15 */
+        ('performing-arts', 'performing-arts', now(), now()),
+        ('visual-arts', 'visual-arts', now(), now()),
+        ('history', 'history', now(), now()),
+        ('languages-and-literature', 'languages-and-literature', now(), now()),
+        ('law', 'law', now(), now()),
+        ('philosophy', 'philosophy', now(), now()),
+        ('theology', 'theology', now(), now()),
         ('agriculture', 'agriculture', now(), now()),
         ('architecture', 'architecture', now(), now()),
         ('business', 'business', now(), now()),
@@ -130,9 +140,68 @@ INSERT INTO fields (name, type, created_date, updated_date)
                 ('neutrino-astronomy', 'space-science', now(), now()),
                 ('gravitational-wave-astronomy', 'space-science', now(), now()),
             ('astronomical-photometry', 'space-science', now(), now()),
-            ('astronomical-spectroscopy', 'space-science', now(), now());
-
-
+            ('astronomical-spectroscopy', 'space-science', now(), now()),
+            
+        /************* Chemistry ****************/
+        ('physical-chemistry', 'chemistry', now(), now()),
+            ('chemical-kinetics', 'chemistry', now(), now()),
+            ('chemical-physics', 'chemistry', now(), now()),
+            ('electrochemistry', 'chemistry', now(), now()),
+            ('femtochemistry', 'chemistry', now(), now()),
+            ('geochemistry', 'chemistry', now(), now()),
+            ('photochemistry', 'chemistry', now(), now()),
+            ('quantum-chemistry', 'chemistry', now(), now()),
+            ('solid-state-chemistry', 'chemistry', now(), now()),
+            ('spectroscopy', 'chemistry', now(), now()),
+            ('stereochemistry', 'chemistry', now(), now()),
+            ('surface-science', 'chemistry', now(), now()),
+            ('thermochemistry', 'chemistry', now(), now()),
+                ('calorimetry', 'chemistry', now(), now()),
+        ('organic-chemistry', 'chemistry', now(), now()),
+            ('biochemistry', 'chemistry-biology', now(), now()),
+                ('neurochemistry', 'chemistry-biology', now(), now()),
+            ('bioorganic-chemistry', 'chemistry-biology', now(), now()),
+            ('biophysical-chemistry', 'chemistry-biology', now(), now()),
+            ('medicinal-chemistry', 'chemistry', now(), now()),
+            ('organometallic-chemistry', 'chemistry', now(), now()),
+            ('physical-organic-chemistry', 'chemistry', now(), now()),
+            ('polymer-chemistry', 'chemistry', now(), now()),
+            ('click-chemistry', 'chemistry', now(), now()),
+        ('inorganic-chemistry', 'chemistry', now(), now()),
+            ('bioinorganic-chemistry', 'chemistry-biology', now(), now()),
+            ('cluster-chemistry', 'chemistry', now(), now()),
+            ('materials-chemistry', 'chemistry', now(), now()),
+        ('nuclear-chemistry', 'chemistry', now(), now()),
+        ('analytical-chemistry', 'chemistry', now(), now()),
+        ('astrochemistry', 'chemistry-space-science', now(), now()),
+            ('cosmochemistry', 'chemistry-space-science', now(), now()),
+        ('computational-chemistry', 'chemistry', now(), now()),
+        ('environmental-chemistry', 'chemistry', now(), now()),
+        ('green-chemistry', 'chemistry', now(), now()),
+        ('supramolecular-chemistry', 'chemistry', now(), now()),
+        ('theoretical-chemistry', 'chemistry', now(), now()),
+        ('wet-chemistry', 'chemistry', now(), now()),
+        ('agrochemistry', 'chemistry', now(), now()),
+        ('atmospheric-chemistry', 'chemistry', now(), now()),
+        ('chemical-engineering', 'chemistry', now(), now()),
+        ('chemical-biology', 'chemistry-biology', now(), now()),
+        ('chemo-informatics', 'chemistry', now(), now()),
+        ('flow-chemistry', 'chemistry', now(), now()),
+        ('immunohistochemistry', 'chemistry', now(), now()),
+        ('immunochemistry', 'chemistry', now(), now()),
+        ('chemical-oceanography', 'chemistry', now(), now()),
+        ('materials-science', 'chemistry', now(), now()),
+        ('mathematical-chemistry', 'chemistry-mathematics', now(), now()),
+        ('mechanochemistry', 'chemistry', now(), now()),
+        ('molecular-mechanics', 'chemistry', now(), now()),
+        ('nanotechnology', 'chemistry', now(), now()),
+        ('petrochemistry', 'chemistry', now(), now()),
+        ('pharmacology', 'chemistry', now(), now()),
+        ('phytochemistry', 'chemistry-biology', now(), now()),
+        ('radiochemistry', 'chemistry', now(), now()),
+        ('sonochemistry', 'chemistry', now(), now()),
+        ('synthetic-chemistry', 'chemistry', now(), now()),
+        ('toxicology', 'chemistry', now(), now()),
 
 /**
  * Build the parent relationships. We're going to create a temporary table from the cross join of fields against itself

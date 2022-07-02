@@ -1,8 +1,10 @@
+const UserDAO = require('./user')
 
 module.exports = class PaperDAO {
 
     constructor(database) {
         this.database = database
+        this.userDAO = new UserDAO(database)
     }
 
     /**
@@ -37,18 +39,12 @@ module.exports = class PaperDAO {
             }
 
             const author = {
-                user: {
-                    id: row.author_id,
-                    name: row.author_name,
-                    email: row.author_email,
-                    createdDate: row.author_createdDate,
-                    updatedDate: row.author_updatedDate
-                },
+                id: row.author_id,
                 order: row.author_order,
                 owner: row.author_owner
             }
 
-            if ( ! papers[paper.id].authors.find((a) => a.user.id == author.user.id)) {
+            if ( ! papers[paper.id].authors.find((a) => a.id == author.id)) {
                 papers[paper.id].authors.push(author)
             }
 
@@ -99,13 +95,11 @@ module.exports = class PaperDAO {
                SELECT 
                     papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft", papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
                     paper_authors.user_id as author_id, paper_authors.author_order as author_order, paper_authors.owner as author_owner,
-                    users.name as author_name, users.email as author_email, users.created_date as "author_createdDate", users.updated_date as "author_updatedDate",
                     paper_versions.version as paper_version, paper_versions.filepath as paper_filepath,
                     fields.id as field_id, fields.name as field_name, fields.type as field_type, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
                     paper_votes.paper_id as "vote_paperId", paper_votes.user_id as "vote_userId", paper_votes.score as vote_score
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
-                    LEFT OUTER JOIN users ON users.id = paper_authors.user_id
                     LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
                     LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
@@ -113,14 +107,20 @@ module.exports = class PaperDAO {
                 ${where} 
                 ORDER BY paper_authors.author_order asc, paper_versions.version desc
         `
-        console.log(sql)
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length == 0 ) {
             return null
         } else {
-            const papers = this.hydratePapers(results.rows)
-            return Object.values(papers)
+            const papers = Object.values(this.hydratePapers(results.rows))
+            for( const paper of papers) {
+                for ( const author of paper.authors ) {
+                    const users = await this.userDAO.selectUsers('WHERE users.id = $1', [ author.id])
+                    author.user = users[0]
+                    delete author.id
+                }
+            }
+            return papers
         }
     }
 

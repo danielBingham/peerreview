@@ -18,8 +18,8 @@ const UserBadge = function(props) {
     })
 
     const user = useSelector(function(state) {
-        if ( state.users.users[props.id] ) {
-            return state.users.users[props.id]
+        if ( state.users.dictionary[props.id] ) {
+            return state.users.dictionary[props.id]
         } else {
             return null
         }
@@ -40,10 +40,12 @@ const UserBadge = function(props) {
 
 
     if ( user && user.fields ) {
-        const fields = []
-        console.log('Showing user.')
-        console.log(user)
-        for ( const userField of user.fields) {
+        const fields = [] 
+        if ( user.fields.length > 0) {
+            let sortedFields = [ ...user.fields ]
+            sortedFields.sort((a, b) => b.reputation - a.reputation)
+           
+            const userField =  sortedFields[0]
             fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {userField.reputation}</div>)
         }
 

@@ -1,0 +1,18 @@
+.user-list {
+    margin-top: 50px;
+}
+.user-list .header {
+    border-bottom: thin solid #ddd;
+}
+.user-list .header h1 {
+    padding: 0;
+    margin: 0;
+    font-size: 1.5em;
+}
+.user-list .user-wrapper {
+    padding: 20px;
+}
+.user-list .badge-wrapper {
+    display: inline-block;
+    margin: 10px;
+}

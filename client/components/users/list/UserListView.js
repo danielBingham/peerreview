@@ -7,6 +7,8 @@ import UserBadge from '../UserBadge'
 
 import Spinner from '/components/Spinner'
 
+import './UserListView.css'
+
 const UserListView = function(props) {
     const [ requestId, setRequestId ] = useState(null)
 
@@ -21,7 +23,7 @@ const UserListView = function(props) {
     })
 
     const users = useSelector(function(state) {
-        return state.users.users
+        return state.users.dictionary
     })
 
     useEffect(function() {
@@ -41,11 +43,16 @@ const UserListView = function(props) {
     if ( users ) {
         const userBadges = []
         for( const user of Object.values(users)) {
-            userBadges.push(<UserBadge key={user.id} id={user.id} />)
+            userBadges.push(<div key={user.id} className="badge-wrapper"><UserBadge id={user.id} /></div>)
         }
         return (
             <div className="user-list">
-                {userBadges} 
+                <div className="header">
+                    <h1>Users</h1>
+                </div>
+                <div className="user-wrapper">
+                    {userBadges} 
+                </div>
             </div>
 
         ) 

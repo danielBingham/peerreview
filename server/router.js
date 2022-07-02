@@ -21,11 +21,6 @@ module.exports = function(database, logger, config) {
     const UserController = require('./controllers/users')
     const userController = new UserController(database, logger)
 
-    // Run a query against users
-    router.get('/users/query', function(request, response) {
-        userController.queryUsers(request, response)
-    })
-
     // Get a list of all users.
     router.get('/users', function(request, response) {
         userController.getUsers(request, response)
@@ -54,10 +49,6 @@ module.exports = function(database, logger, config) {
     // Delete an existing user.
     router.delete('/user/:id', function(request, response) {
         userController.deleteUser(request, response)
-    })
-
-    router.get('/user/:id/papers', function(request, response) {
-        userController.getUserPapers(request, response)
     })
 
     /******************************************************************************
