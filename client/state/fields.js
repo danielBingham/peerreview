@@ -49,8 +49,13 @@ export const fieldsSlice = createSlice({
          * case a list of field objects to be added to the store.
          */
         addFieldsToDictionary: function(state, action) {
-            for(const field of action.payload) {
-                state.dictionary[field.id] = field
+            const fields = action.payload
+            if ( fields && Array.isArray(fields) ) {
+                for(const field of action.payload) {
+                    state.dictionary[field.id] = field
+                }
+            } else if ( fields ) {
+                state.dictionary[fields.id] = fields
             }
         },
 

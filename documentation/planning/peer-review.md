@@ -173,8 +173,9 @@ comments attached to that review.
 
 ```
 {
-    id: int
-
+id: int
+}
+```
 
 #### `GET /paper/:id/reviews`
 

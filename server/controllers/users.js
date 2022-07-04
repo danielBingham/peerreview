@@ -68,12 +68,12 @@ module.exports = class UserController {
             user.password = this.auth.hashPassword(user.password)
 
             const results = await this.database.query(`
-                    INSERT INTO users (name, email, password, created_date, updated_date) 
-                        VALUES ($1, $2, $3, now(), now()) 
+                    INSERT INTO users (name, email, institution, password, created_date, updated_date) 
+                        VALUES ($1, $2, $3, $4, now(), now()) 
                         RETURNING id
 
                 `, 
-                [ user.name, user.email, user.password ]
+                [ user.name, user.email, user.institution, user.password ]
             )
 
             if ( results.rowCount == 0 ) {

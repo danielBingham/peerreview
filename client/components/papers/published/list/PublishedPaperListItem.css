@@ -36,6 +36,12 @@
     font-size: 20px; 
     padding: 5px;
 }
+.published-paper-list-item .title a:link, .published-paper-list-item .title a:active, .published-paper-list-item .title a:visited {
+    color: black;
+}
+.published-paper-list-item .title a:hover {
+    color: #666;
+}
 .published-paper-list-item .authors {
     font-size: 12px;
     padding: 5px;

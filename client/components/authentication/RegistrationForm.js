@@ -19,6 +19,7 @@ import './RegistrationForm.css'
 const RegistrationForm = function(props) { 
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
+    const [institution, setInstitution] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
 
@@ -67,7 +68,8 @@ const RegistrationForm = function(props) {
         const user = {
             name: name,
             email: email,
-            password: password,
+            institution: institution,
+            password: password
         }
 
         setPostUsersRequestId(dispatch(postUsers(user)))
@@ -153,6 +155,14 @@ const RegistrationForm = function(props) {
                         value={email}
                         onChange={ (event) => setEmail(event.target.value) } />
                     <div className="error">{emailError}</div>
+                </div>
+
+                <div className="institution field-wrapper">
+                    <label htmlFor="institution">Institution:</label>
+                    <input type="text" 
+                        name="institution" 
+                        value={institution}
+                        onChange={ (event) => setInstitution(event.target.value) } />
                 </div>
 
                 <div className="password field-wrapper">

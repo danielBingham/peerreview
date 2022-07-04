@@ -39,8 +39,128 @@ edit and organize fields?
 
 **Authentication**: [Authentication Plan](./authentication.md)
 
-**Peer Review**: [Peer Review Plan](./peer-review.md)
+## What's Left for MVP Brainstorm
 
-**Field Tagging**: [Field Tagging Plan](./field-tagging.md)
+### Alpha 
 
-**Reputation**: [Reputation Plan](./reputation.md)
+These are things we need to do before alpha release.  An alpha we'll deploy to
+an infrastructure and invite a very limited set of early testers in to give
+feedback.
+
+[issue #26](https://github.com/danielBingham/peerreview/issues/26) **User Profile Editing** Edit basic profile data (name, bio, institution).
+
+[issue #27](https://github.com/danielBingham/peerreview/issues/27) **User Page Slug** Show a slug for user's profile pages after their ID number,
+and let them edit it.
+
+[issue #28](https://github.com/danielBingham/peerreview/issues/28) **User Account Update** Update email, change password.
+
+[issue #29](https://github.com/danielBingham/peerreview/issues/29) **User Settings Page** Choose tags to ignore, highlight, or isolate.
+
+[issue #30](https://github.com/danielBingham/peerreview/issues/30) **Session Settings** The ability to dismiss our front page notices and have the
+dismissal recorded for the duration of the session.
+
+[issue #31](https://github.com/danielBingham/peerreview/issues/31) **Post a new Version of a Paper in Review** The ability to post new versions of
+papers in review, and get new rounds of review on them. The ability to view
+previous versions.
+
+[issue] **Accept or Reject a Review** The ability to accept or reject a review.
+Accepted reviews grant reputation.
+
+[issue] **Initial Reputation from Citations** Find a citation count somewhere and
+initial reputation from the citation count.
+
+[issue] **Add Authors who Aren't Users** The ability to add authors to a paper with out
+them being users.  None user authors have their email requested and an "Invite
+them?" checkbox.
+
+[issue] **Field Hierarchy Breadcrumbs** Show bread crumbs on the field view page going
+back up the hierarchy.
+
+[issue] **Published Paper Responses** The ability to post a response to a public paper.
+
+[issue] **Published Paper PDF Viewer** We only want to see one page at a time for
+PUblished papers, so that you don't have to scroll forever to see the
+responses.  We need a viewer.
+
+[issue] **Refactor paper uploads to use FileController**  We want to have a single
+unified interface for all file uploads, with a single database table for
+storing file paths that can be references by their usage.  It'll save us code
+duplication.
+
+**Paper Search** The ability to search paper's title and contents. To do this,
+we'll need to be able to pull the paper's contents and store it on the backend
+in the database so we can run a full text search against it.
+
+**Deployment Infrastructure**  We need to deploy a version of the site to a
+staging site so that we can start sharing it with folks.
+
+**S3/equivalent file storage for papers**
+
+### Beta
+
+These are the things we want to get done before a beta release.  A beta release
+we'll announce publicly and allow an open beta.
+
+**Paper List Sorting**  The ability to sort the paper list.
+
+**Paper List Pagination** Pagination for the paper list.
+
+**Field List sorting** The ability to sort the field list?
+
+**Field list pagination** Pagination for the field list?
+
+**User list sorting** The ability to sort the user list.
+
+**User list pagination** The ability to paginate the user list.
+
+**Blind reviews** We want to be able to offer double blind reviews, where
+neither the reviewer nor the authors know who the others are.  This is a little
+tricky, because it means we can't expose any identifying user information on
+the client side.  The plan is to use a blind_id that we only ever tie back to
+the user on the server side.
+
+**Relative dates** Right now we just show timestamps.  We want to show relative
+dates everywhere.
+
+**WYSIWYG Everything** Review comments, review summary, and paper responses all
+need a Markdown capable WYSIWYG editor.
+
+**PDF Text overlay** Bonus?  We need to overlay text on top of the PDF so that
+users can copy and paste out of the PDF.
+
+**Downloading PDF of papers** Users want to download PDFs of Papers.
+
+**Full Authentication and Authorization**  We need to do all the things in the
+Authentication epic to build a really solid authentication system.
+
+**Responsive Design**  We want to give it a responsive design, at least
+partially.  We'll probably only do desktop/laptop at first for the beta.
+
+**Styling pass**  The styling and UX right now is servicable.  We'll need help
+from someone with a better design eye to give it a good polishing.
+
+**Unit test all the things**
+
+**Document all the things**
+
+**Integration test all the things**
+
+**Production deployment infrastructure**
+
+### Bonus (Or 1.0.0+)
+
+**Latex in Text Fields** Add latex support for math to all Markdown capable fields.
+
+**Mermaid support?** Add mermaid support to all Markdown capable fields?
+
+**Github flavored Markdown** Add github flavored Markdown support to all Markdown capable fields.
+
+**Sorting Reviews?** The ability to sort reviews on the draft paper page by date, recommendation, ...other?
+
+**Support for Uploading Papers as Latex** We want to support uploading papers
+as latex and then rendering them client side to HTML rather than PDF, with the
+ability to comment directly on the latex code.
+
+**Support for Uploading Papers as Docx** We want to support uploading papers as
+docx, because that's another common format people use.  We should be able to
+use pandoc to convert them to HTML clientside for a better review experience.

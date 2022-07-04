@@ -10,15 +10,15 @@
 
 INSERT INTO fields (name, type, description, created_date, updated_date)
     VALUES
+        ('physics', 'physics', 'Physics is the natural science that studies matter, its fundamental constituents, its motion and behavior through space and time, and the related entities of energy and force. Physics is one of the most fundamental scientific disciplines, with its main goal being to understand how the universe behaves. A scientist who specializes in the field of physics is called a physicist. [Read more.](https://en.wikipedia.org/wiki/Physics)', now(), now()), 
+        ('chemistry', 'chemistry', 'Chemistry is the scientific study of the properties and behavior of matter. It is a natural science that covers the elements that make up matter to the compounds composed of atoms, molecules and ions: their composition, structure, properties, behavior and the changes they undergo during a reaction with other substances.', now(), now()),
         ('biology', 'biology', 'Biology is the scientific study of life. It is a natural science with a broad scope but has several unifying themes that tie it together as a single, coherent field. For instance, all organisms are made up of cells that process hereditary information encoded in genes, which can be transmitted to future generations. Another major theme is evolution, which explains the unity and diversity of life. Energy processing is also important to life as it allows organisms to move, grow, and reproduce. Finally, all organisms are able to regulate their own internal environments. [Read more.](https://en.wikipedia.org/wiki/Biology)', now(), now()),
-        ('physics', 'physics', 'Physics is the natural science that studies matter, its fundamental constituents, its motion and behavior through space and time, and the related entities of energy and force. Physics is one of the most fundamental scientific disciplines, with its main goal being to understand how the universe behaves. A scientist who specializes in the field of physics is called a physicist. [Read more.](https://en.wikipedia.org/wiki/Physics)', now(), now()); 
+        ('earth-science', 'earth-science', 'Earth science or geoscience includes all fields of natural science related to the planet Earth. This is a branch of science dealing with the physical, chemical, and biological complex constitutions and synergistic linkages of Earth''s four spheres, namely biosphere, hydrosphere, atmosphere, and geosphere. Earth science can be considered to be a branch of planetary science, but with a much older history. Earth science encompasses four main branches of study, the lithosphere, the hydrosphere, the atmosphere, and the biosphere, each of which is further broken down into more specialized fields.',  now(), now()),
+        ('space-science', 'space-science', 'Space science encompasses all of the scientific disciplines that involve space exploration and study natural phenomena and physical bodies occurring in outer space, such as space medicine and astrobiology.', now(), now()),
+        ('anthropology', 'anthropology', 'Anthropology is the scientific study of humanity, concerned with human behavior, human biology, cultures, societies, and linguistics, in both the present and past, including past human species. Social anthropology studies patterns of behaviour, while cultural anthropology studies cultural meaning, including norms and values. A portmanteau sociocultural anthropology is commonly used today. Linguistic anthropology studies how language influences social life. Biological or physical anthropology studies the biological development of humans. [Read more.](https://en.wikipedia.org/wiki/Anthropology)', now(), now());
 
 INSERT INTO fields (name, type, created_date, updated_date) 
     VALUES 
-        ('chemistry', 'chemistry', now(), now()), /* 2 */
-        ('earth-science', 'earth-science', now(), now()), /* 4 */
-        ('space-science', 'space-science', now(), now()), /* 5 */ 
-        ('anthropology', 'anthropology', now(), now()), /* 6 */
         ('archaeology', 'archaeology', now(), now()), /* 7 */ 
         ('economics', 'economics', now(), now()), /* 8 */ 
         ('geography', 'geography', now(), now()), /* 9 */
@@ -51,7 +51,9 @@ INSERT INTO fields (name, type, created_date, updated_date)
         ('public-administration', 'public-administration', now(), now()),
         ('transportation', 'transportation', now(), now()),
 
-        /********** physics ********************/
+/******************************************************************************
+ * Subfields of Physics 
+ *****************************************************************************/
         ('acoustics', 'physics', now(), now()),
         ('applied-physics', 'physics', now(), now()),
         ('astrophysics', 'physics-space-science', now(), now()),
@@ -117,7 +119,9 @@ INSERT INTO fields (name, type, created_date, updated_date)
         ('thermal-physics', 'physics', now(), now()),
         ('thermodynamics', 'physics', now(), now()),
 
-        /********** Space Science **************/
+/******************************************************************************
+ * Subfields of Space Science 
+ *****************************************************************************/
         ('astronomy', 'space-science', now(), now()),
             ('planetary-science', 'space-science', now(), now()),
                 ('atmospheric-science', 'space-science', now(), now()),
@@ -142,7 +146,9 @@ INSERT INTO fields (name, type, created_date, updated_date)
             ('astronomical-photometry', 'space-science', now(), now()),
             ('astronomical-spectroscopy', 'space-science', now(), now()),
             
-        /************* Chemistry ****************/
+/******************************************************************************
+ * Sub-fields of Chemistry 
+ *****************************************************************************/
         ('physical-chemistry', 'chemistry', now(), now()),
             ('chemical-kinetics', 'chemistry', now(), now()),
             ('chemical-physics', 'chemistry', now(), now()),
@@ -201,7 +207,7 @@ INSERT INTO fields (name, type, created_date, updated_date)
         ('radiochemistry', 'chemistry', now(), now()),
         ('sonochemistry', 'chemistry', now(), now()),
         ('synthetic-chemistry', 'chemistry', now(), now()),
-        ('toxicology', 'chemistry', now(), now()),
+        ('toxicology', 'chemistry', now(), now());
 
 /**
  * Build the parent relationships. We're going to create a temporary table from the cross join of fields against itself
@@ -221,7 +227,9 @@ CREATE TABLE fields_cross AS
 
 /* Okay, now insert into the relationships table by selecting pairs from the fields_cross table. */
 
-/* physics */
+/******************************************************************************
+ * Relationships for Physics 
+ *****************************************************************************/
 insert INTO field_relationships (parent_id, child_id) 
     SELECT parent_id, child_id FROM fields_cross
         WHERE parent_name='physics' 
@@ -350,7 +358,9 @@ insert INTO field_relationships (parent_id, child_id)
                 OR child_name='special-relativity'
             );
 
-/* space-science */
+/******************************************************************************
+ * Relationships for Space Science 
+ *****************************************************************************/
 insert INTO field_relationships (parent_id, child_id) 
     SELECT parent_id, child_id FROM fields_cross
         WHERE parent_name='space-science' 
@@ -396,4 +406,109 @@ insert INTO field_relationships (parent_id, child_id)
                 OR child_name='cosmic-ray-astronomy'
                 OR child_name='neutrino-astronomy'
                 OR child_name='gravitational-wave-astronomy'
+            );
+
+/******************************************************************************
+ * Relationships for Chemistry
+ *****************************************************************************/
+
+insert INTO field_relationships (parent_id, child_id) 
+    SELECT parent_id, child_id FROM fields_cross
+        WHERE parent_name='chemistry' 
+        AND  ( 
+            child_name='physical-chemistry'
+            OR child_name='organic-chemistry'
+            OR child_name='inorganic-chemistry'
+            OR child_name='nuclear-chemistry'
+            OR child_name='analytical-chemistry'
+            OR child_name='astrochemistry'
+            OR child_name='computational-chemistry'
+            OR child_name='environmental-chemistry'
+            OR child_name='green-chemistry'
+            OR child_name='supramolecular-chemistry'
+            OR child_name='theoretical-chemistry'
+            OR child_name='wet-chemistry'
+            OR child_name='agrochemistry'
+            OR child_name='atmospheric-chemistry'
+            OR child_name='chemical-engineering'
+            OR child_name='chemical-biology'
+            OR child_name='chemo-informatics'
+            OR child_name='flow-chemistry'
+            OR child_name='immunohistochemistry'
+            OR child_name='immunochemistry'
+            OR child_name='chemical-oceanography'
+            OR child_name='materials-science'
+            OR child_name='mathematical-chemistry'
+            OR child_name='mechanochemistry'
+            OR child_name='molecular-mechanics'
+            OR child_name='nanotechnology'
+            OR child_name='petrochemistry'
+            OR child_name='pharmacology'
+            OR child_name='phytochemistry'
+            OR child_name='radiochemistry'
+            OR child_name='sonochemistry'
+            OR child_name='synthetic-chemistry'
+            OR child_name='toxicology'
+        );
+
+    insert INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='physical-chemistry' 
+            AND  ( 
+                child_name='chemical-kinetics'
+                OR child_name='chemical-physics'
+                OR child_name='electrochemistry'
+                OR child_name='femtochemistry'
+                OR child_name='geochemistry'
+                OR child_name='photochemistry'
+                OR child_name='quantum-chemistry'
+                OR child_name='solid-state-chemistry'
+                OR child_name='spectroscopy'
+                OR child_name='stereochemistry'
+                OR child_name='surface-science'
+                OR child_name='thermochemistry'
+            );
+
+        insert INTO field_relationships (parent_id, child_id) 
+            SELECT parent_id, child_id FROM fields_cross
+                WHERE parent_name='thermochemistry' 
+                AND  ( 
+                    child_name='calorimetry'
+                );
+
+    insert INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='organic-chemistry' 
+            AND  ( 
+                child_name='biochemistry'
+                OR child_name='bioorganic-chemistry'
+                OR child_name='biophysical-chemistry'
+                OR child_name='medicinal-chemistry'
+                OR child_name='organometallic-chemistry'
+                OR child_name='physical-organic-chemistry'
+                OR child_name='polymer-chemistry'
+                OR child_name='click-chemistry'
+            );
+
+        insert INTO field_relationships (parent_id, child_id) 
+            SELECT parent_id, child_id FROM fields_cross
+                WHERE parent_name='biochemistry' 
+                AND  ( 
+                    child_name='neurochemistry'
+                );
+
+    insert INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='inorganic-chemistry' 
+            AND  ( 
+                child_name='bioinorganic-chemistry'
+                OR child_name='cluster-chemistry'
+                OR child_name='materials-chemistry'
+            );
+
+    insert INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='astrochemistry' 
+            AND  ( 
+                child_name='cosmochemistry'
             );
