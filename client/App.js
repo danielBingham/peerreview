@@ -21,6 +21,8 @@ import LoginPage from '/pages/authentication/LoginPage'
 import UsersListPage from '/pages/users/UsersListPage'
 import UserProfilePage from '/pages/users/UserProfilePage'
 import UserAccountPage from '/pages/users/UserAccountPage'
+import UserProfileEditForm from '/components/users/account/UserProfileEditForm'
+import UserAccountDetailsForm from '/components/users/account/UserAccountDetailsForm'
 
 import FieldsListPage from '/pages/fields/FieldsListPage'
 import FieldPage from '/pages/fields/FieldPage'
@@ -106,7 +108,10 @@ const App = function(props) {
                         { /* ========== Users ================================= */ }
                         <Route path="/users" element={ <UsersListPage /> } />
                         <Route path="/user/:id" element={ <UserProfilePage /> } />
-                        <Route path="/account" element={ <UserAccountPage pane={ "profile" } /> } />
+                        <Route path="/account">
+                            <Route path=":pane" element={ <UserAccountPage /> } />
+                            <Route index element={ <UserAccountPage /> } />
+                        </Route>
 
                         { /* ========== fields ================================= */ }
                         <Route path="/fields" element={ <FieldsListPage /> } />

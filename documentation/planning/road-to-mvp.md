@@ -1,11 +1,13 @@
 # The Road to Releasable MVP
 
 **Alpha**: Happy path working for simplified version of the basic feature set.
+Very simple deployable infrastructure.
 
 **Beta**: Happy path covered for the full basic feature set. Most errors and
-edge cases covered. First pass at deployable infrastructure.
+edge cases covered. First pass at deployable scalable production
+infrastructure.
 
-**MVP**: Errors and edge cases covered for the full basic feature set. Public
+**MVP: 1.0.0**: Errors and edge cases covered for the full basic feature set. Public
 facing documentation done and ready.  Deployable infrastructure hardened.
 
 ## MVP Feature Set
@@ -129,6 +131,13 @@ need a Markdown capable WYSIWYG editor.
 users can copy and paste out of the PDF.
 
 **Downloading PDF of papers** Users want to download PDFs of Papers.
+
+**User Profile Pictures** Users can upload pictures to their profiles.
+
+**Use routing for Reviews** Right now we're using redux state to track
+navigation among reviews and review comments on the draft paper review page.
+We should be using routing.  That way you can link to a particular review or
+comment.
 
 **Full Authentication and Authorization**  We need to do all the things in the
 Authentication epic to build a really solid authentication system.

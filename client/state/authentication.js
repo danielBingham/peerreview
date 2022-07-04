@@ -218,6 +218,66 @@ export const postAuthentication = function(email, password) {
 }
 
 /**
+ * PATCH /authentication
+ *
+ * Check a user's credentials, with out modifying the session.  Does retrieve
+ * the user (on authentication) and store them the result. 
+ *
+ * Makes the request async and returns an id that can be used to track the
+ * request and get the results of a completed request from this state slice.
+ *
+ * @param {string} email - The email of the user we'd like to authenticate.
+ * @param {string} password - Their password.
+ *
+ * @returns {string} A uuid requestId we can use to track this request.
+ */
+export const patchAuthentication = function(email, password) {
+    return function(dispatch, getState) {
+
+        const requestId = uuidv4()
+        const endpoint = '/authentication'
+
+        let payload = {
+            requestId: requestId
+        }
+
+        dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                email: email,
+                password: password
+            })
+        }).then(function(response) {
+            payload.status = response.status
+            if(response.ok) {
+                return response.json()
+            } else if (response.status == 403) {
+                return Promise.reject(new Error('Attempt to authenticate "' + email + '" failed.'))
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(user) {
+            payload.result = user
+            dispatch(authenticationSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(authenticationSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
+/**
  * DELETE /authentication
  *
  * Attempt to logout the current user from the backend, destroying their

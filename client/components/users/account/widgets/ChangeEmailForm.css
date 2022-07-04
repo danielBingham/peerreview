@@ -1,0 +1,26 @@
+.change-email-form {}
+.change-email-form h2 {
+    text-align: center;
+}
+.change-email-form .form-field {
+    padding: 20px;
+}
+.change-email-form .form-field .error {
+    padding: 10px;
+    color: red;
+    text-align: center;
+}
+.change-email-form .form-field label {
+    display: inline-block;
+    width: 150px;
+    text-align: right;
+    padding: 5px 20px 5px 5px;
+}
+.change-email-form .form-field input {
+    padding: 5px;
+    border: thin solid #ddd;
+    width: 900px;
+}
+.change-email-form .submit {
+    text-align: center;
+}

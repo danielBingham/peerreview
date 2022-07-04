@@ -61,6 +61,10 @@ module.exports = function(database, logger, config) {
         authenticationController.postAuthentication(request, response)
     })
 
+    router.patch('/authentication', function(request, response) {
+        authenticationController.patchAuthentication(request, response)
+    })
+
     router.get('/authentication', function(request, response) {
         authenticationController.getAuthentication(request,response)
     })

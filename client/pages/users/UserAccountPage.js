@@ -1,12 +1,15 @@
 import React from 'react'
+import { useParams } from 'react-router-dom'
 
 import UserAccountView from '/components/users/account/UserAccountView'
 
 const UserAccountPage = function(props) {
 
+    const { pane = "profile" } = useParams()
+
     return (
         <div id="user-account-page">
-            <UserAccountView pane={props.pane} />
+            <UserAccountView pane={pane} />
         </div>
     )
 

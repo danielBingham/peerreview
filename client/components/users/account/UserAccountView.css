@@ -11,21 +11,25 @@
 .user-account-view .nav-wrapper nav {
     margin: 0 auto;
 }
-.user-account-view nav .pane-link.selected {
-    position: relative;
-    width: 131px;
-    background-color: white;
-    z-index: 100;
-}
 .user-account-view nav .pane-link {
-   padding: 10px;
    border-top: thin solid #ddd;
    border-bottom: thin solid #ddd;
    border-left: thin solid #ddd;
 }
+.user-account-view nav .pane-link.selected {
+    position: relative;
+    width: 151px;
+    background-color: white;
+    z-index: 100;
+}
+.user-account-view nav .pane-link a {
+    display: inline-block;
+    padding: 10px;
+}
 .user-account-view .pane {
     grid-column: 2 / 3;
     border: thin solid #ddd;
+    padding: 30px;
 }
 
 
