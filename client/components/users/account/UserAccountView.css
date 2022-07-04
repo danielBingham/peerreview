@@ -1,0 +1,32 @@
+.user-account-view {
+    margin: 50px auto;
+    display: grid;
+    grid-template-columns: 150px auto;
+    min-width: 1000px;
+    min-height: 600px;
+}
+.user-account-view .nav-wrapper {
+    grid-column: 1 / 2;
+}
+.user-account-view .nav-wrapper nav {
+    margin: 0 auto;
+}
+.user-account-view nav .pane-link.selected {
+    position: relative;
+    width: 131px;
+    background-color: white;
+    z-index: 100;
+}
+.user-account-view nav .pane-link {
+   padding: 10px;
+   border-top: thin solid #ddd;
+   border-bottom: thin solid #ddd;
+   border-left: thin solid #ddd;
+}
+.user-account-view .pane {
+    grid-column: 2 / 3;
+    border: thin solid #ddd;
+}
+
+
+

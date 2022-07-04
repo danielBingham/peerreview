@@ -1,0 +1,32 @@
+.user-profile-edit-form {
+    padding: 30px;
+}
+.user-profile-edit-form .form-field {
+    padding: 20px;
+}
+.user-profile-edit-form .form-field label {
+    display: inline-block;
+    width: 150px;
+    text-align: right;
+    padding: 5px 20px 5px 5px;
+}
+.user-profile-edit-form .form-field input {
+    padding: 5px;
+    border: thin solid #ddd;
+    width: 900px;
+}
+.user-profile-edit-form .form-text {
+    padding: 20px 20px 20px 120px;
+}
+.user-profile-edit-form .form-text label {
+    display: block;
+    padding: 10px 10px 10px 0;
+}
+.user-profile-edit-form .form-text textarea {
+    width: 900px;
+    height: 200px;
+    border: thin solid #ddd
+}
+.user-profile-edit-form .submit {
+    text-align: center;
+}

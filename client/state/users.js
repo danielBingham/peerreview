@@ -1,10 +1,12 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '../configuration'
-import logger from '../logger'
+import configuration from '/configuration'
+import logger from '/logger'
 
 import RequestTracker from './helpers/requestTracker'
+
+import { setCurrentUser } from '/state/authentication'
 
 export const usersSlice = createSlice({
     name: 'users',
@@ -322,6 +324,15 @@ export const getUser = function(id) {
         }).then(function(user) {
             dispatch(usersSlice.actions.addUsersToDictionary(user))
 
+            // If the user we just got is the same as the one in the session,
+            // update the session.  The server will have already done this for
+            // the backend, doubling the login on the frontend just saves us a
+            // request.
+            const state = getState()
+            if ( state.authentication.currentUser && state.authentication.currentUser.id == user.id) {
+                dispatch(setCurrentUser(user))
+            }
+
             payload.result = user
             dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -379,6 +390,15 @@ export const putUser = function(user) {
         }).then(function(returnedUser) {
             dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
 
+            // If the user we just got is the same as the one in the session,
+            // update the session.  The server will have already done this for
+            // the backend, doubling the login on the frontend just saves us a
+            // request.
+            const state = getState()
+            if ( state.authentication.currentUser && state.authentication.currentUser.id == returnedUser.id) {
+                dispatch(setCurrentUser(returnedUser))
+            }
+
             payload.result = returnedUser
             dispatch(usersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -433,6 +453,15 @@ export const patchUser = function(user) {
             }
         }).then(function(returnedUser) {
             dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
+
+            // If the user we just got is the same as the one in the session,
+            // update the session.  The server will have already done this for
+            // the backend, doubling the login on the frontend just saves us a
+            // request.
+            const state = getState()
+            if ( state.authentication.currentUser && state.authentication.currentUser.id == returnedUser.id) {
+                dispatch(setCurrentUser(returnedUser))
+            }
 
             payload.result = returnedUser
             dispatch(usersSlice.actions.completeRequest(payload))

@@ -20,6 +20,7 @@ import LoginPage from '/pages/authentication/LoginPage'
 
 import UsersListPage from '/pages/users/UsersListPage'
 import UserProfilePage from '/pages/users/UserProfilePage'
+import UserAccountPage from '/pages/users/UserAccountPage'
 
 import FieldsListPage from '/pages/fields/FieldsListPage'
 import FieldPage from '/pages/fields/FieldPage'
@@ -105,6 +106,7 @@ const App = function(props) {
                         { /* ========== Users ================================= */ }
                         <Route path="/users" element={ <UsersListPage /> } />
                         <Route path="/user/:id" element={ <UserProfilePage /> } />
+                        <Route path="/account" element={ <UserAccountPage pane={ "profile" } /> } />
 
                         { /* ========== fields ================================= */ }
                         <Route path="/fields" element={ <FieldsListPage /> } />

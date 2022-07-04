@@ -7,7 +7,7 @@ import PublishedPaperList from '/components/papers/published/list/PublishedPaper
 const UserProfilePage = function(props) {
     const { id } = useParams()
 
-    console.log(`\n\n### UserProfilePage(${id} ###`)
+    console.log(`\n\n### UserProfilePage(${id}) ###`)
 
     return (
         <section id="user-profile-page">

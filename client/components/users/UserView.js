@@ -3,6 +3,8 @@ import { Link, useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
+import ReactMarkdown from 'react-markdown'
+
 import { getUser, cleanupRequest as cleanupUserRequest } from '/state/users'
 
 import Field from '/components/fields/Field'
@@ -43,14 +45,17 @@ const UserView = function(props) {
         return state.authentication.currentUser
     })
 
+    console.log('Current User: ')
+    console.log(currentUser)
+
     useEffect(function() {
-        console.log(`==== EFFECT getUser(${props.id}) ====`)
+        console.log(`==== UserView.EFFECT getUser(${props.id}) ====`)
         if ( ! userRequestId ) {
             console.log('Requesting a user.')
             console.log(userRequestId)
             setUserRequestId(dispatch(getUser(props.id)))
         }
-        console.log(`==== END EFFECT getUser(${props.id}) ====`)
+        console.log(`==== END UserView.EFFECT getUser(${props.id}) ====`)
 
 
         return function cleanup() {
@@ -61,12 +66,18 @@ const UserView = function(props) {
     }, [ ])
 
     useEffect(function() {
+        console.log('=== UserView.EFFECT request failed check. ===')
+        console.log(`userRequest`)
+        console.log(userRequest)
         if ( userRequest && userRequest.state == 'failed') {
+            console.log('Request failed with error: ')
+            console.log(userRequest.error)
             setError(userRequest.error)
         }
-    })
+        console.log('=== END UserView.Effect ===')
+    }, [ userRequest ])
 
-    console.log(`==== RENDERING ====`)
+    console.log(`==== UserView.RENDERING ====`)
     console.log('user')
     console.log(user)
     if ( ! user || ! user.fields ) {
@@ -89,14 +100,15 @@ const UserView = function(props) {
         return (
             <article id={ user.id } className='user-view'>
                 <div className="error">{ error } </div>
-                <div className="controls">{currentUser && currentUser.id == user.id && <Link to="edit">edit</Link>}</div>
+                <div className="controls">{currentUser && currentUser.id == user.id && <Link to="/account">edit</Link>}</div>
                 <div className="header"><h1>{ user.name }</h1></div>
                 <div className="profile-picture"></div>
                 <div className="details">
                     <p><span className="label">Name</span> { user.name }</p>
                     <p><span className="label">Email</span> { user.email }</p>
                     <p><span className="label">Institution</span> { user.institution } </p>
-                    <p><span className="label">Bio</span> { user.bio } </p>
+                    <p><span className="label">Location</span> { user.location }</p>
+                    <p><span className="label">Bio</span><ReactMarkdown children={ user.bio } /> </p>
                 </div>
                 <div className="fields-header">
                     <h2>Fields</h2>

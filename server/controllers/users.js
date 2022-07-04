@@ -23,6 +23,9 @@ module.exports = class UserController {
      * GET /users
      *
      * Return a JSON array of all users in thethis.database.
+     *
+     * TODO Should we check the users for the session user and update the
+     * session if we find them?
      */
     async getUsers(request, response) {
         try {
@@ -102,6 +105,9 @@ module.exports = class UserController {
                 return response.status(404).json([])
             }
 
+            if ( request.session && request.session.user && request.session.user.id == returnUsers[0].id) {
+                request.session.user = returnUsers[0]
+            }
             return response.status(200).json(returnUsers[0])
         } catch (error) {
             this.logger.error(error)
@@ -131,11 +137,15 @@ module.exports = class UserController {
                 return response.status(404).json({error: 'no-resource'})
             }
 
-            const returnUser = await this.userDAO.selectUsers('WHERE users.id=$1', results.rows[0].id)
-            if ( returnUser.length == 0 ) {
+            const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', results.rows[0].id)
+            if ( returnUsers.length == 0 ) {
                 throw new Error('Updated user somehow does not exist.')
             }
-            return response.status(200).json(returnUser[0])
+
+            if ( request.session && request.session.user && request.session.user.id == returnUsers[0].id) {
+                request.session.user = returnUsers[0]
+            }
+            return response.status(200).json(returnUsers[0])
         } catch (error) {
             this.logger.error(error)
             response.status(500).json({error: 'unknown'})
@@ -154,12 +164,13 @@ module.exports = class UserController {
         let sql = 'UPDATE users SET '
         let params = []
         let count = 1
+        const ignored = [ 'id', 'blindId', 'initialReputation', 'reputation', 'createdDate', 'updatedDate', 'fields']
         for(let key in user) {
-            if ( key == 'id' ) {
+            if (ignored.includes(key)) {
                 continue
             }
 
-            sql += key + ' = $' + count + ' and '
+            sql += key + ' = $' + count + ', '
 
             if ( key == 'password' ) {
                 try {
@@ -168,6 +179,8 @@ module.exports = class UserController {
                     this.logger.error(error)
                     return response.status(500).json({error: 'unknown'})
                 }
+            } else if ( key == 'createdDate') {
+    
             }
 
             params.push(user[key])
@@ -183,11 +196,15 @@ module.exports = class UserController {
                 return response.status(404).json({error: 'no-resource'})
             }
 
-            const returnUser = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
-            if ( ! returnUser ) {
+            const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
+            if ( ! returnUsers ) {
                 throw new Error('Updated user somehow does not exist!')
             }
-            return response.status(200).json(returnUser[0])
+
+            if ( request.session && request.session.user && request.session.user.id == returnUsers[0].id) {
+                request.session.user = returnUsers[0]
+            }
+            return response.status(200).json(returnUsers[0])
         } catch (error) {
             this.logger.error(error)
             response.status(500).json({error: 'unknown'})
@@ -198,9 +215,12 @@ module.exports = class UserController {
      * DELETE /user/:id
      *
      * Delete an existing user.
+     *
+     * TODO TECHDEBT This probably needs to check to see if the user we're
+     * deleting is also the session user and then delete the session if they
+     * are.
      */
     async deleteUser(request, response) {
-
         try {
             const results = await this.database.query(
                 'delete from users where id = $1',

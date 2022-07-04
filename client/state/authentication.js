@@ -26,22 +26,8 @@ export const authenticationSlice = createSlice({
     },
     reducers: {
 
-        // ================== GET /logout =====================================
-
-        /**
-         * Complete a request to GET /logout.  The backend will have destroyed
-         * the session, we just need to wipe currentUser to destroy the
-         * frontend's record of the session.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         */
-        completeGetLogoutRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            state.currentUser = null
+        setCurrentUser: function(state, action) {
+            state.currentUser = action.payload
         },
 
         // ========== Generic Request Methods =============
@@ -93,8 +79,6 @@ export const authenticationSlice = createSlice({
          */
         completeRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            state.currentUser = action.payload.result
         },
 
 
@@ -154,6 +138,8 @@ export const getAuthentication = function() {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
+            dispatch(authenticationSlice.actions.setCurrentUser(user))
+
             payload.result = user
             dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -213,6 +199,8 @@ export const postAuthentication = function(email, password) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(user) {
+            dispatch(authenticationSlice.actions.setCurrentUser(user))
+
             payload.result = user
             dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -260,7 +248,9 @@ export const deleteAuthentication = function() {
             payload.status = response.status
             payload.result = null
             if (response.ok) {
-                dispatch(authenticationSlice.actions.completeGetLogoutRequest(payload))
+                dispatch(authenticationSlice.actions.setCurrentUser(null))
+
+                dispatch(authenticationSlice.actions.completeRequest(payload))
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
@@ -278,6 +268,6 @@ export const deleteAuthentication = function() {
     }
 }
 
-export const { completeGetLogoutRequest, makeRequest, failRequest, completeRequest, cleanupRequest} = authenticationSlice.actions
+export const { setCurrentUser, makeRequest, failRequest, completeRequest, cleanupRequest} = authenticationSlice.actions
 
 export default authenticationSlice.reducer

@@ -21,11 +21,18 @@ import './PublishedPaperList.css'
 const PublishedPaperList = function(props) { 
     const [requestId, setRequestId ] = useState(null)
 
+    console.log(`\n\n### PublishedPaperList ###`)
+    console.log(props)
+    console.log('RequestId')
+    console.log(requestId)
+
     const dispatch = useDispatch()
 
     const paperList = useSelector(function(state) {
         return state.papers.list
     })
+    console.log('paperList')
+    console.log(paperList)
 
     const request = useSelector(function(state) {
         if (requestId) {
@@ -34,16 +41,22 @@ const PublishedPaperList = function(props) {
             null
         }
     })
+    console.log('Request')
+    console.log(request)
 
     useEffect(function() {
-        let query = {}
-        if ( props.query ) {
-            query = { ...props.query }
-        }
-        query.isDraft = false
+        console.log(`=== PublishedPaperList.EFFECT - props.query ===`)
+        if ( ! requestId ) {
+            let query = {}
+            if ( props.query ) {
+                query = { ...props.query }
+            }
+            query.isDraft = false
 
-        dispatch(clearList())
-        setRequestId(dispatch(getPapers(query)))
+            dispatch(clearList())
+            setRequestId(dispatch(getPapers(query)))
+        }
+        console.log(`=== END PublishedPaperList.EFFECT - props.query ===`)
 
         return function cleanup() {
             if ( request ) {
@@ -53,6 +66,8 @@ const PublishedPaperList = function(props) {
     }, [ props.query ])
 
     // ====================== Render ==========================================
+    console.log(`=== PublishedPaperList.RENDERING ===`)
+    console.log(paperList)
     if ( request && request.state == 'fulfilled') { 
 
         let listItems = []
