@@ -16,7 +16,6 @@ import './UserView.css'
 const UserView = function(props) {
     const [ userRequestId, setUserRequestId ] = useState(null)
     const [ error, setError ] = useState(null)
-    console.log(`\n\n### UserView(${props.id}) ###`)
 
     const dispatch = useDispatch()
 
@@ -27,8 +26,6 @@ const UserView = function(props) {
             return state.users.requests[userRequestId]
         }
     })
-    console.log('userRequest')
-    console.log(userRequest)
 
     const user = useSelector(function(state) {
         if ( state.users.dictionary[props.id] ) {
@@ -38,25 +35,14 @@ const UserView = function(props) {
         }
     })
 
-    console.log('user')
-    console.log(user)
-
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
-    console.log('Current User: ')
-    console.log(currentUser)
-
     useEffect(function() {
-        console.log(`==== UserView.EFFECT getUser(${props.id}) ====`)
         if ( ! userRequestId ) {
-            console.log('Requesting a user.')
-            console.log(userRequestId)
             setUserRequestId(dispatch(getUser(props.id)))
         }
-        console.log(`==== END UserView.EFFECT getUser(${props.id}) ====`)
-
 
         return function cleanup() {
             if ( userRequestId ) {
@@ -66,20 +52,11 @@ const UserView = function(props) {
     }, [ ])
 
     useEffect(function() {
-        console.log('=== UserView.EFFECT request failed check. ===')
-        console.log(`userRequest`)
-        console.log(userRequest)
         if ( userRequest && userRequest.state == 'failed') {
-            console.log('Request failed with error: ')
-            console.log(userRequest.error)
             setError(userRequest.error)
         }
-        console.log('=== END UserView.Effect ===')
     }, [ userRequest ])
 
-    console.log(`==== UserView.RENDERING ====`)
-    console.log('user')
-    console.log(user)
     if ( ! user || ! user.fields ) {
         return ( <Spinner /> )
     } else {

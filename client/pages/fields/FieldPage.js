@@ -7,8 +7,6 @@ import PublishedPaperList from '/components/papers/published/list/PublishedPaper
 
 const FieldPage = function(props) {
     const { id } = useParams()
-    console.log('FieldPage: id')
-    console.log(id)
 
     return (
         <section id="field-page">

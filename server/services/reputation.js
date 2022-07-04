@@ -136,12 +136,8 @@ module.exports = class ReputationService {
         const rootIds = fieldResults.rows.map((r) => r.field_id)
 
         const fieldIds = await this.fieldDAO.selectFieldParents(rootIds)
-        console.log(fieldIds)
         const set = new Set(fieldIds)
-        console.log(set)
         const uniqueFieldIds = [ ...set ]
-        console.log(uniqueFieldIds)
-
 
         const existingFieldResults = await this.database.query(`
             SELECT field_id FROM user_field_reputation WHERE user_id = $1

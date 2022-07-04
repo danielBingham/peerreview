@@ -79,7 +79,6 @@ module.exports = class ReviewController {
             if ( ! returnReviews || returnReviews.length == 0) {
                 throw new Error(`Failed to find newly inserted review ${review.id}.`)
             }
-            console.log(returnReviews)
             this.reviewDAO.selectVisibleComments(userId, returnReviews)
             return response.status(201).json(returnReviews[0])
         } catch (error) {

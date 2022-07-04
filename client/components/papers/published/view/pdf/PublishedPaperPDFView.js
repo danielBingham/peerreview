@@ -15,7 +15,6 @@ const PublishedPaperPDFView = function(props) {
      * them.
      */
     useEffect(function() {
-        console.log('Attempting render.')
         if (  props.paper.versions.length > 0 ) {
             const loadingTask = PDFLib.getDocument('http://' + window.location.host + props.paper.versions[0].filepath)
             loadingTask.promise.then(function(pdf) {

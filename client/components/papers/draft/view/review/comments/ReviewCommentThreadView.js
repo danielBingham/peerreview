@@ -70,7 +70,6 @@ const ReviewCommentThreadView = function(props) {
     const commentViews = []
     const sortedComments = [ ...thread.comments ]
     sortedComments.sort((a,b) => a.threadOrder - b.threadOrder)
-    console.log(sortedComments)
     for ( const comment of sortedComments) {
         if ( comment.status == 'in-progress' && comment.userId == currentUser.id) {
             inProgress = true

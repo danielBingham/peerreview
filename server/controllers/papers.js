@@ -101,7 +101,6 @@ module.exports = class PaperController {
      */
     async postPapers(request, response) {
         const paper = request.body
-        console.log(paper)
 
         try {
             const results = await this.database.query(`
@@ -116,7 +115,6 @@ module.exports = class PaperController {
                 return response.status(500).json({error: 'unknown'})
             }
             paper.id = results.rows[0].id
-            console.log(paper)
             await this.insertAuthors(paper) 
             await this.insertFields(paper)
 

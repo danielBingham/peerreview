@@ -162,8 +162,6 @@ const DraftPaperPDFPageView = function(props) {
     // ============ Method definitions ========================================
     //
     const selectThread = function(thread) {
-        console.log('Selecting thread:')
-        console.log(thread)
         setSelectedThread(thread)
     }
 

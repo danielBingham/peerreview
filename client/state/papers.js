@@ -212,9 +212,6 @@ export const papersSlice = createSlice({
  */
 export const getPapers = function(params) {
     return function(dispatch, getState) {
-        console.log(`\n\n ==== getPapers ==== `)
-        console.log('Params')
-        console.log(params)
         const queryString = new URLSearchParams()
         for ( const key in params ) {
             if ( Array.isArray(params[key]) ) {
@@ -228,8 +225,6 @@ export const getPapers = function(params) {
 
         const requestId = uuidv4() 
         const endpoint = '/papers' + ( params ? '?' + queryString.toString() : '')
-        console.log('endpoint')
-        console.log(endpoint)
 
         let payload = {
             requestId: requestId
@@ -269,7 +264,6 @@ export const getPapers = function(params) {
             logger.error(error)
             dispatch(papersSlice.actions.failRequest(payload))
         })
-        console.log(`\n\n ==== END getPapers ====`)
 
         return requestId
     }

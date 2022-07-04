@@ -82,23 +82,14 @@ module.exports = class ReviewDAO {
      * @return {object[]} The filter review array
      */
     selectVisibleComments(userId, reviews) {
-        console.log('SetVisibleComments: Before')
-        console.log('userId')
-        console.log(userId)
-        console.log('Reviews')
-        console.log(reviews)
         for( const review of reviews) {
-            console.log(review)
             for ( const thread of review.threads) {
-                console.log(thread)
                 thread.comments = thread.comments.filter((c) => {
                     return c.status == "posted" || c.userId == userId
                 })
             }
             review.threads = review.threads.filter((t) => t.comments.length > 0)
         }
-        console.log('After: reviews')
-        console.log(reviews)
         return reviews
     }
 
