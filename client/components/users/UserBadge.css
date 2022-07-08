@@ -1,8 +1,24 @@
 .user-badge {
     display: inline-block;
     width: 250px;
-    height: 75px;
-    border: thin solid #ddd;
     padding: 15px;
-    overflow: hidden;
+}
+.user-badge .user-profile-picture {
+    background-color: #ddd;
+    width: 30px;
+    height: 30px;
+    margin-right: 5px;
+    margin-bottom: 5px;
+    float: left;
+}
+.user-badge .user-tag {
+    display: inline-block;
+}
+.user-badge .badge-fields {
+    clear:both;
+    margin-left: -5px;
+}
+.user-badge .badge-fields .field-wrapper {
+    display: inline-block;
+    padding: 5px;
 }

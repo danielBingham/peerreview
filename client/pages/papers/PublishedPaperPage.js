@@ -5,9 +5,9 @@ import PublishedPaperView from '/components/papers/published/view/PublishedPaper
 const PublishedPaperPage = function(props) {
 
     return (
-        <section id="published-paper-page">
+        <div id="published-paper-page" className="page">
             <PublishedPaperView />
-        </section>
+        </div>
     )
 }
 

@@ -57,6 +57,11 @@ const FieldsInput = function(props) {
         setFieldSuggestions([])
     }
 
+    const removeField = function(field) {
+        const filteredFields = props.fields.filter((f) => f.id != field.id)
+        props.setFields(filteredFields)
+    }
+
     const suggestFields = function(fieldName) {
         if ( timeoutId.current ) {
             clearTimeout(timeoutId.current)
@@ -92,8 +97,10 @@ const FieldsInput = function(props) {
     useEffect(function() {
         if (fieldsRequest && fieldsRequest.state == 'fulfilled') {
             let newFieldSuggestions = []
-            for(const field of fields) {
-                newFieldSuggestions.push(field)
+            if ( fields.length > 0) {
+                for(const field of fields) {
+                    newFieldSuggestions.push(field)
+                }
             }
             setFieldSuggestions(newFieldSuggestions)
         }
@@ -105,21 +112,24 @@ const FieldsInput = function(props) {
         }
     }, [ fieldsRequest ])
 
-
     let fieldList = [] 
-    for(const field of props.fields) {
-        fieldList.push(<Field key={field.id} field={field} />)
+    if ( props.fields.length > 0) {
+        for(const field of props.fields) {
+            fieldList.push(<Field key={field.id} field={field} remove={removeField} />)
+        }
     }
 
     let suggestedFieldList = []
-    for (const field of fieldSuggestions) {
-        suggestedFieldList.push(<div className='badge-wrapper' key={field.id} onClick={(event) => { appendField(field) }}><FieldBadge   field={field} /></div>)
+    if ( fieldSuggestions.length > 0) {
+        for (const field of fieldSuggestions) {
+            suggestedFieldList.push(<div className='badge-wrapper' key={field.id} onClick={(event) => { appendField(field) }}><FieldBadge   field={field} /></div>)
+        }
     }
 
     return (
-        <div className="fields-input field-wrapper"> 
-            <label htmlFor="fields">Fields</label>
-            <div className="explanation">Enter up to five fields, subfields, or areas you believe your paper is relevant to, eg. "biology", "chemistry", or "microbiology.</div>
+        <div className="fields-input"> 
+            <label htmlFor="fields">{ props.title }</label>
+            <div className="explanation">{ props.explanation }</div>
             <div className="selected-fields">{fieldList}</div>
             <input type="text" 
                 name="fields" 

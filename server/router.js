@@ -52,6 +52,42 @@ module.exports = function(database, logger, config) {
     })
 
     /******************************************************************************
+     *          User Settings REST Routes
+     ******************************************************************************/
+    const SettingsController = require('./controllers/settings')
+    const settingsController = new SettingsController(database, logger)
+
+    // Get a list of all settings.
+    router.get('/user/:user_id/settings', function(request, response) {
+        settingsController.getSettings(request, response)
+    })
+
+    // Create a new setting 
+    router.post('/user/:user_id/settings', function(request, response) {
+        settingsController.postSettings(request, response)
+    })
+
+    // Get the details of a single setting 
+    router.get('/user/:user_id/setting/:id', function(request, response) {
+        settingsController.getSetting(request, response)
+    })
+
+    // Replace a setting wholesale.
+    router.put('/user/:user_id/setting/:id', function(request, response) {
+        settingsController.putSetting(request, response)
+    })
+        
+    // Edit an existing setting with partial data.
+    router.patch('/user/:user_id/setting/:id', function(request, response) {
+        settingsController.patchSetting(request, response)
+    })
+
+    // Delete an existing setting.
+    router.delete('/user/:user_id/setting/:id', function(request, response) {
+        settingsController.deleteSetting(request, response)
+    })
+
+    /******************************************************************************
      *          Authentication REST Routes
      ******************************************************************************/
     const AuthenticationController = require('./controllers/authentication')

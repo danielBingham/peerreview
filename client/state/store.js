@@ -7,6 +7,7 @@ import papersReducer from './papers'
 import fieldsReducer from './fields'
 import reviewsReducer from './reviews'
 import authenticationReducer from './authentication'
+import settingsReducer from './settings'
 
 
 const reducers = combineReducers({
@@ -15,7 +16,8 @@ const reducers = combineReducers({
     authentication: authenticationReducer,
     papers: papersReducer,
     reviews: reviewsReducer,
-    fields: fieldsReducer
+    fields: fieldsReducer,
+    settings: settingsReducer
 })
 
 const rootReducer = function(state, action) {

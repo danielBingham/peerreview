@@ -43,17 +43,32 @@ const UserBadge = function(props) {
         const fields = [] 
         if ( user.fields.length > 0) {
             let sortedFields = [ ...user.fields ]
-            sortedFields.sort((a, b) => b.reputation - a.reputation)
-           
-            const userField =  sortedFields[0]
-            fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {userField.reputation}</div>)
+            sortedFields.sort((a, b) => { 
+                const repDiff = b.reputation - a.reputation 
+                if ( repDiff !== 0 ) {
+                    return repDiff
+                }
+                return b.field.id - a.field.id
+            })
+            if ( props.fields ) {
+                sortedFields = sortedFields.filter((uf) => props.fields.find((f) => f.id == uf.field.id) !== undefined)
+
+                for (const userField of sortedFields ) {
+                    fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {userField.reputation}</div>)
+                }
+            } else {
+                const userField = sortedFields[0]
+                fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {userField.reputation}</div>)
+            }
         }
 
         return (
             <div className="user-badge">
-                <div className="user-tag" ><Link to={ `/user/${user.id}` }>{user.name}</Link> ({user.reputation})</div> 
+                <div className="user-tag" ><div className="user-profile-picture"></div><Link to={ `/user/${user.id}` }>{user.name}</Link> ({user.reputation})</div> 
                 <div className="institution">{user.institution}</div>
-                {fields}
+                <div className="badge-fields">
+                    {fields}
+                </div>
             </div>
         )
     } else {

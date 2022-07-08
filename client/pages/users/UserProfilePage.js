@@ -8,10 +8,10 @@ const UserProfilePage = function(props) {
     const { id } = useParams()
 
     return (
-        <section id="user-profile-page">
+        <div id="user-profile-page" className="page">
             <UserView id={id} />
             <PublishedPaperList query={ { authorId: id } } />
-        </section>
+        </div>
     )
 }
 

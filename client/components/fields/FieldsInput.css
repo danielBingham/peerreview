@@ -1,0 +1,33 @@
+.fields-input .field-suggestions {
+    position: relative;
+    padding: 10px;
+    border: thin solid #ddd;
+    box-shadow: 2px 2px 2px #666;
+}
+.fields-input .field-suggestions .badge-wrapper {
+    display: inline-block;
+    margin: 5px;
+}
+.fields-input .field-suggestions .badge-wrapper:hover, .fields-input .field-suggestions .badge-wrapper.highlighted {
+    background-color: #eee;
+}
+.fields-input {
+    padding: 20px;
+}
+.fields-input .explanation {
+    padding: 5px 0;
+}
+.fields-input .selected-fields {
+    padding: 5px 0;
+}
+.fields-input label {
+    display: block;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+}
+.fields-input input[type=text] {
+    width: 948px;
+    padding: 5px;
+    border: thin solid #ddd;
+}

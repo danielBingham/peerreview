@@ -1,3 +1,35 @@
 .draft-paper-list {
     width: 100%;
+    margin: 0 auto;
+    background-color: white;
+    border: thin solid #ddd;
 }
+.draft-paper-list .header {
+    display: grid;
+    grid-template-columns: 1fr, 1fr;
+    grid-template-rows: auto;
+    border-bottom: thin solid #ddd;
+    padding: 10px 20px;
+}
+.draft-paper-list .header h2 {
+    grid-column: 1 / 2;
+    padding: 0;
+    margin: 0;
+}
+.draft-paper-list .header .controls {
+    grid-column: 2 / 3;
+}
+.draft-paper-list .header .controls .sort {
+    text-align: right;
+}
+.draft-paper-list .header .controls .sort div {
+    display: inline-block;
+    padding: 5px;
+    margin: 0 10px;
+
+}
+.draft-paper-list .empty-search {
+    padding: 20px;
+    text-align: center;
+}
+

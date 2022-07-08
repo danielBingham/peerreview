@@ -6,6 +6,8 @@ import logger from '../logger'
 
 import RequestTracker  from './helpers/requestTracker'
 
+import { addSettingsToDictionary } from '/state/settings'
+
 export const authenticationSlice = createSlice({
     name: 'authentication',
     initialState: {
@@ -22,12 +24,18 @@ export const authenticationSlice = createSlice({
          *
          * @type {object} 
          */
-        currentUser: null
+        currentUser: null,
+
+        settings: null
     },
     reducers: {
 
         setCurrentUser: function(state, action) {
             state.currentUser = action.payload
+        },
+
+        setSettings: function(state, action) {
+            state.settings = action.payload
         },
 
         // ========== Generic Request Methods =============
@@ -137,10 +145,16 @@ export const getAuthentication = function() {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(user) {
-            dispatch(authenticationSlice.actions.setCurrentUser(user))
+        }).then(function(session) {
+            if ( session ) {
+                dispatch(authenticationSlice.actions.setCurrentUser(session.user))
+                dispatch(authenticationSlice.actions.setSettings(session.settings))
+                dispatch(addSettingsToDictionary(session.settings))
+            } else {
+                dispatch(authenticationSlice.actions.setCurrentUser(null))
+            }
 
-            payload.result = user
+            payload.result = session 
             dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -198,10 +212,11 @@ export const postAuthentication = function(email, password) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(user) {
-            dispatch(authenticationSlice.actions.setCurrentUser(user))
+        }).then(function(session) {
+            dispatch(authenticationSlice.actions.setCurrentUser(session.user))
+            dispatch(addSettingsToDictionary(session.settings))
 
-            payload.result = user
+            payload.result = session 
             dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -328,6 +343,6 @@ export const deleteAuthentication = function() {
     }
 }
 
-export const { setCurrentUser, makeRequest, failRequest, completeRequest, cleanupRequest} = authenticationSlice.actions
+export const { setCurrentUser, setSettings, makeRequest, failRequest, completeRequest, cleanupRequest} = authenticationSlice.actions
 
 export default authenticationSlice.reducer

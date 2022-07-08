@@ -75,16 +75,38 @@ module.exports = class PaperController {
                     for(let row of results.rows) {
                         paper_ids.push(row.paper_id)
                     }
-                    params.push(paper_ids)
+                    const uniquePaperIds = [ ...new Set(paper_ids) ] 
+                    params.push(uniquePaperIds)
                 } else {
                     return response.status(200).json([])
                 }
+            }
+
+            if ( request.query.excludeFields && request.query.excludeFields.length > 0) {
+                const fieldIds = await this.fieldDAO.selectFieldChildren(request.query.excludeFields)
+                const results = await this.database.query(`SELECT paper_id from paper_fields where field_id = ANY ($1::int[])`, [ fieldIds])
+                if ( results.rows.length > 0) {
+                    count += 1
+                    and = ( count > 1 ? ' AND ' : '' )
+                    where += `${and} papers.id != ALL($${count}::int[])`
+
+                    const paper_ids = []
+                    for(let row of results.rows) {
+                        paper_ids.push(row.paper_id)
+                    }
+                    const uniquePaperIds = [ ...new Set(paper_ids) ]
+                    params.push(uniquePaperIds)
+                } 
             }
 
             // We don't actually have any query parameters.
             if ( count < 1 ) {
                 where = ''
             }
+            console.log('getPapers WHERE')
+            console.log(where)
+            console.log('getPapers params')
+            console.log(params)
             const papers = await this.paperDAO.selectPapers(where, params)
             return response.status(200).json(papers)
         } catch (error) {

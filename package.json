@@ -15,6 +15,7 @@
     "verbose": true
   },
   "dependencies": {
+    "@heroicons/react": "^1.0.6",
     "@reduxjs/toolkit": "^1.8.1",
     "bcrypt": "^5.0.1",
     "connect-pg-simple": "^7.0.0",

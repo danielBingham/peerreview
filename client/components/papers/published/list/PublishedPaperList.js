@@ -1,7 +1,4 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router'
-import { Link } from 'react-router-dom'
-
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { clearList, getPapers, cleanupRequest } from '/state/papers'
@@ -20,12 +17,34 @@ import './PublishedPaperList.css'
  */
 const PublishedPaperList = function(props) { 
     const [requestId, setRequestId ] = useState(null)
+    //const [query, setQuery ] = useState(null)
+
+    console.log('\n\n ##### PublishedPaperList #####')
+    console.log('props.query')
+    console.log(props.query)
+
+    const oldQuery = useRef(props.query)
+    if ( oldQuery.current !== props.query ) {
+        console.log('Query changed.')
+        console.log('OldQuery')
+        console.log(oldQuery.current)
+        console.log('NewQuery')
+        console.log(props.query)
+        oldQuery.current = props.query
+    }
+
+    console.log('Current State: ')
+    console.log('RequestId')
+    console.log(requestId)
 
     const dispatch = useDispatch()
 
     const paperList = useSelector(function(state) {
         return state.papers.list
     })
+
+    console.log('PaperList')
+    console.log(paperList)
 
     const request = useSelector(function(state) {
         if (requestId) {
@@ -35,14 +54,25 @@ const PublishedPaperList = function(props) {
         }
     })
 
-    useEffect(function() {
-        if ( ! requestId ) {
-            let query = {}
-            if ( props.query ) {
-                query = { ...props.query }
-            }
-            query.isDraft = false
+    console.log('request')
+    console.log(request)
 
+    useEffect(function() {
+        console.log('====== PublishedPaperList.EFFECT - Make request. =====')
+        let query = {}
+        if ( props.query ) {
+            query = {
+                ...props.query
+            }
+        }
+        query.isDraft = false
+
+        if ( ! requestId ) {
+            console.log('No id, initial request.')
+            dispatch(clearList())
+            setRequestId(dispatch(getPapers(query)))
+        } else if ( requestId && request && request.state == 'fulfilled' ) {
+            console.log('Finished request, make a new one.')
             dispatch(clearList())
             setRequestId(dispatch(getPapers(query)))
         }
@@ -54,6 +84,7 @@ const PublishedPaperList = function(props) {
         }
     }, [ props.query ])
 
+    console.log('===== PublishedPaperList.RENDER =====')
     // ====================== Render ==========================================
     if ( request && request.state == 'fulfilled') { 
 

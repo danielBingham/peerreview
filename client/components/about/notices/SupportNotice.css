@@ -4,10 +4,22 @@
     background-color: #d0ddf4;
     padding: 15px;
     margin: 20px auto;
-    width: 900px;
+    width: 800px;
+}
+.support-notice p {
+    width: 650px;
+    font-size: 14px;
+    line-height: 1.7em;
+    margin: 2em auto;
 }
 .support-notice .close {
     position: absolute;
     top: 5px;
     right: 5px;
 }
+.support-notice .close svg {
+    width: 24px;
+    height: 24px;
+    color: #5c84b2;
+}
+ 

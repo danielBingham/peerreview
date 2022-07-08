@@ -4,6 +4,7 @@ body {
 
     font-family: Georgia, serif;
     font-size: 14px;
+    background-color: #eee;
 }
 
 a:link, a:active, a:visited {
@@ -20,5 +21,13 @@ a:hover {
 main {
     width: 1600px;
     margin: 0 auto;
+}
+
+main .page {
+    width: 1600px;
+    margin: 50px auto;
+    border: thin solid #ddd;
+    background-color: white;
+    padding: 20px;
 }
 

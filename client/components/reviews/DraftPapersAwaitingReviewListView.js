@@ -42,8 +42,7 @@ const DraftPapersAwaitingReviewListView = function(props) {
     useEffect(function() {
         if ( currentUser && ! requestId) {
             dispatch(clearList())
-            setRequestId(dispatch(getPapers({ isDraft: true })))
-        }
+            setRequestId(dispatch(getPapers({ isDraft: true }))) }
 
         return function cleanup() {
             if ( request ) {
@@ -65,9 +64,21 @@ const DraftPapersAwaitingReviewListView = function(props) {
         }
 
         return (
-            <section className="draft-paper-list">
-                {listItems}
-            </section>
+            <div className="draft-paper-list">
+                <div className="error"> {request && request.error} </div>
+                <div className="header">
+                    <h2>Draft Papers Awaiting Review</h2>
+                    <div className="controls">
+                        <div className="sort">
+                            <div>Newest</div>
+                            <div>Active</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    { listItems.length > 0 ? listItems : <div className="empty-search">No papers awaiting review.</div>}
+                </div>
+            </div >
         )
     } else {
         return (

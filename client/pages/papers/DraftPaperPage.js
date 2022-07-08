@@ -25,9 +25,9 @@ const DraftPaperPage = function(props) {
 
     if ( currentUser ) {
         return (
-            <section id="draft-paper-page">
+            <div id="draft-paper-page" className="page">
                 <DraftPaperView id={id} />
-            </section>
+            </div>
         )
     } else {
         return (

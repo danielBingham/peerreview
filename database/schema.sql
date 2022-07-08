@@ -14,6 +14,10 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app;
 
 /* Peer Review Schema file */
 
+/******************************************************************************
+ * Users 
+ *****************************************************************************/
+
 CREATE TABLE users (
     id bigserial PRIMARY KEY,
     blind_id uuid DEFAULT gen_random_uuid(), 
@@ -29,6 +33,10 @@ CREATE TABLE users (
     updated_date timestamp 
 );
 
+/******************************************************************************
+ * Fields 
+ *****************************************************************************/
+
 CREATE TABLE fields (
     id bigserial PRIMARY KEY,
     name varchar(512),
@@ -39,9 +47,31 @@ CREATE TABLE fields (
 );
 
 CREATE TABLE field_relationships (
-    parent_id bigint REFERENCES fields(id),
-    child_id bigint REFERENCES fields(id)
+    parent_id bigint REFERENCES fields(id) ON DELETE CASCADE,
+    child_id bigint REFERENCES fields(id) ON DELETE CASCADE
 );
+
+/******************************************************************************
+ * User Settings 
+ *****************************************************************************/
+
+CREATE TABLE user_settings (
+    id bigserial PRIMARY KEY,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    welcome_dismissed boolean
+);
+
+CREATE TYPE user_field_setting AS ENUM('ignored', 'isolated');
+CREATE TABLE user_field_settings (
+    setting_id bigint REFERENCES user_settings(id) ON DELETE CASCADE,
+    field_id bigint REFERENCES fields(id) ON DELETE CASCADE,
+    setting user_field_setting,
+    PRIMARY KEY (setting_id, field_id)
+);
+
+/******************************************************************************
+ * Files 
+ *****************************************************************************/
 
 CREATE TABLE files (
     id bigserial PRIMARY KEY,
@@ -110,9 +140,9 @@ CREATE TABLE user_field_reputation (
     PRIMARY KEY (user_id, field_id)
 );
 
-/***
- *  Reviews 
- ***/
+/******************************************************************************
+ * Reviews 
+ *****************************************************************************/
 
 CREATE TYPE review_status AS ENUM('in-progress', 'submitted', 'rejected', 'accepted');
 CREATE TYPE review_recommendation as ENUM('reject', 'request-changes', 'approve');

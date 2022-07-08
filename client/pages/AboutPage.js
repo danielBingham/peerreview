@@ -10,13 +10,13 @@ import './AboutPage.css'
 const AboutPage = function(props) {
 
     return (
-        <section id="about-page">
+        <div id="about-page" className="page">
             <h1>About Peer Review</h1>
             <IntroductionSection />
             <HowItWorksSection />
             <RationaleSection />
             <FAQSection />
-        </section>
+        </div>
     )
 
 }

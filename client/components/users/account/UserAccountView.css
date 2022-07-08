@@ -10,11 +10,12 @@
 }
 .user-account-view .nav-wrapper nav {
     margin: 0 auto;
+    background-color: white;
 }
 .user-account-view nav .pane-link {
-   border-top: thin solid #ddd;
-   border-bottom: thin solid #ddd;
-   border-left: thin solid #ddd;
+   border-top: thin solid #ccc;
+   border-bottom: thin solid #ccc;
+   border-left: thin solid #ccc;
 }
 .user-account-view nav .pane-link.selected {
     position: relative;
@@ -28,8 +29,9 @@
 }
 .user-account-view .pane {
     grid-column: 2 / 3;
-    border: thin solid #ddd;
+    border: thin solid #ccc;
     padding: 30px;
+    background-color: white;
 }
 
 

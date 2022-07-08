@@ -6,8 +6,8 @@
  ******************************************************************************/
 
 const AuthenticationService = require('../services/authentication')
-const PaperDAO = require('../daos/paper')
 const UserDAO = require('../daos/user')
+const SettingsDAO = require('../daos/settings')
 
 module.exports = class UserController {
 
@@ -15,8 +15,8 @@ module.exports = class UserController {
         this.database = database
         this.logger = logger
         this.auth = new AuthenticationService()
-        this.paperDAO = new PaperDAO(database)
         this.userDAO = new UserDAO(database)
+        this.settingsDAO = new SettingsDAO(database, logger)
     }
 
     /**
@@ -83,7 +83,15 @@ module.exports = class UserController {
                 throw new Error('Insert user failed.')
             }
 
+
             const returnUser = await this.userDAO.selectUsers('WHERE users.id=$1', [results.rows[0].id])
+
+            if ( returnUser.length <= 0) {
+                throw new Error(`No user found after insertion. Looking for id ${results.rows[0].id}.`)
+            }
+
+            await this.settingsDAO.initializeSettingsForUser(returnUser[0])
+
             return response.status(201).json(returnUser[0])
         } catch (error) {
             this.logger.error(error)
@@ -179,9 +187,7 @@ module.exports = class UserController {
                     this.logger.error(error)
                     return response.status(500).json({error: 'unknown'})
                 }
-            } else if ( key == 'createdDate') {
-    
-            }
+            } 
 
             params.push(user[key])
             count = count + 1

@@ -5,15 +5,17 @@ import FieldView from '/components/fields/FieldView'
 import FieldListView from '/components/fields/list/FieldListView'
 import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
 
+import './FieldPage.css'
+
 const FieldPage = function(props) {
     const { id } = useParams()
 
     return (
-        <section id="field-page">
+        <div id="field-page" className="page">
             <FieldView id={id} />
             <FieldListView id={id} />
             <PublishedPaperList query={ { fields: [ id ] } } />
-        </section>
+        </div>
     )
 }
 

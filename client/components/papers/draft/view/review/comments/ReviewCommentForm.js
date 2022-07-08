@@ -7,6 +7,8 @@ import { deleteReviewComment, patchReviewComment, cleanupRequest } from '/state/
 
 import Spinner from '/components/Spinner'
 
+import './ReviewCommentForm.css'
+
 const ReviewCommentForm = function(props) {
     const [patchCommentRequestId, setPatchCommentRequestId] = useState(null)
     const [deleteCommentRequestId, setDeleteCommentRequestId] = useState(null)
@@ -101,16 +103,14 @@ const ReviewCommentForm = function(props) {
         <section className="comment-form" >
             <form onSubmit={onSubmit}>
                 <div className="content">
-                <textarea 
-                    name="content" 
-                    rows="10" 
-                    cols="40" 
-                    onBlur={commit}
-                    onChange={(e) => setContent(e.target.value)} 
-                    value={content}
-                >
-                </textarea>
-            </div>
+                    <textarea 
+                        name="content" 
+                        onBlur={commit}
+                        onChange={(e) => setContent(e.target.value)} 
+                        value={content}
+                    >
+                    </textarea>
+                </div>
             <div className="controls">
                 <button onClick={cancelComment}>Cancel</button>
                 <input type="submit" name="submit" value="Add Comment" />

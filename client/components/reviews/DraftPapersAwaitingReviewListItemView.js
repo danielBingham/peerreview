@@ -25,8 +25,9 @@ const DraftPapersAwaitingReviewListItemView = function(props) {
 
     const paperPath = `/draft/${paper.id}`
     return (
-        <div id={paper.id} className="draft-paper">
-            <div className="reviews list-score-box">0 <span className="label">reviews</span></div>
+        <div id={paper.id} className="draft-paper-list-item">
+            <div className="reviews list-score-box">0 <br/><span className="label">reviews</span></div>
+            <div className="version list-score-box">1 <br/><span className="label">version</span></div>
             <div className="wrapper">
                 <div className="title"> <Link to={paperPath}>{paper.title}</Link></div>
                 <div className="authors">by {authors}</div>

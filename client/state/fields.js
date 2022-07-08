@@ -60,10 +60,10 @@ export const fieldsSlice = createSlice({
         },
 
         appendFieldsToList: function(state, action) {
-            if ( action.payload.length ) {
+            if ( action.payload && Array.isArray(action.payload)) {
                 const fields = action.payload
                 state.list.push(...fields)
-            } else {
+            } else if(action.payload) {
                 state.list.push(action.payload)
             }
         },

@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { postPapers, uploadPaper, cleanupRequest as cleanupPapersRequest } from '/state/papers'
 
 import AuthorsInput from './AuthorsInput'
-import FieldsInput from './FieldsInput'
+import FieldsInput from '/components/fields/FieldsInput'
 import Spinner from '/components/Spinner'
 
 import './SubmitDraftForm.css'
@@ -182,7 +182,12 @@ const SubmitDraftForm = function(props) {
                 </div>
 
                 <AuthorsInput authors={authors} setAuthors={setAuthors} />
-                <FieldsInput fields={fields} setFields={setFields} />
+                <FieldsInput 
+                    fields={fields} 
+                    setFields={setFields} 
+                    title="Fields"
+                    explanation={`Enter up to five fields, subfields, or areas you believe your paper is relevant to, eg. "biology", "chemistry", or "microbiology.`}
+                />
 
                 <div className="upload field-wrapper">
                     <label htmlFor="upload">Select a file to upload</label>

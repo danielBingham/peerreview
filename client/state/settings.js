@@ -6,10 +6,10 @@ import logger from '/logger'
 
 import RequestTracker from './helpers/requestTracker'
 
-import { setCurrentUser } from '/state/authentication'
+import { setSettings } from '/state/authentication'
 
-export const usersSlice = createSlice({
-    name: 'users',
+export const settingsSlice = createSlice({
+    name: 'settings',
     initialState: {
         /**
          * A dictionary of requests in progress or that we've made and completed,
@@ -20,83 +20,48 @@ export const usersSlice = createSlice({
         requests: {},
 
         /**
-         * A dictionary of users we've retrieved from the backend, keyed by
-         * user.id.
+         * A dictionary of settings we've retrieved from the backend, keyed by
+         * setting.id.
          *
          * @type {object}
          */
-        dictionary: {},
+        dictionary: {}
 
-        /** 
-         * A list of users returned from /users/query.  We need to use a list
-         * here, because we need to preserve the order returned from the
-         * backend.  The query can include a `sort` parameter.  We can only run
-         * one query at a time, subsequent queries will be assumed to build on
-         * it. If you need to start a new query, call the `newQuery` action.
-         */
-        list: []
     },
     reducers: {
 
         /**
-         * Add one or more users to the user state.
+         * Add one or more settings to the setting state.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
          * @param {object|object[]} action.payload - The payload sent with the
-         * action, must either be an array of users or a user.
+         * action, must either be an array of settings or a setting.
          */
-        addUsersToDictionary: function(state, action) {
+        addSettingsToDictionary: function(state, action) {
+            console.log(action.payload)
             if (Array.isArray(action.payload)) {
-                action.payload.forEach(function(user) {
-                    state.dictionary[user.id] = user
-                })
+                for(const setting of action.payload) {
+                    state.dictionary[setting.userId] = setting
+                }
             } else if( action.payload.id ) {
-                const user = action.payload
-                state.dictionary[user.id] = user 
+                const setting = action.payload
+                state.dictionary[setting.userId] = setting 
             } else {
-                throw new TypeError('Payload must be an array of users or a user.')
+                throw new TypeError('Payload must be an array of settings or a setting.')
             }
         },
 
         /**
-         * Add one or more users to the list.
-         *
-         * @param {object} state    The redux state slice.
-         * @param {object} action   The redux action we're reducing.
-         * @param {object|object[]} action.payload  A user or an array of users
-         * we want to append to the end of the list.
-         */
-        appendUsersToList: function(state, action) {
-            if ( Array.isArray(action.payload)) {
-                state.list.push(...action.payload)
-            } else if ( action.payload.id ) {
-                state.list.push(action.payload)
-            } else {
-                throw new TypeError('Payload must be an array of users or a user.')
-            }
-        },
-
-        /**
-         * Reset the query, so that you can run a new one.
-         *
-         * @param {Object} state - The redux state slice.
-         * @param {Object} action - The redux action we're reducing.
-         */
-        clearList: function(state, action) {
-            state.list = []
-        },
-
-        /**
-         * Remove a user from both the dictionary and the list.
+         * Remove a setting from both the dictionary and the list.
          *
          * @param {object} state    The redux state slice.
          * @param {object} action   The action we're reducing.
-         * @param {object} action.payload   A user object.  The one we want to remove.
+         * @param {object} action.payload   A setting object.  The one we want to remove.
          */
-        removeUser: function(state, action) {
-            delete state.dictionary[action.payload.id]
-            state.list = state.list.filter((u) => u.id != action.payload.id)
+        removeSetting: function(state, action) {
+            const setting = action.payload
+            delete state.dictionary[setting.userId]
         },
 
 
@@ -104,12 +69,12 @@ export const usersSlice = createSlice({
         // Use these methods when no extra logic is needed.  If additional
         // logic is needed for a particular request, make a reducer of the form
         // [make/fail/complete/cleanup][method][endpoint]Request().  For
-        // example, makePostUsersRequest().  The reducer should take an object
+        // example, makePostSettingsRequest().  The reducer should take an object
         // with at least requestId defined, along with whatever all inputs it
         // needs.
 
         /**
-         * Make a request to a user or users endpoint.
+         * Make a request to a setting or settings endpoint.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
@@ -124,7 +89,7 @@ export const usersSlice = createSlice({
         },
 
         /**
-         * Fail a request to a user or users endpoint, usually with an error.
+         * Fail a request to a setting or settings endpoint, usually with an error.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
@@ -138,14 +103,14 @@ export const usersSlice = createSlice({
         },
 
         /**
-         * Complete a request to a user or users endpoint by setting the user
-         * sent back by the backend in the users hash.
+         * Complete a request to a setting or settings endpoint by setting the setting
+         * sent back by the backend in the settings hash.
          *
          * @param {object} state - The redux state slice.
          * @param {object} action - The redux action we're reducing.
          * @param {object} action.payload - The payload sent with the action.
          * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.user - A populated user object, must have `id` defined
+         * @param {object} action.payload.setting - A populated setting object, must have `id` defined
          */
         completeRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
@@ -167,38 +132,27 @@ export const usersSlice = createSlice({
 })
 
 /**
- * GET /users?...
+ * GET /user/:user_id/settings
  *
- * Get all users in the database. Queryable.  Populates state.dictionary and
- * state.list.
+ * Get all settings in the database for a user. 
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getUsers = function(params) {
+export const getSettings = function(userId) {
     return function(dispatch, getState) {
-        const queryString = new URLSearchParams()
-        for ( const key in params ) {
-            if ( Array.isArray(params[key]) ) {
-                for ( const value of params[key] ) {
-                    queryString.append(key+'[]', value)
-                }
-            } else {
-                queryString.append(key, params[key])
-            }
-        }
 
         const requestId = uuidv4() 
-        const endpoint = '/users' + ( params ? '?' + queryString.toString() : '')
+        const endpoint = `/user/${userId}/settings`
 
         let payload = {
             requestId: requestId
         }
 
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'GET',
             headers: {
@@ -211,12 +165,11 @@ export const getUsers = function(params) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(users) {
-            dispatch(usersSlice.actions.addUsersToDictionary(users))
-            dispatch(usersSlice.actions.appendUsersToList(users))
+        }).then(function(settings) {
+            dispatch(settingsSlice.actions.addSettingsToDictionary(settings))
 
-            payload.result = users
-            dispatch(usersSlice.actions.completeRequest(payload))
+            payload.result = settings
+            dispatch(settingsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -224,7 +177,7 @@ export const getUsers = function(params) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(settingsSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -232,34 +185,34 @@ export const getUsers = function(params) {
 }
 
 /**
- * POST /users
+ * POST /user/:user_id/settings
  *
- * Create a new user.
+ * Create a new setting.
  *  
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} user - A populated user object, minus the `id` member.
+ * @param {object} setting - A populated setting object, minus the `id` member.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const postUsers = function(user) {
+export const postSettings = function(setting) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/users'
+        const endpoint = `/user/${setting.userId}/settings`
 
         const payload = {
             requestId: requestId
         }
 
-        dispatch(usersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
+        dispatch(settingsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(user)
+            body: JSON.stringify(setting)
         }).then(function(response) {
             payload.status = response.status
             if ( response.ok ) {
@@ -267,11 +220,11 @@ export const postUsers = function(user) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
+        }).then(function(returnedSetting) {
+            dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
 
-            payload.result = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
+            payload.result = returnedSetting
+            dispatch(settingsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -279,7 +232,7 @@ export const postUsers = function(user) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(settingsSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -287,28 +240,28 @@ export const postUsers = function(user) {
 }
 
 /**
- * GET /user/:id
+ * GET /setting/:id
  *
- * Get a single user.
+ * Get a single setting.
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {int} id - The id of the user we want to retrieve.
+ * @param {int} id - The id of the setting we want to retrieve.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getUser = function(id) {
+export const getSetting = function(userId, id) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/user/' + id
+        const endpoint = `/user/${userId}/setting/${id}`
 
         const payload = {
             requestId: requestId
         }
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'GET',
             headers: {
@@ -321,11 +274,11 @@ export const getUser = function(id) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(user) {
-            dispatch(usersSlice.actions.addUsersToDictionary(user))
+        }).then(function(setting) {
+            dispatch(settingsSlice.actions.addSettingsToDictionary(setting))
 
-            payload.result = user
-            dispatch(usersSlice.actions.completeRequest(payload))
+            payload.result = setting
+            dispatch(settingsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -333,7 +286,7 @@ export const getUser = function(id) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(settingsSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -341,34 +294,34 @@ export const getUser = function(id) {
 }
 
 /**
- * PUT /user/:id
+ * PUT /user/:user_id/setting/:id
  *
- * Replace a user wholesale. 
+ * Replace a setting wholesale. 
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} user - A populated user object.
+ * @param {object} setting - A populated setting object.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const putUser = function(user) {
+export const putSetting = function(setting) {
     return function(dispatch, getState) {
     
         const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
+        const endpoint = `/user/${setting.id}/setting/${setting.id}`
 
         const payload = {
             requestId: requestId
         }
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
+        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(user)
+            body: JSON.stringify(setting)
         }).then(function(response) {
             payload.status = response.status
             if ( response.ok ) {
@@ -378,20 +331,12 @@ export const putUser = function(user) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
 
-        }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
+        }).then(function(returnedSetting) {
+            dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
+            dispatch(setSettings(returnedSetting))
 
-            // If the user we just got is the same as the one in the session,
-            // update the session.  The server will have already done this for
-            // the backend, doubling the login on the frontend just saves us a
-            // request.
-            const state = getState()
-            if ( state.authentication.currentUser && state.authentication.currentUser.id == returnedUser.id) {
-                dispatch(setCurrentUser(returnedUser))
-            }
-
-            payload.result = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
+            payload.result = returnedSetting
+            dispatch(settingsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -399,7 +344,7 @@ export const putUser = function(user) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(settingsSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -407,34 +352,34 @@ export const putUser = function(user) {
 }
 
 /**
- * PATCH /user/:id
+ * PATCH /user/:user_id/setting/:id
  *
- * Update a user from a partial `user` object. 
+ * Update a setting from a partial `setting` object. 
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} user - A populate user object.
+ * @param {object} setting - A populate setting object.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const patchUser = function(user) {
+export const patchSetting = function(setting) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
+        const endpoint = `/user/${setting.userId}/setting/${setting.id}` 
 
         const payload = {
             requestId: requestId
         }
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
+        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(user)
+            body: JSON.stringify(setting)
         }).then(function(response) {
             payload.status = response.status
             if ( response.ok ) {
@@ -442,20 +387,12 @@ export const patchUser = function(user) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
+        }).then(function(returnedSetting) {
+            dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
+            dispatch(setSettings(returnedSetting))
 
-            // If the user we just got is the same as the one in the session,
-            // update the session.  The server will have already done this for
-            // the backend, doubling the login on the frontend just saves us a
-            // request.
-            const state = getState()
-            if ( state.authentication.currentUser && state.authentication.currentUser.id == returnedUser.id) {
-                dispatch(setCurrentUser(returnedUser))
-            }
-
-            payload.result = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
+            payload.result = returnedSetting
+            dispatch(settingsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -463,7 +400,7 @@ export const patchUser = function(user) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(settingsSlice.actions.failRequest(payload))
         })
 
         return requestId
@@ -471,29 +408,29 @@ export const patchUser = function(user) {
 }
 
 /**
- * DELETE /user/:id
+ * DELETE /user/:user_id/setting/:id
  *
- * Delete a user. 
+ * Delete a setting. 
  *
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} user - A populated user object.
+ * @param {object} setting - A populated setting object.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const deleteUser = function(user) {
+export const deleteSetting = function(setting) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
+        const endpoint = `/user/${setting.userId}/setting/${setting.id}`
 
         const payload = {
             requestId: requestId,
-            result: user.id
+            result: setting.id
         }
         
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
+        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'DELETE',
             headers: {
@@ -502,8 +439,8 @@ export const deleteUser = function(user) {
         }).then(function(response) {
             payload.status = response.status
             if( response.ok ) {
-                dispatch(usersSlice.actions.removeUser(user))
-                dispatch(usersSlice.actions.completeRequest(payload))
+                dispatch(settingsSlice.actions.removeSetting(setting))
+                dispatch(settingsSlice.actions.completeRequest(payload))
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
@@ -514,13 +451,13 @@ export const deleteUser = function(user) {
                 payload.error = 'Unknown error.'
             }
             logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
+            dispatch(settingsSlice.actions.failRequest(payload))
         })
 
         return requestId
     }
 } 
 
-export const { addUsersToDictionary, appendUsersToList, clearList, removeUser, makeRequest, failRequest, completeRequest, cleanupRequest }  = usersSlice.actions
+export const { addSettingsToDictionary, removeSetting, makeRequest, failRequest, completeRequest, cleanupRequest }  = settingsSlice.actions
 
-export default usersSlice.reducer
+export default settingsSlice.reducer

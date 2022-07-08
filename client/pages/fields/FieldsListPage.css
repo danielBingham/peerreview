@@ -1,5 +1,13 @@
+#fields-list-page {
+    background-color: white;
+    min-height: 600px;
+    padding: 20px;
+    margin: 50px auto;
+    border: thin solid #ddd;
+}
+
 #fields-list-page .explanation {
-    margin: 20px auto;
     width: 900px;
     padding: 15px;
+    margin: 0 auto;
 }

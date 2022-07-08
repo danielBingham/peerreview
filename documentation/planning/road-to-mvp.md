@@ -65,26 +65,26 @@ dismissal recorded for the duration of the session.
 papers in review, and get new rounds of review on them. The ability to view
 previous versions.
 
-[issue] **Accept or Reject a Review** The ability to accept or reject a review.
+[issue #32](https://github.com/danielBingham/peerreview/issues/32) **Accept or Reject a Review** The ability to accept or reject a review.
 Accepted reviews grant reputation.
 
-[issue] **Initial Reputation from Citations** Find a citation count somewhere and
+[issue #34](https://github.com/danielBingham/peerreview/issues/34) **Initial Reputation from Citations** Find a citation count somewhere and
 initial reputation from the citation count.
 
-[issue] **Add Authors who Aren't Users** The ability to add authors to a paper with out
+[issue #35](https://github.com/danielBingham/issues/35) **Add Authors who Aren't Users** The ability to add authors to a paper with out
 them being users.  None user authors have their email requested and an "Invite
 them?" checkbox.
 
-[issue] **Field Hierarchy Breadcrumbs** Show bread crumbs on the field view page going
+[issue #36](https://github.com/danielbingham/issues/36) **Field Hierarchy Breadcrumbs** Show bread crumbs on the field view page going
 back up the hierarchy.
 
-[issue] **Published Paper Responses** The ability to post a response to a public paper.
+[issue #33](https://github.com/danielbingham/issues/33) **Published Paper Responses** The ability to post a response to a public paper.
 
-[issue] **Published Paper PDF Viewer** We only want to see one page at a time for
+[issue #37](https://github.com/danielbingham/issues/37) **Published Paper PDF Viewer** We only want to see one page at a time for
 PUblished papers, so that you don't have to scroll forever to see the
 responses.  We need a viewer.
 
-[issue] **Refactor paper uploads to use FileController**  We want to have a single
+[issue #38](https://github.com/danielbingham/issues/38) **Refactor paper uploads to use FileController**  We want to have a single
 unified interface for all file uploads, with a single database table for
 storing file paths that can be references by their usage.  It'll save us code
 duplication.
@@ -98,10 +98,20 @@ staging site so that we can start sharing it with folks.
 
 **S3/equivalent file storage for papers**
 
+**Peer Review Blog**  We want to create a simple Jekyl blog and host it on an
+S3 equivalent.  The plan is to write up a series of articles explaining the
+problems with academic publishing and how Peer Review could potentially fix
+them.
+
 ### Beta
 
 These are the things we want to get done before a beta release.  A beta release
 we'll announce publicly and allow an open beta.
+
+**Reputation Based Permissions** You can only review if you have 10,000
+reputation in the fields (total?  or in each field?  or in only one of the
+fields?).  You can only vote and post responses if you 10,000 reputation in the
+fields.  Those numbers are tentative.
 
 **Paper List Sorting**  The ability to sort the paper list.
 
@@ -173,3 +183,8 @@ ability to comment directly on the latex code.
 **Support for Uploading Papers as Docx** We want to support uploading papers as
 docx, because that's another common format people use.  We should be able to
 use pandoc to convert them to HTML clientside for a better review experience.
+
+**DOIs for all Uploaded Papers** We should attach DOIs to all papers uploaded
+to Peer Review.  It's the system currently in wide adoption in academia (though
+we could easily replace it with something better, in this case it's probably
+better to just go with it.)

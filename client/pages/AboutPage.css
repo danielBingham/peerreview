@@ -1,4 +1,10 @@
 #about-page {
-    margin: 100px auto;
-    width: 900px;
+    width: 650px;
+    padding: 125px;
+
+    font-size: 18px;
+    line-height: 1.7em;
+}
+#about-page h1 {
+    text-align: center;
 }

@@ -36,7 +36,12 @@ module.exports = class FieldController {
             }
 
             const fields = await this.fieldDAO.selectFields(where, params)
-            return response.status(200).json(fields)
+
+            if ( ! fields ) {
+                return response.status(200).json([])
+            } else {
+                return response.status(200).json(fields)
+            }
         } catch (error) {
             console.error(error)
             response.status(500).json({ error: 'server-error' })

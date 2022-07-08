@@ -1,8 +1,8 @@
 .user-list {
-    margin-top: 50px;
 }
 .user-list .header {
     border-bottom: thin solid #ddd;
+    padding: 10px;
 }
 .user-list .header h1 {
     padding: 0;

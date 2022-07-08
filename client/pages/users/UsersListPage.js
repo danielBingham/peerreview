@@ -5,9 +5,9 @@ import UserListView from '/components/users/list/UserListView'
 const UsersListPage = function(props) {
 
     return (
-        <section id="users-list-page">
+        <div id="users-list-page" className="page">
             <UserListView />
-        </section>
+        </div>
     )
 }
 

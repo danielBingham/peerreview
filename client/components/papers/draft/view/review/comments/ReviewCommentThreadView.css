@@ -5,7 +5,7 @@
     padding: 5px;
     box-shadow: 1px 1px 3px #777;
     z-index: 1;
-    width: 300px;
+    width: 450px;
 }
 .comment-thread.selected {
     z-index: 2;

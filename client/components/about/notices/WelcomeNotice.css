@@ -4,10 +4,21 @@
     background-color: #edebd5;
     padding: 15px;
     margin: 20px auto;
-    width: 900px;
+    width: 800px;
+}
+.welcome-notice p {
+    width: 650px;
+    font-size: 14px;
+    line-height: 1.7em;
+    margin: 2em auto;
 }
 .welcome-notice .close {
     position: absolute;
     top: 5px;
     right: 5px;
+}
+.welcome-notice .close svg {
+    color: #b7b584;
+    width: 24px;
+    height: 24px;
 }

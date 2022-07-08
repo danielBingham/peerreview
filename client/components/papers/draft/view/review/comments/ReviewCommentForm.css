@@ -1,0 +1,10 @@
+.comment-form .content {
+    padding: 4px;
+} 
+.comment-form .content textarea {
+    display: inline-block;
+    width: 430px;
+    height: 150px;
+    border: thin solid #ddd;
+    padding: 5px;
+}

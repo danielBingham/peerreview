@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { XCircleIcon } from '@heroicons/react/solid'
+
 import './WelcomeNotice.css'
 
 const WelcomeNotice = function(props) {
@@ -13,7 +15,7 @@ const WelcomeNotice = function(props) {
     if ( ! isClosed ) {
         return (
             <div className="welcome-notice">
-                <div className="close" onClick={close}>x</div>
+                <div className="close" onClick={close}><XCircleIcon /></div>
                 <p>
                     Welcome to Peer Review!  Peer Review is an open source, diamond
                     open access (free to access, free to publish) scientific

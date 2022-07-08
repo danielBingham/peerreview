@@ -10,6 +10,8 @@ import Spinner from '/components/Spinner'
 
 import DraftPapersListItemView from './DraftPapersListItemView'
 
+import './DraftPapersListView.css'
+
 const DraftPapersListView = function(props) {
     const [requestId, setRequestId] = useState(null)
 
@@ -63,7 +65,19 @@ const DraftPapersListView = function(props) {
 
         return (
             <section className="draft-paper-list">
-                {listItems}
+                <div className="error"> {request && request.error} </div>
+                <div className="header">
+                    <h2>Draft Papers</h2>
+                    <div className="controls">
+                        <div className="sort">
+                            <div>Newest</div>
+                            <div>Active</div>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    { listItems.length > 0 ? listItems : <div className="empty-search">No papers to list.</div> }
+                </div>
             </section>
         )
     } else {

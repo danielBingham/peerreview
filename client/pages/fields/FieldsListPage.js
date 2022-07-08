@@ -7,7 +7,7 @@ import './FieldsListPage.css'
 const FieldsListPage = function(props) {
 
     return (
-        <section id="fields-list-page">
+        <div id="fields-list-page" className="page">
             <div className="explanation">
                 <p>
                     These are the top-level academic fields on the site.  Each
@@ -28,7 +28,7 @@ const FieldsListPage = function(props) {
                 </p>
             </div>
             <FieldListView />
-        </section>
+        </div>
     )
 }
 

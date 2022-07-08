@@ -13,10 +13,10 @@ const DraftPapersListPage = function(props) {
     })
 
     return (
-        <section id="draft-papers-list-page">
+        <div id="draft-papers-list-page" className="page">
             { ! currentUser && <div className="login-notice">You must be logged in to view your submitted drafts.  Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</div> }
             { currentUser && <DraftPapersListView /> }
-        </section>
+        </div>
     )
 }
 

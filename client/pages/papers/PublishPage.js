@@ -13,10 +13,10 @@ const PublishPage = function(props) {
     })
 
     return (
-        <section id="publish-page">
+        <div id="publish-page" className="page">
             { ! currentUser && <div className="login-notice">You must be logged in to submit a paper for publication.  Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</div> }
             { currentUser && <SubmitDraftForm /> }
-        </section>
+        </div>
     )
 }
 
