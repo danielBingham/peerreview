@@ -89,14 +89,14 @@ unified interface for all file uploads, with a single database table for
 storing file paths that can be references by their usage.  It'll save us code
 duplication.
 
-**Paper Search** The ability to search paper's title and contents. To do this,
+[issue #39](https://github.com/danielbingham/issues/39) **Paper Search** The ability to search paper's title and contents. To do this,
 we'll need to be able to pull the paper's contents and store it on the backend
 in the database so we can run a full text search against it.
 
-**Deployment Infrastructure**  We need to deploy a version of the site to a
+[issue #40](https://github.com/danielbingham/issues/40) **Deployment Infrastructure**  We need to deploy a version of the site to a
 staging site so that we can start sharing it with folks.
 
-**S3/equivalent file storage for papers**
+[issue #41](https://github.com/danielbingham/issues/41) **S3/equivalent file storage for papers**
 
 **Peer Review Blog**  We want to create a simple Jekyl blog and host it on an
 S3 equivalent.  The plan is to write up a series of articles explaining the
@@ -113,17 +113,21 @@ reputation in the fields (total?  or in each field?  or in only one of the
 fields?).  You can only vote and post responses if you 10,000 reputation in the
 fields.  Those numbers are tentative.
 
-**Paper List Sorting**  The ability to sort the paper list.
+[Issue #42](https://github.com/danielbingham/peerreview/issues/42) **Published Paper List Sorting**  The ability to sort the paper list.
 
-**Paper List Pagination** Pagination for the paper list.
+[Issue #42](https://github.com/danielbingham/peerreview/issues/42) **Published Paper List Pagination** Pagination for the paper list.
 
-**Field List sorting** The ability to sort the field list?
+[Issue #43](https://github.com/danielbingham/peerreview/issues/43) **Draft Paper List Sorting**  The ability to sort the paper list.
+
+[Issue #43](https://github.com/danielbingham/peerreview/issues/43) **Draft Paper List Pagination** Pagination for the paper list.
+
+**Field List sorting** The ability to sort the field list? ...This might not actually make sense.  At least in the beta.
 
 **Field list pagination** Pagination for the field list?
 
-**User list sorting** The ability to sort the user list.
+[Issue #45](https://github.com/danielbingham/peerreview/issues/45) **User list sorting** The ability to sort the user list.
 
-**User list pagination** The ability to paginate the user list.
+[Issue #45](https://github.com/danielbingham/peerreview/issues/45) **User list pagination** The ability to paginate the user list.
 
 **Blind reviews** We want to be able to offer double blind reviews, where
 neither the reviewer nor the authors know who the others are.  This is a little
