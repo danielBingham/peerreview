@@ -200,7 +200,12 @@ export const postSettings = function(setting) {
     return function(dispatch, getState) {
 
         const requestId = uuidv4()
-        const endpoint = `/user/${setting.userId}/settings`
+        let endpoint = ''
+        if ( setting.userId ) {
+            endpoint = `/user/${setting.userId}/settings`
+        } else {
+            endpoint = '/settings'
+        }
 
         const payload = {
             requestId: requestId
@@ -221,7 +226,12 @@ export const postSettings = function(setting) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedSetting) {
-            dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
+            const state = getState()
+            if ( state.authentication.currentUser) {
+                dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
+            } else {
+                dispatch(setSettings(returnedSetting))
+            }
 
             payload.result = returnedSetting
             dispatch(settingsSlice.actions.completeRequest(payload))

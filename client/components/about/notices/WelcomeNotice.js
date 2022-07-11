@@ -1,16 +1,61 @@
-import React, { useState } from 'react'
+import React, { useState, useLayoutEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useDispatch, useSelector } from 'react-redux'
 
 import { XCircleIcon } from '@heroicons/react/solid'
+
+import { postSettings, patchSetting, cleanupRequest }  from '/state/settings'
 
 import './WelcomeNotice.css'
 
 const WelcomeNotice = function(props) {
     const [ isClosed, setIsClosed ] = useState(false)
+    const [ requestId, setRequestId ] = useState(null)
+
+    const dispatch = useDispatch()
+
+    const request = useSelector(function(state) {
+        if ( requestId ) {
+            return state.settings.requests[requestId]
+        } else {
+            return null
+        }
+    })
+
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
+    const settings = useSelector(function(state) {
+        return state.authentication.settings
+    })
 
     const close = function(event) {
         setIsClosed(true)
+
+        const newSettings = {
+            welcomeDismissed: true
+        }
+        if ( currentUser && settings) {
+            newSettings.userId = currentUser.id
+            newSettings.id = settings.id
+            setRequestId(dispatch(patchSetting(newSettings)))
+        } else {
+            setRequestId(dispatch(postSettings(newSettings)))
+        }
     }
+
+    useLayoutEffect(function() {
+        if ( settings.welcomeDismissed ) {
+            setIsClosed(true)
+        }
+
+        return function cleanup() {
+            if ( request ) {
+                dispatch(cleanupRequest(request))
+            }
+        }
+    }, [ settings ])
 
     if ( ! isClosed ) {
         return (

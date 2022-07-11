@@ -58,7 +58,9 @@ CREATE TABLE field_relationships (
 CREATE TABLE user_settings (
     id bigserial PRIMARY KEY,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
-    welcome_dismissed boolean
+    welcome_dismissed boolean,
+    created_date timestamp,
+    update_date timestamp
 );
 
 CREATE TYPE user_field_setting AS ENUM('ignored', 'isolated');

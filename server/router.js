@@ -67,6 +67,11 @@ module.exports = function(database, logger, config) {
         settingsController.postSettings(request, response)
     })
 
+    // When we don't have a use, just store settings on the session.
+    router.post('/settings', function(request, response) {
+        settingsController.postSettings(request, response)
+    })
+
     // Get the details of a single setting 
     router.get('/user/:user_id/setting/:id', function(request, response) {
         settingsController.getSetting(request, response)
@@ -86,6 +91,7 @@ module.exports = function(database, logger, config) {
     router.delete('/user/:user_id/setting/:id', function(request, response) {
         settingsController.deleteSetting(request, response)
     })
+
 
     /******************************************************************************
      *          Authentication REST Routes

@@ -24,17 +24,31 @@ module.exports = class SettingsController {
 
     async postSettings(request, response) {
         try {
-            const userId = request.params.user_id
-            const setting = request.body
-            setting.userId = userId
+            if ( request.params.user_id ) {
+                const userId = request.params.user_id
+                const setting = request.body
+                setting.userId = userId
 
-            await this.settingsDAO.insertSetting(setting)
+                await this.settingsDAO.insertSetting(setting)
 
-            const settings = await this.settingsDAO.selectSettings('WHERE user_settings.id = $1', [ setting.id ])
-            if ( settings.length <= 0) {
-                throw new Error(`Failed to find setting ${setting.id} after insertion!`)
+                const settings = await this.settingsDAO.selectSettings('WHERE user_settings.id = $1', [ setting.id ])
+                if ( settings.length <= 0) {
+                    throw new Error(`Failed to find setting ${setting.id} after insertion!`)
+                }
+                response.status(500).json(settings[0])
+            } else {
+                /*
+                 * @TODO TECHDEBT - We're not validating the settings in any way right now.
+                 * We need to be validating them and only accepting valid values.
+                 */
+                const settings = request.body
+                if ( session.settings ) {
+                    request.session.settings = session.settings
+                }
+
+                return response.status(200).json(request.session.settings)
             }
-            response.status(500).json(settings[0])
+
         } catch(error) {
             this.logger.error(error)
             response.status(500).json({ error: 'server-error' })

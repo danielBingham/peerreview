@@ -21,6 +21,9 @@ module.exports = class SettingsDAO {
                 id: row.setting_id,
                 userId: row.setting_userId,
                 welcomeDismissed: row.setting_welcomeDismissed,
+                fundingDismissed: row.setting_fundingDismissed,
+                createdDate: row.setting_createdDate,
+                updatedDate: row.setting_updatedDate,
                 fields: []
             }
 
@@ -52,7 +55,10 @@ module.exports = class SettingsDAO {
 
         const sql = `
             SELECT 
-                user_settings.id as setting_id, user_settings.user_id as "setting_userId", user_settings.welcome_dismissed as "setting_welcomeDismissed",
+                user_settings.id as setting_id, user_settings.user_id as "setting_userId", 
+                user_settings.welcome_dismissed as "setting_welcomeDismissed", 
+                user_settings.funding_dismissed as "setting_fundingDismissed", 
+                user_settings.created_date as "setting_createdDate", user_settings.updated_date as "setting_updatedDate",
                 user_field_settings.field_id as "field_id", user_field_settings.setting as "field_setting"
             FROM user_settings
                 LEFT OUTER JOIN user_field_settings ON user_settings.id = user_field_settings.setting_id
@@ -89,10 +95,10 @@ module.exports = class SettingsDAO {
 
     async insertSetting(setting) {
         const results = await this.database.query(`
-            INSERT INTO user_settings (user_id, welcome_dismissed)
-                VALUES ($1, $2)
+            INSERT INTO user_settings (user_id, welcome_dismissed, funding_dismissed, created_date, updated_date)
+                VALUES ($1, $2, $3, now(), now())
                 RETURNING id
-        `, [ setting.userId, setting.welcomeDismissed ])
+        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed ])
 
         if ( results.rowCount == 0 ) {
             throw new Error(`Something went wrong while inserting setting ${setting.id}.`)
@@ -118,9 +124,11 @@ module.exports = class SettingsDAO {
         const results = await this.database.query(`
             UPDATE user_settings SET
                 user_id = $1,
-                welcome_dismissed = $2
+                welcome_dismissed = $2,
+                funding_dismissed = $3,
+                updated_date = now()
             WHERE id = $3
-        `, [ setting.userId, setting.welcomeDismissed, setting.id ])
+        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed, setting.id ])
 
         if ( results.rowCount == 0) {
             throw new Error(`Failed to update setting ${setting.id}.  May not exist.`)
@@ -154,16 +162,22 @@ module.exports = class SettingsDAO {
         let sql = 'UPDATE user_settings SET '
         let params = []
         let count = 1
-        const ignored = [ 'id' ] 
-        for(let key in user) {
+        const ignored = [ 'id', 'userId', 'createdDate' ] 
+        for(let key in setting) {
             if (ignored.includes(key)) {
                 continue
             }
 
-            sql += key + ' = $' + count + ', '
+            if ( key == 'welcomeDismissed' ) {
+                sql += `welcome_dismissed = $${count}, `
+            } else if ( key == 'fundingDismissed' ) {
+                sql += `funding_dismissed = $${count}, `
+            } else {
+                sql += `${key} = $${count}, `
+            }
 
 
-            params.push(user[key])
+            params.push(setting[key])
             count = count + 1
         }
         sql += 'updated_date = now() WHERE id = $' + count

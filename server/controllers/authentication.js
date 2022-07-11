@@ -36,6 +36,7 @@ module.exports = class AuthenticationController {
                 return response.status(204).json(null)
             }
         } catch (error) {
+            console.error(error)
             return response.status(500).json({error: 'server-error'})
         }
     }
@@ -131,6 +132,5 @@ module.exports = class AuthenticationController {
             }
         })
     }
-
 }
 
