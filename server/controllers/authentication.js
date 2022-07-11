@@ -33,7 +33,10 @@ module.exports = class AuthenticationController {
                 })
 
             } else {
-                return response.status(204).json(null)
+                return response.status(200).json({
+                    user: null,
+                    settings: request.session.settings
+                })
             }
         } catch (error) {
             console.error(error)

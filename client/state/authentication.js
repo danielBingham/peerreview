@@ -136,22 +136,20 @@ export const getAuthentication = function() {
             if ( response.ok ) {
                 if ( response.status == 200) {
                     return response.json()
-                } else if( response.status == 204 ) {
-                    // No authenticated users
-                    return null
-                } else {
+                }  else {
                     return Promise.reject(new Error('Request failed with status: ' + response.status))
                 }
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(session) {
-            if ( session ) {
+            if ( session && session.user ) {
                 dispatch(authenticationSlice.actions.setCurrentUser(session.user))
                 dispatch(authenticationSlice.actions.setSettings(session.settings))
                 dispatch(addSettingsToDictionary(session.settings))
             } else {
                 dispatch(authenticationSlice.actions.setCurrentUser(null))
+                dispatch(authenticationSlice.actions.setSettings(session.settings))
             }
 
             payload.result = session 
@@ -214,6 +212,7 @@ export const postAuthentication = function(email, password) {
             }
         }).then(function(session) {
             dispatch(authenticationSlice.actions.setCurrentUser(session.user))
+            dispatch(authenticationSlice.actions.setSettings(session.settings))
             dispatch(addSettingsToDictionary(session.settings))
 
             payload.result = session 
@@ -324,6 +323,7 @@ export const deleteAuthentication = function() {
             payload.result = null
             if (response.ok) {
                 dispatch(authenticationSlice.actions.setCurrentUser(null))
+                dispatch(authenticationSlice.actions.setSettings(null))
 
                 dispatch(authenticationSlice.actions.completeRequest(payload))
             } else {

@@ -41,9 +41,9 @@ module.exports = class SettingsController {
                  * @TODO TECHDEBT - We're not validating the settings in any way right now.
                  * We need to be validating them and only accepting valid values.
                  */
-                const settings = request.body
-                if ( session.settings ) {
-                    request.session.settings = session.settings
+                const setting = request.body
+                if ( setting ) {
+                    request.session.settings = setting
                 }
 
                 return response.status(200).json(request.session.settings)

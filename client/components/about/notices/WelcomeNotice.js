@@ -33,20 +33,25 @@ const WelcomeNotice = function(props) {
     const close = function(event) {
         setIsClosed(true)
 
-        const newSettings = {
-            welcomeDismissed: true
-        }
         if ( currentUser && settings) {
+            const newSettings = {
+                welcomeDismissed: true
+            }
             newSettings.userId = currentUser.id
             newSettings.id = settings.id
             setRequestId(dispatch(patchSetting(newSettings)))
         } else {
+            let newSettings = {}
+            if ( settings ) { 
+                newSettings =  { ...settings }
+            }
+            newSettings.welcomeDismissed = true
             setRequestId(dispatch(postSettings(newSettings)))
-        }
+        } 
     }
 
     useLayoutEffect(function() {
-        if ( settings.welcomeDismissed ) {
+        if ( settings && settings.welcomeDismissed ) {
             setIsClosed(true)
         }
 

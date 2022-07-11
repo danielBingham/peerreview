@@ -33,20 +33,25 @@ const SupportNotice = function(props) {
     const close = function(event) {
         setIsClosed(true)
 
-        const newSettings = {
-            fundingDismissed: true
-        }
         if ( currentUser && settings) {
+            const newSettings = {
+                fundingDismissed: true
+            }
             newSettings.userId = currentUser.id
             newSettings.id = settings.id
             setRequestId(dispatch(patchSetting(newSettings)))
         } else {
+            let newSettings = {}
+            if ( settings ) {
+                newSettings = { ...settings }
+            }
+            newSettings.fundingDismissed = true
             setRequestId(dispatch(postSettings(newSettings)))
         }
     }
 
     useLayoutEffect(function() {
-        if ( settings.fundingDismissed) {
+        if ( settings && settings.fundingDismissed) {
             setIsClosed(true)
         }
 
