@@ -103,12 +103,16 @@ S3 equivalent.  The plan is to write up a series of articles explaining the
 problems with academic publishing and how Peer Review could potentially fix
 them.
 
+[Issue #53](https://github.com/danielbingham/issues/53) **Unit test all the things**
+
+
 ### Beta
+
 
 These are the things we want to get done before a beta release.  A beta release
 we'll announce publicly and allow an open beta.
 
-**Reputation Based Permissions** You can only review if you have 10,000
+[Issue #54](https://github.com/danielbingham/peerreview/issues/54) **Reputation Based Permissions** You can only review if you have 10,000
 reputation in the fields (total?  or in each field?  or in only one of the
 fields?).  You can only vote and post responses if you 10,000 reputation in the
 fields.  Those numbers are tentative.
@@ -129,19 +133,19 @@ fields.  Those numbers are tentative.
 
 [Issue #45](https://github.com/danielbingham/peerreview/issues/45) **User list pagination** The ability to paginate the user list.
 
-**Blind reviews** We want to be able to offer double blind reviews, where
+[Issue #49](https://github.com/danielbingham/peerreview/issues/49) **Blind reviews** We want to be able to offer double blind reviews, where
 neither the reviewer nor the authors know who the others are.  This is a little
 tricky, because it means we can't expose any identifying user information on
 the client side.  The plan is to use a blind_id that we only ever tie back to
 the user on the server side.
 
-**Relative dates** Right now we just show timestamps.  We want to show relative
+[Issue #50](https://github.com/danielbingham/peerreview/issues/50) **Relative dates** Right now we just show timestamps.  We want to show relative
 dates everywhere.
 
-**WYSIWYG Everything** Review comments, review summary, and paper responses all
+[Issue #51](https://github.com/danielbingham/peerreview/issues/51) **WYSIWYG Everything** Review comments, review summary, and paper responses all
 need a Markdown capable WYSIWYG editor.
 
-**PDF Text overlay** Bonus?  We need to overlay text on top of the PDF so that
+[Issue #52](https://github.com/danielbingham/peerreview/issues/52) **PDF Text overlay**  We need to overlay text on top of the PDF so that
 users can copy and paste out of the PDF.
 
 **Downloading PDF of papers** Users want to download PDFs of Papers.
@@ -156,14 +160,6 @@ comment.
 **Full Authentication and Authorization**  We need to do all the things in the
 Authentication epic to build a really solid authentication system.
 
-**Responsive Design**  We want to give it a responsive design, at least
-partially.  We'll probably only do desktop/laptop at first for the beta.
-
-**Styling pass**  The styling and UX right now is servicable.  We'll need help
-from someone with a better design eye to give it a good polishing.
-
-**Unit test all the things**
-
 **Document all the things**
 
 **Integration test all the things**
@@ -171,6 +167,12 @@ from someone with a better design eye to give it a good polishing.
 **Production deployment infrastructure**
 
 ### Bonus (Or 1.0.0+)
+
+**Responsive Design**  We want to give it a responsive design, at least
+partially.  We'll probably only do desktop/laptop at first for the beta.
+
+**Styling pass**  The styling and UX right now is servicable.  We'll need help
+from someone with a better design eye to give it a good polishing.
 
 **Latex in Text Fields** Add latex support for math to all Markdown capable fields.
 

@@ -162,7 +162,7 @@ module.exports = class SettingsDAO {
         let sql = 'UPDATE user_settings SET '
         let params = []
         let count = 1
-        const ignored = [ 'id', 'userId', 'createdDate' ] 
+        const ignored = [ 'id', 'userId', 'createdDate', 'updatedDate' ] 
         for(let key in setting) {
             if (ignored.includes(key)) {
                 continue

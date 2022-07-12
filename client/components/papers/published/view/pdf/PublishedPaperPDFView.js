@@ -16,7 +16,7 @@ const PublishedPaperPDFView = function(props) {
      */
     useEffect(function() {
         if (  props.paper.versions.length > 0 ) {
-            const loadingTask = PDFLib.getDocument('http://' + window.location.host + props.paper.versions[0].filepath)
+            const loadingTask = PDFLib.getDocument('http://' + window.location.host + props.paper.versions[0].file.filepath)
             loadingTask.promise.then(function(pdf) {
                 const newPages = []
                 for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {

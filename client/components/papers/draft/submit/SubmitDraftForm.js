@@ -7,6 +7,7 @@ import { postPapers, uploadPaper, cleanupRequest as cleanupPapersRequest } from 
 
 import AuthorsInput from './AuthorsInput'
 import FieldsInput from '/components/fields/FieldsInput'
+import FileUploadInput from '/components/files/FileUploadInput' 
 import Spinner from '/components/Spinner'
 
 import './SubmitDraftForm.css'
@@ -20,18 +21,13 @@ const SubmitDraftForm = function(props) {
 
     // ================ State used in Rendering ===============================
     const [title, setTitle] = useState('')
-    const [file, setFile] = useState(null)
     const [authors, setAuthors] = useState([])
     const [fields, setFields] = useState([])
-
-    const [paper, setPaper] = useState(null)
-
+    const [file, setFile] = useState(null)
 
     // ================== Request Tracking ====================================
     
     const [postPapersRequestId, setPostPapersRequestId] = useState(null)
-    const [uploadPaperRequestId, setUploadPaperRequestId] = useState(null)
-
 
     // ============= Helpers ==================================================
 
@@ -42,20 +38,10 @@ const SubmitDraftForm = function(props) {
     // ============= Collect State from Redux =================================
 
     // ============= Requests =================================================
-    
-
 
     const postPapersRequest = useSelector(function(state) {
         if (postPapersRequestId) {
             return state.papers.requests[postPapersRequestId]
-        } else {
-            return null
-        }
-    })
-
-    const uploadPaperRequest = useSelector(function(state) {
-        if ( uploadPaperRequestId ) {
-            return state.papers.requests[uploadPaperRequestId]
         } else {
             return null
         }
@@ -82,10 +68,14 @@ const SubmitDraftForm = function(props) {
             title: title,
             isDraft: true,
             authors: authors,
-            fields: fields
-        }
+            fields: fields,
+            versions: [
+                {
+                    file_id: file.id
+                }
+            ]
 
-        setPaper(paper)
+        }
 
         setPostPapersRequestId(dispatch(postPapers(paper)))
 
@@ -94,14 +84,6 @@ const SubmitDraftForm = function(props) {
 
 
     // ================= Data Fetching and Side Effects =======================
-
-    useEffect(function() {
-        // If we're not logged in, we can't be here.
-        if ( ! currentUser ) {
-
-            navigate("/", { replace: true })
-        }
-    }, [ currentUser ])
 
     useEffect(function() {
         if ( currentUser && authors.length == 0) {
@@ -121,35 +103,16 @@ const SubmitDraftForm = function(props) {
     useEffect(function() {
 
         if ( postPapersRequest && postPapersRequest.state == 'fulfilled') {
-            if ( ! uploadPaperRequest ) {
-                const paper = postPapersRequest.result
-                setPaper(paper)
-                setUploadPaperRequestId(dispatch(uploadPaper(paper.id, file)))
-            } else if ( uploadPaperRequest.state == 'fulfilled') {
-                const path = "/draft/" + paper.id
-                navigate(path)
-            }
+            const path = "/draft/" + postPapersRequest.result.id
+            navigate(path)
         }
 
         return function cleanup() {
             if ( postPapersRequest ) {
-                dispatch(cleanupPapersRequest(postPapersRequestId))
+                dispatch(cleanupPapersRequest(postPapersRequest))
             }
-
-            if ( uploadPaperRequest ) {
-                dispatch(cleanupPapersRequest(uploadPaperRequestId))
-            }
-
         }
-    })
-
-    useEffect(function() {
-        document.body.className = 'grey-background'
-
-        return function cleanup() {
-            document.body.className = ''
-        }
-    }, [])
+    }, [ postPapersRequest] )
 
 
     // ====================== Render ==========================================
@@ -161,7 +124,7 @@ const SubmitDraftForm = function(props) {
         return (
             <Spinner />
         )
-    } else if ( postPapersRequest || uploadPaperRequest ) {
+    } else if ( postPapersRequest ) {
         return (
             <Spinner />
         )
@@ -189,12 +152,8 @@ const SubmitDraftForm = function(props) {
                     explanation={`Enter up to five fields, subfields, or areas you believe your paper is relevant to, eg. "biology", "chemistry", or "microbiology.`}
                 />
 
-                <div className="upload field-wrapper">
-                    <label htmlFor="upload">Select a file to upload</label>
-                    <input type="file"
-                        name="paper"
-                        onChange={(event) => setFile(event.target.files[0])} />
-                </div>
+                <FileUploadInput setFile={setFile} />
+
                 <div className="submit field-wrapper">
                     <input type="submit" name="submit-draft" value="Submit Draft for Peer Review" />
                 </div>

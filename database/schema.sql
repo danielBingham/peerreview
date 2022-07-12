@@ -15,6 +15,18 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app;
 /* Peer Review Schema file */
 
 /******************************************************************************
+ * Files 
+ *****************************************************************************/
+
+CREATE TABLE files (
+    id uuid PRIMARY KEY,
+    filepath varchar(1024),
+    type varchar(256),
+    created_date timestamp,
+    updated_date timestamp
+);
+
+/******************************************************************************
  * Users 
  *****************************************************************************/
 
@@ -59,8 +71,9 @@ CREATE TABLE user_settings (
     id bigserial PRIMARY KEY,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     welcome_dismissed boolean,
+    funding_dismissed boolean,
     created_date timestamp,
-    update_date timestamp
+    updated_date timestamp
 );
 
 CREATE TYPE user_field_setting AS ENUM('ignored', 'isolated');
@@ -71,15 +84,6 @@ CREATE TABLE user_field_settings (
     PRIMARY KEY (setting_id, field_id)
 );
 
-/******************************************************************************
- * Files 
- *****************************************************************************/
-
-CREATE TABLE files (
-    id bigserial PRIMARY KEY,
-    filepath varchar(1024),
-    type varchar(256)
-);
 
 /******************************************************************************
  * Papers
@@ -94,10 +98,9 @@ CREATE TABLE papers (
 );
 
 CREATE TABLE paper_versions (
-    paper_id bigint REFERENCES papers(id) on DELETE CASCADE,
+    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
     version int NOT NULL,
-    filepath varchar(512),
-    type varchar(256),
+    file_id uuid REFERENCES files(id) ON DELETE CASCADE,
     created_date timestamp,
     updated_date timestamp,
     PRIMARY KEY (paper_id, version)

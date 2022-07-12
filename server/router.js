@@ -16,6 +16,19 @@ module.exports = function(database, logger, config) {
     const router = express.Router()
 
     /******************************************************************************
+     *          File REST Routes
+     ******************************************************************************/
+    const FileController = require('./controllers/files')
+    const fileController = new FileController(database, logger)
+
+    const upload = new multer({ dest: 'public/uploads/tmp' })
+
+    // Upload a version of the paper.
+    router.post('/upload', upload.single('file'), function(request, response) {
+        fileController.upload(request, response)
+    })
+
+    /******************************************************************************
      *          User REST Routes
      ******************************************************************************/
     const UserController = require('./controllers/users')
@@ -161,9 +174,6 @@ module.exports = function(database, logger, config) {
     const PaperController = require('./controllers/papers')
     const paperController = new PaperController(database, logger)
 
-    const upload = new multer({ dest: 'public/uploads/tmp' })
-
-
     // Get a list of all papers.
     router.get('/papers', function(request, response) {
         paperController.getPapers(request, response)
@@ -174,10 +184,6 @@ module.exports = function(database, logger, config) {
         paperController.postPapers(request, response)
     })
 
-    // Upload a version of the paper.
-    router.post('/paper/:id/upload', upload.single('paperVersion'), function(request, response) {
-        paperController.uploadPaper(request, response)
-    })
 
     // Get the details of a single paper 
     router.get('/paper/:id', function(request, response) {

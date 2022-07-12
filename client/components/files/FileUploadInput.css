@@ -1,0 +1,11 @@
+.file-upload { }
+.file-upload .file {
+    padding: 10px 0;
+}
+.file-upload .file svg {
+    float: left;
+    width: 34px;
+    height: 34px;
+    color: #666;
+    margin-right: 5px;
+}

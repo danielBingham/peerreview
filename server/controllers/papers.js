@@ -5,7 +5,6 @@
  *
  ******************************************************************************/
 
-const fs = require('fs')
 const sanitizeFilename = require('sanitize-filename')
 const PaperDAO = require('../daos/paper.js')
 const FieldDAO = require('../daos/field.js')
@@ -122,34 +121,26 @@ module.exports = class PaperController {
      * Create a new paper in the database from the provided JSON.
      */
     async postPapers(request, response) {
-        const paper = request.body
-
         try {
-            const results = await this.database.query(`
-                INSERT INTO papers (title, is_draft, created_date, updated_date) 
-                    VALUES ($1, $2, now(), now()) 
-                    RETURNING id
-                `, 
-                [ paper.title, paper.isDraft ]
-            )
-            if ( results.rows.length == 0 ) {
-                this.logger.error('Failed to insert a paper.')
-                return response.status(500).json({error: 'unknown'})
-            }
-            paper.id = results.rows[0].id
-            await this.insertAuthors(paper) 
-            await this.insertFields(paper)
+            const paper = request.body
+            console.log('postPapers')
+            console.log('paper')
+            console.log(paper)
+
+            paper.id = await this.paperDAO.insertPaper(paper) 
+            await this.paperDAO.insertAuthors(paper) 
+            await this.paperDAO.insertFields(paper)
+            await this.paperDAO.insertVersions(paper)
 
             const returnPapers = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
             if ( returnPapers ) {
                 return response.status(201).json(returnPapers[0])
             } else {
-                this.logger.error('Paper does not exist after insert.')
-                return response.status(500).json({ error: 'server-error' })
+                throw new Error(`Paper ${paper.id} does not exist after insert!`)
             }
         } catch (error) {
             this.logger.error(error)
-            return response.status(500).json({error: 'unknown'})
+            return response.status(500).json({error: 'server-error'})
         }
     }
 
@@ -175,14 +166,6 @@ module.exports = class PaperController {
                 return response.status(404).json({ error: 'no-paper' })
             }
 
-            const maxVersionResults = await this.database.query(
-                'SELECT MAX(version)+1 as version FROM paper_versions WHERE paper_id=$1', 
-                [ request.params.id ]
-            )
-            let version = 1
-            if ( maxVersionResults.rows.length > 0 && maxVersionResults.rows[0].version) {
-                version = maxVersionResults.rows[0].version
-            }
 
             const versionResults = await this.database.query(`
                 INSERT INTO paper_versions
@@ -202,16 +185,6 @@ module.exports = class PaperController {
                 return response.status(500).json({ error: 'unknown' })
             }
 
-            const title = titleResults.rows[0].title
-            let titleFilename = title.replaceAll(/\s/g, '-')
-            titleFilename = titleFilename.toLowerCase()
-            titleFilename = sanitizeFilename(titleFilename)
-
-            const base = 'public'
-            // TODO Properly check the MIME type and require PDF.  Possibly use Node Mime.
-            const filename = request.params.id + '-' + version + '-' + titleFilename + '.pdf'
-            const filepath = '/uploads/papers/' + filename
-            fs.copyFileSync(request.file.path, base+filepath) 
 
             const updateResults = await this.database.query(`
                 UPDATE paper_versions SET
@@ -398,58 +371,4 @@ module.exports = class PaperController {
     }
 
 
-    /**
-     * Insert the authors for a paper.
-     *
-     * @throws Error Doesn't catch errors, so any errors returned by the database will bubble up.
-     */
-    async insertAuthors(paper) {
-        let sql =  `INSERT INTO paper_authors (paper_id, user_id, author_order, owner) VALUES `
-        let params = []
-
-        let count = 1
-        let authorCount = 1
-        for (const author of paper.authors) {
-            sql += `($${count}, $${count+1}, $${count+2}, $${count+3})` + (authorCount < paper.authors.length ? ', ' : '')
-            params.push(paper.id, author.user.id, author.order, author.owner)
-            count = count+4
-            authorCount++
-        }
-
-        const results = await this.database.query(sql, params)
-
-        if (results.rowCount == 0 )  {
-            throw new Error('Something went wrong with the author insertion.')
-        }
-    }
-
-    /**
-     * Insert fields for the paper.  Assumes the field already exists, only
-     * inserts the ids into the tagging table.
-     *
-     * @throws Error Doesn't catch errors, so any errors thrown by the database will bubble up.
-     */
-    async insertFields(paper) {
-        if ( ! paper.fields ) {
-            return
-        }
-
-        let sql = `INSERT INTO paper_fields (field_id, paper_id) VALUES `
-        let params = []
-
-        let count = 1
-        let fieldCount = 1
-        for (const field of paper.fields) {
-            sql += `($${count}, $${count+1})` + (fieldCount < paper.fields.length ? ', ' : '')
-            params.push(field.id, paper.id)
-            count = count+2
-            fieldCount++
-        }
-
-        const results = await this.database.query(sql, params)
-
-        if ( results.rowCount == 0) {
-            throw new Error('Something went wrong with field insertion.')
-        }
-    }
 } 
