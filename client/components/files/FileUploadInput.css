@@ -1,11 +1,33 @@
-.file-upload { }
+.file-upload { 
+}
 .file-upload .file {
+    display: grid;
+    grid-template-columns: 44px auto 44px;
     padding: 10px 0;
 }
-.file-upload .file svg {
-    float: left;
+.file-upload .file .document-icon {
+    grid-column: 1 / 2;
+    padding: 5px;
+}
+.file-upload .file .document-icon svg {
     width: 34px;
     height: 34px;
-    color: #666;
-    margin-right: 5px;
+    color: #bbb;
+}
+.file-upload .file .file-details {
+    grid-column: 2 / 3;
+    padding: 5px;
+}
+.file-upload .file .close-icon {
+    grid-column: 3 / 4;
+    padding: 5px;
+}
+.file-upload .file .close-icon svg {
+    width: 24px;
+    height: 24px;
+    padding: 5px;
+    color: #bbb;
+}
+.file-upload .file .close-icon svg:hover {
+    color: #ddd;
 }

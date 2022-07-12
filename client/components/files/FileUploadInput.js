@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { DocumentTextIcon } from '@heroicons/react/outline'
@@ -82,7 +82,7 @@ const FileUploadInput = function(props) {
 
     // ============ Async Response ==================================
     
-    useEffect(function() {
+    useLayoutEffect(function() {
         if ( deleteRequest && deleteRequest.state == 'fulfilled') {
             setFileData(null)
             setFile(null)
@@ -131,10 +131,12 @@ const FileUploadInput = function(props) {
         if ( fileData && file ) {
             content = (
                 <div className="file">
-                    <DocumentTextIcon />
-                    <div className="filename"><span className="label">File Name:</span> {fileData.name}</div>
-                    <div className="filetype"><span className="label">Type: </span> {file.type}</div>
-                    <XCircleIcon onClick={removeFile} />
+                    <div className="document-icon"><DocumentTextIcon /></div>
+                    <div className="file-details">
+                        <div className="filename"><span className="label">File Name:</span> {fileData.name}</div>
+                        <div className="filetype"><span className="label">Type: </span> {file.type}</div>
+                    </div>
+                    <div className="close-icon"><XCircleIcon onClick={removeFile} /></div>
                 </div>
             )
         } else if (( fileData && ! file) ) {
