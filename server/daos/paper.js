@@ -211,15 +211,11 @@ module.exports = class PaperDAO {
     }
 
     async insertVersions(paper) {
-        console.log('insertVersions')
-        console.log(paper)
         for(const version of paper.versions ) {
             const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ version.file_id ])
             if ( files.length <= 0) {
                 throw new Error(`Invalid file_id posted with paper ${paper.id}.`)
             }
-            console.log('files')
-            console.log(files)
             const file = files[0]
 
             const maxVersionResults = await this.database.query(
@@ -245,7 +241,7 @@ module.exports = class PaperDAO {
             titleFilename = titleFilename.toLowerCase()
             titleFilename = sanitizeFilename(titleFilename)
 
-            const filename = paper.id + '-' + version + '-' + titleFilename + mime.getExtension(file.type) 
+            const filename = `${paper.id}-${versionNumber}-${titleFilename}.${mime.getExtension(file.type)}`
             const filepath = '/uploads/papers/' + filename
 
             const newFile = { ...file }

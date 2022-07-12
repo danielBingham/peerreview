@@ -48,7 +48,9 @@ export const filesSlice = createSlice({
             }
         },
 
-
+        removeFile: function(state, action) {
+            delete state.dictionary[action.payload.id]
+        },
 
         // ========== Generic Request Methods =============
         // Use these methods when no extra logic is needed.  If additional
@@ -170,9 +172,58 @@ export const uploadFile = function(file) {
     }
 }
 
+/**
+ * DELETE /file/:id 
+ *
+ * Delete a file.
+ *  
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {int} fileId - The Id of the file we want to delete. 
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const deleteFile = function(fileId) {
+    return function(dispatch, getState) {
+        const requestId = uuidv4()
+        const endpoint = '/file/' + fileId
+
+        const payload = {
+            requestId: requestId,
+        }
+
+        dispatch(filesSlice.actions.makeRequest({requestId:requestId, method: 'DELETE', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'DELETE'
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(file) {
+            dispatch(filesSlice.actions.removeFile(fileId))
+
+            payload.result = fileId 
+            dispatch(filesSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(filesSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
 
 
 
-export const {  addFilesToDictionary, makeRequest, failRequest, completeRequest, cleanupRequest }  = filesSlice.actions
+export const {  addFilesToDictionary, removeFile, makeRequest, failRequest, completeRequest, cleanupRequest }  = filesSlice.actions
 
 export default filesSlice.reducer

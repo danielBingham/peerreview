@@ -28,6 +28,10 @@ module.exports = function(database, logger, config) {
         fileController.upload(request, response)
     })
 
+    router.delete('/file/:id', function(request, response) {
+        fileController.deleteFile(request, response)
+    })
+
     /******************************************************************************
      *          User REST Routes
      ******************************************************************************/

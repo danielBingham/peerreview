@@ -2,77 +2,145 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { DocumentTextIcon } from '@heroicons/react/outline'
+import { XCircleIcon } from '@heroicons/react/solid'
 
-import { uploadFile, cleanupRequest } from '/state/files'
+import { uploadFile, deleteFile, cleanupRequest } from '/state/files'
 
 import Spinner from '/components/Spinner'
 
 import './FileUploadInput.css'
 
+/**
+ *
+ * TODO If a page showing this component is reloaded after a file has been
+ * chosen, that file is left hanging in the database and on disk.  It's
+ * effectively orphaned.  We should fix that.
+ */
 const FileUploadInput = function(props) {
-    const [requestId, setRequestId] = useState(null)
+    // ============ Render State ====================================
+  
     const [file, setFile] = useState(null)
     const [fileData, setFileData] = useState(null)
 
-    const dispatch = useDispatch()
+    // ============ Request State ===================================
+   
+    const [uploadRequestId, setUploadRequestId] = useState(null)
+    const [deleteRequestId, setDeleteRequestId] = useState(null)
 
-    const request = useSelector(function(state) {
-        if ( requestId) {
-            return state.files.requests[requestId]
+    // ============ Request Tracking ================================
+   
+    const uploadRequest = useSelector(function(state) {
+        if ( uploadRequestId) {
+            return state.files.requests[uploadRequestId]
         } else {
             return null
         }
     })
 
+    const deleteRequest = useSelector(function(state) {
+        if ( deleteRequestId ) {
+            return state.files.requests[deleteRequestId]
+        } else {
+            return null
+        }
+    })
+
+    // ============ Event Handling ==================================
+    //
+    const dispatch = useDispatch()
+    
     const onChange = function(event) {
         if ( ! fileData && ! file ) {
-
-            setFileData(event.target.files[0])
-
-            if ( requestId && request  && request.id == requestId) {
-                dispatch(cleanupRequest(request))
-            } else if ( (requestId && ! request) || (requestId && request && request.id !== requestId)) {
-                throw new Error('We somehow have a requestId that does not match the request when calling onChange.  This should not happen!')
+            if ( uploadRequestId && uploadRequest) {
+                dispatch(cleanupRequest(uploadRequest))
+            } else if ( (uploadRequestId && ! uploadRequest)) {
+                // We shouldn't be able to end up in this position, because we
+                // should always show a spinner while the uploadRequest is
+                // processing, so the user shouldn't be able to hit the input
+                // button until we've processed the last uploadRequest.
+                throw new Error('We are in an invalid state.')
             } 
 
-            setRequestId(dispatch(uploadFile(event.target.files[0])))
+            setFileData(event.target.files[0])
+            setUploadRequestId(dispatch(uploadFile(event.target.files[0])))
+        } else {
+            // We shouldn't be able to get here, because we should always show
+            // a spinner when we have fileData but no file.  Which means the
+            // user shouldn't be able to change the file input.
+            throw new Error('We are in an invalid state.')
         }
     }
 
+    const removeFile = function(event) {
+        if ( uploadRequestId && uploadRequest )  {
+            setUploadRequestId(null)
+            dispatch(cleanupRequest(uploadRequest))
+        } 
+
+        setDeleteRequestId(dispatch(deleteFile(file.id)))
+    }
+
+    // ============ Async Response ==================================
+    
     useEffect(function() {
-        if ( request && request.state == 'fulfilled') {
-            const file = request.result
+        if ( deleteRequest && deleteRequest.state == 'fulfilled') {
+            setFileData(null)
+            setFile(null)
+        }
+
+        return function cleanup() {
+            if ( deleteRequest ) {
+                dispatch(cleanupRequest(deleteRequest))
+            }
+        }
+
+    }, [ deleteRequest ])
+
+
+    useEffect(function() {
+        if ( uploadRequest && uploadRequest.state == 'fulfilled') {
+            const file = uploadRequest.result
             setFile(file)
             props.setFile(file)
         }
 
         return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(request))
+            if ( uploadRequest ) {
+                dispatch(cleanupRequest(uploadRequest))
             }
         }
-    }, [ request ])
+    }, [ uploadRequest ])
 
+    // ============ Render ==========================================
 
-    if (  ( requestId && ! request) || (request && request.state !== 'fulfilled') ) {
-        return (<div className="file-upload field-wrapper"> <Spinner /> </div> )
+    let content = null
+
+    // Spinner while we wait for requests to process so that we can't start a new request on top of an existing one.
+    if ( (deleteRequestId && ! deleteRequest) || (deleteRequest && deleteRequest.state == 'pending') 
+        || ( uploadRequestId && ! uploadRequest) || (uploadRequest && uploadRequest.state == 'pending') ) 
+    {
+        content = ( <Spinner /> )
+
+    // Request failure - report an error.
+    } else if (  deleteRequest && deleteRequest.state == 'failed') {
+        content = (<div className="error"> { deleteRequest.error }</div>)
+    } else if ( uploadRequest && uploadRequest.state == 'failed' ) {
+        content = (<div className="error"> { uploadRequest.error }</div>)
     } else { 
-        let content = null
+        // We're not waiting for any thing, render the content.
         if ( fileData && file ) {
             content = (
                 <div className="file">
                     <DocumentTextIcon />
                     <div className="filename"><span className="label">File Name:</span> {fileData.name}</div>
                     <div className="filetype"><span className="label">Type: </span> {file.type}</div>
+                    <XCircleIcon onClick={removeFile} />
                 </div>
             )
         } else if (( fileData && ! file) ) {
             content = ( <Spinner /> )
-        }
-
-        return (
-            <div className="file-upload field-wrapper">
-                { content }
+        } else {
+            content = (
                 <div className="upload-input">
                     <label htmlFor="upload">Select a file to upload</label>
                     <input type="file"
@@ -80,9 +148,16 @@ const FileUploadInput = function(props) {
                         onChange={onChange} 
                     />
                 </div>
-            </div>
-        )
+            )
+        }
     }
+
+    // Perform the render.
+    return (
+        <div className="file-upload field-wrapper">
+            { content }
+        </div>
+    )
 
 }
 

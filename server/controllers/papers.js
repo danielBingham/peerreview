@@ -5,7 +5,6 @@
  *
  ******************************************************************************/
 
-const sanitizeFilename = require('sanitize-filename')
 const PaperDAO = require('../daos/paper.js')
 const FieldDAO = require('../daos/field.js')
 

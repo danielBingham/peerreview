@@ -14,17 +14,6 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO app;
 
 /* Peer Review Schema file */
 
-/******************************************************************************
- * Files 
- *****************************************************************************/
-
-CREATE TABLE files (
-    id uuid PRIMARY KEY,
-    filepath varchar(1024),
-    type varchar(256),
-    created_date timestamp,
-    updated_date timestamp
-);
 
 /******************************************************************************
  * Users 
@@ -43,6 +32,19 @@ CREATE TABLE users (
     reputation int DEFAULT 100,
     created_date timestamp,
     updated_date timestamp 
+);
+
+/******************************************************************************
+ * Files 
+ *****************************************************************************/
+
+CREATE TABLE files (
+    id uuid PRIMARY KEY,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    filepath varchar(1024),
+    type varchar(256),
+    created_date timestamp,
+    updated_date timestamp
 );
 
 /******************************************************************************
