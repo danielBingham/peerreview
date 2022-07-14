@@ -4,6 +4,10 @@
     background-color: white;
     border: thin solid #ddd;
 }
+.published-paper-list .spinner-wrapper {
+    padding: 10px;
+    text-align: center;
+}
 .published-paper-list .header {
     display: grid;
     grid-template-columns: 1fr, 1fr;

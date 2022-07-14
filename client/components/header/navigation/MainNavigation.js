@@ -3,13 +3,21 @@ import { Link } from 'react-router-dom'
 
 import './MainNavigation.css'
 
+/**
+ * Display primary navigation for the site.
+ *
+ * @param {object} props    The standard React props object - empty in this case.
+ */ 
 const MainNavigation = function(props) {
+
+    // ======= Render ===============================================
+
     return (
-        <section id="main-navigation" className="navigation-block">
+        <div id="main-navigation" className="navigation-block">
             <Link to="/about">about</Link>
             <Link to="/fields">fields</Link>
             <Link to="/users">users</Link>
-        </section>
+        </div>
     )
 
 }

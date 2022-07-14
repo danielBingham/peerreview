@@ -212,48 +212,51 @@ module.exports = class PaperDAO {
 
     async insertVersions(paper) {
         for(const version of paper.versions ) {
-            const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ version.file_id ])
-            if ( files.length <= 0) {
-                throw new Error(`Invalid file_id posted with paper ${paper.id}.`)
-            }
-            const file = files[0]
+            await this.insertVersion(paper, version)
+        }
+    }
 
-            const maxVersionResults = await this.database.query(
-                'SELECT MAX(version)+1 as version FROM paper_versions WHERE paper_id=$1', 
-                [ paper.id ]
-            )
-            let versionNumber = 1
-            if ( maxVersionResults.rows.length > 0 && maxVersionResults.rows[0].version) {
-                versionNumber = maxVersionResults.rows[0].version
-            }
+    async insertVersion(paper, version) {
+        const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ version.file_id ])
+        if ( files.length <= 0) {
+            throw new Error(`Invalid file_id posted with paper ${paper.id}.`)
+        }
+        const file = files[0]
 
-            const versionResults = await this.database.query(`
-                INSERT INTO paper_versions (paper_id, version, file_id, created_date, updated_date)
-                    VALUES ($1, $2, $3, now(), now())
-            `, [ paper.id, versionNumber, file.id ])
-
-            if ( versionResults.rowCount <= 0) {
-                throw new Error(`Failed to insert version for paper ${paper.id} and file ${file.id}.`)
-            }
-
-            const title = paper.title
-            let titleFilename = title.replaceAll(/\s/g, '-')
-            titleFilename = titleFilename.toLowerCase()
-            titleFilename = sanitizeFilename(titleFilename)
-
-            const filename = `${paper.id}-${versionNumber}-${titleFilename}.${mime.getExtension(file.type)}`
-            const filepath = '/uploads/papers/' + filename
-
-            const newFile = { ...file }
-            newFile.filepath = filepath
-
-            // TODO Should moving the file when the file is updated be the
-            // responsibility of the FileDAO?  Probably.
-            this.fileService.copyFile(file.filepath, filepath)
-            this.fileDAO.updateFile(newFile)
-            this.fileService.removeFile(file.filepath)
+        const maxVersionResults = await this.database.query(
+            'SELECT MAX(version)+1 as version FROM paper_versions WHERE paper_id=$1', 
+            [ paper.id ]
+        )
+        let versionNumber = 1
+        if ( maxVersionResults.rows.length > 0 && maxVersionResults.rows[0].version) {
+            versionNumber = maxVersionResults.rows[0].version
         }
 
+        const versionResults = await this.database.query(`
+            INSERT INTO paper_versions (paper_id, version, file_id, created_date, updated_date)
+                VALUES ($1, $2, $3, now(), now())
+        `, [ paper.id, versionNumber, file.id ])
+
+        if ( versionResults.rowCount <= 0) {
+            throw new Error(`Failed to insert version for paper ${paper.id} and file ${file.id}.`)
+        }
+
+        const title = paper.title
+        let titleFilename = title.replaceAll(/\s/g, '-')
+        titleFilename = titleFilename.toLowerCase()
+        titleFilename = sanitizeFilename(titleFilename)
+
+        const filename = `${paper.id}-${versionNumber}-${titleFilename}.${mime.getExtension(file.type)}`
+        const filepath = '/uploads/papers/' + filename
+
+        const newFile = { ...file }
+        newFile.filepath = filepath
+
+        // TODO Should moving the file when the file is updated be the
+        // responsibility of the FileDAO?  Probably.
+        this.fileService.copyFile(file.filepath, filepath)
+        this.fileDAO.updateFile(newFile)
+        this.fileService.removeFile(file.filepath)
     }
 
 }

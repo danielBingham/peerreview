@@ -4,7 +4,11 @@ import { v4 as uuidv4 } from 'uuid'
 import configuration from '/configuration'
 import logger from '/logger'
 
-import RequestTracker from './helpers/requestTracker'
+import { makeRequest as makeTrackedRequest, 
+    failRequest as failTrackedRequest, 
+    completeRequest as completeTrackedRequest, 
+    cleanupRequest as cleanupTrackedRequest, 
+    garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
 import { setSettings } from '/state/authentication'
 
@@ -39,7 +43,6 @@ export const settingsSlice = createSlice({
          * action, must either be an array of settings or a setting.
          */
         addSettingsToDictionary: function(state, action) {
-            console.log(action.payload)
             if (Array.isArray(action.payload)) {
                 for(const setting of action.payload) {
                     state.dictionary[setting.userId] = setting
@@ -64,70 +67,13 @@ export const settingsSlice = createSlice({
             delete state.dictionary[setting.userId]
         },
 
+        // ========== Request Tracking Methods =============
 
-        // ========== Generic Request Methods =============
-        // Use these methods when no extra logic is needed.  If additional
-        // logic is needed for a particular request, make a reducer of the form
-        // [make/fail/complete/cleanup][method][endpoint]Request().  For
-        // example, makePostSettingsRequest().  The reducer should take an object
-        // with at least requestId defined, along with whatever all inputs it
-        // needs.
-
-        /**
-         * Make a request to a setting or settings endpoint.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {string} action.payload.method - One of the HTTP verbs
-         * @param {string} action.payload.endpoint - The endpoint we're making the request to
-         */
-        makeRequest: function(state, action) {
-            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker(action.payload.method, action.payload.endpoint)
-            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Fail a request to a setting or settings endpoint, usually with an error.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {int} action.payload.status - (Optional) The status code returned with the response.
-         * @param {string} action.payload.error - (Optional) A string error message.
-         */
-        failRequest: function(state, action) {
-            RequestTracker.failRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Complete a request to a setting or settings endpoint by setting the setting
-         * sent back by the backend in the settings hash.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.setting - A populated setting object, must have `id` defined
-         */
-        completeRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Cleanup a request by removing it from our request hash.  Once we're
-         * done with a request, we don't need to keep its tracking around.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         */
-        cleanupRequest: function(state, action) {
-            delete state.requests[action.payload.requestId]
-        }
+        makeRequest: makeTrackedRequest, 
+        failRequest: failTrackedRequest, 
+        completeRequest: completeTrackedRequest,
+        cleanupRequest: cleanupTrackedRequest, 
+        garbageCollectRequests: garbageCollectTrackedRequests
     }
 })
 
@@ -143,6 +89,8 @@ export const settingsSlice = createSlice({
  */
 export const getSettings = function(userId) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(settingsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4() 
         const endpoint = `/user/${userId}/settings`
@@ -198,6 +146,8 @@ export const getSettings = function(userId) {
  */
 export const postSettings = function(setting) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(settingsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         let endpoint = ''
@@ -263,6 +213,8 @@ export const postSettings = function(setting) {
  */
 export const getSetting = function(userId, id) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(settingsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = `/user/${userId}/setting/${id}`
@@ -317,6 +269,8 @@ export const getSetting = function(userId, id) {
  */
 export const putSetting = function(setting) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(settingsSlice.actions.garbageCollectRequests())
     
         const requestId = uuidv4()
         const endpoint = `/user/${setting.id}/setting/${setting.id}`
@@ -375,6 +329,8 @@ export const putSetting = function(setting) {
  */
 export const patchSetting = function(setting) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(settingsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = `/user/${setting.userId}/setting/${setting.id}` 
@@ -431,6 +387,8 @@ export const patchSetting = function(setting) {
  */
 export const deleteSetting = function(setting) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(settingsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = `/user/${setting.userId}/setting/${setting.id}`

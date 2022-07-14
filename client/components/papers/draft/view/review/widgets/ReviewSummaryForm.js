@@ -13,13 +13,15 @@ import './ReviewSummaryForm.css'
  *
  */
 const ReviewSummaryForm = function(props) {
+
+    // ======= Render State =========================================
+
     const [ summary, setSummary ] = useState('')
     const [ recommendation, setRecommendation ] = useState('request-changes')
 
+    // ======= Request Tracking =====================================
+    
     const [patchReviewRequestId, setPatchReviewRequestId] = useState(null)
-
-    const dispatch = useDispatch()
-
     const patchReviewRequest = useSelector(function(state) {
         if ( patchReviewRequestId) {
             return state.reviews.requests[patchReviewRequestId]
@@ -27,6 +29,8 @@ const ReviewSummaryForm = function(props) {
             return null
         }
     })
+
+    // ======= Redux State ==========================================
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
@@ -40,6 +44,9 @@ const ReviewSummaryForm = function(props) {
         return state.reviews.inProgress[props.paper.id]
     })
 
+    // ======= Actions and Event Handling ===========================
+    
+    const dispatch = useDispatch()
     const finish = function(event) {
         event.preventDefault()
 
@@ -51,6 +58,9 @@ const ReviewSummaryForm = function(props) {
             status: 'submitted'
         }
 
+        if ( patchReviewRequest ) {
+            dispatch(cleanupRequest(patchReviewRequest))
+        }
         setPatchReviewRequestId(dispatch(patchReview(reviewPatch)))
     }
 
@@ -65,14 +75,7 @@ const ReviewSummaryForm = function(props) {
         setPatchReviewRequestId(dispatch(patchReview(reviewPatch)))
     }
 
-    useEffect(function() {
-
-        return function cleanup() {
-            if ( patchReviewRequest ) {
-                dispatch(cleanupRequest(patchReviewRequest))
-            }
-        }
-    }, [])
+    // ======= Effect Handling ======================================
 
     useLayoutEffect(function() {
         if ( reviewInProgress) {
@@ -81,6 +84,17 @@ const ReviewSummaryForm = function(props) {
         }
     }, [ reviewInProgress])
 
+    // Cleanup request tracking.
+    useEffect(function() {
+        return function cleanup() {
+            if ( patchReviewRequestId ) {
+                dispatch(cleanupRequest({ requestId: patchReviewRequestId }))
+            }
+        }
+    }, [ patchReviewRequestId ])
+
+    // ======= Render ===============================================
+    
     if ( ! reviewInProgress) {
         return (
             <div className="review-summary-form" style={ { display: 'none' }}>

@@ -9,14 +9,15 @@ import FieldsInput from '/components/fields/FieldsInput'
 import Spinner from '/components/Spinner'
 
 const UserSettingsForm = function(props) {
+
+    // ====== Render State ==========================================
+
     const [ignored, setIgnored] = useState([])
     const [isolated, setIsolated] = useState([])
 
+    // ======= Request Tracking =====================================
+
     const [settingsRequestId, setSettingsRequestId] = useState(null)
-    const [fieldsRequestId, setFieldsRequestId] = useState(null)
-
-    const dispatch = useDispatch()
-
     const settingsRequest = useSelector(function(state) {
         if ( settingsRequestId) {
             return state.settings.requests[settingsRequestId]
@@ -25,6 +26,7 @@ const UserSettingsForm = function(props) {
         }
     })
 
+    const [fieldsRequestId, setFieldsRequestId] = useState(null)
     const fieldsRequest = useSelector(function(state) {
         if ( fieldsRequestId ) {
             return state.fields.requests[fieldsRequestId]
@@ -32,6 +34,8 @@ const UserSettingsForm = function(props) {
             return null
         }
     })
+
+    // ======= Redux State ==========================================
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
@@ -45,16 +49,17 @@ const UserSettingsForm = function(props) {
         return state.fields.dictionary
     })
 
+    // ======= Actions and Event Handling ===========================
+
+    const dispatch = useDispatch()
 
     const onSubmit = function(event) {
         event.preventDefault()
 
         const newSetting = {
-            id: setting.id,
-            userId: setting.userId,
-            welcomeDismissed: setting.welcomeDismissed,
-            fields: []
+            ...setting
         }
+        newSetting.fields = []
 
         for( const field of ignored ) {
             newSetting.fields.push({
@@ -70,6 +75,8 @@ const UserSettingsForm = function(props) {
             })
         }
 
+        console.log(newSetting)
+
         setSettingsRequestId(dispatch(putSetting(newSetting)))
     }
 
@@ -78,31 +85,30 @@ const UserSettingsForm = function(props) {
             ids: []
         }
         if ( setting.fields.length > 0 ) {
-            const ignored = []
-            const isolated = []
+            const newIgnored = []
+            const newIsolated = []
             for ( const fieldSetting of setting.fields ) {
                 if ( fields[fieldSetting.fieldId] ) {
                     if ( fieldSetting.setting == 'ignored') {
-                        ignored.push(fields[fieldSetting.fieldId])
+                        newIgnored.push(fields[fieldSetting.fieldId])
                     } else if (fieldSetting.setting == 'isolated') {
-                        isolated.push(fields[fieldSetting.fieldId])
+                        newIsolated.push(fields[fieldSetting.fieldId])
                     }
                 } else {
                     query.ids.push(fieldSetting.fieldId)
                 }
             }
-            setIgnored(ignored)
-            setIsolated(isolated)
+            setIgnored(newIgnored)
+            setIsolated(newIsolated)
         } 
         return query
     }
 
+    // ======= Effect Handling ======================================
+
     useLayoutEffect(function() {
         const query = initializeFields()
-        console.log('query')
-        console.log(query)
         if ( query.ids.length > 0 ) {
-            console.log('So we should not be here.')
             setFieldsRequestId(dispatch(getFields(query)))
         }
     }, [])
@@ -110,26 +116,28 @@ const UserSettingsForm = function(props) {
     useLayoutEffect(function() {
         if ( fieldsRequest && fieldsRequest.state == 'fulfilled' ) {
             const query = initializeFields()
-            console.log('setting fields')
-            console.log(setting.fields)
-            console.log('fields')
-            console.log(fields)
-            console.log('Query ids')
-            console.log(query.ids)
             if ( query.ids.length > 0 ) {
                 throw new Error('We have a query after running the query. This should not happen.')
             }
         }
+    }, [ fieldsRequest] )
 
+    useEffect(function() {
         return function cleanup() {
-            if ( fieldsRequest ) {
-                dispatch(cleanupFieldsRequest(fieldsRequest))
+            if ( fieldsRequestId ) {
+                dispatch(cleanupFieldsRequest({ requestId: fieldsRequestId }))
             }
         }
-    }, [ fieldsRequest ])
+    }, [ fieldsRequestId ])
 
-    console.log('fieldsRequestId')
-    console.log(fieldsRequestId)
+    useEffect(function() {
+        return function cleanup() {
+            if ( settingsRequestId ) {
+                dispatch(cleanupSettingsRequest({ requestId: settingsRequestId}))
+            }
+        }
+    }, [ settingsRequestId ])
+
     if ( ! fieldsRequestId || (fieldsRequest && fieldsRequest.state == 'fulfilled')) {
         return (
             <div className="user-settings-form">

@@ -1,9 +1,8 @@
 .comment-thread {
     position: absolute;
-    border: thin solid black;
+    border: thin solid #ccc;
     background: white;
     padding: 5px;
-    box-shadow: 1px 1px 3px #777;
     z-index: 1;
     width: 450px;
 }

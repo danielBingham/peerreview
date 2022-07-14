@@ -19,13 +19,14 @@ import './PublishedPaperView.css'
 
 
 const PublishedPaperView = function(props) {
-    const [ paperRequestId, setPaperRequestId ] = useState(null)
 
+    // ======= Routing Parameters ===================================
+    
     const { id } = useParams() 
 
-    const dispatch = useDispatch()
-
     // ================= Request Tracking =====================================
+
+    const [ paperRequestId, setPaperRequestId ] = useState(null)
     const paperRequest = useSelector(function(state) {
         if ( ! paperRequestId) {
             return null
@@ -48,41 +49,42 @@ const PublishedPaperView = function(props) {
         return state.authentication.currentUser
     })
 
-    // ================= User Action Handling  ================================
+    // ================= Effect Handling  ================================
+    
+    const dispatch = useDispatch()
 
     useEffect(function() {
-        if ( ! paper && ! paperRequest ) {
-            setPaperRequestId(dispatch(getPaper(id)))
-        } 
-
-        return function cleanup() {
-            if ( paperRequest ) {
-                dispatch(cleanupPaperRequest(paperRequestId))
-            }
-
-        }
-
+        setPaperRequestId(dispatch(getPaper(id)))
     }, [id])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( paperRequestId ) {
+                dispatch(cleanupPaperRequest({ requestId: paperRequestId }))
+            }
+        }
+    }, [ paperRequestId ])
+
     // ================= Render ===============================================
-    
+
+    // TODO Redirect to a 404 page in this case.
     if ( ! paper ) {
         return ( <Spinner /> )
     } else {
         return (
-            <section id={paper.id} className="published-paper">
-                <div className="header">
+            <article id={paper.id} className="published-paper">
+                <section className="header">
                     <h2 className="paper-title">{paper.title}</h2>
                     <PublishedPaperFieldsWidget paper={paper} />
-                </div>
-                <div className="sidebar">
+                </section>
+                <aside className="sidebar">
                     <PublishedPaperVoteWidget paper={paper} />
                     <PublishedPaperAuthorsWidget paper={paper} />
-                </div>
-                <div className="main">
+                </aside>
+                <section className="main">
                     <PublishedPaperPDFView paper={paper} />
-                </div>
-            </section>
+                </section>
+            </article>
         )
     }
 }

@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -8,12 +8,19 @@ import { postSettings, patchSetting, cleanupRequest } from '/state/settings'
 
 import './SupportNotice.css'
 
+/**
+ * Show a notice asking users for support.
+ *
+ * @param {object} props    React props object - empty.
+ */
 const SupportNotice = function(props) {
+
+    // ======= Render State =========================================
     const [ isClosed, setIsClosed ] = useState(false)
+
+    // ======= Request Tracking =====================================
+    
     const [ requestId, setRequestId ] = useState(null)
-
-    const dispatch = useDispatch()
-
     const request = useSelector(function(state) {
         if ( requestId ) {
             return state.settings.requests[requestId]
@@ -21,6 +28,8 @@ const SupportNotice = function(props) {
             return null
         }
     })
+
+    // ======= Redux State ==========================================
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
@@ -30,6 +39,16 @@ const SupportNotice = function(props) {
         return state.authentication.settings
     })
 
+    // ======= Actions and Event Handling ===========================
+    
+    const dispatch = useDispatch()
+
+    /**
+     * Close the notice and record the closure either in the users settings or
+     * session, depending on whether or not we have a logged in user.
+     *
+     * @param {Event} event Standard javascript event object.
+     */
     const close = function(event) {
         setIsClosed(true)
 
@@ -50,18 +69,26 @@ const SupportNotice = function(props) {
         }
     }
 
+    // ======= Effect Handling ======================================
+
+    // Initialize our closed state from the user's settings.
     useLayoutEffect(function() {
         if ( settings && settings.fundingDismissed) {
             setIsClosed(true)
         }
-
-        return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(request))
-            }
-        }
     }, [ settings ])
 
+    // Cleanup our requests when we're done with them.
+    useEffect(function() {
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({requestId: requestId}))
+            }
+        }
+    }, [ requestId ])
+
+    // ======= Render ===============================================
+    
     if ( ! isClosed ) {
         return (
             <div className="support-notice">

@@ -20,58 +20,16 @@ import './DraftPaperPDFPageView.css'
  *
  */
 const DraftPaperPDFPageView = function(props) {
-    /**
-     * Record whether we've rendered the PDF page to our <canvas> element yet.
-     *
-     * `true` if we've rendered the page to canvas, `false` otherwise.
-     *
-     * @type {boolean}
-     */
+    
+    // ======= Render State =========================================
+    
     const [ haveRendered, setHaveRendered ] = useState(false)
-
-    /**
-     * An array of `ReviewCommentThreadView` components to render our threads.
-     *
-     * @type {ReviewCommentThreadView[]}
-     */
-    const [ threadViews, setThreadViews ] = useState([])
-
+    const [ rerenderThreadsToggle, setRerenderThreadsToggle ] = useState(false)
     const [ selectedThread, setSelectedThread ] = useState(null)
-
-    /**
-     * A RequestTracker to track our POST /.../threads request.
-     *
-     * @type {RequestTracker}
-     */
-    const [ postThreadsRequestId, setPostThreadsRequestId ] = useState(null)
-
-    /**
-     * A RequestTracker to track our POST /.../reviews request.
-     *
-     * @type {RequestTracker}
-     */
-    const [ newReviewRequestId, setNewReviewRequestId ] = useState(null)
-
-    /**
-     * A ref for the <canvas> element that we'll render the PDF page on to
-     * using PDF.js.
-     */
-    const canvasRef = useRef(null) 
-
-    // ============ React/Redux helpers =======================================
-
-    const dispatch = useDispatch()
 
     // ============ Request Tracking ==========================================
 
-    /**
-     * The tracker for the POST /paper/:paper_id/review/:review_id/threads
-     * request.
-     *
-     * A request tracker object.
-     *
-     * @type {object} 
-     */
+    const [ postThreadsRequestId, setPostThreadsRequestId ] = useState(null)
     const postThreadsRequest = useSelector(function(state) {
         if ( ! postThreadsRequestId ) {
             return null
@@ -80,14 +38,7 @@ const DraftPaperPDFPageView = function(props) {
         }
     })
 
-    /**
-     * The tracker for the POST /paper/:paper_id/reviews request that will
-     * create a new review for us.
-     *
-     * A request tracker object.
-     *
-     * @type {object}
-     */
+    const [ newReviewRequestId, setNewReviewRequestId ] = useState(null)
     const newReviewRequest = useSelector(function(state) {
         if ( ! newReviewRequestId ) {
             return null
@@ -98,52 +49,16 @@ const DraftPaperPDFPageView = function(props) {
 
     // ============ Redux State ===============================================
 
-    /**
-     * The user currently logged in.  This is who will be potentially creating
-     * new threads (or a new review).
-     *
-     * A user object.
-     *
-     * @type {object} 
-     */
+    // The currently logged in user, a `user` object.
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
-    /**
-     * The review that is curently in progress on this draft (if any).
-     *
-     * A review object.
-     *
-     * @type {object} 
-     */
+    // The review that is currently in progress.  `review` object or null.
     const reviewInProgress = useSelector(function(state) {
         return state.reviews.inProgress[props.paper.id]
     })
 
-    /**
-     * The review that is currently selected for viewing.  We only want to
-     * display threads belonging to this review.
-     *
-     * @type {object} A review object.
-     */
-    const selectedReview = useSelector(function(state) {
-        return state.reviews.selected[props.paper.id]
-    })
-
-    const reviewTargets = useSelector(function(state) {
-        if ( state.reviews.selected[props.paper.id] ) {
-            return state.reviews.selected[props.paper.id]
-        } else {
-            return state.reviews.list[props.paper.id]
-        }
-    })
-
-    /**
-     * An array of threads that are attached to this page.
-     *
-     * @type {object[]} A list of threads that are pinned to this page.
-     */
     const threads = useSelector(function(state) {
         if ( state.reviews.selected[props.paper.id] ) {
             return state.reviews.selected[props.paper.id].threads.filter((t) => t.page == props.pageNumber)
@@ -159,57 +74,23 @@ const DraftPaperPDFPageView = function(props) {
         }
     })
 
-    // ============ Method definitions ========================================
-    //
+    // ======= Refs =================================================
+    
+    /**
+     * A ref for the <canvas> element that we'll render the PDF page on to
+     * using PDF.js.
+     */
+    const canvasRef = useRef(null) 
+
+    const lastRenderCanvasRectRef = useRef(null)
+    
+    // ============ Actions and Event Handlers ========================================
+    
+    const dispatch = useDispatch()
+
     const selectThread = function(thread) {
         setSelectedThread(thread)
     }
-
-    /**
-     * Create the `ReviewCommentThreadView` components for each of the threads
-     * we just pulled from the store above.  
-     *
-     * This will create the thread views and set them on our `threadViews`
-     * state property.
-     *
-     * NOTE: We need to do this in a method because we can't do it in the
-     * initial render.  This code depends on the <canvas> element being
-     * rendered and positioned in the DOM and it won't be during React's normal
-     * render cycle, even if we have a ref to it.  So we have to wait until
-     * after the render cycle by running this in an useEffect.  However, we
-     * want to run this in response to multiple potential events, hence,
-     * multiple useEffects.
-     *
-     * @returns undefined
-     */
-    const createThreadViews = function() {
-        const newThreadViews = []
-        const rect = canvasRef.current.getBoundingClientRect()
-        
-        for( const thread of threads ) {
-            const pinPosition = {
-                top: parseInt(thread.pinY + rect.top + window.scrollY),
-                left: parseInt(thread.pinX + rect.left + window.scrollX)
-            }
-            const threadPosition = {
-                top: parseInt(thread.pinY + rect.top + window.scrollY),
-                left: parseInt(rect.left + rect.width + window.scrollX + 10) 
-            }
-            newThreadViews.push(
-                <ReviewCommentThreadView 
-                    key={thread.id} 
-                    paper={props.paper} 
-                    thread={thread} 
-                    pinPosition={pinPosition} 
-                    threadPosition={threadPosition} 
-                    selected={( selectedThread && selectedThread.id == thread.id ? true : false )} 
-                    selectThread={selectThread}
-                />
-            )
-        }
-        setThreadViews(newThreadViews)
-    }
-
 
     /**
      * Handle a click event on the page canvas.  If we don't have a review in
@@ -241,7 +122,7 @@ const DraftPaperPDFPageView = function(props) {
         }
     }
 
-    // ============ Layout Effect Handling ====================================
+    // ============ Effect Handling ===========================================
 
     /**
      * Once our <canvas> element has rendered in the DOM, we need to render our
@@ -282,73 +163,77 @@ const DraftPaperPDFPageView = function(props) {
 
                 // Let the rest of the component know that we've rendered the
                 // page to our canvas.
-                setHaveRendered(true)
+                 setHaveRendered(true)
             }).catch(function(error) {
                 console.error(error)
             })
         }
-    }, [ ] )
-
-    // ============ Effect Handling ===========================================
-    //
-
-    /**
-     * Our initial render of the threadViews, after the canvas has loaded in
-     * the DOM and we've successfully rendered the page to it (meaning it has
-     * its final size and position).
-     */
-    useEffect(function() {
-        if ( haveRendered ) {
-            createThreadViews()
-        }
-    }, [ haveRendered ] )
-
-    /**
-     * Cleanup our last postThreadsRequest.
-     */
-     useEffect(function() {
-
-        return function cleanup() {
-            if ( postThreadsRequest ) {
-                dispatch(cleanupRequest(postThreadsRequest))
-            }
-        }
-    }, [ ])
+    }, [ props.pdf ] )
 
     useEffect(function() {
         if ( newReviewRequest && newReviewRequest.state == 'fulfilled') {
             dispatch(setSelected(reviewInProgress)) 
         }
-
-        return function cleanup() {
-            if ( newReviewRequest ) {
-                dispatch(cleanupRequest(newReviewRequest))
-            }
-        }
     }, [ newReviewRequest ])
 
-    /**
-     * If the parent reviews of any of the threads we're rendering have
-     * changed, then we need to re-render the threads.
-     *
-     * This may result in us executing some extra renders, because there will
-     * be reviews in this list with no threads on this page.  But better extra
-     * renders than not rendering when we need to.
-     */
     useEffect(function() {
-        if ( haveRendered ) {
-            createThreadViews()
+        if ( canvasRef.current && lastRenderCanvasRectRef.current ) {
+            const rect = canvasRef.current.getBoundingClientRect()
+            if ( lastRenderCanvasRectRef.current.top !== rect.top ) {
+                setRerenderThreadsToggle( ! rerenderThreadsToggle )
+            }
         }
-    }, [ reviewTargets ])
+    })
 
+
+    // Clean up our request.
     useEffect(function() {
-        if ( haveRendered ) {
-            createThreadViews()
+        return function cleanup() {
+            if ( postThreadsRequestId) {
+                dispatch(cleanupRequest({ requestId: postThreadsRequestId}))
+            }
         }
-    }, [ selectedThread ])
+    }, [ postThreadsRequestId])
+
+    // Clean up our request.
+    useEffect(function() {
+        return function cleanup() {
+            if ( newReviewRequestId) {
+                dispatch(cleanupRequest({ requestId: newReviewRequestId}))
+            }
+        }
+    }, [ newReviewRequestId ])
 
     // ============ Render ====================================================
-    
+
+    let threadViews = [] 
+    if (haveRendered && canvasRef.current ) {
+        const rect = canvasRef.current.getBoundingClientRect()
+        lastRenderCanvasRectRef.current = rect
+        
+        for( const thread of threads ) {
+            const pinPosition = {
+                top: parseInt(thread.pinY + rect.top + window.scrollY),
+                left: parseInt(thread.pinX + rect.left + window.scrollX)
+            }
+            const threadPosition = {
+                top: parseInt(thread.pinY + rect.top + window.scrollY),
+                left: parseInt(rect.left + rect.width + window.scrollX + 10) 
+            }
+            threadViews.push(
+                <ReviewCommentThreadView 
+                    key={thread.id} 
+                    paper={props.paper} 
+                    thread={thread} 
+                    pinPosition={pinPosition} 
+                    threadPosition={threadPosition} 
+                    selected={( selectedThread && selectedThread.id == thread.id ? true : false )} 
+                    selectThread={selectThread}
+                />
+            )
+        }
+    }
+
     const canvasId = `page-${props.pageNumber}-canvas`
     const pageId = `page-${props.pageNumber}`
     return (

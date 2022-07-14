@@ -21,10 +21,14 @@ import './DraftPaperReviewsWrapperView.css'
  * we're intending to display.
  */
 const DraftPaperReviewsWrapperView = function(props) {
-    const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
+
+    // ======= Render State =========================================
+    
     const [ width, setWidth ] = useState(900)
 
-    const dispatch = useDispatch()
+    // ======= Request Tracking =====================================
+
+    const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
 
     const reviewsRequest = useSelector(function(state) {
         if ( ! reviewsRequestId ) {
@@ -34,30 +38,41 @@ const DraftPaperReviewsWrapperView = function(props) {
         }
     })
 
+    const selectedReview = useSelector(function(state) {
+        return state.reviews.selected[props.paper.id]
+    })
+
+    // ======= Effect Handling ======================================
+
+    const dispatch = useDispatch()
+
     /**
-     * Once we've retrieved the papers, retrieve the reviews.
+     * Retrieve the reviews on mount.  Cleanup the request on dismount.
      */
     useEffect(function() {
         if ( ! reviewsRequestId ) {
             dispatch(clearList(props.paper.id))
             setReviewsRequestId(dispatch(getReviews(props.paper.id)))
         }
+    }, [])
 
+    useEffect(function() {
         return function cleanup() {
-            if ( reviewsRequest) {
-                dispatch(cleanupReviewRequest(reviewsRequest))
+            if ( reviewsRequestId) {
+                dispatch(cleanupReviewRequest({ requestId: reviewsRequestId }))
             }
         }
+    }, [ reviewsRequestId ])
 
-    }, [])
+    // ======= Render ===============================================
 
     if ( reviewsRequest && reviewsRequest.state == 'fulfilled') {
         const id = `paper-${props.paper.id}-reviews`
         return (
             <div id={id} className="draft-paper-reviews-wrapper">
-                <ReviewHeaderView paper={props.paper} width={width}/>
-                <ReviewListView paper={props.paper} />
-                <DraftPaperPDFView paper={props.paper} width={width} setWidth={setWidth} />
+                <ReviewHeaderView paper={props.paper} width={width} selectedReview={selectedReview} />
+                <ReviewListView paper={props.paper} versionNumber={props.versionNumber} />
+                <DraftPaperPDFView paper={props.paper} selectedReview={selectedReview} versionNumber={props.versionNumber} width={width} setWidth={setWidth} />
             </div>
         )
     } else {

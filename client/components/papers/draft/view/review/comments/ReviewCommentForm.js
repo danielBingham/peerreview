@@ -9,15 +9,18 @@ import Spinner from '/components/Spinner'
 
 import './ReviewCommentForm.css'
 
+/**
+ *
+ */
 const ReviewCommentForm = function(props) {
-    const [patchCommentRequestId, setPatchCommentRequestId] = useState(null)
-    const [deleteCommentRequestId, setDeleteCommentRequestId] = useState(null)
-
+    
+    // ======= Render State =========================================
+    
     const [content, setContent] = useState('')
 
-    const dispatch = useDispatch()
-
-
+    // ======= Request Tracking =====================================
+   
+    const [patchCommentRequestId, setPatchCommentRequestId] = useState(null)
     const patchCommentRequest = useSelector(function(state) {
         if ( patchCommentRequestId ) {
             return state.reviews.requests[patchCommentRequestId]
@@ -27,6 +30,7 @@ const ReviewCommentForm = function(props) {
 
     })
 
+    const [deleteCommentRequestId, setDeleteCommentRequestId] = useState(null)
     const deleteCommentRequest = useSelector(function(state) {
         if ( deleteCommentRequestId ) {
             return state.reviews.requests[deleteCommentRequestId]
@@ -35,9 +39,15 @@ const ReviewCommentForm = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
+
+    // ======= Actions and Event Handling ===========================
+
+    const dispatch = useDispatch()
 
     const commit = function(event) {
         const comment = {
@@ -47,9 +57,6 @@ const ReviewCommentForm = function(props) {
             threadOrder: props.comment.threadOrder,
             status: 'in-progress',
             content: content
-        }
-        if ( patchCommentRequest ) {
-            dispatch(cleanupRequest(patchCommentRequest))
         }
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
     }
@@ -64,9 +71,6 @@ const ReviewCommentForm = function(props) {
             status: 'posted',
             content: content
         }
-        if ( patchCommentRequest ) {
-            dispatch(cleanupRequest(patchCommentRequest))
-        }
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
 
         return false
@@ -74,30 +78,32 @@ const ReviewCommentForm = function(props) {
 
     const cancelComment = function(event) {
         event.preventDefault()
-
-        if ( deleteCommentRequest ) {
-            dispatch(cleanupRequest(deleteCommentRequest))
-        }
         setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
     }
 
+    // ======= Effect Handling ======================================
+
     useLayoutEffect(function() {
         setContent(props.comment.content)
-
     }, [])
 
     useEffect(function() {
-
         return function cleanup() {
-            if ( patchCommentRequest ) {
-                dispatch(cleanupRequest(patchCommentRequest))
-            }
-
-            if ( deleteCommentRequest) {
-                dispatch(cleanupRequest(deleteCommentRequest))
+            if ( patchCommentRequestId ) {
+                dispatch(cleanupRequest({ requestId: patchCommentRequestId }))
             }
         }
-    }, [] )
+    }, [ patchCommentRequestId ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( deleteCommentRequestId) {
+                dispatch(cleanupRequest({ requestId: deleteCommentRequestId }))
+            }
+        }
+    }, [ deleteCommentRequestId ] )
+
+    // ======= Render ==============================================
 
     return (
         <section className="comment-form" >

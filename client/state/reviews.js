@@ -5,7 +5,11 @@ import configuration from '../configuration'
 import logger from '../logger'
 
 import { addUsers } from './users'
-import RequestTracker from './helpers/requestTracker'
+import { makeRequest as makeTrackedRequest, 
+    failRequest as failTrackedRequest, 
+    completeRequest as completeTrackedRequest, 
+    cleanupRequest as cleanupTrackedRequest, 
+    garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
 export const reviewsSlice = createSlice({
     name: 'reviews',
@@ -132,69 +136,13 @@ export const reviewsSlice = createSlice({
             state.list[paperId] = [] 
         },
 
-        // ========== Generic Request Methods =============
-        // Use these methods when no extra logic is needed.  If additional
-        // logic is needed for a particular request, make a reducer of the form
-        // [make/fail/complete/cleanup][method][endpoint]Request().  For
-        // example, makePostReviewsRequest().  The reducer should take an object
-        // with at least requestId defined, along with whatever all inputs it
-        // needs.
+        // ========== Request Tracking Methods =============
 
-        /**
-         * Make a request to a review or reviews endpoint.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {string} action.payload.method - One of the HTTP verbs
-         * @param {string} action.payload.endpoint - The endpoint we're making the request to
-         */
-        makeRequest: function(state, action) {
-            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker(action.payload.method, action.payload.endpoint)
-            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Fail a request to a review or reviews endpoint, usually with an error.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {int} action.payload.status - (Optional) The status code returned with the response.
-         * @param {string} action.payload.error - (Optional) A string error message.
-         */
-        failRequest: function(state, action) {
-            RequestTracker.failRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Complete a request to a review or reviews endpoint by setting the review
-         * sent back by the backend in the reviews hash.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.review - A populated review object, must have `id` defined
-         */
-        completeRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Cleanup a request by removing it from our request hash.  Once we're
-         * done with a request, we don't need to keep its tracking around.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         */
-        cleanupRequest: function(state, action) {
-            delete state.requests[action.payload.requestId]
-        }
+        makeRequest: makeTrackedRequest, 
+        failRequest: failTrackedRequest, 
+        completeRequest: completeTrackedRequest,
+        cleanupRequest: cleanupTrackedRequest, 
+        garbageCollectRequests: garbageCollectTrackedRequests
     }
 })
 
@@ -248,6 +196,9 @@ export const updateReview = function(review) {
  */
 export const getReviews = function(paperId) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
         const requestId = uuidv4() 
         const endpoint = `/paper/${paperId}/reviews`
 
@@ -315,6 +266,9 @@ export const getReviews = function(paperId) {
  */
 export const postReviews = function(review) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
         const requestId = uuidv4()
         const endpoint = `/paper/${review.paperId}/reviews`
 
@@ -372,6 +326,9 @@ export const postReviews = function(review) {
  */
 export const getReview = function(paperId, id) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
         const requestId = uuidv4()
         const endpoint = `/paper/${paperId}/review/${id}`
 
@@ -432,6 +389,9 @@ export const getReview = function(paperId, id) {
  */
 export const putReview = function(review) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
         const requestId = uuidv4()
         const endpoint = `/paper/${review.paperId}/review/${review.id}`
 
@@ -488,6 +448,9 @@ export const putReview = function(review) {
  */
 export const patchReview = function(review) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+        
         const requestId = uuidv4()
         const endpoint = `/paper/${review.paperId}/review/${review.id}`
 
@@ -542,6 +505,9 @@ export const patchReview = function(review) {
  */
 export const deleteReview = function(review) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
         const requestId = uuidv4()
         const endpoint = `/paper/${review.paperId}/review/${review.id}`
 
@@ -594,6 +560,9 @@ export const deleteReview = function(review) {
  */
 export const postReviewThreads = function(paperId, reviewId, threads) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+        
         const requestId = uuidv4()
         const endpoint = `/paper/${paperId}/review/${reviewId}/threads`
 
@@ -651,6 +620,9 @@ export const postReviewThreads = function(paperId, reviewId, threads) {
  */
 export const postReviewComments = function(paperId, reviewId, threadId, comments) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
         const requestId = uuidv4()
         const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comments`
 
@@ -708,6 +680,9 @@ export const postReviewComments = function(paperId, reviewId, threadId, comments
  */
 export const patchReviewComment = function(paperId, reviewId, threadId, comment) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
         const requestId = uuidv4()
         const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comment/${comment.id}`
 
@@ -762,6 +737,9 @@ export const patchReviewComment = function(paperId, reviewId, threadId, comment)
  */
 export const deleteReviewComment = function(paperId, reviewId, threadId, comment) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
         const requestId = uuidv4()
         const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comment/${comment.id}`
 

@@ -12,16 +12,12 @@ import './ReviewHeaderView.css'
 const ReviewHeaderView = function(props) {
     const dispatch = useDispatch()
 
-    const selectedReview = useSelector(function(state) {
-        return state.reviews.selected[props.paper.id]
-    })
-
     let content = null 
-    if ( selectedReview ) {
-        if ( selectedReview.status == 'in-progress' ) {
+    if ( props.selectedReview ) {
+        if ( props.selectedReview.status == 'in-progress' ) {
             content = ( <ReviewSummaryForm paper={props.paper} width={props.width} /> )
         } else {
-            content = ( <ReviewSummaryView paper={props.paper} /> )
+            content = ( <ReviewSummaryView paper={props.paper} selectedReview={props.selectedReview} /> )
         }
     } else {
         content = (

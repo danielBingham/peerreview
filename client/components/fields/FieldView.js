@@ -9,10 +9,17 @@ import Spinner from '/components/Spinner'
 
 import './FieldView.css'
 
-const FieldPage = function(props) {
-    const [requestId, setRequestId] = useState(null)
+/**
+ * Show the details of a single field.
+ *
+ * @param {object} props    The React props object.
+ * @param {int} props.id    The id of the field we'd like to show details for.
+ */
+const FieldView = function(props) {
 
-    const dispatch = useDispatch()
+    // ======= Request Tracking =====================================
+
+    const [requestId, setRequestId] = useState(null)
 
     const request = useSelector(function(state) {
         if ( ! requestId ) {
@@ -22,33 +29,64 @@ const FieldPage = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+
     const field = useSelector(function(state) {
+        if ( ! props.id ) {
+            return null
+        }
         return state.fields.dictionary[props.id]
     })
 
-    useEffect(function() {
-        if ( ! requestId ) {
-            setRequestId(dispatch(getField(props.id)))
-        }
+    // ======= Effect Handling ======================================
+    
+    const dispatch = useDispatch()
 
-        return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(request))
-            }
+    /**
+     * Request the field matching the id given in props, to ensure we have it.
+     */
+    useEffect(function() {
+        if ( ! props.id ) {
+            console.error(`Can't render FieldView with out an 'id' number.`)
+        } else { 
+            setRequestId(dispatch(getField(props.id)))
         }
     }, [])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
+            }
+        }
+    }, [ requestId ])
 
-    if ( ! field ) {
-        return ( <Spinner /> )
-    } else {
-        return (
-            <article className="field-view">
-                <h1>{ field.name }</h1>
-                <section className="description"><ReactMarkdown>{ field.description }</ReactMarkdown></section>
-            </article>
-        )
+
+    // ======= Render ===============================================
+
+    let content = ( <Spinner /> )
+    if ( request && request.state == 'fulfilled' ) {
+        if ( field ) {
+            content = ( 
+                <div className="field-details">
+                    <h1>{ field.name }</h1>
+                    <section className="description"><ReactMarkdown>{ field.description }</ReactMarkdown></section>
+                </div>
+            )
+        } else {
+          content = (  <div className="field-not-found">We weren't able to find that field.</div> )
+        }
+    } else if ( request && request.state == 'failed') {
+        content = ( <div className="error">Something went wrong with fetching the field details from the backend: { request.error }.  Please report this as a bug.</div> )
+    } else if ( ! props.id ) {
+        content = (  <div className="field-not-found">We weren't able to find that field.</div> )
     }
+
+    return (
+        <article className="field-view">
+            { content }
+        </article>
+    )
 }
 
-export default FieldPage
+export default FieldView 

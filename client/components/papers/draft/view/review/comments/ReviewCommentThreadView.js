@@ -11,10 +11,10 @@ import Spinner from '/components/Spinner'
 import './ReviewCommentThreadView.css'
 
 const ReviewCommentThreadView = function(props) {
+
+    // ======= Request Tracking =====================================
+
     const [ requestId, setRequestId ] = useState(null)
-
-    const dispatch = useDispatch()
-
     const request = useSelector(function(state) {
         if ( requestId ) {
             return state.reviews.requests[requestId]
@@ -22,6 +22,8 @@ const ReviewCommentThreadView = function(props) {
             return null
         }
     })
+
+    // ======= Redux State ==========================================
 
     const review = useSelector(function(state) {
         return state.reviews.dictionary[props.paper.id][props.thread.reviewId]
@@ -34,6 +36,10 @@ const ReviewCommentThreadView = function(props) {
     const thread = useSelector(function(state) {
         return state.reviews.dictionary[props.paper.id][props.thread.reviewId].threads.find((t) => t.id == props.thread.id)
     })
+
+    // ======= Actions and Event Handling ===========================
+
+    const dispatch = useDispatch()
 
     const newComment = function(event) {
         const comment = {
@@ -54,13 +60,18 @@ const ReviewCommentThreadView = function(props) {
         props.selectThread(thread)
     }
 
+    // ======= Effect Handling ======================================
+
+    // Cleanup our requests.
     useEffect(function() {
         return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(request))
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
             }
         }
-    }, [])
+    }, [ requestId ])
+
+    // ======= Rendering ============================================
 
     if ( ! thread ) {
         return (null)

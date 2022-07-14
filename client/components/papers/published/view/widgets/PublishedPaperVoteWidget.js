@@ -9,11 +9,14 @@ import Spinner from '/components/Spinner'
 import './PublishedPaperVoteWidget.css'
 
 const PublishedPaperVoteWidget = function(props) {
+
+    // ======= Render State =========================================
+
+    const [ errorType, setErrorType ] = useState(null)
+
+    // ======= Request Tracking =====================================
+
     const [ voteRequestId, setVoteRequestId] = useState(null)
-    const [ error, setError ] = useState(null)
-
-    const dispatch = useDispatch()
-
     const voteRequest = useSelector(function(state) {
         if ( ! voteRequestId ) {
             return null
@@ -22,26 +25,39 @@ const PublishedPaperVoteWidget = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
+    const vote = useSelector(function(state) {
+        if (currentUser && state.papers.dictionary[props.paper.id].votes.length > 0) {
+            return state.papers.dictionary[props.paper.id].votes.find((v) => v.userId == currentUser.id)
+        }  else {
+            return null
+        }
+    })
 
-    let vote = null
-    if ( currentUser && props.paper.votes.length > 0 ) {
-        vote = props.paper.votes.find((v) => v.userId == currentUser.id)
-    }
+    
+    const isAuthor = ( currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
 
+    // ======= Actions and Event Handling ===========================
+
+    const dispatch = useDispatch()
+
+    // TODO Don't let authors vote on their own papers.
+    // TODO Allow users to undo their votes by clicking on the vote icon again.
     const voteUp = function(event) {
         event.preventDefault()
 
         if ( ! vote ) {
-            vote = {
+            const newVote = {
                 paperId: props.paper.id,
                 userId: currentUser.id,
                 score: 1
             }
-            setVoteRequestId(dispatch(postVotes(vote)))
+            setVoteRequestId(dispatch(postVotes(newVote)))
         }
     }
 
@@ -49,40 +65,43 @@ const PublishedPaperVoteWidget = function(props) {
         event.preventDefault()
 
         if ( ! vote ) {
-            vote = {
+            const newVote = {
                 paperId: props.paper.id,
                 userId: currentUser.id,
                 score: -1
             }
-            setVoteRequestId(dispatch(postVotes(vote)))
+            setVoteRequestId(dispatch(postVotes(newVote)))
         }
     }
 
+    // ======= Effect Handling ======================================
+    
     useEffect(function() {
-
-        if ( voteRequest && voteRequest.state == 'failed' ) {
-            vote = null
-            setError('Something went wrong with your vote.  Please try again.')
-        }
-
         return function cleanup() {
-            if ( voteRequest ) {
-                dispatch(cleanupRequest(voteRequestId))
+            if ( voteRequestId ) {
+                dispatch(cleanupRequest({ requestId: voteRequestId }))
             }
         }
-    })
+    }, [ voteRequestId ])
+
+    // ======= Render ===============================================
 
     let score = 0
     for(const v of props.paper.votes) {
         score += v.score
     }
 
+    let error = null
+    if ( voteRequest && voteRequest.state == 'failed') {
+        error = ( <div className="request-failure">{ voteRequest.error }</div> )
+    }
+
     return (
         <div className="published-paper-vote-widget">
             { error && <div class="error">{ error }</div> }
-            <div className={ vote && vote.score == 1 ? 'vote-button vote-up highlight' : 'vote-up' } onClick={voteUp} ></div>
+            { currentUser && ! isAuthor && <div className={ vote && vote.score == 1 ? 'vote-button vote-up highlight' : 'vote-button vote-up' } onClick={voteUp} ></div> }
             <div className="score">{score}</div>
-            <div className={ vote && vote.score == -1 ? 'vote-button vote-down highlight' : 'vote-down' } onClick={voteDown} ></div>
+            { currentUser && ! isAuthor && <div className={ vote && vote.score == -1 ? 'vote-button vote-down highlight' : 'vote-button vote-down' } onClick={voteDown} ></div> }
         </div>
     )
 }

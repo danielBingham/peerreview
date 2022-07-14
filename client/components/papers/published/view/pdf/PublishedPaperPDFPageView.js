@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useParams } from 'react-router-dom'
 
@@ -12,41 +12,45 @@ import './PublishedPaperPDFPageView.css'
 
 const PublishedPaperPDFPageView = function(props) {
 
+    const canvasRef = useRef(null)
+
     useEffect(function() {
         props.pdf.getPage(props.pageNumber).then(function(page) {
-            var scale = 1.5;
-            var viewport = page.getViewport({ scale: scale, });
-            // Support HiDPI-screens.
-            var outputScale = window.devicePixelRatio || 1;
+            if ( canvasRef.current ) {
+                var scale = 1.5;
+                var viewport = page.getViewport({ scale: scale, });
+                // Support HiDPI-screens.
+                var outputScale = window.devicePixelRatio || 1;
 
-            var canvas = document.getElementById(`page-${props.pageNumber}`);
-            var context = canvas.getContext('2d');
+                var context = canvasRef.current.getContext('2d');
 
-            canvas.width = Math.floor(viewport.width * outputScale);
-            canvas.height = Math.floor(viewport.height * outputScale);
-            canvas.style.width = Math.floor(viewport.width) + "px";
-            canvas.style.height =  Math.floor(viewport.height) + "px";
+                canvasRef.current.width = Math.floor(viewport.width * outputScale);
+                canvasRef.current.height = Math.floor(viewport.height * outputScale);
+                canvasRef.current.style.width = Math.floor(viewport.width) + "px";
+                canvasRef.current.style.height =  Math.floor(viewport.height) + "px";
 
-            var transform = outputScale !== 1
-                ? [outputScale, 0, 0, outputScale, 0, 0]
-                : null;
+                var transform = outputScale !== 1
+                    ? [outputScale, 0, 0, outputScale, 0, 0]
+                    : null;
 
-            var renderContext = {
-                canvasContext: context,
-                transform: transform,
-                viewport: viewport
-            };
-            page.render(renderContext);
+                var renderContext = {
+                    canvasContext: context,
+                    transform: transform,
+                    viewport: viewport
+                };
+                page.render(renderContext);
+            } else {
+                throw new Error('Attempted to render the page before the canvas ref was set!')
+            }
         }).catch(function(error) {
             console.error(error)
         })
 
     }, [ props.pdf, props.pageNumber] )
 
-    const pageId = `page-${props.pageNumber}`
     return (
         <section className="published-paper-page-wrapper">
-            <canvas id={pageId}></canvas>
+            <canvas ref={canvasRef} id={`page-${props.pageNumber}`}></canvas>
         </section>
     )
 

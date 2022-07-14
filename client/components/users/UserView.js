@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import ReactMarkdown from 'react-markdown'
 
-import { getUser, cleanupRequest as cleanupUserRequest } from '/state/users'
+import { getUser, cleanupRequest } from '/state/users'
 
 import Field from '/components/fields/Field'
 
@@ -14,51 +14,66 @@ import Spinner from '/components/Spinner'
 import './UserView.css'
 
 const UserView = function(props) {
-    const [ userRequestId, setUserRequestId ] = useState(null)
-    const [ error, setError ] = useState(null)
 
-    const dispatch = useDispatch()
+    // ======= Request Tracking =====================================
 
-    const userRequest = useSelector(function(state) {
-        if ( ! userRequestId) {
+    const [ requestId, setRequestId ] = useState(null)
+    const request = useSelector(function(state) {
+        if ( ! requestId) {
             return null
         } else {
-            return state.users.requests[userRequestId]
+            return state.users.requests[requestId]
         }
     })
 
+    // ======= Redux State ==========================================
+    
     const user = useSelector(function(state) {
-        if ( state.users.dictionary[props.id] ) {
-            return state.users.dictionary[props.id]
-        } else {
-            return null
-        }
+        return state.users.dictionary[props.id]
     })
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
-    useEffect(function() {
-        if ( ! userRequestId ) {
-            setUserRequestId(dispatch(getUser(props.id)))
-        }
+    // ======= Effect Handling ======================================
 
-        return function cleanup() {
-            if ( userRequestId ) {
-                dispatch(cleanupUserRequest(userRequest))
-            }
-        }
+    const dispatch = useDispatch()
+
+    useEffect(function() {
+        setRequestId(dispatch(getUser(props.id)))
     }, [ ])
 
     useEffect(function() {
-        if ( userRequest && userRequest.state == 'failed') {
-            setError(userRequest.error)
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
+            }
         }
-    }, [ userRequest ])
+    }, [ requestId ])
 
-    if ( ! user || ! user.fields ) {
+    // ======= Render ===============================================
+
+    if ( ! request ) {
         return ( <Spinner /> )
+    } else if ( request && request.state == 'pending' ) {
+        return ( <Spinner /> )
+    } else  if ( request && request.state == 'failed' ) {
+        return (
+            <article className="user-view">
+                <div className="error">
+                    Failed to request the user's data: { request.error }.  Please report a bug.
+                </div>
+            </article>
+        )
+    } else if ( ! user && request && request.state == 'fulfilled' ) {
+        return (
+            <article className="user-view">
+                <div className="error">
+                    Failed to request the user's data: { request.error }.  Please report a bug.
+                </div>
+            </article>
+        )
     } else {
         const fields = []
         const sortedFields = [...user.fields]
@@ -74,18 +89,21 @@ const UserView = function(props) {
             fields.push(<div key={ userField.field.id } className="wrapper"><Field field={ userField.field } /> { userField.reputation } </div>)
         }
 
+        const shouldRenderControls = ( currentUser && user && currentUser.id == user.id)
+
         return (
             <article id={ user.id } className='user-view'>
-                <div className="error">{ error } </div>
-                <div className="controls">{currentUser && currentUser.id == user.id && <Link to="/account">edit</Link>}</div>
-                <div className="header"><h1>{ user.name }</h1></div>
+                <div className="header">
+                    <h1>{ user.name }</h1>
+                    { shouldRenderControls && <div className="controls"><Link to="/account">edit</Link></div> }
+                </div>
                 <div className="profile-picture"></div>
                 <div className="details">
-                    <p><span className="label">Name</span> { user.name }</p>
-                    <p><span className="label">Email</span> { user.email }</p>
-                    <p><span className="label">Institution</span> { user.institution } </p>
-                    <p><span className="label">Location</span> { user.location }</p>
-                    <p><span className="label">Bio</span><ReactMarkdown children={ user.bio } /> </p>
+                    <div><span className="label">Name</span> { user.name }</div>
+                    <div><span className="label">Email</span> { user.email }</div>
+                    <div><span className="label">Institution</span> { user.institution } </div>
+                    <div><span className="label">Location</span> { user.location }</div>
+                    <div><span className="label">Biography</span><ReactMarkdown children={ user.bio } /> </div>
                 </div>
                 <div className="fields-header">
                     <h2>Fields</h2>

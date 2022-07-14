@@ -10,6 +10,8 @@ import './ReviewCommentView.css'
 
 const ReviewCommentView = function(props) {
 
+    // ======= Render ===============================================
+
     return (
         <div key={props.comment.id} id={props.comment.id} className="comment-outer">
             <UserTag id={props.comment.userId} />

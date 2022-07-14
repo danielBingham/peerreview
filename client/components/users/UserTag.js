@@ -8,14 +8,16 @@ import Spinner from '/components/Spinner'
 import './UserTag.css'
 
 const UserTag = function(props) {
+
+    // ======= Request Tracking =====================================
+    
     const [ requestId, setRequestId ] = useState(null)
-
-    const dispatch = useDispatch()
-
     const request = useSelector(function(state) {
         return state.users.requests[requestId]
     })
 
+    // ======= Redux State ==========================================
+    
     const user = useSelector(function(state) {
         if ( state.users.dictionary[props.id] ) {
             return state.users.dictionary[props.id]
@@ -24,19 +26,24 @@ const UserTag = function(props) {
         }
     })
 
-    useEffect(function() {
-        if ( ! requestId ) {
-            setRequestId(dispatch(getUser(props.id)))
-        }
+    // ======= Effect Handling ======================================
+    
+    const dispatch = useDispatch()
 
+    useEffect(function() {
+        setRequestId(dispatch(getUser(props.id)))
+    }, [ ])
+
+    // Cleanup our request.
+    useEffect(function() {
         return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(request))
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
             }
         }
+    }, [ requestId])
 
-    }, [ request ])
-
+    // ======= Render ===============================================
 
     if ( user ) {
         return (

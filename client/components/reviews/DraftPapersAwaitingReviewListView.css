@@ -4,6 +4,10 @@
     background-color: white;
     border: thin solid #ddd;
 }
+.draft-paper-lis .spinner-wrapper {
+    padding: 10px;
+    text-align: center;
+}
 .draft-paper-list .header {
     display: grid;
     grid-template-columns: 1fr, 1fr;

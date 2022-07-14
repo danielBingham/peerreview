@@ -8,20 +8,17 @@ import { cleanupRequest, deleteAuthentication } from '/state/authentication'
 import UserTag from '/components/users/UserTag'
 
 import './AuthenticationNavigation.css'
+
 /**
  * Provides an Authentication component to be used in navigation menus.  
  *
- * No props.
+ * @param {object} props    Standard React props object - empty.
  */
 const AuthenticationNavigation = function(props) {
-    const [ deleteAuthenticationRequestId, setLogoutRequestId ] = useState(null)
 
-    const dispatch = useDispatch()
+    // ======= Request Tracking =====================================
 
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
-
+    const [ deleteAuthenticationRequestId, setDeleteAuthenticationRequestId ] = useState(null)
     const deleteAuthenticationRequest = useSelector(function(state) {
         if (deleteAuthenticationRequestId) {
             return state.authentication.requests[deleteAuthenticationRequestId]
@@ -30,6 +27,15 @@ const AuthenticationNavigation = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
+    // ======= Actions and Event Handling ===========================
+
+    const dispatch = useDispatch()
 
     /**
      * Handle a Logout request by dispatching the appropriate action.
@@ -42,33 +48,35 @@ const AuthenticationNavigation = function(props) {
     const handleLogout = function(event) {
         event.preventDefault()
 
-        setLogoutRequestId(dispatch(deleteAuthentication()))
+        setDeleteAuthenticationRequestId(dispatch(deleteAuthentication()))
     }
 
-    useEffect(function() {
+    // ======= Effect Handling ======================================
 
+    // Cleanup our request tracking.
+    useEffect(function() {
         return function cleanup() {
-            if (  deleteAuthenticationRequest ) {
-                dispatch(cleanupRequest(deleteAuthenticationRequest))
+            if (  deleteAuthenticationRequestId ) {
+                dispatch(cleanupRequest({ requestId: deleteAuthenticationRequestId }))
             }
         }
+    }, [ deleteAuthenticationRequestId ])
 
-    }, [])
-
-    // ============= RENDER =======================
+    // ============= Render =======================
+    
     if ( currentUser ) {
         return (
-            <section id="authentication-navigation" className="navigation-block authenticated">
+            <div id="authentication-navigation" className="navigation-block authenticated">
                 <UserTag id={currentUser.id} />
                 <a href="" className="logout" onClick={handleLogout} >logout</a>
-            </section>
+            </div>
         )
     } else {
         return (
-            <section id="authentication-navigation" className="navigation-block not-authenticated">
+            <div id="authentication-navigation" className="navigation-block not-authenticated">
                 <Link to="login">login</Link>
                 <Link to="register">register</Link>
-            </section>
+            </div>
         )
     }
 

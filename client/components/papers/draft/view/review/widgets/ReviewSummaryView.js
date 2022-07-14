@@ -15,23 +15,19 @@ import './ReviewSummaryView.css'
  */
 const ReviewSummaryView = function(props) {
 
-    const selectedReview = useSelector(function(state) {
-        return state.reviews.selected[props.paper.id]
-    })
-
-    if ( selectedReview && selectedReview.status == 'in-progress' ) {
-        return
-    } else if ( selectedReview ) {
-        const id = `selected-review-${selectedReview.id}`
+    if ( props.selectedReview && props.selectedReview.status == 'in-progress' ) {
+        return null
+    } else if ( props.selectedReview ) {
+        const id = `selected-review-${props.selectedReview.id}`
         return (
             <div id={id} className="review-summary">
-                <div className="datetime">{selectedReview.createdDate}</div>
-                <div className="recommendation">{selectedReview.recommendation}</div>
-                <div className="summary"><ReactMarkdown>{selectedReview.summary}</ReactMarkdown></div>
+                <div className="datetime">{props.selectedReview.createdDate}</div>
+                <div className="recommendation">{props.selectedReview.recommendation}</div>
+                <div className="summary"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div>
             </div>
         )
     } else {
-        return
+        return null
     }
 
 }

@@ -188,7 +188,6 @@ module.exports = function(database, logger, config) {
         paperController.postPapers(request, response)
     })
 
-
     // Get the details of a single paper 
     router.get('/paper/:id', function(request, response) {
         paperController.getPaper(request, response)
@@ -210,11 +209,12 @@ module.exports = function(database, logger, config) {
     })
 
     /******************************************************************************
-     *          Draft REST Routes
+     *          Version REST Routes
      ******************************************************************************/
 
-
-
+    router.post('/paper/:id/versions', function(request, response) {
+        paperController.postPaperVersions(request, response)
+    })
 
 
     /**************************************************************************

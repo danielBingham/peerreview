@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router'
 import { useParams } from 'react-router-dom'
 
@@ -15,9 +15,36 @@ import Spinner from '/components/Spinner'
 
 import './DraftPaperPDFView.css'
 
-const DraftPaperPDFView = function(props) {
-    const [ pages, setPages ] = useState(null)
+/**
+ * @see `/server/daos/papers.js::hydratePapers()` for the structure of the `paper` object.
+ */
 
+/**
+ * Render the PDF file corresponding to the select version of a Draft Paper.
+ * Will also render the review comment threads corresponding to the review
+ * currently selected in the Redux store (or all reviews) for each page.
+ *
+ * @param {object} props    The React props object.
+ * @param {int} props.width The page width of the pages of this PDF in pixels.
+ * @param {function} props.setWidth A function to set the width of the pages of
+ * this PDF in pixel on a parent component.
+ * @param {object} props.paper  The `paper` object for the draft paper who's
+ * PDF file we're rendering.
+ * @param {int} props.versionNumber The version number corresponding to the PDF
+ * file we're rendering.
+ */
+const DraftPaperPDFView = function(props) {
+
+    // ======= Render State =========================================
+    const [ loaded, setLoaded] = useState(false)
+    const [ error, setError ] = useState(null)
+
+    // ======= Refs =================================================
+    
+    const pdfRef = useRef(null)
+
+    // ======= Effect Handling ======================================
+    
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
@@ -26,35 +53,63 @@ const DraftPaperPDFView = function(props) {
      * them.
      */
     useEffect(function() {
+        setLoaded(false)
         if ( props.paper.versions.length > 0 ) {
-            const loadingTask = PDFLib.getDocument('http://' + window.location.host + props.paper.versions[0].file.filepath)
+            let version = props.paper.versions.find((v) => v.version == props.versionNumber)
+            if ( ! version ) {
+                version = props.paper.versions[0]
+            }
+
+            const loadingTask = PDFLib.getDocument('http://' + window.location.host + version.file.filepath)
             loadingTask.promise.then(function(pdf) {
-                const newPages = []
-                for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-                    const pageKey = `page-${pageNumber}`
-                    newPages.push(<DraftPaperPDFPageView key={pageKey} width={props.width} setWidth={props.setWidth} paper={props.paper} pageNumber={pageNumber} pdf={pdf} />)
-                }
-                setPages(newPages)
+                pdfRef.current = pdf
+                setLoaded(true)
             }).catch(function(error) {
+                setError('rendering-error')
                 console.error(error)
             })
+        } else {
+            setError('no-versions-error')
+            console.error('Attempting to load a draft paper with no versions!')
         }
-
-    }, [ props.paper.versions ])
+    }, [ props.paper.versions, props.versionNumber ])
 
     // ================= Render ===============================================
-    if ( pages ) {
-        const id = `paper-${props.paper.id}-content`
-        return (
-            <article id={id} className="draft-paper-pdf" style={ { width: props.width+'px' } }>
-                { pages }
-            </article>
-        )
-    } else {
-        return (
-            <Spinner />
-        )
+   
+    let content = ( <Spinner /> )
+    if ( loaded ) {
+        if ( ! error ) {
+            content = []
+            for (let pageNumber = 1; pageNumber <= pdfRef.current.numPages; pageNumber++) {
+                content.push(
+                    <DraftPaperPDFPageView 
+                        key={pageNumber} 
+                        width={props.width} 
+                        setWidth={props.setWidth} 
+                        paper={props.paper}
+                        selectedReview={props.selectedReview}
+                        versionNumber={props.versionNumber}
+                        pageNumber={pageNumber} 
+                        pdf={pdfRef.current} 
+                    />
+                )
+            }
+        } else {
+            let errorElement = null
+            if ( error == 'rendering-error' ) {
+                errorElement = (<div className="rendering-error">Something went wrong when loading and rendering the PDF.</div>)
+            } else if ( error == 'no-versions-error' ) {
+                errorElement = ( <div className="no-versions-error">Attempt to load paper with no versions!</div>)
+            }
+            content = (<div className="error">{ errorElement }</div>)
+        }
     }
+
+    return (
+        <article id={`paper-${props.paper.id}-content`} className="draft-paper-pdf" style={ { width: props.width+'px' } }>
+            { content }
+        </article>
+    )
 
 }
 

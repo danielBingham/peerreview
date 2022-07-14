@@ -4,7 +4,11 @@ import { v4 as uuidv4 } from 'uuid'
 import configuration from '../configuration' 
 import logger from '../logger'
 
-import RequestTracker  from './helpers/requestTracker'
+import { makeRequest as makeTrackedRequest, 
+    failRequest as failTrackedRequest, 
+    completeRequest as completeTrackedRequest, 
+    cleanupRequest as cleanupTrackedRequest, 
+    garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
 import { addSettingsToDictionary } from '/state/settings'
 
@@ -38,69 +42,13 @@ export const authenticationSlice = createSlice({
             state.settings = action.payload
         },
 
-        // ========== Generic Request Methods =============
-        // Use these methods when no extra logic is needed.  If additional
-        // logic is needed for a particular request, make a reducer of the form
-        // [make/fail/complete/cleanup][method][endpoint]Request().  For
-        // example, makeGetAuthenticateRequest().  The reducer should take an object
-        // with at least requestId defined, along with whatever all inputs it
-        // needs.
+        // ========== Request Tracking Methods =============
 
-        /**
-         * Make a request to an authentication endpoint.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {string} action.payload.method - One of the HTTP verbs
-         * @param {string} action.payload.endpoint - The endpoint we're making the request to
-         */
-        makeRequest: function(state, action) {
-            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker(action.payload.method, action.payload.endpoint)
-            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Fail a request to an authentication endpoint, usually with an error.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {int} action.payload.status - (Optional) The status code returned with the response.
-         * @param {string} action.payload.error - (Optional) A string error message.
-         */
-        failRequest: function(state, action) {
-            RequestTracker.failRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Complete a request by setting the current user to the value returned
-         * in the payload.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.user - A populated `user` object or NULL.
-         */
-        completeRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-        },
-
-
-        /**
-         * Cleanup a request once we're finished with it.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The action we're reducing.
-         * @param {object} action.payload - The payload.
-         * @param {string} action.payload.requestId - A uuid identifying the request we want to cleanup.
-         */
-        cleanupRequest: function(state, action) {
-            delete state.requests[action.payload.requestId]
-        }
+        makeRequest: makeTrackedRequest, 
+        failRequest: failTrackedRequest, 
+        completeRequest: completeTrackedRequest,
+        cleanupRequest: cleanupTrackedRequest, 
+        garbageCollectRequests: garbageCollectTrackedRequests
     }
 
 })
@@ -117,6 +65,8 @@ export const authenticationSlice = createSlice({
  */
 export const getAuthentication = function() {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(authenticationSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/authentication'
@@ -183,6 +133,8 @@ export const getAuthentication = function() {
  */
 export const postAuthentication = function(email, password) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(authenticationSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/authentication'
@@ -247,6 +199,8 @@ export const postAuthentication = function(email, password) {
  */
 export const patchAuthentication = function(email, password) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(authenticationSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/authentication'
@@ -304,6 +258,8 @@ export const patchAuthentication = function(email, password) {
  */
 export const deleteAuthentication = function() {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(authenticationSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/authentication'

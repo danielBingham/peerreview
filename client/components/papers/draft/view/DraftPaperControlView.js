@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router'
 import {  patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import {  patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
+import './DraftPaperControlView.css'
+
 const DraftPaperControlView = function(props) {
     const [ patchPaperRequestId, setPatchPaperRequestId ] = useState(null)
 
@@ -42,31 +44,62 @@ const DraftPaperControlView = function(props) {
         setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
     }
 
-    useEffect(function() {
+    const uploadVersion = function(event) {
+        const uri = `/draft/${props.paper.id}/versions/upload`
+        navigate(uri)
+    }
 
-        if ( patchPaperRequestId && patchPaperRequest && patchPaperRequest.state == 'fulfilled' ) {
+    const changeVersion = function(event) {
+        const versionNumber = event.target.value
+        const uri = `/draft/${props.paper.id}/version/${versionNumber}`
+        navigate(uri)
+    }
+
+    // ======= Effect Handling ======================================
+
+    useEffect(function() {
+        if (patchPaperRequest && patchPaperRequest.state == 'fulfilled' ) {
             const paperPath = '/paper/' + paper.id
             navigate(paperPath)
         }
+    }, [ patchPaperRequest ])
 
+    // Request cleanup. 
+    useEffect(function() {
         return function cleanup() {
-            if ( patchPaperRequest ) {
-                dispatch(cleanupPaperRequest(patchPaperRequestId))
+            if ( patchPaperRequestId ) {
+                dispatch(cleanupPaperRequest({ requestId: patchPaperRequestId }))
             }
         }
+    }, [ patchPaperRequestId ])
 
-    })
-
+    // ======= Render ===============================================
+    
     let contents = ''
      if ( isAuthor ) {
-        contents = (
-            <button onClick={publishPaper}>Publish</button>
+         contents = (
+             <div className="author-controls">
+                 <button onClick={uploadVersion}>Upload New Version</button>
+                 <button onClick={publishPaper}>Publish</button>
+             </div>
         )
+     }
+
+    const paperVersionOptions = []
+    for( const paperVersion of props.paper.versions ) {
+        paperVersionOptions.push(<option key={paperVersion.version} value={paperVersion.version}>{ paperVersion.version }</option>)     
     }
+
 
     return (
         <div className="draft-paper-controls">
             { contents }
+            <div className="version-controls">
+                <label htmlFor="versionNumber">Show Version</label>
+                <select name="versionNumber" value={props.versionNumber} onChange={changeVersion}>
+                    {paperVersionOptions}
+                </select>
+            </div>
         </div>
     )
 

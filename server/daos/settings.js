@@ -127,7 +127,7 @@ module.exports = class SettingsDAO {
                 welcome_dismissed = $2,
                 funding_dismissed = $3,
                 updated_date = now()
-            WHERE id = $3
+            WHERE id = $4
         `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed, setting.id ])
 
         if ( results.rowCount == 0) {

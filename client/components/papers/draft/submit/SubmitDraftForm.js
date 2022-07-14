@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postPapers, uploadPaper, cleanupRequest as cleanupPapersRequest } from '/state/papers'
+import { postPapers, cleanupRequest as cleanupPapersRequest } from '/state/papers'
 
 import AuthorsInput from './AuthorsInput'
 import FieldsInput from '/components/fields/FieldsInput'
@@ -19,26 +19,17 @@ import './SubmitDraftForm.css'
  */
 const SubmitDraftForm = function(props) { 
 
-    // ================ State used in Rendering ===============================
+    // ================ Render State ================================
     const [title, setTitle] = useState('')
     const [authors, setAuthors] = useState([])
     const [fields, setFields] = useState([])
     const [file, setFile] = useState(null)
 
+    const [errors, setErrors] = useState([])
+
     // ================== Request Tracking ====================================
     
     const [postPapersRequestId, setPostPapersRequestId] = useState(null)
-
-    // ============= Helpers ==================================================
-
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
-
-
-    // ============= Collect State from Redux =================================
-
-    // ============= Requests =================================================
-
     const postPapersRequest = useSelector(function(state) {
         if (postPapersRequestId) {
             return state.papers.requests[postPapersRequestId]
@@ -47,22 +38,36 @@ const SubmitDraftForm = function(props) {
         }
     })
 
-    // ================= State ================================================
+    // ================= Redux State ================================================
     
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
 
-    // =========== Event Handling Methods =====================================
+    // =========== Actions and Event Handling =====================================
+
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     /**
-     * Handle the form's submission by attempting to post the paper. 
-     * Store the postPapersRequestId so that we can track the request and respond to
+     * Handle the form's submission by attempting to post the paper.  Store the
+     * postPapersRequestId so that we can track the request and respond to
      * errors.
+     *
+     * @param {Event} event Standard Javascript event object.
      */
     const onSubmit = function(event) {
         event.preventDefault();
+
+        const foundErrors = []
+        if ( ! title ) {
+           foundErrors.push('missing-title') 
+        }
+        if (foundErrors.length > 0) {
+            setErrors(foundErrors)
+            return false
+        }
 
         const paper = {
             title: title,
@@ -76,14 +81,13 @@ const SubmitDraftForm = function(props) {
             ]
 
         }
-
         setPostPapersRequestId(dispatch(postPapers(paper)))
 
         return false
     }
 
 
-    // ================= Data Fetching and Side Effects =======================
+    // ================= Effect Handling =======================
 
     useEffect(function() {
         if ( currentUser && authors.length == 0) {
@@ -97,37 +101,41 @@ const SubmitDraftForm = function(props) {
             }
             setAuthors([ author ])
         }
-    }, [ currentUser, authors ])
+    }, [ currentUser ])
 
 
     useEffect(function() {
-
         if ( postPapersRequest && postPapersRequest.state == 'fulfilled') {
             const path = "/draft/" + postPapersRequest.result.id
             navigate(path)
         }
 
+    }, [ postPapersRequest] )
+
+    useEffect(function() {
         return function cleanup() {
-            if ( postPapersRequest ) {
-                dispatch(cleanupPapersRequest(postPapersRequest))
+            if ( postPapersRequestId ) {
+                dispatch(cleanupPapersRequest({ requestId: postPapersRequestId }))
             }
         }
-    }, [ postPapersRequest] )
+    }, [ postPapersRequestId])
 
 
     // ====================== Render ==========================================
 
-    // If we're not logged in, we don't want to render the form at all. Show a
-    // spinner and navigate away.  Alternatively, we've requested the current
-    // user and we're waiting for the request to return.
-    if ( ! currentUser ) {
+    if ( postPapersRequest ) {
         return (
             <Spinner />
         )
-    } else if ( postPapersRequest ) {
-        return (
-            <Spinner />
-        )
+    }
+
+    let titleErrorElement = null
+    if ( errors ) {
+        for ( const error of errors ) {
+            if ( error == 'missing-title' ) {
+                titleErrorElement = ( <div className="error">Title is required!</div> )
+            }
+        }
     }
 
     return (
@@ -141,7 +149,9 @@ const SubmitDraftForm = function(props) {
                     <input type="text" 
                         name="title" 
                         value={title}
-                        onChange={ (event) => setTitle(event.target.value) } />
+                        onChange={ (event) => setTitle(event.target.value) } 
+                    />
+                    { titleErrorElement }
                 </div>
 
                 <AuthorsInput authors={authors} setAuthors={setAuthors} />

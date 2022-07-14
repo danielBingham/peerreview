@@ -3,19 +3,22 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { patchUser, cleanupRequest } from '/state/users'
 
+import Spinner from '/components/Spinner'
+
 import './UserProfileEditForm.css'
 
 const UserProfileEditForm = function(props) {
+
+    // ======= Render State =========================================
+    
     const [name, setName] = useState('')
     const [institution, setInstitution] = useState('')
     const [location, setLocation] = useState('')
     const [bio, setBio] = useState('')
 
-    const [status, setStatus] = useState(null)
+    // ======= Request Tracking =====================================
+
     const [requestId, setRequestId] = useState(null)
-
-    const dispatch = useDispatch()
-
     const request = useSelector(function(state) {
         if ( requestId ) {
             return state.users.requests[requestId]
@@ -24,9 +27,15 @@ const UserProfileEditForm = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
+
+    // ======= Actions and Event Handling ===========================
+
+    const dispatch = useDispatch()
 
     const onSubmit = function(event) {
         event.preventDefault()
@@ -37,16 +46,10 @@ const UserProfileEditForm = function(props) {
         user.location = location
         user.bio = bio
 
-        if ( requestId && ! request ) {
-            setStatus('You moved too fast and now we have a wierd problem.  Please report this as a bug and try again.')
-            return
-        }
-
-        if ( request ) {
-            dispatch(cleanupRequest(request))
-        }
         setRequestId(dispatch(patchUser(user)))
     }
+
+    // ======= Effect Handling ======================================
 
     useLayoutEffect(function() {
         if ( ! currentUser.name ) {
@@ -71,21 +74,38 @@ const UserProfileEditForm = function(props) {
         } else {
             setBio(currentUser.bio)
         }
-
     }, [])
 
+    // Clean up request.
     useEffect(function() {
-        if ( request && request.state == 'fulfilled' ) {
-            setStatus('Update sucessful.')
-        }
-
         return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(request))
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
             }
         }
-    }, [ request ])
+    }, [ requestId ])
 
+    // ======= Render ===============================================
+   
+    let result = null
+    if ( request && request.state == 'fulfilled' ) {
+        result = (
+            <div className="success">
+                Update successful.
+            </div>
+        )
+    } else if ( request && request.state == 'failed') {
+        result = (
+            <div className="request-failure">
+                Request failed: { request.error }.
+            </div>
+        )
+    }
+
+    let submit = ( <input type="submit" name="submit" value="Submit" /> )
+    if ( request && request.state == 'pending') {
+        submit = ( <Spinner /> )
+    }
 
     return (
         <div className='user-profile-edit-form'>
@@ -115,9 +135,9 @@ const UserProfileEditForm = function(props) {
                     <label htmlFor="bio">Biography</label>
                     <textarea name="bio" value={bio} onChange={ (event) => setBio(event.target.value) }></textarea>
                 </div>
-                <div className="status">{status}</div>
+                <div className="result">{result}</div>
                 <div className="form-submit submit">
-                    <input type="submit" name="submit" value="Submit" />
+                    { submit }
                 </div>
             </form>
         </div>

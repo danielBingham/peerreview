@@ -17,23 +17,20 @@ import './RegistrationForm.css'
  * @param {object} props - An empty object, takes no props.
  */
 const RegistrationForm = function(props) { 
+
+    // ======= Render State =========================================
+    
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [institution, setInstitution] = useState('')
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
 
-    const [overallError, setOverallError] = useState('')
-    const [emailError, setEmailError] = useState('')
-    const [passwordConfirmationError, setPasswordConfirmationError] = useState('')
+    const [passwordConfirmationError, setPasswordConfirmationError] = useState(false)
+
+    // ======= Request Tracking =====================================
 
     const [postUsersRequestId, setPostUsersRequestId] = useState(null)
-    const [postAuthenticationRequestId, setAuthenticateRequestId] = useState(null)
-
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
-
-
     const postUsersRequest = useSelector(function(state) {
         if (postUsersRequestId) {
             return state.users.requests[postUsersRequestId]
@@ -41,6 +38,8 @@ const RegistrationForm = function(props) {
             return null
         }
     })
+
+    const [postAuthenticationRequestId, setAuthenticateRequestId] = useState(null)
     const authenticationRequest = useSelector(function(state) {
         if (postAuthenticationRequestId) {
             return state.authentication.requests[postAuthenticationRequestId]
@@ -48,9 +47,17 @@ const RegistrationForm = function(props) {
             return null
         }
     })
+
+    // ======= Redux State ==========================================
+    
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
+
+    // ======= Actions and Event Handling ===========================
+    
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     /**
      * Handle a form submission event.
@@ -61,7 +68,7 @@ const RegistrationForm = function(props) {
         event.preventDefault();
 
         if (password != confirmPassword) {
-            setPasswordConfirmationError("Your passwords do not match!")
+            setPasswordConfirmationError(true)
             return
         }
 
@@ -75,51 +82,52 @@ const RegistrationForm = function(props) {
         setPostUsersRequestId(dispatch(postUsers(user)))
     }
 
-    useLayoutEffect(function() {
-        document.body.className='grey-background'
-        
-        return function cleanup() {
-            document.body.className=''
-        }
-    }, [])
+    // ======= Effect Handling ======================================
 
-
-    // Make sure to do our cleanup in a useEffect so that we do it after
-    // rendering.
     useEffect(function() {
         // If we have a user logged in, at all, then we want to navigate away
         // to the home page.  This works whether we're nagivating away to the
-        // home page after we've postAuthenticationd a newly registered user or
-        // navigating away to the homepage after an already postAuthenticationd user
+        // home page after we've authenticated a newly registered user or
+        // navigating away to the homepage after an already authenticated user
         // somehow winds up on the registration page.  Either way, we don't
         // want to be here.
         if ( currentUser ) {
-
-            // Make sure we cleanup our authentication request before we go.
-            dispatch(cleanupAuthenticationRequest({requestId: postAuthenticationRequestId}))
-
-            navigate("/", {replace: true})
+            navigate("/")
         }
+    }, [ currentUser ])
 
-        // If we've successfully created our user, then we want to postAuthentication them.
+    useEffect(function() {
+        // If we've successfully created our user, then we want to authenticate them.
         if ( postUsersRequest && postUsersRequest.state == 'fulfilled') {
-            // At this point, we're done with the postUsers request, so clean
-            // it up.
-            dispatch(cleanupUsersRequest({requestId: postUsersRequestId}))
-
             setAuthenticateRequestId(dispatch(postAuthentication(email, password)))
         } 
-    })
+    }, [ postUsersRequest ])
 
 
-    // Handle errors in the registration process.
-    if ( postUsersRequest ) {
-        if (postUsersRequest.status == 409 ) {
-            setEmailError('A user with that email already exists.  Please login instead.')
-        } else if (postUsersRequest.error) {
-            setOverallError(postUsersRequest.error)
+    useLayoutEffect(function() {
+        // Handle errors in the registration process.
+        if ( postUsersRequest && postUsersRequest.status == 'failed' ) {
         }
-    }
+    }, [ postUsersRequest ])
+
+    // Cleanup the postUsersRequest.
+    useEffect(function() {
+        return function cleanup() {
+            if ( postUsersRequestId ) {
+                dispatch(cleanupUsersRequest({requestId: postUsersRequestId}))
+            }
+        }
+    }, [ postUsersRequestId])
+
+    // Cleanup the postAuthenticationRequest.
+    useEffect(function() {
+        return function cleanup() {
+            if ( postAuthenticationRequestId ) {
+                dispatch(cleanupAuthenticationRequest({requestId: postAuthenticationRequestId}))
+            }
+        }
+    }, [ postAuthenticationRequestId])
+
 
 
     // ====================== Render ==========================================
@@ -131,6 +139,21 @@ const RegistrationForm = function(props) {
         return (
             <Spinner />
         )
+    }
+
+    let overallError = null
+    let emailError = null
+    if ( postUsersRequest && postUsersRequest.state == 'failed') {
+        if (postUsersRequest.status == 409 ) {
+            emailError = ( <div className="email-conflict-error">A user with that email already exists.  Please login instead.</div> )
+        } else { 
+            overallError = (<div className="unknown-error">{ postUsersRequest.error }</div> )
+        }
+    }
+
+    let passwordConfirmationErrorElement = null
+    if ( passwordConfirmationError ) {
+        passwordConfirmationErrorElement = ( <div className="unmatched-passwords-error">Your passwords don't match!</div> )
     }
 
     return (
@@ -180,7 +203,7 @@ const RegistrationForm = function(props) {
                         name="confirmPassword"
                         value={confirmPassword}
                         onChange={ (event) => setConfirmPassword(event.target.value) } />
-                    <div className="error">{passwordConfirmationError}</div>
+                    <div className="error">{passwordConfirmationErrorElement}</div>
                 </div>
                 <div className="submit field-wrapper">
                     <input type="submit" name="register" value="Register" />

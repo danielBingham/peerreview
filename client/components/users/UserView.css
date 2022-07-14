@@ -1,6 +1,20 @@
-.user-view h1 {
-    font-size: 2em;
-    text-align: center;
+.user-view .header {
+    display: grid;
+    grid-template-columns: auto auto;
+    border-bottom: thin solid #ddd;
+    margin-bottom: 20px;
+}
+.user-view .header h1 {
+    grid-column: 1 / 2;
+    font-size: 20px;
+    padding: 0;
+    margin: 0;
+}
+.user-view .header .controls {
+    grid-column: 2 / 3;
+    text-align: right;
+    padding: 4px;
+    margin-right: 10px;
 }
 .user-view .label {
     display: inline-block;
@@ -17,6 +31,9 @@
 }
 .user-view .details {
     min-height: 150px;
+}
+.user-view .details div {
+    padding: 12px;
 }
 .user-view .fields-header, .user-view .papers-header {
     clear: both;

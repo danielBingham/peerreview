@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router'
 
-import { getPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
+import { getPaper, cleanupRequest } from '/state/papers'
 
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
@@ -41,6 +41,8 @@ const DraftPaperView = function(props) {
         return state.papers.dictionary[props.id]
     })
 
+    // ======= Effect Handling =====================
+
     useEffect(function() {
         if ( paper && ! paper.isDraft ) {
             const url = `/paper/${paper.id}`
@@ -54,17 +56,18 @@ const DraftPaperView = function(props) {
      * retrieve it from the paper endpoint to get full and up to date data.
      */
     useEffect(function() {
-        if ( ! requestId ) {
-            setRequestId(dispatch(getPaper(props.id)))
-        } 
+        setRequestId(dispatch(getPaper(props.id)))
+    }, [])
 
+    // Clean up our request.
+    useEffect(function() {
         return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupPaperRequest(request))
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
             }
         }
+    }, [ requestId ])
 
-    }, [])
 
 
     // ================= Render ===============================================
@@ -89,10 +92,11 @@ const DraftPaperView = function(props) {
         return (
             <div id={id} className="draft-paper">
                 <h2 className="title">{paper.title}</h2>
+                <div className="submitted date">{paper.createdDate}</div>
                 <div className="authors">{authors}</div>
                 <div className="fields">{fields}</div>
-                <DraftPaperControlView paper={paper} />
-                <DraftPaperReviewsWrapperView paper={paper} />
+                <DraftPaperControlView paper={paper} versionNumber={props.versionNumber} />
+                <DraftPaperReviewsWrapperView paper={paper} versionNumber={props.versionNumber} />
             </div>
         )
      } else {

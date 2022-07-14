@@ -8,6 +8,9 @@
 const PaperDAO = require('../daos/paper.js')
 const FieldDAO = require('../daos/field.js')
 
+const ControllerError = require('../errors/ControllerError')
+const DAOError = require('../errors/DAOError')
+
 
 /**
  *
@@ -121,10 +124,11 @@ module.exports = class PaperController {
      */
     async postPapers(request, response) {
         try {
+            if ( ! request.session || ! request.session.user ) {
+                throw new ControllerError(403, 'not-authorized', `User must be authenticated to submit a paper!`)
+            }
+
             const paper = request.body
-            console.log('postPapers')
-            console.log('paper')
-            console.log(paper)
 
             paper.id = await this.paperDAO.insertPaper(paper) 
             await this.paperDAO.insertAuthors(paper) 
@@ -139,78 +143,13 @@ module.exports = class PaperController {
             }
         } catch (error) {
             this.logger.error(error)
-            return response.status(500).json({error: 'server-error'})
-        }
-    }
-
-    /**
-     * POST /paper/:id/upload
-     *
-     * Upload a version of a paper.
-     */
-    async uploadPaper(request, response) {
-        try {
-            const titleResults = await this.database.query(`
-                SELECT
-                    title
-                FROM papers
-                WHERE id = $1
-                `,
-                [ request.params.id ]
-            )
-
-            if ( titleResults.rows.length == 0 ) {
-                this.logger.error('Attempt to upload paper that does not exist.')
-                fs.rmSync(request.file.path)
-                return response.status(404).json({ error: 'no-paper' })
-            }
-
-
-            const versionResults = await this.database.query(`
-                INSERT INTO paper_versions
-                    (paper_id, version, filepath)
-                VALUES
-                    ($1, $2, $3)
-                RETURNING 
-                    paper_id, version, filepath
-                `,
-                [request.params.id, version, request.file.path]
-            )
-
-
-            if (versionResults.rows.length == 0) {
-                this.logger.error('Insert paper version failed silently for ' + paper_id + ' and ' + request.file.path)
-                fs.rmSync(request.file.path)
-                return response.status(500).json({ error: 'unknown' })
-            }
-
-
-            const updateResults = await this.database.query(`
-                UPDATE paper_versions SET
-                    filepath = $1
-                WHERE paper_id = $2 and version = $3
-                `,
-                [ filepath, request.params.id, version ]
-            )
-
-            if (updateResults.rowCount == 0) {
-                this.logger.error('Failed to update paper version with new filepath: ' + filepath)
-                fs.rmSync(base + filepath)
-                return response.status(500).json({ error: 'failed-filepath-update' })
-            }
-
-            fs.rmSync(request.file.path)
-
-            const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [request.params.id])
-            if ( ! returnPapers ) {
-                this.logger.error('Failed to find paper after upload.')
-                return response.status(500).json({ error: 'server-error' })
+            if ( error instanceof ControllerError) {
+                return response.status(error.status).json({ error: error.type })
+            } else if ( error instanceof DAOError) {
+                return response.status(500).json({error: 'server-error'})
             } else {
-                return response.status(200).json(returnPapers[0])
+                return response.status(500).json({error: 'server-error'})
             }
-        } catch (error) {
-            this.logger.error(error)
-            return response.status(500).json({ error: 'unknown' })
         }
     }
 
@@ -369,5 +308,43 @@ module.exports = class PaperController {
         }
     }
 
+    async postPaperVersions(request, response) {
+        try {
+            const paperId = request.params.id
+            if ( ! request.session || ! request.session.user ) {
+                throw new ControllerError(403, 'not-authorized', `Un-authorized user attempted to submit a new version of Paper(${paperId}).`)
+            }
+            const version = request.body
+
+            const papers = this.paperDAO.selectPapers('WHERE papers.id=$1', [paperId])
+            if ( papers.length <= 0) {
+                throw new ControllerError(404, 'not-found', `Attempt to submit a version, but Paper(${paperId}) not found!`)
+            }
+            const paper = papers[0]
+
+            if ( ! paper.authors.find((a) => a.user.id == request.session.user.id)) {
+                throw new ControllerError(403, 'not-authorized', `Un-authorized User(${request.session.user.id}) attempted to submit a new version of Paper(${paper.id}) of which they are not an author.`)
+            }
+
+            await this.paperDAO.insertVersion(paper, version)
+
+            const returnPapers = this.paperDAO.selectPapers('WHERE papers.id = $1', [ paper.id ])
+            if ( returnPapers.length <= 0) {
+                throw new Error(`Paper(${paper.id}) not found after inserting a new version!`)
+            }
+            return response.status(200).json(returnPapers[0])
+        } catch (error) {
+            this.logger.error(error)
+            if ( error instanceof ControllerError) {
+                return response.status(error.status).json({ error: error.type })
+            } else if ( error instanceof DAOError) {
+                return response.status(500).json({error: 'server-error'})
+            } else {
+                return response.status(500).json({error: 'server-error'})
+            }
+
+        }
+
+    }
 
 } 

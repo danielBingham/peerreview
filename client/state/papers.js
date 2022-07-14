@@ -6,7 +6,11 @@ import logger from '../logger'
 
 import { addFieldsToDictionary } from './fields'
 import { addUsersToDictionary } from './users'
-import RequestTracker from './helpers/requestTracker'
+import { makeRequest as makeTrackedRequest, 
+    failRequest as failTrackedRequest, 
+    completeRequest as completeTrackedRequest, 
+    cleanupRequest as cleanupTrackedRequest, 
+    garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
 export const papersSlice = createSlice({
     name: 'papers',
@@ -18,6 +22,14 @@ export const papersSlice = createSlice({
          * @type {object}
          */
         requests: {},
+
+        /**
+         * A dictionary of recent requests keyed by method-endpoint to allow us
+         * to determine whether we've made a certain request recently.
+         *
+         * @type {object}
+         */
+        requestCache: {},
 
         /**
          * A dictionary of papers we've retrieved from the backend, keyed by
@@ -99,6 +111,20 @@ export const papersSlice = createSlice({
             }
         },
 
+        addVoteToPaper: function(state, action) {
+            // Add the vote to the dictionary
+            const vote = action.payload
+            if ( state.dictionary[vote.paperId] ) {
+                state.dictionary[vote.paperId].votes.push(vote)
+            }
+
+            // Add the vote to the list.
+            const paper = state.list.find((p) => p.id == vote.paperId)
+            if ( paper ) {
+                paper.votes.push(vote)
+            }
+        },
+
         /**
          * Clear the list, as when you want to start a new ordered query.
          *
@@ -120,85 +146,26 @@ export const papersSlice = createSlice({
          */
         completePostVotesRequest: function(state, action) {
             RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            state.dictionary[action.payload.result.paperId].votes.push(action.payload.result)
         },
 
-        // TECHDEBT Assumes we're never getting votes for a paper we haven't
-        // already queried into the database. Not necessarily a safe
-        // assumption.
-        completeGetVotesRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-            for(const vote of action.payload.result) {
-                state.dictionary[vote.paper_id].votes.push(vote)
-            }
-        },
+        // ========== Request Tracking Methods =============
 
-        // ========== Generic Request Methods =============
-        // Use these methods when no extra logic is needed.  If additional
-        // logic is needed for a particular request, make a reducer of the form
-        // [make/fail/complete/cleanup][method][endpoint]Request().  For
-        // example, makePostPapersRequest().  The reducer should take an object
-        // with at least requestId defined, along with whatever all inputs it
-        // needs.
-
-        /**
-         * Make a request to a paper or papers endpoint.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {string} action.payload.method - One of the HTTP verbs
-         * @param {string} action.payload.endpoint - The endpoint we're making the request to
-         */
-        makeRequest: function(state, action) {
-            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker(action.payload.method, action.payload.endpoint)
-            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Fail a request to a paper or papers endpoint, usually with an error.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {int} action.payload.status - (Optional) The status code returned with the response.
-         * @param {string} action.payload.error - (Optional) A string error message.
-         */
-        failRequest: function(state, action) {
-            RequestTracker.failRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Complete a request to a paper or papers endpoint by setting the paper
-         * sent back by the backend in the papers hash.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.result - A populated paper object, must have `id` defined
-         */
-        completeRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Cleanup a request by removing it from our request hash.  Once we're
-         * done with a request, we don't need to keep its tracking around.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         */
-        cleanupRequest: function(state, action) {
-            delete state.requests[action.payload.requestId]
-        }
+        makeRequest: makeTrackedRequest, 
+        failRequest: failTrackedRequest, 
+        completeRequest: completeTrackedRequest,
+        cleanupRequest: cleanupTrackedRequest, 
+        garbageCollectRequests: garbageCollectTrackedRequests
     }
 })
 
+const getRequestFromCache = function(state, method, endpoint) {
+    for ( const id in state.papers.requests) {
+        if ( state.papers.requests[id].method == method && state.papers.requests[id].endpoint == endpoint ) {
+            return state.papers.requests[id]
+        }
+    }
+    return null
+}
 
 /**
  * GET /papers
@@ -210,8 +177,11 @@ export const papersSlice = createSlice({
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getPapers = function(params) {
+export const getPapers = function(params, replaceList) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
+
         const queryString = new URLSearchParams()
         for ( const key in params ) {
             if ( Array.isArray(params[key]) ) {
@@ -223,9 +193,30 @@ export const getPapers = function(params) {
             }
         }
 
-        const requestId = uuidv4() 
         const endpoint = '/papers' + ( params ? '?' + queryString.toString() : '')
 
+        const request = getRequestFromCache(getState(), 'GET', endpoint)
+        if ( request ) {
+            if ( replaceList ) {
+                dispatch(papersSlice.actions.clearList())
+
+                const state = getState()
+                const list = [ ...request.result ]
+                for(const [index, paper] of list.entries()) {
+                    if ( state.papers.dictionary[paper.id] ) {
+                        list[index] = state.papers.dictionary[paper.id]
+                    }
+                }
+                dispatch(papersSlice.actions.appendPapersToList(list))
+            }
+            return request.requestId
+        }
+
+        if ( replaceList ) {
+            dispatch(papersSlice.actions.clearList())
+        }
+
+        const requestId = uuidv4() 
         let payload = {
             requestId: requestId
         }
@@ -253,6 +244,7 @@ export const getPapers = function(params) {
                 }
                 dispatch(papersSlice.actions.appendPapersToList(papers))
             } 
+
             payload.result = papers
             dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -283,9 +275,12 @@ export const getPapers = function(params) {
  */
 export const postPapers = function(paper) {
     return function(dispatch, getState) {
-        const requestId = uuidv4()
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
+
         const endpoint = '/papers'
 
+        const requestId = uuidv4()
         const payload = {
             requestId: requestId
         }
@@ -306,66 +301,12 @@ export const postPapers = function(paper) {
             }
         }).then(function(returnedPaper) {
             dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
-            payload.result = returnedPaper
-            dispatch(papersSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(papersSlice.actions.failRequest(payload))
-        })
-
-        return requestId
-    }
-}
-
-
-/**
- * POST /paper/:id/upload
- *
- * Upload a new version of a paper.
- *  
- * Makes the request asynchronously and returns a id that can be used to track
- * the request and retreive the results from the state slice.
- *
- * @param {object} paper - A populated paper object, minus the `id` member.
- *
- * @returns {string} A uuid requestId that can be used to track this request.
- */
-export const uploadPaper = function(id, file) {
-    return function(dispatch, getState) {
-        const requestId = uuidv4()
-        const endpoint = '/paper/' + id + '/upload'
-
-        const payload = {
-            requestId: requestId,
-            paper_id: id
-        }
-
-        var formData = new FormData()
-        formData.append('paperVersion', file)
-
-        dispatch(papersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            body: formData 
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(paper) {
-            for(const author of paper.authors) {
+            for (const author of paper.authors) {
                 dispatch(addUsersToDictionary(author.user))
             }
             dispatch(addFieldsToDictionary(paper.fields))
-            dispatch(papersSlice.actions.addPapersToDictionary(paper))
-            payload.result = paper 
+
+            payload.result = returnedPaper
             dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -395,10 +336,12 @@ export const uploadPaper = function(id, file) {
  */
 export const getPaper = function(id) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
 
-        const requestId = uuidv4()
         const endpoint = '/paper/' + id
 
+        const requestId = uuidv4()
         const payload = {
             requestId: requestId
         }
@@ -422,6 +365,7 @@ export const getPaper = function(id) {
             }
             dispatch(addFieldsToDictionary(paper.fields))
             dispatch(papersSlice.actions.addPapersToDictionary(paper))
+
             payload.result = paper
             dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
@@ -452,10 +396,12 @@ export const getPaper = function(id) {
  */
 export const putPaper = function(paper) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
     
-        const requestId = uuidv4()
         const endpoint = '/paper/' + paper.id
 
+        const requestId = uuidv4()
         const payload = {
             requestId: requestId
         }
@@ -512,6 +458,8 @@ export const putPaper = function(paper) {
  */
 export const patchPaper = function(paper) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/paper/' + paper.id
@@ -570,6 +518,8 @@ export const patchPaper = function(paper) {
  */
 export const deletePaper = function(paper) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/paper/' + paper.id
@@ -608,30 +558,36 @@ export const deletePaper = function(paper) {
 } 
 
 /**
- * GET /paper/:paper_id/votes
+ * POST /paper/:id/versions
  *
- * Get all votes on this paper from the database.
- *
+ * Create a new version of a paper.
+ *  
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
+ * @param {object} paper - A populated paper object, minus the `id` member.
+ *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getVotes = function(paper_id) {
+export const postPaperVersions = function(paper, version) {
     return function(dispatch, getState) {
-        const requestId = uuidv4() 
-        const endpoint = `/paper/${paper_id}/votes`
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
 
-        let payload = {
+        const endpoint = `/paper/${paper.id}/versions`
+
+        const requestId = uuidv4()
+        const payload = {
             requestId: requestId
         }
 
-        dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        dispatch(papersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
-            method: 'GET',
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
-            }
+            },
+            body: JSON.stringify(version)
         }).then(function(response) {
             payload.status = response.status
             if ( response.ok ) {
@@ -639,9 +595,15 @@ export const getVotes = function(paper_id) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(votes) {
-            payload.result = votes
-            dispatch(papersSlice.actions.completeGetVotesRequest(payload))
+        }).then(function(returnedPaper) {
+            for(const author of returnedPaper.authors) {
+                dispatch(addUsersToDictionary(author.user))
+            }
+            dispatch(addFieldsToDictionary(returnedPaper.fields))
+            dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
+
+            payload.result = returnedPaper
+            dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -671,10 +633,12 @@ export const getVotes = function(paper_id) {
  */
 export const postVotes = function(vote) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
 
-        const requestId = uuidv4()
         const endpoint = `/paper/${vote.paperId}/votes`
 
+        const requestId = uuidv4()
         const payload = {
             requestId: requestId
         }
@@ -694,9 +658,10 @@ export const postVotes = function(vote) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedVote) {
+            dispatch(papersSlice.actions.addVoteToPaper(returnedVote))
+
             payload.result = returnedVote 
-            console.log(payload)
-            dispatch(papersSlice.actions.completePostVotesRequest(payload))
+            dispatch(papersSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()
@@ -712,6 +677,6 @@ export const postVotes = function(vote) {
 }
 
 
-export const {  addPapersToDictionary, appendPapersToList, removePapers, clearList, completePostVotesRequest, makeRequest, failRequest, completeRequest, cleanupRequest }  = papersSlice.actions
+export const {  addPapersToDictionary, appendPapersToList, removePapers, clearList, completePostVotesRequest, cleanupRequest   }  = papersSlice.actions
 
 export default papersSlice.reducer

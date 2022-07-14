@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -8,12 +8,20 @@ import { postSettings, patchSetting, cleanupRequest }  from '/state/settings'
 
 import './WelcomeNotice.css'
 
+/**
+ * Show a notice welcoming the user to Peer Review, giving a short explanation
+ * of what it is, and linking them to more documentation.
+ *
+ * @param {object} props    Standard react props - empty.
+ */
 const WelcomeNotice = function(props) {
+
+    // ======= Render State =========================================
+    
     const [ isClosed, setIsClosed ] = useState(false)
+
+    // ======= Request Tracking =====================================
     const [ requestId, setRequestId ] = useState(null)
-
-    const dispatch = useDispatch()
-
     const request = useSelector(function(state) {
         if ( requestId ) {
             return state.settings.requests[requestId]
@@ -22,6 +30,8 @@ const WelcomeNotice = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+    
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
@@ -30,6 +40,16 @@ const WelcomeNotice = function(props) {
         return state.authentication.settings
     })
 
+    // ======= Actions and Event Handling ===========================
+    
+    const dispatch = useDispatch()
+
+    /**
+     * Close the notice and record the closure in the user's settings or
+     * session.
+     *
+     * @param {Event} event The standard javascript event object.
+     */
     const close = function(event) {
         setIsClosed(true)
 
@@ -50,18 +70,26 @@ const WelcomeNotice = function(props) {
         } 
     }
 
+    // ======= Effect Handling ======================================
+
+    // Initialize the state from the user's settings.
     useLayoutEffect(function() {
         if ( settings && settings.welcomeDismissed ) {
             setIsClosed(true)
         }
-
-        return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(request))
-            }
-        }
     }, [ settings ])
 
+    // Cleanup our request.
+    useEffect(function() {
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({requestId: requestId}))
+            }
+        }
+    }, [ requestId])
+
+    // ======= Render ===============================================
+    
     if ( ! isClosed ) {
         return (
             <div className="welcome-notice">

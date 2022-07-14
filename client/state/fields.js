@@ -4,7 +4,11 @@ import { v4 as uuidv4 } from 'uuid'
 import configuration from '../configuration'
 import logger from '../logger'
 
-import RequestTracker from './helpers/requestTracker'
+import { makeRequest as makeTrackedRequest, 
+    failRequest as failTrackedRequest, 
+    completeRequest as completeTrackedRequest, 
+    cleanupRequest as cleanupTrackedRequest, 
+    garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
 export const fieldsSlice = createSlice({
     name: 'fields',
@@ -94,71 +98,13 @@ export const fieldsSlice = createSlice({
             state.list = []
         },
 
-        // ========== Generic Request Methods =============
-        // Use these methods when no extra logic is needed.  If additional
-        // logic is needed for a particular request, make a reducer of the form
-        // [make/fail/complete/cleanup][method][endpoint]Request().  For
-        // example, makePostFieldsRequest().  The reducer should take an object
-        // with at least requestId defined, along with whatever all inputs it
-        // needs.
+        // ========== Request Tracking Methods =============
 
-        /**
-         * Make a request to a field or fields endpoint.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {string} action.payload.method - One of the HTTP verbs
-         * @param {string} action.payload.endpoint - The endpoint we're making the request to
-         */
-        makeRequest: function(state, action) {
-            state.requests[action.payload.requestId] = RequestTracker.getRequestTracker(action.payload.method, action.payload.endpoint)
-            RequestTracker.makeRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Fail a request to a field or fields endpoint, usually with an error.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {int} action.payload.status - (Optional) The status code returned with the response.
-         * @param {string} action.payload.error - (Optional) A string error message.
-         */
-        failRequest: function(state, action) {
-            RequestTracker.failRequest(state.requests[action.payload.requestId], action)
-        },
-
-        /**
-         * Complete a request to a field or fields endpoint by setting the field
-         * sent back by the backend in the fields hash.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         * @param {object} action.payload.result - A populated field object, must have `id` defined
-         */
-        completeRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-
-            state.dictionary[action.payload.result.id] = action.payload.result
-        },
-
-        /**
-         * Cleanup a request by removing it from our request hash.  Once we're
-         * done with a request, we don't need to keep its tracking around.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - The payload sent with the action.
-         * @param {string} action.payload.requestId - A uuid for the request.
-         */
-        cleanupRequest: function(state, action) {
-            delete state.requests[action.payload.requestId]
-        }
+        makeRequest: makeTrackedRequest, 
+        failRequest: failTrackedRequest, 
+        completeRequest: completeTrackedRequest,
+        cleanupRequest: cleanupTrackedRequest, 
+        garbageCollectRequests: garbageCollectTrackedRequests
     }
 })
 
@@ -177,6 +123,9 @@ export const fieldsSlice = createSlice({
  */
 export const getFields = function(params) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(fieldsSlice.actions.garbageCollectRequests())
+
         const queryString = new URLSearchParams(params)
 
         const requestId = uuidv4() 
@@ -234,6 +183,8 @@ export const getFields = function(params) {
  */
 export const postFields = function(field) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(fieldsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/fields'
@@ -290,6 +241,8 @@ export const postFields = function(field) {
  */
 export const getField = function(id) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(fieldsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/field/' + id
@@ -344,6 +297,8 @@ export const getField = function(id) {
  */
 export const putField = function(field) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(fieldsSlice.actions.garbageCollectRequests())
     
         const requestId = uuidv4()
         const endpoint = '/field/' + field.id
@@ -401,6 +356,8 @@ export const putField = function(field) {
  */
 export const patchField = function(field) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(fieldsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/field/' + field.id
@@ -456,6 +413,8 @@ export const patchField = function(field) {
  */
 export const deleteField = function(field) {
     return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(fieldsSlice.actions.garbageCollectRequests())
 
         const requestId = uuidv4()
         const endpoint = '/field/' + field.id

@@ -9,15 +9,19 @@ import './HomePage.css'
 
 const HomePage = function(props) {
 
-    const settings = useSelector(function(state) {
-        return state.authentication.settings
+    const fieldSettings = useSelector(function(state) {
+        if ( state.authentication.settings ) {
+            return state.authentication.settings.fields
+        } else {
+            return []
+        }
     })
 
     let query = null
-    if ( settings && settings.fields) {
+    if ( fieldSettings.length > 0) {
         const ignored = []
         const isolated = []
-        for (const settingField of settings.fields) {
+        for (const settingField of fieldSettings) {
             if( settingField.setting == 'isolated' ) {
                 isolated.push(settingField.fieldId)
             } else if (settingField.setting == 'ignored' ) {
@@ -29,7 +33,6 @@ const HomePage = function(props) {
             excludeFields: ignored
         }
     }
-
 
     return (
         <div id="home-page" className="page">

@@ -9,16 +9,23 @@ import AuthenticationNavigation from './navigation/AuthenticationNavigation'
 
 import './Header.css'
 
+/**
+ * A component to render the site header.
+ *
+ * @param {object} props    Standard react props object - empty.
+ */
 const Header = function(props) {
 
+    // ======= Render ===============================================
+    
     return (
         <header>
-            <section id="site-title"><Link to="/">Peer Review</Link></section>
-            <section id="navigation">
+            <div id="site-title"><Link to="/">Peer Review</Link></div>
+            <div id="navigation">
                 <MainNavigation />
                 <UserNavigation /> 
                 <AuthenticationNavigation />
-            </section>
+            </div>
         </header>
     )
 

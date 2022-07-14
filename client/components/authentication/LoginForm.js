@@ -15,12 +15,14 @@ import './LoginForm.css'
  * @param {object} props - An empty object, takes no props.
  */
 const LoginForm = function(props) { 
+
+    // ======= Render State =========================================
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [requestId, setRequestId] = useState(null);
 
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
+    // ======= Request Tracking =====================================
+   
+    const [requestId, setRequestId] = useState(null);
 
     const request = useSelector(function(state) {
         if (requestId) {
@@ -30,14 +32,23 @@ const LoginForm = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+   
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
+    // ======= Actions and Event Handling ===========================
+   
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+
     /**
-     * Handle the form's submission by attempting to postAuthentication the user.
+     * Handle the form's submission by attempting to authenticate the user.
      * Store the requestId so that we can track the request and respond to
      * errors.
+     *
+     * @param {Event} event Standard Javascript event.
      */
     const onSubmit = function(event) {
         event.preventDefault();
@@ -45,39 +56,49 @@ const LoginForm = function(props) {
         setRequestId(dispatch(postAuthentication(email, password)))
     }
 
-    useLayoutEffect(function() {
-        document.body.className='grey-background'
-
-        return function cleanup() {
-            document.body.className=''
-        }
-    }, [])
-
+    // ======= Effect Handling ======================================
+    
     useEffect(function() {
         // If we're logged in then we don't want to be here.  We don't really
         // care if we were already logged in or if this is the result of a
         // successful authentication.
         if ( currentUser ) {
-            // Cleanup our request before we go.
-            dispatch(cleanupRequest({requestId: requestId}))
             navigate("/", { replace: true })
         }
     })
 
+    // Clean up our request.
+    useEffect(function() {
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
+            }
+        }
+    }, [ requestId ])
+
     // ====================== Render ==========================================
 
+    let error = null
     // Show a spinner if the request we made is still in progress.
     if (request && request.state == 'pending') {
         return (
             <Spinner />
         )
+    } 
+
+    if ( request && request.state == 'failed') {
+        if ( request.status == 403 ) {
+            error = (<div className="authentication-error">Login failed.</div>)
+        } else {
+            error = (<div className="general-error">Something went wrong: { request.error }. Please report a bug.</div>)
+        }
     }
 
     return (
         <div className='login-form'>
             <h2>Login</h2>
             <form onSubmit={onSubmit}>
-                {(request && request.status == 403) && <div className="authentication-error">Login failed.</div>}
+                <div className="error"> { error } </div>
 
                 <div className="email field-wrapper">
                     <label htmlFor="email">Email</label>

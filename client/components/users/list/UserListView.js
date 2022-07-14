@@ -10,10 +10,10 @@ import Spinner from '/components/Spinner'
 import './UserListView.css'
 
 const UserListView = function(props) {
+    
+    // ======= Request Tracking =====================================
+
     const [ requestId, setRequestId ] = useState(null)
-
-    const dispatch = useDispatch()
-
     const request = useSelector(function(state) {
         if ( requestId ) {
             return state.users.requests[requestId]
@@ -22,23 +22,30 @@ const UserListView = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+    
     const users = useSelector(function(state) {
         return state.users.dictionary
     })
 
-    useEffect(function() {
-        if ( ! requestId ) {
-            setRequestId(dispatch(getUsers()))
-        }
+    // ======= Effect Handling ======================================
 
+    const dispatch = useDispatch()
+
+    useEffect(function() {
+        setRequestId(dispatch(getUsers()))
+    }, [ ])
+
+    // Clean up our request.
+    useEffect(function() {
         return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(request))
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
             }
         }
+    }, [ requestId ])
 
-    }, [ request ])
-
+    // ======= Render ===============================================
 
     if ( users ) {
         const userBadges = []

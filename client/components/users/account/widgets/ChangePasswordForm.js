@@ -9,20 +9,16 @@ import Spinner from '/components/Spinner'
 import './ChangePasswordForm.css'
 
 const ChangePasswordForm = function(props) {
+
+    // ======= Render State =========================================
+
     const [newPassword, setNewPassword] = useState('')
     const [confirmNewPassword, setConfirmNewPassword] = useState('')
     const [oldPassword, setOldPassword] = useState('')
 
-    const [confirmPasswordError, setConfirmPasswordError] = useState(null)
-    const [oldPasswordError, setOldPasswordError] = useState(null)
-
-    const [result, setResult] = useState(null)
+    // ======= Request Tracking =====================================
 
     const [requestId, setRequestId] = useState(null)
-    const [ authRequestId, setAuthRequestId] = useState(null)
-
-    const dispatch = useDispatch()
-
     const request = useSelector(function(state) {
         if ( requestId ) {
             return state.users.requests[requestId]
@@ -31,6 +27,7 @@ const ChangePasswordForm = function(props) {
         }
     })
 
+    const [ authRequestId, setAuthRequestId] = useState(null)
     const authRequest = useSelector(function(state) {
         if ( authRequestId ) {
             return state.authentication.requests[authRequestId]
@@ -39,32 +36,28 @@ const ChangePasswordForm = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
-    const clearErrors = function() {
-        setConfirmPasswordError(null)
-        setOldPasswordError(null)
-    }
+    // ======= Actions and Event Handling ===========================
 
-    
-    const clearForm = function() {
-        clearErrors()
-        setResult(null)
-    }
+    const dispatch = useDispatch()
 
     const onSubmit = function(event) {
         event.preventDefault()
-        clearForm()
 
+        // Passwords must match.
         if (newPassword != confirmNewPassword ) {
-            setConfirmPasswordError('Your passwords must match.')
             return
         }
         setAuthRequestId(dispatch(patchAuthentication(currentUser.email, oldPassword)))
 
     }
+
+    // ======= Effect Handling ======================================
 
     useEffect(function() {
         if ( authRequest && authRequest.state == 'fulfilled') {
@@ -75,31 +68,72 @@ const ChangePasswordForm = function(props) {
                 }
 
                 setRequestId(dispatch(patchUser(user)))
-            } else {
-                setOldPasswordError('Authentication failed.  Make sure you typed your old password correctly.')
             }
-        } else if (authRequest && authRequest.state == 'failed') {
-            setOldPasswordError('Authentication failed.  Make sure you typed your old password correctly.')
         }
     }, [ authRequest ])
-                
 
+    // Clean up our request.
     useEffect(function() {
-        if ( request && request.state == 'fulfilled') {
-            clearErrors()
-            setResult('Successfully updated password!')
-        } else if(request && request.state == 'failed') {
-            clearErrors()
-            setResult('Something went wrong. Please try again.')
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
+            }
         }
-    }, [ request ])
+    }, [ requestId ])
 
+    // Clean up our request.
+    useEffect(function() {
+        return function cleanup() {
+            if ( authRequestId ) {
+                dispatch(cleanupAuthenticationRequest({ requestId: authRequestId }))
+            }
+        }
+    }, [ authRequestId ])
+
+
+    // ======= Render ===============================================
 
     let submit = null
     if ( ( request && request.state == 'in-progress') || (authRequest && authRequest.state == 'in-progress') ) {
         submit = ( <Spinner /> )
     } else {
         submit = ( <input type="submit" name="submit" value="Change Password" /> )
+    }
+
+    let confirmPasswordError = null
+    if ( newPassword !== confirmNewPassword) {
+        confirmPasswordError = (<div className="password-mismatch-error">Your passwords must match!</div>)
+    }
+
+    let oldPasswordError = null
+    if ( authRequest && authRequest.state == 'fulfilled' && authRequest.status != 200) {
+        oldPasswordError = ( 
+            <div className="authentication-failure">
+                Authentication failed.  Make sure you typed your old password correctly.
+            </div>
+        )
+    } else if ( authRequest && authRequest.state == 'failed' ) {
+        oldPasswordError = ( 
+            <div className="authentication-failure">
+                Authentication failed.  Make sure you typed your old password correctly.
+            </div>
+        )
+    }
+
+    let result = null
+    if ( request && request.state == 'fulfilled' ) {
+        result = (
+            <div className="success">
+                Password successfully updated!
+            </div>
+        )
+    } else if ( request && request.state == 'failed' ) {
+        result = (
+            <div className="request-failure">
+                Something went wrong with the attempt to update your password.  Please try again.<br />
+                If the error persists, please report a bug.
+            </div>
+        )
     }
 
     return (

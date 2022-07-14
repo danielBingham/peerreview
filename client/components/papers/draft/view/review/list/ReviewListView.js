@@ -22,9 +22,10 @@ import './ReviewListView.css'
  * displaying.
  */
 const ReviewListView = function(props) {
-    const [ postReviewsRequestId, setPostReviewRequestId ] = useState(null)
 
-    const dispatch = useDispatch()
+    // ======= Request Tracking =====================================
+
+    const [ postReviewsRequestId, setPostReviewRequestId ] = useState(null)
 
     const postReviewsRequest = useSelector(function(state) {
         if ( ! postReviewsRequestId ) {
@@ -33,6 +34,8 @@ const ReviewListView = function(props) {
             return state.reviews.requests[postReviewsRequestId]
         }
     })
+
+    // ======= Redux State ==========================================
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
@@ -50,6 +53,10 @@ const ReviewListView = function(props) {
         return state.reviews.inProgress[props.paper.id]
     })
 
+    // ======= Actions and Event Handling ===========================
+    
+    const dispatch = useDispatch()
+
     const startReview = function(event) {
         if ( ! reviewInProgress ) {
             setPostReviewRequestId(dispatch(newReview(props.paper.id, currentUser.id)))
@@ -60,15 +67,18 @@ const ReviewListView = function(props) {
         dispatch(clearSelected(props.paper.id))
     }
 
-    useEffect(function() {
+    // ======= Effect Handling ======================================
 
+    // Request tracker cleanup.
+    useEffect(function() {
         return function cleanup() {
-            if ( postReviewsRequest ) {
-                dispatch(cleanupRequest(postReviewsRequest))
+            if ( postReviewsRequestId ) {
+                dispatch(cleanupRequest({ requestId: postReviewsRequestId }))
             }
         }
+    }, [ postReviewsRequestId ])
 
-    }, [postReviewsRequest])
+    // ======= Render ===============================================
 
     const reviewItems = []
     if ( reviews ) {

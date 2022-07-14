@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { clearList, getPapers, cleanupRequest } from '/state/papers'
@@ -16,36 +16,10 @@ import './PublishedPaperList.css'
  * @param {object} props - An empty object, takes no props.
  */
 const PublishedPaperList = function(props) { 
+
+    // ======= Request Tracking =====================================
+
     const [requestId, setRequestId ] = useState(null)
-    //const [query, setQuery ] = useState(null)
-
-    console.log('\n\n ##### PublishedPaperList #####')
-    console.log('props.query')
-    console.log(props.query)
-
-    const oldQuery = useRef(props.query)
-    if ( oldQuery.current !== props.query ) {
-        console.log('Query changed.')
-        console.log('OldQuery')
-        console.log(oldQuery.current)
-        console.log('NewQuery')
-        console.log(props.query)
-        oldQuery.current = props.query
-    }
-
-    console.log('Current State: ')
-    console.log('RequestId')
-    console.log(requestId)
-
-    const dispatch = useDispatch()
-
-    const paperList = useSelector(function(state) {
-        return state.papers.list
-    })
-
-    console.log('PaperList')
-    console.log(paperList)
-
     const request = useSelector(function(state) {
         if (requestId) {
             return state.papers.requests[requestId]
@@ -54,11 +28,18 @@ const PublishedPaperList = function(props) {
         }
     })
 
-    console.log('request')
-    console.log(request)
 
-    useEffect(function() {
-        console.log('====== PublishedPaperList.EFFECT - Make request. =====')
+    // ======= Redux State ==========================================
+   
+    const paperList = useSelector(function(state) {
+        return state.papers.list
+    })
+
+    // ======= Effect Handling ======================================
+
+    const dispatch = useDispatch()
+
+    useLayoutEffect(function() {
         let query = {}
         if ( props.query ) {
             query = {
@@ -68,59 +49,57 @@ const PublishedPaperList = function(props) {
         query.isDraft = false
 
         if ( ! requestId ) {
-            console.log('No id, initial request.')
-            dispatch(clearList())
-            setRequestId(dispatch(getPapers(query)))
+            setRequestId(dispatch(getPapers(query, true)))
         } else if ( requestId && request && request.state == 'fulfilled' ) {
-            console.log('Finished request, make a new one.')
-            dispatch(clearList())
-            setRequestId(dispatch(getPapers(query)))
-        }
-
-        return function cleanup() {
-            if ( request ) {
-                dispatch(cleanupRequest(requestId))
-            }
+            setRequestId(dispatch(getPapers(query, true)))
         }
     }, [ props.query ])
 
-    console.log('===== PublishedPaperList.RENDER =====')
-    // ====================== Render ==========================================
+    // Cleanup our request.
+    useEffect(function() {
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({requestId: requestId}))
+            }
+        }
+    }, [ requestId ])
+
+    // ======= Render ===============================================
+    
+    let content = (<div className="spinner-wrapper"> <Spinner /> </div>) 
     if ( request && request.state == 'fulfilled') { 
-
-        let listItems = []
+        content = []
         for (const paper of paperList) {
-            listItems.push(<PublishedPaperListItem paper={paper} key={paper.id} />)
+            content.push(<PublishedPaperListItem paper={paper} key={paper.id} />)
         }
 
-        if ( listItems.length == 0 ) {
-            listItems = ( <div className="empty-search">No published papers to display.</div>)
+        if ( content.length == 0 ) {
+            content = ( <div className="empty-search">No published papers to display.</div>)
         }
+    }
 
-        return (
-            <section className="published-paper-list">
-                <div className="error"> {request && request.error} </div>
-                <div className="header">
-                    <h2>Published Papers</h2>
-                    <div className="controls">
-                        <div className="sort">
-                            <div>Newest</div>
-                            <div>Active</div>
-                        </div>
+    let error = null
+    if ( request && request.state == 'failed' ) {
+        error = (<div className="error">Something went wrong with our attempt to retreive the paper list: { request.error }.</div>)
+    }
+
+    return (
+        <section className="published-paper-list">
+            <div className="header">
+                <h2>Published Papers</h2>
+                <div className="controls">
+                    <div className="sort">
+                        <div>Newest</div>
+                        <div>Active</div>
                     </div>
                 </div>
-                <div>
-                    {listItems}
-                </div>
-            </section>
-        )
-    } else {
-        // Show a spinner if we haven't made the request yet or the request is not
-        // fulfilled. 
-        return (
-            <Spinner />
-        )
-    }
+            </div>
+            <div>
+                {error}
+                {content}
+            </div>
+        </section>
+    )
 }
 
 export default PublishedPaperList 

@@ -11,7 +11,7 @@ import Spinner from '/components/Spinner'
 const DraftPaperPage = function(props) {
 
     const navigate = useNavigate()
-    const { id } = useParams()
+    const { id, versionNumber } = useParams()
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
@@ -26,7 +26,7 @@ const DraftPaperPage = function(props) {
     if ( currentUser ) {
         return (
             <div id="draft-paper-page" className="page">
-                <DraftPaperView id={id} />
+                <DraftPaperView id={id} versionNumber={versionNumber} />
             </div>
         )
     } else {

@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect } from 'react'
+import React, { useState, useEffect, useLayoutEffect } from 'react'
 import {
     BrowserRouter as Router,
     Routes,
@@ -29,6 +29,7 @@ import FieldPage from '/pages/fields/FieldPage'
 
 import PublishPage from '/pages/papers/PublishPage'
 import DraftPaperPage from '/pages/papers/DraftPaperPage'
+import UploadPaperVersionPage from '/pages/papers/UploadPaperVersionPage'
 
 import ReviewPapersListPage from '/pages/papers/ReviewPapersListPage'
 import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
@@ -41,24 +42,14 @@ import './app.css';
 
 
 /**
- * App component acts as the root for the component tree, loading the layout and all other
- * components.
- *
- * Usage:
- * ```
- * <App />
- * ```
+ * App component acts as the root for the component tree, loading the layout
+ * and all other components.
  */
 const App = function(props) {
 
+    // ======= Request Tracking =====================================
+    
     const [requestId, setRequestId] = useState(null)
-
-    const dispatch = useDispatch()
-
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
-
     const request = useSelector(function(state) {
         if ( ! requestId ) {
             return null
@@ -67,28 +58,44 @@ const App = function(props) {
         }
     })
 
-    useLayoutEffect(function() {
-        if ( ! currentUser && ! requestId ) {
-            setRequestId(dispatch(getAuthentication()))
-        }
+    // ======= Redux State ==========================================
 
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
+    // ======= Effect Handling ======================================
+
+    const dispatch = useDispatch()
+
+    useLayoutEffect(function() {
+        setRequestId(dispatch(getAuthentication()))
+    }, [ ])
+
+    useEffect(function() {
         return function cleanup() {
             if ( requestId ) {
-                dispatch(cleanupRequest(requestId))
+                dispatch(cleanupRequest({ requestId: requestId }))
             }
         }
+    }, [ requestId ])
 
-    }, [ currentUser, requestId ])
+    // ======= Render ===============================================
 
-
-    if ( ! currentUser && ! requestId ) {
+    if ( ! requestId ) {
         return (
             <Spinner />
         )
     } else if (request && request.state != 'fulfilled') {
-        return (
-            <Spinner />
-        )
+        if ( request.state == 'pending' ) {
+            return (
+                <Spinner />
+            )
+        } else if (request.state == 'failed') {
+            return (
+                <div className="error">Authentication request failed.  Report this as a bug and try reloading.</div>
+            )
+        }
     } else {   
         /**
          * Render the header, navigation.
@@ -122,6 +129,8 @@ const App = function(props) {
                         <Route path="/review" element={ <ReviewPapersListPage /> } />
                         <Route path="/drafts/" element={ <DraftPapersListPage /> } />
                         <Route path="/draft/:id" element={ <DraftPaperPage /> }  />
+                        <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
+                        <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage /> } />
 
                         { /* ========= Published Papers ===================== */ }
                         <Route path="/paper/:id" element={ <PublishedPaperPage /> } />

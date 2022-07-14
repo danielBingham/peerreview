@@ -9,6 +9,7 @@ import './PublishedPaperListItem.css'
 const PublishedPaperListItem = function(props) {
     const paper = props.paper
 
+    // ======= Render ===============================================
     const authors = []
     for(const author of paper.authors) {
         authors.push(<UserTag key={author.user.id} id={author.user.id} />)

@@ -7,17 +7,15 @@ import { patchUser, cleanupRequest } from '/state/users'
 import './ChangeEmailForm.css'
 
 const ChangeEmailForm = function(props) {
+
+    // ======= Render State =========================================
+
     const [ email, setEmail ] = useState('')
     const [ password, setPassword ] = useState('')
 
-    const [ error, setError ] = useState(null)
-    const [ result, setResult ] = useState(null)
+    // ======= Request Tracking =====================================
 
     const [ authRequestId, setAuthRequestId] = useState(null)
-    const [ requestId, setRequestId ] = useState(null)
-
-    const dispatch = useDispatch()
-
     const authRequest = useSelector(function(state) {
         if ( authRequestId ) {
             return state.authentication.requests[authRequestId]
@@ -26,6 +24,7 @@ const ChangeEmailForm = function(props) {
         }
     })
 
+    const [ requestId, setRequestId ] = useState(null)
     const request = useSelector(function(state) {
         if ( requestId ) {
             return state.users.requests[requestId]
@@ -34,15 +33,23 @@ const ChangeEmailForm = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
+
+    // ======= Actions and Event Handling ===========================
+
+    const dispatch = useDispatch()
 
     const onSubmit = function(event) {
         event.preventDefault()
         
         setAuthRequestId(dispatch(patchAuthentication(currentUser.email, password)))
     }
+
+    // ======= Effect Handling ======================================
 
     useEffect(function() {
         if ( authRequest && authRequest.state == 'fulfilled') {
@@ -51,24 +58,31 @@ const ChangeEmailForm = function(props) {
                     id: currentUser.id,
                     email: email
                 }
-
                 setRequestId(dispatch(patchUser(user)))
-            } else {
-                setError('Authentication failed.  Please make sure you typed your password correctly.')
-            }
-        } else if (authRequest && authRequest.state == 'failed') {
-            setError('Authentication failed.  Please make sure you typed your password correctly.')
+            } 
         }
     }, [ authRequest ])
 
+    // Clean up our request.
     useEffect(function() {
-        if ( request && request.state == 'fulfilled') {
-            setResult('Successfully updated email!')
-        } else if( request && request.state == 'failed') {
-            setError('Something went wrong.  Please try again. If the error persists, contact support.')
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
+            }
         }
+    }, [ requestId ])
 
-    }, [request])
+    // Clean up authRequest.
+    useEffect(function() {
+        return function cleanup() {
+            if ( authRequestId ) {
+                dispatch(cleanupAuthRequest({ requestId: authRequestId }))
+            }
+        }
+    }, [ authRequestId ])
+
+
+    // ======= Render ===============================================
 
     let submit = null
     if ( ( request && request.state == 'in-progress') || (authRequest && authRequest.state == 'in-progress') ) {
@@ -77,6 +91,32 @@ const ChangeEmailForm = function(props) {
         submit = ( <input type="submit" name="submit" value="Change Email" /> )
     }
 
+    let errors = [] 
+    if ( request && request.state == 'failed' ) {
+        errors.push(
+            <div key="request-failed" className="request-failed">
+                Something went wrong with the request: { request.error }.
+            </div>
+        )
+    }
+    if ( authRequest && authRequest.state == 'fulfilled' && authRequest.status !== 200 ) {
+        errors.push(
+            <div key="auth-failed" className="auth-failed">
+                Authentication failed.  Please make sure you typed your password correctly.
+            </div>
+        )
+    } else if (authRequest && authRequest.state == 'failed' ) {
+        errors.push(
+            <div key="auth-failed" className="auth-failed">
+                Authentication failed.  Please make sure you typed your password correctly.
+            </div>
+        )
+    }
+
+    let result = null
+    if ( request && request.state == 'fulfilled' ) {
+        result = ( <div className="success">Email successfully updated!</div>)
+    }
 
     return (
         <div className="change-email-form">
@@ -98,7 +138,7 @@ const ChangeEmailForm = function(props) {
                         onChange={(event) => setPassword(event.target.value)}
                     />
                 </div>
-                <div className="error"> { error } </div>
+                <div className="error"> { errors } </div>
                 <div className="result"> { result } </div>
                 <div className="submit"> { submit } </div>
             </form>
