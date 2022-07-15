@@ -30,12 +30,12 @@ const ReviewListItemView = function(props) {
         let message = null
         if ( props.review.recommendation == 'commentary' ) {
             message = (<div className="commentary">Commentary (No recommendation)</div>)
-        } else if ( props.review.recommendation == 'approved' ) {
+        } else if ( props.review.recommendation == 'approve' ) {
             message = (<div className="approved">Reviewer Recommends Approval</div>)
         } else if ( props.review.recommendation == 'request-changes' ) {
-            message = (<div className="request-changes">Reviewer Recommends Changes</div>)
-        } else if ( props.review.recommendation == 'rejected' ) {
-            message = (<div className="rejected">Reviewer Recommends Rejection</div>)
+            message = (<div className="request-changes"><span className="reviewer">Reviewer</span> Recommends Changes</div>)
+        } else if ( props.review.recommendation == 'reject' ) {
+            message = (<div className="rejected"><span className="reviewer">Reviewer</span> Recommends Rejection</div>)
         }
 
         recommendation = (

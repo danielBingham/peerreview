@@ -34,7 +34,6 @@ import './DraftPaperPDFView.css'
  * file we're rendering.
  */
 const DraftPaperPDFView = function(props) {
-
     // ======= Render State =========================================
     const [ loaded, setLoaded] = useState(false)
     const [ error, setError ] = useState(null)
@@ -74,6 +73,7 @@ const DraftPaperPDFView = function(props) {
             console.error('Attempting to load a draft paper with no versions!')
         }
     }, [ props.paper.versions, props.versionNumber ])
+
 
     // ================= Render ===============================================
    

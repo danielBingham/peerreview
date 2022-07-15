@@ -181,3 +181,11 @@
 .field.physics-chemistry:hover {
     background: linear-gradient(to right, #AF5B59, #557982);
 }
+.field.chemistry-biology {
+    background: linear-gradient(to right, #38646C, #70b570);
+    color: white;
+}
+.field.chemistry-biology:hover {
+    background: linear-gradient(to right, #557982, #81c181);
+
+}

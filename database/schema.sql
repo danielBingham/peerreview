@@ -147,6 +147,13 @@ CREATE TABLE user_field_reputation (
     PRIMARY KEY (user_id, field_id)
 );
 
+CREATE TABLE user_review_reputation (
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+    reputation int,
+    PRIMARY KEY (user_id, paper_id)
+);
+
 /******************************************************************************
  * Reviews 
  *****************************************************************************/

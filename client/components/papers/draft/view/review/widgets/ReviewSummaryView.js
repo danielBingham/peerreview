@@ -34,6 +34,7 @@ const ReviewSummaryView = function(props) {
     })
 
     const isAuthor = (currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
+    const reviewerIsAuthor = (props.paper.authors.find((a) => a.user.id == props.selectedReview.userId) ? true : false)
 
     // ======= Actions and Event Handling ===========================
     
@@ -88,17 +89,39 @@ const ReviewSummaryView = function(props) {
         return null
     } else if ( props.selectedReview ) {
         let authorControls = null
-        if ( isAuthor && props.selectedReview.status == 'submitted' ) {
+        if ( isAuthor && ! reviewerIsAuthor 
+            && props.selectedReview.status == 'submitted' && props.selectedReview.recommendation !== 'commentary' ) 
+        {
             authorControls = (
                 <div className="author-controls">
                     <button onClick={acceptReview}>Accept Review</button>
-                    <button>Reject Review</button>
+                    <button onClick={rejectReview}>Reject Review</button>
                 </div>
             )
-        } else {
+        } else if ( props.selectedReview.status !== 'submitted' ) {
             authorControls = (
                 <div className="author-controls">
                     { props.selectedReview.status }
+                </div>
+            )
+        }
+
+        let recommendation = null
+        if ( props.selectedReview.status !== 'in-progress' ) {
+            let message = null
+            if ( props.selectedReview.recommendation == 'commentary' ) {
+                message = (<div className="commentary">Commentary (No recommendation)</div>)
+            } else if ( props.selectedReview.recommendation == 'approve' ) {
+                message = (<div className="approved">Reviewer Recommends Approval</div>)
+            } else if ( props.selectedReview.recommendation == 'request-changes' ) {
+                message = (<div className="request-changes">Reviewer Recommends Changes</div>)
+            } else if ( props.selectedReview.recommendation == 'reject' ) {
+                message = (<div className="rejected">Reviewer Recommends Rejection</div>)
+            }
+
+            recommendation = (
+                <div className="recommendation">
+                    {message}
                 </div>
             )
         }
@@ -107,7 +130,7 @@ const ReviewSummaryView = function(props) {
             <>
                 <div id={`selected-review-${props.selectedReview.id}`} className="review-summary">
                     <div className="datetime">{props.selectedReview.createdDate}</div>
-                    <div className="recommendation">{props.selectedReview.recommendation}</div>
+                    { recommendation }
                     <div className="summary"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div>
                 </div>
                 {authorControls}

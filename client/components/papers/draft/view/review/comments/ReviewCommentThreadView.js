@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -11,7 +11,6 @@ import Spinner from '/components/Spinner'
 import './ReviewCommentThreadView.css'
 
 const ReviewCommentThreadView = function(props) {
-
     // ======= Request Tracking =====================================
 
     const [ requestId, setRequestId ] = useState(null)
@@ -60,6 +59,7 @@ const ReviewCommentThreadView = function(props) {
         props.selectThread(thread)
     }
 
+
     // ======= Effect Handling ======================================
 
     // Cleanup our requests.
@@ -70,6 +70,20 @@ const ReviewCommentThreadView = function(props) {
             }
         }
     }, [ requestId ])
+
+    useEffect(function() {
+        const onBodyClick = function(event) {
+            if ( ! event.target.matches('.pin') &&  ! event.target.matches('.comment-thread') 
+                && ! event.target.matches('.pin :scope') && ! event.target.matches('.comment-thread :scope') ) {
+                props.selectThread(null)
+            } 
+        }
+        document.body.addEventListener('click', onBodyClick)
+
+        return function cleanup() {
+            document.body.removeEventListener('click', onBodyClick)
+        }
+    }, [])
 
     // ======= Rendering ============================================
 
@@ -103,8 +117,19 @@ const ReviewCommentThreadView = function(props) {
     const id = `comment-thread-${props.thread.id}`
     return (
         <div className="comment-thread-outer">
-            <div className={( props.selected ? "pin selected "+props.paper.fields[0].type : "pin "+props.paper.fields[0].type)} onClick={pinClicked} style={ pinPosition }></div> 
-            <div key={props.thread.id} id={id} onClick={threadClicked} className={( props.selected ? "comment-thread selected" : "comment-thread")} style={ threadPosition}>
+            <div 
+                className={( props.selected ? "pin selected "+props.paper.fields[0].type : "pin "+props.paper.fields[0].type)} 
+                onClick={pinClicked} 
+                style={ pinPosition }
+            >
+            </div> 
+            <div 
+                key={props.thread.id} 
+                id={id} 
+                onClick={threadClicked} 
+                className={( props.selected ? "comment-thread selected "+props.paper.fields[0].type : "comment-thread "+props.paper.fields[0].type )} 
+                style={ threadPosition}
+            >
                 { commentViews }
                 { ! inProgress && <div onClick={newComment} className="reply">Post a reply...</div> }
             </div>

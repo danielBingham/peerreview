@@ -20,7 +20,6 @@ import './DraftPaperPDFPageView.css'
  *
  */
 const DraftPaperPDFPageView = function(props) {
-    
     // ======= Render State =========================================
     
     const [ haveRendered, setHaveRendered ] = useState(false)

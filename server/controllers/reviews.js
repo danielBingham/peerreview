@@ -1,4 +1,5 @@
 const ReviewDAO = require('../daos/review')
+const ReputationService = require('../services/reputation')
 
 /**
  *
@@ -8,6 +9,7 @@ module.exports = class ReviewController {
     constructor(database) {
         this.database = database
         this.reviewDAO = new ReviewDAO(database)
+        this.reputationService = new ReputationService(database)
     }
 
 
@@ -258,6 +260,12 @@ module.exports = class ReviewController {
             const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
             if ( ! returnReviews || returnReviews.length == 0) {
                 throw new Error(`Failed to find patched review ${review.id}.`)
+            }
+
+            // We'll use the return review to increment the reputation since
+            // that will have all the information we need.
+            if ( review.status == 'accepted' ) {
+                await this.reputationService.incrementReputationForReview(returnReviews[0])
             }
             this.reviewDAO.selectVisibleComments(userId, returnReviews)
             return response.status(200).json(returnReviews[0])
