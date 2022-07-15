@@ -248,8 +248,4 @@ const DraftPaperPDFPageView = function(props) {
 
 }
 
-DraftPaperPDFPageView.defaultProps = {
-    versionNumber: 1
-}
-
 export default DraftPaperPDFPageView 

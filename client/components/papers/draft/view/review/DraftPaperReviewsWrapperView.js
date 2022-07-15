@@ -79,9 +79,5 @@ const DraftPaperReviewsWrapperView = function(props) {
     }
 }
 
-DraftPaperReviewsWrapperView.defaultProps = {
-    versionNumber: 1
-}
-
 export default DraftPaperReviewsWrapperView
 

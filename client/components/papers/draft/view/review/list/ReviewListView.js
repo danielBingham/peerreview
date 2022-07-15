@@ -106,8 +106,4 @@ const ReviewListView = function(props) {
 
 }
 
-ReviewListView.defaultProps = {
-    versionNumber: 1
-}
-
 export default ReviewListView 

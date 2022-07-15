@@ -112,8 +112,4 @@ const DraftPaperControlView = function(props) {
 
 }
 
-DraftPaperControlView.defaultProps = {
-    versionNumber: 1
-}
-
 export default DraftPaperControlView
