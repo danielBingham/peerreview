@@ -187,14 +187,16 @@ export const getPapers = function(params, replaceList) {
             if ( replaceList ) {
                 dispatch(papersSlice.actions.clearList())
 
-                const state = getState()
-                const list = [ ...request.result ]
-                for(const [index, paper] of list.entries()) {
-                    if ( state.papers.dictionary[paper.id] ) {
-                        list[index] = state.papers.dictionary[paper.id]
+                if ( request.result && request.result.length > 0) {
+                    const state = getState()
+                    const list = [ ...request.result ]
+                    for(const [index, paper] of list.entries()) {
+                        if ( state.papers.dictionary[paper.id] ) {
+                            list[index] = state.papers.dictionary[paper.id]
+                        }
                     }
+                    dispatch(papersSlice.actions.appendPapersToList(list))
                 }
-                dispatch(papersSlice.actions.appendPapersToList(list))
             }
             return request.requestId
         }

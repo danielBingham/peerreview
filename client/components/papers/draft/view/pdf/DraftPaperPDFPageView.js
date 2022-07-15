@@ -25,7 +25,6 @@ const DraftPaperPDFPageView = function(props) {
     
     const [ haveRendered, setHaveRendered ] = useState(false)
     const [ rerenderThreadsToggle, setRerenderThreadsToggle ] = useState(false)
-    const [ selectedThread, setSelectedThread ] = useState(null)
 
     // ============ Request Tracking ==========================================
 
@@ -92,9 +91,6 @@ const DraftPaperPDFPageView = function(props) {
     
     const dispatch = useDispatch()
 
-    const selectThread = function(thread) {
-        setSelectedThread(thread)
-    }
 
     /**
      * Handle a click event on the page canvas.  If we don't have a review in
@@ -140,25 +136,19 @@ const DraftPaperPDFPageView = function(props) {
         if ( canvasRef ) {
             props.pdf.getPage(props.pageNumber).then(function(page) {
                 const scalingViewport = page.getViewport({ scale: 1 })
-
                 const scale = 900 / scalingViewport.width
 
                 const viewport = page.getViewport({ scale: scale })
 
-                console.log('viewport')
-                console.log(viewport)
                 // Support HiDPI-screens.
                 var outputScale = window.devicePixelRatio || 1;
-                console.log('outputScale')
-                console.log(outputScale)
 
                 var context = canvasRef.current.getContext('2d');
 
                 canvasRef.current.width = Math.floor(viewport.width * outputScale);
                 canvasRef.current.height = Math.floor(viewport.height * outputScale);
-                //canvasRef.current.style.width = Math.floor(viewport.width) + "px";
-                //canvasRef.current.style.height =  Math.floor(viewport.height) + "px";
-                console.log(canvasRef.current) 
+                canvasRef.current.style.width = Math.floor(viewport.width) + "px";
+                canvasRef.current.style.height =  Math.floor(viewport.height) + "px";
 
 
                 var transform = outputScale !== 1
@@ -239,8 +229,8 @@ const DraftPaperPDFPageView = function(props) {
                     thread={thread} 
                     pinPosition={pinPosition} 
                     threadPosition={threadPosition} 
-                    selected={( selectedThread && selectedThread.id == thread.id ? true : false )} 
-                    selectThread={selectThread}
+                    selected={( props.selectedThread && props.selectedThread.id == thread.id ? true : false )} 
+                    selectThread={props.setSelectedThread}
                 />
             )
         }

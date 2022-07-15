@@ -76,7 +76,7 @@ const SubmitDraftForm = function(props) {
             fields: fields,
             versions: [
                 {
-                    file_id: file.id
+                    file: file
                 }
             ]
 

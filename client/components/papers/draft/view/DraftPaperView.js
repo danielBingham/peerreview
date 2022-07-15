@@ -78,6 +78,15 @@ const DraftPaperView = function(props) {
             throw new Error(`Attempt to view draft paper ${props.id} but paper doesn't exist after request.`)
         } 
 
+        // If we don't have a version number from the path, then we want to
+        // select the most recent version.  That should be the first version in
+        // the array.
+        let versionNumber = props.versionNumber
+        if ( ! versionNumber ) {
+            versionNumber = paper.versions[0].version
+        }
+
+
         let authors = [] 
         for(const author of paper.authors) {
             authors.push(<UserTag key={author.user.id} id={author.user.id} />)
@@ -95,8 +104,8 @@ const DraftPaperView = function(props) {
                 <div className="submitted date">{paper.createdDate}</div>
                 <div className="authors">{authors}</div>
                 <div className="fields">{fields}</div>
-                <DraftPaperControlView paper={paper} versionNumber={props.versionNumber} />
-                <DraftPaperReviewsWrapperView paper={paper} versionNumber={props.versionNumber} />
+                <DraftPaperControlView paper={paper} versionNumber={versionNumber} />
+                <DraftPaperReviewsWrapperView paper={paper} versionNumber={versionNumber} />
             </div>
         )
      } else {
