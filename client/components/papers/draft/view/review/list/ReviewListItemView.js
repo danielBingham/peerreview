@@ -14,10 +14,54 @@ import './ReviewListItemView.css'
  *
  */
 const ReviewListItemView = function(props) {
-    const dispatch = useDispatch()
 
+    // ======= Actions and Event Handling ===========================
+    
+    const dispatch = useDispatch()
     const selectReview = function(event) {
         dispatch(setSelected(props.review))
+    }
+
+    // ======= Render ===============================================
+
+
+    let recommendation = null
+    if ( props.review.status !== 'in-progress' ) {
+        let message = null
+        if ( props.review.recommendation == 'commentary' ) {
+            message = (<div className="commentary">Commentary (No recommendation)</div>)
+        } else if ( props.review.recommendation == 'approved' ) {
+            message = (<div className="approved">Reviewer Recommends Approval</div>)
+        } else if ( props.review.recommendation == 'request-changes' ) {
+            message = (<div className="request-changes">Reviewer Recommends Changes</div>)
+        } else if ( props.review.recommendation == 'rejected' ) {
+            message = (<div className="rejected">Reviewer Recommends Rejection</div>)
+        }
+
+        recommendation = (
+            <div className="recommendation">
+                {message}
+            </div>
+        )
+    }
+
+    let status = null
+    if ( props.review.status !== 'submitted' ) {
+
+        let message = null
+        if ( props.review.status == 'in-progress' ) {
+            message = (<div className="in-progress">Review In Progress</div>)
+        } else if ( props.review.status == 'accepted' ) {
+            message = (<div className="accepted">Authors Accepted</div>)
+        } else if ( props.review.status == 'rejected') {
+            message = (<div className="rejected">Authors Rejected</div>)
+        }
+
+        status = (
+            <div className="status">
+                {message}
+            </div>
+        )
     }
 
     const classes = 'review-list-item' + (props.selected ? ' selected' : '')
@@ -25,8 +69,8 @@ const ReviewListItemView = function(props) {
         <div className={classes} onClick={selectReview} >
             <UserTag id={props.review.userId} />
             <div className="created">{props.review.createdDate}</div>
-            { props.review.status !== 'in-progress' && <div className="recommendation">{props.review.recommendation}</div> }
-            { props.review.status == 'in-progress' && <div className="status">{props.review.status}</div> }
+            { recommendation }
+            { status }
         </div>
     )
 

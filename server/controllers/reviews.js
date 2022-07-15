@@ -194,11 +194,32 @@ module.exports = class ReviewController {
             review.id = request.params.id
             review.paperId = request.params.paper_id
 
+            // ============== Authorization Checks ============================
             const userCheckResults = await this.database.query(`SELECT user_id FROM reviews WHERE id = $1`, [ review.id ])
             if ( userCheckResults.rows.length == 0 ) {
                 return response.status(404).json({ error: 'no-resource' })
-            } else if ( ! userId || userCheckResults.rows[0].user_id != userId ) {
+            } else if ( ! userId ) {
                 return response.status(403).json({ error: 'not-authorized' })
+            } else if (userCheckResults.rows[0].user_id != userId ) {
+                const authorResults = await this.database.query( `
+                    SELECT user_id from paper_authors where paper_id = $1
+                `, [ review.paperId ])
+
+                // Paper authors are only allowed to modify the review status, and then only to set it to 
+                // either "accepted" or "rejected".
+                if ( authorResults.rows.length > 0 && authorResults.rows.find((r) => r.user_id == userId)) {
+                    if ( review.status == 'accepted' || review.status == 'rejected') {
+                        review = {
+                            id: review.id,
+                            paperId: review.paperId,
+                            status: review.status
+                        }
+                    } else {
+                        return response.status(403).json({ error: 'not-authorized' })
+                    }
+                } else {
+                    return response.status(403).json({ error: 'not-authorized' })
+                }
             }
 
             // We'll ignore these fields when assembling the patch SQL.  These are

@@ -121,7 +121,8 @@ const ReviewSummaryForm = function(props) {
                             onBlur={commitChange} 
                             value={recommendation} 
                         >
-                                <option value="request-changes">Suggest Changes</option>
+                                <option value="commentary">Commentary (No recommendation)</option>
+                                <option value="request-changes">Recommend Changes</option>
                                 <option value="approve">Recommend Approval</option>
                                 <option value="reject">Recommend Rejection</option>
                         </select>

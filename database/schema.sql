@@ -152,7 +152,7 @@ CREATE TABLE user_field_reputation (
  *****************************************************************************/
 
 CREATE TYPE review_status AS ENUM('in-progress', 'submitted', 'rejected', 'accepted');
-CREATE TYPE review_recommendation as ENUM( 'reject', 'author-commentary', 'request-changes', 'approve');
+CREATE TYPE review_recommendation as ENUM( 'reject', 'commentary', 'request-changes', 'approve');
 CREATE TABLE reviews (
     id bigserial PRIMARY KEY,
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
