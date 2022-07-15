@@ -135,19 +135,6 @@ export const papersSlice = createSlice({
             state.list = []
         },
 
-        // ======== POST /paper/:id/votes =====================================
-
-        /**
-         * Finish the POST /paper/:id/votes request by adding the vote to the
-         * paper's vote array in the database.
-         *
-         * TECHDEBT Assumes we're posting votes on a paper we've already pulled
-         * to the frontend.  Not necessarily a safe assumption.
-         */
-        completePostVotesRequest: function(state, action) {
-            RequestTracker.completeRequest(state.requests[action.payload.requestId], action)
-        },
-
         // ========== Request Tracking Methods =============
 
         makeRequest: makeTrackedRequest, 
