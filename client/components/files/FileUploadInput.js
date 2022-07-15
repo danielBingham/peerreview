@@ -17,7 +17,6 @@ import './FileUploadInput.css'
  * effectively orphaned.  We should fix that.
  */
 const FileUploadInput = function(props) {
-    console.log('\n\n ###### FileUploadInput #####')
     // ============ Render State ====================================
   
     const [file, setFile] = useState(null)
@@ -27,16 +26,6 @@ const FileUploadInput = function(props) {
    
     const [uploadRequestId, setUploadRequestId] = useState(null)
     const [deleteRequestId, setDeleteRequestId] = useState(null)
-
-    console.log('State')
-    console.log('File: ')
-    console.log(file)
-    console.log('FileData: ')
-    console.log(fileData)
-
-    console.log('Request State')
-    console.log('uploadRequestId: ' + uploadRequestId)
-    console.log('deleteRequestId: ' + deleteRequestId)
    
     const uploadRequest = useSelector(function(state) {
         if ( uploadRequestId) {
@@ -46,9 +35,6 @@ const FileUploadInput = function(props) {
         }
     })
 
-    console.log('uploadRequest')
-    console.log(uploadRequest)
-
     const deleteRequest = useSelector(function(state) {
         if ( deleteRequestId ) {
             return state.files.requests[deleteRequestId]
@@ -57,73 +43,47 @@ const FileUploadInput = function(props) {
         }
     })
 
-    console.log('deleteRequest')
-    console.log(deleteRequest)
-
     // ============ Actions and Event Handling ======================
     //
     const dispatch = useDispatch()
     
     const onChange = function(event) {
-        console.log('=== onChange ====')
         if ( ! fileData && ! file ) {
-            console.log('No file.')
-            if ( uploadRequestId && uploadRequest) {
-                console.log('Reset upload request.')
-                dispatch(cleanupRequest(uploadRequest))
-            } else if ( (uploadRequestId && ! uploadRequest)) {
-                // We shouldn't be able to end up in this position, because we
-                // should always show a spinner while the uploadRequest is
-                // processing, so the user shouldn't be able to hit the input
-                // button until we've processed the last uploadRequest.
-                throw new Error('We are in an invalid state.')
-            } 
-
             setFileData(event.target.files[0])
             setUploadRequestId(dispatch(uploadFile(event.target.files[0])))
         } else {
             // We shouldn't be able to get here, because we should always show
-            // a spinner when we have fileData but no file.  Which means the
+            // a spinner when we have fileData but no file, and we don't show
+            // an input when we have both fileData and file.  Which means the
             // user shouldn't be able to change the file input.
             throw new Error('We are in an invalid state.')
         }
-        console.log('=== END onChange ===')
     }
 
     const removeFile = function(event) {
-        console.log('=== removeFile ===')
-        if ( uploadRequestId && uploadRequest )  {
-            console.log('Cleanup upload request.')
-            setUploadRequestId(null)
-            dispatch(cleanupRequest(uploadRequest))
-        } 
-
         setDeleteRequestId(dispatch(deleteFile(file.id)))
-        console.log('=== END removeFile ===')
     }
 
     // ============ Effect Handling ==================================
     
     useLayoutEffect(function() {
-        console.log('=== FileUploadInput.LayoutEffect ===')
         if ( deleteRequest && deleteRequest.state == 'fulfilled') {
-            console.log('Delete request finished, cleanup.')
             setFileData(null)
             setFile(null)
+
+            if ( uploadRequestId && uploadRequest )  {
+                setUploadRequestId(null)
+            } 
         }
-        console.log('=== END FileUploadInput.LayoutEffect ===')
     }, [ deleteRequest ])
 
 
     useEffect(function() {
-        console.log('=== FileUploadInput.useEffect ===')
         if ( uploadRequest && uploadRequest.state == 'fulfilled') {
-            console.log('Upload request finished.')
             const file = uploadRequest.result
             setFile(file)
             props.setFile(file)
         }
-        console.log('=== END FileUploadInput.useEffect ===')
     }, [ uploadRequest ])
 
     // Clean up our upload request.
@@ -149,14 +109,6 @@ const FileUploadInput = function(props) {
     // ============ Render ==========================================
 
     let content = null
-
-    console.log('Delete Request')
-    console.log(deleteRequestId)
-    console.log(deleteRequest)
-
-    console.log('Upload Request')
-    console.log(uploadRequestId)
-    console.log(uploadRequest)
     // Spinner while we wait for requests to process so that we can't start a new request on top of an existing one.
     if ( (deleteRequestId && ! deleteRequest) || (deleteRequest && deleteRequest.state == 'pending') 
         || ( uploadRequestId && ! uploadRequest) || (uploadRequest && uploadRequest.state == 'pending') ) 

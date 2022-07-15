@@ -3,6 +3,7 @@
     grid-row: 1 / 2;
 
     border: thin solid #ddd;
+    width: 900px;
 }
 
 .review-header .inner {

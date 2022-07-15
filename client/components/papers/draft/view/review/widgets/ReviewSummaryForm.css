@@ -5,6 +5,7 @@
     display: block;
     border: thin solid #ddd;
     height: 200px;
+    width: 880px;
     padding: 10px;
 }
 .review-summary-form .recommendation-wrapper {

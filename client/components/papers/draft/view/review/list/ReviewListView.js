@@ -46,7 +46,11 @@ const ReviewListView = function(props) {
     })
 
     const reviews = useSelector(function(state) {
-        return state.reviews.list[props.paper.id]
+        if ( state.reviews.list[props.paper.id] ) {
+            return state.reviews.list[props.paper.id].filter((r) => r.version == props.versionNumber)
+        } else {
+            return null 
+        }
     })
 
     const reviewInProgress = useSelector(function(state) {
@@ -59,7 +63,7 @@ const ReviewListView = function(props) {
 
     const startReview = function(event) {
         if ( ! reviewInProgress ) {
-            setPostReviewRequestId(dispatch(newReview(props.paper.id, currentUser.id)))
+            setPostReviewRequestId(dispatch(newReview(props.paper.id, props.versionNumber, currentUser.id)))
         }
     }
 
@@ -100,6 +104,10 @@ const ReviewListView = function(props) {
         </div>
     )
 
+}
+
+ReviewListView.defaultProps = {
+    versionNumber: 1
 }
 
 export default ReviewListView 

@@ -316,10 +316,11 @@ module.exports = class PaperController {
             }
             const version = request.body
 
-            const papers = this.paperDAO.selectPapers('WHERE papers.id=$1', [paperId])
+            const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paperId])
             if ( papers.length <= 0) {
                 throw new ControllerError(404, 'not-found', `Attempt to submit a version, but Paper(${paperId}) not found!`)
             }
+
             const paper = papers[0]
 
             if ( ! paper.authors.find((a) => a.user.id == request.session.user.id)) {
@@ -328,7 +329,7 @@ module.exports = class PaperController {
 
             await this.paperDAO.insertVersion(paper, version)
 
-            const returnPapers = this.paperDAO.selectPapers('WHERE papers.id = $1', [ paper.id ])
+            const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paper.id ])
             if ( returnPapers.length <= 0) {
                 throw new Error(`Paper(${paper.id}) not found after inserting a new version!`)
             }

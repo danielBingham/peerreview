@@ -149,11 +149,12 @@ export const reviewsSlice = createSlice({
 /**
  * Start a new review.
 */
-export const newReview = function(paperId, userId, threads) {
+export const newReview = function(paperId, version, userId, threads) {
     return function(dispatch, getState) {
         const review = {
             paperId: paperId,
             userId: userId, 
+            version: version,
             summary: '',
             status: 'in-progress',
             recommendation: 'request-changes',

@@ -24,6 +24,7 @@ module.exports = class ReviewDAO {
                     id: row.review_id,
                     paperId: row.review_paperId,
                     userId: row.review_userId,
+                    version: row.review_version,
                     summary: row.review_summary,
                     recommendation: row.review_recommendation,
                     status: row.review_status,
@@ -99,7 +100,7 @@ module.exports = class ReviewDAO {
 
         const sql = `
             SELECT
-              reviews.id as review_id, reviews.paper_id as "review_paperId", reviews.user_id as "review_userId", reviews.summary as review_summary, reviews.recommendation as review_recommendation, reviews.status as review_status, reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
+              reviews.id as review_id, reviews.paper_id as "review_paperId", reviews.version as review_version, reviews.user_id as "review_userId", reviews.summary as review_summary, reviews.recommendation as review_recommendation, reviews.status as review_status, reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
               review_comment_threads.id as thread_id, review_comment_threads.review_id as "thread_reviewId", review_comment_threads.page as thread_page, review_comment_threads.pin_x as "thread_pinX", review_comment_threads.pin_y as "thread_pinY",  
               review_comments.id as comment_id, review_comments.thread_id as "comment_threadId", review_comments.user_id as "comment_userId", review_comments.thread_order as "comment_threadOrder", review_comments.status as comment_status, review_comments.content as comment_content, review_comments.created_date as "comment_createdDate", review_comments.updated_date as "comment_updatedDate"
             FROM reviews

@@ -22,14 +22,9 @@ import './DraftPaperReviewsWrapperView.css'
  */
 const DraftPaperReviewsWrapperView = function(props) {
 
-    // ======= Render State =========================================
-    
-    const [ width, setWidth ] = useState(900)
-
     // ======= Request Tracking =====================================
 
     const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
-
     const reviewsRequest = useSelector(function(state) {
         if ( ! reviewsRequestId ) {
             return null
@@ -37,6 +32,8 @@ const DraftPaperReviewsWrapperView = function(props) {
             return state.reviews.requests[reviewsRequestId]
         }
     })
+
+    // ======= Redux State ==========================================
 
     const selectedReview = useSelector(function(state) {
         return state.reviews.selected[props.paper.id]
@@ -70,9 +67,9 @@ const DraftPaperReviewsWrapperView = function(props) {
         const id = `paper-${props.paper.id}-reviews`
         return (
             <div id={id} className="draft-paper-reviews-wrapper">
-                <ReviewHeaderView paper={props.paper} width={width} selectedReview={selectedReview} />
+                <ReviewHeaderView paper={props.paper}  selectedReview={selectedReview} />
                 <ReviewListView paper={props.paper} versionNumber={props.versionNumber} />
-                <DraftPaperPDFView paper={props.paper} selectedReview={selectedReview} versionNumber={props.versionNumber} width={width} setWidth={setWidth} />
+                <DraftPaperPDFView paper={props.paper} selectedReview={selectedReview} versionNumber={props.versionNumber} />
             </div>
         )
     } else {
@@ -80,6 +77,10 @@ const DraftPaperReviewsWrapperView = function(props) {
             <Spinner />
         )
     }
+}
+
+DraftPaperReviewsWrapperView.defaultProps = {
+    versionNumber: 1
 }
 
 export default DraftPaperReviewsWrapperView

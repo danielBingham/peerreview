@@ -62,11 +62,11 @@ module.exports = class ReviewController {
 
         try {
             const results = await this.database.query(`
-                INSERT INTO reviews (paper_id, user_id, summary, recommendation, status, created_date, updated_date) 
-                    VALUES ($1, $2, $3, $4, $5, now(), now()) 
+                INSERT INTO reviews (paper_id, user_id, version, summary, recommendation, status, created_date, updated_date) 
+                    VALUES ($1, $2, $3, $4, $5, $6, now(), now()) 
                     RETURNING id
                 `, 
-                [ review.paperId, userId, review.summary, review.recommendation, review.status ]
+                [ review.paperId, userId, review.version, review.summary, review.recommendation, review.status ]
             )
             if ( results.rows.length == 0 ) {
                 throw new Error('Failed to insert a new review.')

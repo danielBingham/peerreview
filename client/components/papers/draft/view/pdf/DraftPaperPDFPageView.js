@@ -63,14 +63,18 @@ const DraftPaperPDFPageView = function(props) {
         if ( state.reviews.selected[props.paper.id] ) {
             return state.reviews.selected[props.paper.id].threads.filter((t) => t.page == props.pageNumber)
         } else {
-            const reviews = state.reviews.list[props.paper.id]
-            const results = []
-            if ( reviews ) {
-                for (const review of reviews ) {
-                    results.push(...review.threads.filter((t) => t.page == props.pageNumber))
+            if ( state.reviews.list[props.paper.id] ) {
+                const reviews = state.reviews.list[props.paper.id].filter((r) => r.version == props.versionNumber)
+                const results = []
+                if ( reviews && reviews.length > 0 ) {
+                    for (const review of reviews ) {
+                        results.push(...review.threads.filter((t) => t.page == props.pageNumber))
+                    }
                 }
+                return results
+            } else {
+                return [] 
             }
-            return results
         }
     })
 
@@ -118,7 +122,7 @@ const DraftPaperPDFPageView = function(props) {
             thread.reviewId = reviewInProgress.id
             setPostThreadsRequestId(dispatch(postReviewThreads(props.paper.id, reviewInProgress.id, thread)))
         } else {
-            setNewReviewRequestId(dispatch(newReview(props.paper.id, currentUser.id, [thread])))
+            setNewReviewRequestId(dispatch(newReview(props.paper.id, props.versionNumber, currentUser.id, [thread])))
         }
     }
 
@@ -132,23 +136,30 @@ const DraftPaperPDFPageView = function(props) {
      * the component understands we've finished rendering.
      */
     useLayoutEffect(function() {
+        setHaveRendered(false)
         if ( canvasRef ) {
             props.pdf.getPage(props.pageNumber).then(function(page) {
-                var scale = 1.5;
-                var viewport = page.getViewport({ scale: scale, });
+                const scalingViewport = page.getViewport({ scale: 1 })
+
+                const scale = 900 / scalingViewport.width
+
+                const viewport = page.getViewport({ scale: scale })
+
+                console.log('viewport')
+                console.log(viewport)
                 // Support HiDPI-screens.
                 var outputScale = window.devicePixelRatio || 1;
+                console.log('outputScale')
+                console.log(outputScale)
 
                 var context = canvasRef.current.getContext('2d');
 
                 canvasRef.current.width = Math.floor(viewport.width * outputScale);
                 canvasRef.current.height = Math.floor(viewport.height * outputScale);
-                canvasRef.current.style.width = Math.floor(viewport.width) + "px";
-                canvasRef.current.style.height =  Math.floor(viewport.height) + "px";
+                //canvasRef.current.style.width = Math.floor(viewport.width) + "px";
+                //canvasRef.current.style.height =  Math.floor(viewport.height) + "px";
+                console.log(canvasRef.current) 
 
-                if ( props.width != canvasRef.current.width ) {
-                    props.setWidth(parseInt(canvasRef.current.width))
-                }
 
                 var transform = outputScale !== 1
                     ? [outputScale, 0, 0, outputScale, 0, 0]
@@ -170,13 +181,7 @@ const DraftPaperPDFPageView = function(props) {
         }
     }, [ props.pdf ] )
 
-    useEffect(function() {
-        if ( newReviewRequest && newReviewRequest.state == 'fulfilled') {
-            dispatch(setSelected(reviewInProgress)) 
-        }
-    }, [ newReviewRequest ])
-
-    useEffect(function() {
+    useLayoutEffect(function() {
         if ( canvasRef.current && lastRenderCanvasRectRef.current ) {
             const rect = canvasRef.current.getBoundingClientRect()
             if ( lastRenderCanvasRectRef.current.top !== rect.top ) {
@@ -184,6 +189,13 @@ const DraftPaperPDFPageView = function(props) {
             }
         }
     })
+
+    useEffect(function() {
+        if ( newReviewRequest && newReviewRequest.state == 'fulfilled') {
+            dispatch(setSelected(reviewInProgress)) 
+        }
+    }, [ newReviewRequest ])
+
 
 
     // Clean up our request.
@@ -237,13 +249,17 @@ const DraftPaperPDFPageView = function(props) {
     const canvasId = `page-${props.pageNumber}-canvas`
     const pageId = `page-${props.pageNumber}`
     return (
-        <section id={pageId} className="draft-paper-pdf-page"  >
-            <canvas id={canvasId} ref={canvasRef} onClick={handleClick} style={ haveRendered ? { display: 'block' } : { display: 'none' } }></canvas>
-            {threadViews}
+        <section id={pageId} className="draft-paper-pdf-page" >
+            <canvas id={canvasId} ref={canvasRef} onClick={handleClick}></canvas>
+            {haveRendered && threadViews}
             { ! haveRendered && <Spinner /> }
         </section>
     )
 
+}
+
+DraftPaperPDFPageView.defaultProps = {
+    versionNumber: 1
 }
 
 export default DraftPaperPDFPageView 

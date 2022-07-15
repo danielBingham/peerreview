@@ -217,7 +217,7 @@ module.exports = class PaperDAO {
     }
 
     async insertVersion(paper, version) {
-        const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ version.file_id ])
+        const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ version.file.id ])
         if ( files.length <= 0) {
             throw new Error(`Invalid file_id posted with paper ${paper.id}.`)
         }

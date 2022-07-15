@@ -15,7 +15,7 @@ const ReviewHeaderView = function(props) {
     let content = null 
     if ( props.selectedReview ) {
         if ( props.selectedReview.status == 'in-progress' ) {
-            content = ( <ReviewSummaryForm paper={props.paper} width={props.width} /> )
+            content = ( <ReviewSummaryForm paper={props.paper} /> )
         } else {
             content = ( <ReviewSummaryView paper={props.paper} selectedReview={props.selectedReview} /> )
         }
@@ -26,7 +26,7 @@ const ReviewHeaderView = function(props) {
         )
     }
     return (
-        <div className="review-header" style={ { width: props.width+'px' } }>
+        <div className="review-header">
             <div className="inner">
                 { content }
             </div>

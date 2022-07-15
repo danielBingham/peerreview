@@ -18,7 +18,7 @@ const HomePage = function(props) {
     })
 
     let query = null
-    if ( fieldSettings.length > 0) {
+    if (fieldSettings && fieldSettings.length > 0) {
         const ignored = []
         const isolated = []
         for (const settingField of fieldSettings) {

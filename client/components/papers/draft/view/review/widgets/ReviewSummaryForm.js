@@ -112,7 +112,6 @@ const ReviewSummaryForm = function(props) {
                             onChange={(e) => setSummary(e.target.value)} 
                             onBlur={commitChange} 
                             value={summary}
-                            style={ { width: (props.width-20)+'px' } }
                         >
                         </textarea>
                     </div>

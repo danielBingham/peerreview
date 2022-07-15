@@ -84,8 +84,6 @@ const DraftPaperPDFView = function(props) {
                 content.push(
                     <DraftPaperPDFPageView 
                         key={pageNumber} 
-                        width={props.width} 
-                        setWidth={props.setWidth} 
                         paper={props.paper}
                         selectedReview={props.selectedReview}
                         versionNumber={props.versionNumber}
@@ -106,7 +104,7 @@ const DraftPaperPDFView = function(props) {
     }
 
     return (
-        <article id={`paper-${props.paper.id}-content`} className="draft-paper-pdf" style={ { width: props.width+'px' } }>
+        <article id={`paper-${props.paper.id}-content`} className="draft-paper-pdf">
             { content }
         </article>
     )
