@@ -1,0 +1,11 @@
+.pdf-viewer-page {
+    position: relative;
+    margin: 0px auto;
+}
+.pdf-viewer-page canvas {
+    border: thin solid #ddd;
+}
+.text-layer > span{
+    position: absolute;
+    color: rgba(0,0,0,0);
+}

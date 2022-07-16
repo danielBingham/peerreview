@@ -1,0 +1,40 @@
+.pdf-viewer {
+    position: relative;
+}
+.pdf-viewer .controls {
+    display: grid;
+    grid-template-columns: 150px auto 150px;
+    width: 900px;
+}
+.pdf-viewer .controls .control {
+    padding: 10px;
+    text-align: center;
+}
+.pdf-viewer .controls .control .icon {
+    display: inline-block;
+}
+.pdf-viewer .controls .control svg {
+    display: inline-block;
+    margin-bottom: -8px;
+    padding: 0;
+    width: 24px;
+}
+.pdf-viewer .controls .control .link {
+    display: inline-block;
+    margin: 10px;
+}
+.pdf-viewer .controls .control a {
+    font-size: 14px;
+}
+.pdf-viewer .controls .control .page-control {
+    display: inline-block;
+    margin: 0 10px;
+}
+.pdf-viewer .controls .control input {
+    width: 50px;
+    padding: 5px;
+    border: thin solid #ddd;
+}
+.pdf-viewer canvas {
+    border: thin solid #ddd;
+}
