@@ -21,7 +21,9 @@
     grid-row: 2 / 3;
     padding: 50px 20px;
 }
-
+.published-paper .published-date {
+    text-align: center;
+}
 .published-paper .paper-votes .highlight {
     color: red;
 }

@@ -2,7 +2,6 @@
     position: absolute;
     border: thin solid #ccc;
     background: white;
-    padding: 5px;
     z-index: 1;
     width: 400px;
 }
@@ -43,10 +42,11 @@
     margin-top:-9px;
 }
 
+
 .comment-thread-outer .pin.selected {
-    width: 18px;
-    height: 18px;
-    border-radius: 18px;
-    margin-left: -9px;
-    margin-right: -9px;
+    width: 20px;
+    height: 20px;
+    border-radius: 20px;
+    margin-left: -10px;
+    margin-top: -10px;
 }

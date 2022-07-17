@@ -1,7 +1,36 @@
 .review-summary {
     padding: 10px;
 }
-
-.review-summary .summary {
+.review-summary .reviewer {
+    display: inline-block;
+}
+.review-summary .datetime {
+    display: inline-block;
+}
+.review-summary .summary-text {
     padding: 10px;
 }
+.review-summary .author-controls {
+    text-align: right;
+}
+.review-summary .author-controls button {
+    margin: 0px 10px;
+}
+.review-summary svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: -7px;
+}
+.review-summary .request-changes svg {
+    color: #666;
+}
+.review-summary .rejected svg  {
+    color: red;
+}
+.review-summary .approved svg {
+    color: green;
+}
+.review-summary .accepted svg {
+    color: green;
+}
+

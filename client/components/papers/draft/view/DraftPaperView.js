@@ -6,6 +6,7 @@ import { getPaper, cleanupRequest } from '/state/papers'
 
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
+import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 
 import DraftPaperControlView from './DraftPaperControlView'
@@ -101,8 +102,8 @@ const DraftPaperView = function(props) {
         return (
             <div id={id} className="draft-paper">
                 <h2 className="title">{paper.title}</h2>
-                <div className="submitted date">{paper.createdDate}</div>
-                <div className="authors">{authors}</div>
+                <div className="submitted date">submitted <DateTag timestamp={paper.createdDate} /></div>
+                <div className="authors">by {authors}</div>
                 <div className="fields">{fields}</div>
                 <DraftPaperControlView paper={paper} versionNumber={versionNumber} />
                 <DraftPaperReviewsWrapperView paper={paper} versionNumber={versionNumber} />

@@ -7,6 +7,7 @@ import * as PDFLib from 'pdfjs-dist/webpack'
 
 import { getPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 
+import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 
 import PublishedPaperAuthorsWidget from './widgets/PublishedPaperAuthorsWidget'
@@ -79,6 +80,7 @@ const PublishedPaperView = function(props) {
                 </section>
                 <aside className="sidebar">
                     <PublishedPaperVoteWidget paper={paper} />
+                    <div className="published-date">published <DateTag timestamp={paper.updatedDate} /></div>
                     <PublishedPaperAuthorsWidget paper={paper} />
                 </aside>
                 <section className="main">

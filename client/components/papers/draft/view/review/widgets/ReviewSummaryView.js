@@ -5,6 +5,11 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { patchReview, cleanupRequest } from '/state/reviews'
 
+import { CheckCircleIcon, AnnotationIcon, XCircleIcon } from '@heroicons/react/outline'
+import  { CheckIcon, XIcon } from '@heroicons/react/solid'
+
+import UserTag from '/components/users/UserTag'
+import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 
 import './ReviewSummaryView.css'
@@ -99,9 +104,15 @@ const ReviewSummaryView = function(props) {
                 </div>
             )
         } else if ( props.selectedReview.status !== 'submitted' ) {
+            let status = null
+            if ( props.selectedReview.status == 'accepted' ) {
+                status = ( <div className="accepted"> <CheckIcon /> Accepted</div> )
+            } else if ( props.selectedReview.status == 'rejected' ) {
+                status = ( <div className="rejected"> <XIcon /> Rejected </div> )
+            }
             authorControls = (
                 <div className="author-controls">
-                    { props.selectedReview.status }
+                    { status }
                 </div>
             )
         }
@@ -112,11 +123,11 @@ const ReviewSummaryView = function(props) {
             if ( props.selectedReview.recommendation == 'commentary' ) {
                 message = (<div className="commentary">Commentary (No recommendation)</div>)
             } else if ( props.selectedReview.recommendation == 'approve' ) {
-                message = (<div className="approved">Reviewer Recommends Approval</div>)
+                message = (<div className="approved"> <CheckCircleIcon /> Recommends Approval</div>)
             } else if ( props.selectedReview.recommendation == 'request-changes' ) {
-                message = (<div className="request-changes">Reviewer Recommends Changes</div>)
+                message = (<div className="request-changes"><AnnotationIcon /> Recommends Changes</div>)
             } else if ( props.selectedReview.recommendation == 'reject' ) {
-                message = (<div className="rejected">Reviewer Recommends Rejection</div>)
+                message = (<div className="rejected"><XCircleIcon /> Recommends Rejection</div>)
             }
 
             recommendation = (
@@ -127,14 +138,15 @@ const ReviewSummaryView = function(props) {
         }
 
         return (
-            <>
-                <div id={`selected-review-${props.selectedReview.id}`} className="review-summary">
-                    <div className="datetime">{props.selectedReview.createdDate}</div>
+            <div className="review-summary">
+                <div className="summary">
+                    <div className="reviewer">Reviewed by <UserTag id={props.selectedReview.userId} /></div>
+                    <div className="datetime"><DateTag timestamp={props.selectedReview.createdDate} /></div>
                     { recommendation }
-                    <div className="summary"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div>
+                    <div className="summary-text"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div>
                 </div>
                 {authorControls}
-            </>
+            </div>
         )
     } else {
         return null

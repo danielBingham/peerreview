@@ -8,3 +8,6 @@
     border: thin solid #ddd;
     padding: 5px;
 }
+.comment-form .controls {
+    padding: 0 5px 10px 5px;
+}

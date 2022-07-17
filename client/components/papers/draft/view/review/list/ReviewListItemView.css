@@ -1,9 +1,27 @@
 .review-list-item {
     border: thin solid #ddd;
-    min-height: 100px;
-    padding: 5px;
+    padding: 20px 10px;
     background-color: #fafafa;
+    line-height: 1.7em;
 }
 .review-list-item.selected {
     background-color: white;
 }
+.review-list-item svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: -7px;
+}
+.review-list-item .request-changes svg {
+    color: #666;
+}
+.review-list-item .rejected svg  {
+    color: red;
+}
+.review-list-item .approved svg {
+    color: green;
+}
+.review-list-item .accepted svg {
+    color: green;
+}
+

@@ -5,6 +5,7 @@ import ReactMarkdown from 'react-markdown'
 import { getUser, cleanupRequest } from '/state/users'
 
 import UserTag from '/components/users/UserTag'
+import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 import './ReviewCommentView.css'
 
@@ -14,8 +15,9 @@ const ReviewCommentView = function(props) {
 
     return (
         <div key={props.comment.id} id={props.comment.id} className="comment-outer">
+            <div className="profile-picture"></div>
             <UserTag id={props.comment.userId} />
-            <div className="datetime">{props.comment.updatedDate}</div>
+            <div className="datetime"><DateTag timestamp={props.comment.updatedDate} /></div>
             <div className="comment-inner" style={{ padding: '5px' }} >
                 <ReactMarkdown>
                     {props.comment.content}

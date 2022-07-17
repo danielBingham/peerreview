@@ -1,5 +1,17 @@
 .comment-outer {
-    padding: 5px;
+    padding: 20px 5px 0 5px;
     border-top: thin solid #ddd;
     border-bottom: thin solid #ddd;
+}
+.comment-outer .profile-picture {
+    float: left;
+    height: 30px;
+    width: 30px;
+    margin-right: 10px;
+    margin-bottom: 5px;
+    border: thin solid #aaa;
+    background-color: #bbb;
+}
+.comment-outer .comment-inner {
+    clear: both;
 }
