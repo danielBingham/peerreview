@@ -52,6 +52,11 @@ export const completeRequest = function(state, action) {
 export const cleanupRequest = function(state, action) {
     const tracker = state.requests[action.payload.requestId]
 
+    if ( ! tracker ) {
+        console.error('Warning: attempt to cleanup request that does not exit: ' + action.payload.requestId)
+        return
+    }
+
     if ( isStale(tracker) ) {
         delete state.requests[action.payload.requestId]
     } else {

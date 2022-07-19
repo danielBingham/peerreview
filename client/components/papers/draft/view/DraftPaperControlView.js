@@ -8,18 +8,25 @@ import {  clearSelected, patchReview, cleanupRequest as cleanupReviewRequest } f
 import './DraftPaperControlView.css'
 
 const DraftPaperControlView = function(props) {
-    const [ patchPaperRequestId, setPatchPaperRequestId ] = useState(null)
 
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
 
     // ================= Request Tracking =====================================
     
+    const [ patchPaperRequestId, setPatchPaperRequestId ] = useState(null)
     const patchPaperRequest = useSelector(function(state) {
         if ( ! patchPaperRequestId ) {
             return null
         } else {
             return state.papers.requests[patchPaperRequestId]
+        }
+    })
+
+    const [ patchPaperVersionRequestId, setPatchPaperVersionRequestId] = useState(null)
+    const patchPaperVersionRequest = useSelector(function(state) {
+        if ( patchPaperVersionRequestId ) {
+            return state.papers.requests[patchPaperVersionReqeustId]
+        } else {
+            return null
         }
     })
    
@@ -38,6 +45,9 @@ const DraftPaperControlView = function(props) {
 
     // ================= User Action Handling  ================================
 
+    const dispatch = useDispatch()
+    const navigate = useNavigate()
+
     const publishPaper = function(event) {
         event.preventDefault()
 
@@ -46,6 +56,14 @@ const DraftPaperControlView = function(props) {
             isDraft: false
         }
         setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
+
+        const latestVersion = props.paper.versions[0]
+        const paperVersionPatch = {
+            paperId: latestVersion.paperId,
+            version: latestVersion.version,
+            isPublished: true
+        }
+        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(paperVersionPatch)))
     }
 
     const uploadVersion = function(event) {
@@ -65,11 +83,13 @@ const DraftPaperControlView = function(props) {
     // ======= Effect Handling ======================================
 
     useEffect(function() {
-        if (patchPaperRequest && patchPaperRequest.state == 'fulfilled' ) {
+        if (patchPaperRequest && patchPaperRequest.state == 'fulfilled'  
+            && patchPaperVersionRequest && patchPaperVersionRequest.state == 'fulfilled') 
+        {
             const paperPath = '/paper/' + paper.id
             navigate(paperPath)
         }
-    }, [ patchPaperRequest ])
+    }, [ patchPaperRequest, patchPaperVersionRequest ])
 
     // Request cleanup. 
     useEffect(function() {
@@ -79,6 +99,14 @@ const DraftPaperControlView = function(props) {
             }
         }
     }, [ patchPaperRequestId ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( patchPaperVersionRequestId ) {
+                dispatch(cleanupPaperRequest({ requestId: patchPaperVersionRequestId }))
+            }
+        }
+    }, [ patchPaperVersionRequestId ])
 
     // ======= Render ===============================================
     

@@ -1,0 +1,21 @@
+.paper-search-view {
+    margin: 0 auto;
+    width: 1200px;
+    padding: 30px;
+}
+.paper-search-view .field-wrapper {
+    display: inline-block;
+    padding: 10px;
+}
+.paper-search-view .field-wrapper input[type=text] {
+    width: 1000px;
+    padding: 10px;
+    font-size: 16px;
+    border: thin solid #ddd;
+}
+.paper-search-view .submit {
+    display: inline-block;
+}
+.paper-search-view .submit input[type=submit] {
+    font-size: 16px;
+}

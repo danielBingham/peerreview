@@ -57,7 +57,8 @@ const UploadPaperVersionForm = function(props) {
 
         if ( file ) {
             const version = {
-                file: file
+                file: file,
+                is_published: false
             }
 
             setRequestId(dispatch(postPaperVersions(props.paper, version)))

@@ -1,15 +1,15 @@
 import React, { useState, useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { useLocation, useSearchParams } from 'react-router-dom'
 
-import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
 import PaperSearchView from '/components/papers/search/PaperSearchView'
-import WelcomeNotice from '/components/about/notices/WelcomeNotice'
-import SupportNotice from '/components/about/notices/SupportNotice'
+import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
 
-import './HomePage.css'
+import './PaperSearchPage.css'
 
-const HomePage = function(props) {
+const PaperSearchPage = function(props) {
     const [ query, setQuery ] = useState({})
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     const fieldSettings = useSelector(function(state) {
         if ( state.authentication.settings ) {
@@ -20,9 +20,15 @@ const HomePage = function(props) {
     })
 
     useLayoutEffect(function() {
-        if (fieldSettings && fieldSettings.length > 0) {
-            let newQuery = { ...query } 
+        if ( searchParams && searchParams.get('q') ) {
+            const newQuery = { ...query }
+            newQuery.searchString = searchParams.get('q')
+            setQuery(newQuery)
+        }
+    }, [searchParams])
 
+    useLayoutEffect(function() {
+        if (fieldSettings && fieldSettings.length > 0) {
             const ignored = []
             const isolated = []
 
@@ -34,21 +40,19 @@ const HomePage = function(props) {
                 }
             }
 
+            const newQuery = { ...query }
             newQuery.fields = isolated
             newQuery.excludeFields = ignored
-
             setQuery(newQuery)
         }
-    }, [ fieldSettings ])
+    }, [])
 
     return (
-        <div id="home-page" className="page">
-            <WelcomeNotice />
-            <SupportNotice />
-            <PaperSearchView />
+        <div id="paper-search-page" className="page">
+            <PaperSearchView  />
             <PublishedPaperList query={query} />
         </div>
     )
 }
 
-export default HomePage
+export default PaperSearchPage

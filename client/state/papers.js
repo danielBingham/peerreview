@@ -169,6 +169,9 @@ export const getPapers = function(params, replaceList) {
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests())
 
+        console.log('getPapers')
+        console.log('params')
+        console.log(params)
         const queryString = new URLSearchParams()
         for ( const key in params ) {
             if ( Array.isArray(params[key]) ) {
@@ -182,8 +185,11 @@ export const getPapers = function(params, replaceList) {
 
         const endpoint = '/papers' + ( params ? '?' + queryString.toString() : '')
 
+        console.log('endpoint')
+        console.log(endpoint)
         const request = getRequestFromCache(getState(), 'GET', endpoint)
         if ( request ) {
+            console.log('Got request from cache.')
             if ( replaceList ) {
                 dispatch(papersSlice.actions.clearList())
 
@@ -201,9 +207,6 @@ export const getPapers = function(params, replaceList) {
             return request.requestId
         }
 
-        if ( replaceList ) {
-            dispatch(papersSlice.actions.clearList())
-        }
 
         const requestId = uuidv4() 
         let payload = {
@@ -224,6 +227,10 @@ export const getPapers = function(params, replaceList) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(papers) {
+            if ( replaceList ) {
+                dispatch(papersSlice.actions.clearList())
+            }
+
             if ( papers && papers.length ) {
                 for (const paper of papers) {
                     for (const author of paper.authors) {

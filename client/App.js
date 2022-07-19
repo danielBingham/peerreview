@@ -35,6 +35,7 @@ import ReviewPapersListPage from '/pages/papers/ReviewPapersListPage'
 import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
 
 import PublishedPaperPage from '/pages/papers/PublishedPaperPage'
+import PaperSearchPage from '/pages/papers/PaperSearchPage'
 
 import Spinner from '/components/Spinner'
 
@@ -133,6 +134,7 @@ const App = function(props) {
                         <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage /> } />
 
                         { /* ========= Published Papers ===================== */ }
+                        <Route path="/search" element={ <PaperSearchPage /> } />
                         <Route path="/paper/:id" element={ <PublishedPaperPage /> } />
                     </Routes>
                 </main>

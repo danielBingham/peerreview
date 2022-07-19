@@ -48,11 +48,7 @@ const PublishedPaperList = function(props) {
         }
         query.isDraft = false
 
-        if ( ! requestId ) {
-            setRequestId(dispatch(getPapers(query, true)))
-        } else if ( requestId && request && request.state == 'fulfilled' ) {
-            setRequestId(dispatch(getPapers(query, true)))
-        }
+        setRequestId(dispatch(getPapers(query, true)))
     }, [ props.query ])
 
     // Cleanup our request.

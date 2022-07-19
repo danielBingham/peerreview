@@ -1,5 +1,7 @@
 const mime = require('mime')
 const sanitizeFilename = require('sanitize-filename')
+const fs = require('fs')
+const pdfjslib = require('pdfjs-dist/legacy/build/pdf.js')
 
 const UserDAO = require('./user')
 const FileDAO = require('./files')
@@ -100,9 +102,10 @@ module.exports = class PaperDAO {
         return papers
     }
 
-    async selectPapers(where, params) {
+    async selectPapers(where, params, order) {
         where = (where ? where : '')
         params = (params ? params : [])
+        order = ( order ? order+', ' : '')
 
         const sql = `
                SELECT 
@@ -120,8 +123,12 @@ module.exports = class PaperDAO {
                     LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
                     LEFT OUTER JOIN paper_votes ON paper_votes.paper_id = papers.id
                 ${where} 
-                ORDER BY paper_authors.author_order asc, paper_versions.version desc
+                ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
         `
+        console.log('SQL: ')
+        console.log(sql)
+        console.log('params: ')
+        console.log(params)
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length == 0 ) {
@@ -232,10 +239,28 @@ module.exports = class PaperDAO {
             versionNumber = maxVersionResults.rows[0].version
         }
 
+        const data = new Uint8Array(fs.readFileSync('public' + file.filepath))
+        const pdf = await pdfjslib.getDocument({data}).promise
+        let content = ''
+        for(let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
+            const page = await pdf.getPage(pageNumber)
+            const textContent = await page.getTextContent()
+
+            for(const item of textContent.items ) {
+                content += item.str 
+            }
+        }
+
+        console.log('Extracted Content: ')
+        console.log(content)
+        console.log('Successfully extracted content.')
+
+        content = content.replace(/\0/g, '')
+
         const versionResults = await this.database.query(`
-            INSERT INTO paper_versions (paper_id, version, file_id, created_date, updated_date)
-                VALUES ($1, $2, $3, now(), now())
-        `, [ paper.id, versionNumber, file.id ])
+            INSERT INTO paper_versions (paper_id, version, file_id, is_published, content, created_date, updated_date)
+                VALUES ($1, $2, $3, $4, $5, now(), now())
+        `, [ paper.id, versionNumber, file.id, version.isPublished, content ])
 
         if ( versionResults.rowCount <= 0) {
             throw new Error(`Failed to insert version for paper ${paper.id} and file ${file.id}.`)

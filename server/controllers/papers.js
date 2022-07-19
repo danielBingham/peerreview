@@ -34,6 +34,7 @@ module.exports = class PaperController {
         try {
             let where = 'WHERE'
             const params = []
+            let order = ''
             let count = 0
             let and = ''
 
@@ -51,7 +52,7 @@ module.exports = class PaperController {
                 if ( results.rows.length > 0) {
                     count += 1
                     and = ( count > 1 ? ' AND ' : '' )
-                    where += `${and} papers.id = ANY($${count}::int[])`
+                    where += `${and} papers.id = ANY($${count}::bigint[])`
 
                     const paper_ids = []
                     for(let row of results.rows) {
@@ -66,7 +67,7 @@ module.exports = class PaperController {
             // Query for papers tagged with certain fields and their children 
             if ( request.query.fields && request.query.fields.length > 0) {
                 const fieldIds = await this.fieldDAO.selectFieldChildren(request.query.fields)
-                const results = await this.database.query(`SELECT paper_id from paper_fields where field_id = ANY ($1::int[])`, [ fieldIds])
+                const results = await this.database.query(`SELECT paper_id from paper_fields where field_id = ANY ($1::bigint[])`, [ fieldIds])
                 if ( results.rows.length > 0) {
                     count += 1
                     and = ( count > 1 ? ' AND ' : '' )
@@ -85,11 +86,11 @@ module.exports = class PaperController {
 
             if ( request.query.excludeFields && request.query.excludeFields.length > 0) {
                 const fieldIds = await this.fieldDAO.selectFieldChildren(request.query.excludeFields)
-                const results = await this.database.query(`SELECT paper_id from paper_fields where field_id = ANY ($1::int[])`, [ fieldIds])
+                const results = await this.database.query(`SELECT paper_id from paper_fields where field_id = ANY ($1::bigint[])`, [ fieldIds])
                 if ( results.rows.length > 0) {
                     count += 1
                     and = ( count > 1 ? ' AND ' : '' )
-                    where += `${and} papers.id != ALL($${count}::int[])`
+                    where += `${and} papers.id != ALL($${count}::bigint[])`
 
                     const paper_ids = []
                     for(let row of results.rows) {
@@ -100,6 +101,23 @@ module.exports = class PaperController {
                 } 
             }
 
+            if ( request.query.searchString && request.query.searchString.length > 0) {
+                const results = await this.database.query(`select paper_id from paper_versions where searchable_content @@ websearch_to_tsquery('english', $1) AND is_published=true`, [ request.query.searchString ])
+                if ( results.rows.length > 0 ) {
+                    count += 1
+                    and = ( count > 1 ? ' AND ' : '' )
+
+                    const paperIds = results.rows.map((r) => r.paper_id)
+                    where += `${and} papers.id = ANY($${count}::int[])`
+                    order += `array_position($${count}::bigint[], papers.id)`
+                    params.push(paperIds)
+
+                } else {
+                    return response.status(200).json([])
+                }
+
+            }
+
             // We don't actually have any query parameters.
             if ( count < 1 ) {
                 where = ''
@@ -108,7 +126,9 @@ module.exports = class PaperController {
             console.log(where)
             console.log('getPapers params')
             console.log(params)
-            const papers = await this.paperDAO.selectPapers(where, params)
+            console.log('getPapers order')
+            console.log(order)
+            const papers = await this.paperDAO.selectPapers(where, params, order)
             return response.status(200).json(papers)
         } catch (error) {
             this.logger.error(error)
@@ -344,6 +364,60 @@ module.exports = class PaperController {
                 return response.status(500).json({error: 'server-error'})
             }
 
+        }
+
+    }
+
+    async patchPaperVersion(request, response) {
+        let paper_version = request.body
+
+        // We want to use the params.id over any id in the body.
+        paper_version.paperId = request.params.paper_id
+        paper_version.version = request.params.version
+
+        // We'll ignore these fields when assembling the patch SQL.  These are
+        // fields that either need more processing (authors) or that we let the
+        // database handle (date fields, id, etc)
+        const ignoredFields = [ 'paper_id', 'version', 'createdDate', 'updatedDate' ]
+
+        let sql = 'UPDATE paper_versions SET '
+        let params = []
+        let count = 1
+        for(let key in paper) {
+            if (ignoredFields.includes(key)) {
+                continue
+            }
+
+            if ( key == 'isPublished') {
+                sql += 'is_published = $' + count + ', '
+            } else {
+                sql += key + ' = $' + count + ', '
+            }
+
+            params.push(paper[key])
+            count = count + 1
+        }
+        sql += `updated_date = now() WHERE paper_id = ${count} AND version = ${count+1}`
+
+        params.push(paper_version.paperId, paper_version.version )
+
+        try {
+            const results = await this.database.query(sql, params)
+
+            if ( results.rowCount == 0 ) {
+                return response.status(404).json({error: 'no-resource'})
+            }
+
+            const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paper_version.paperId])
+            if ( ! returnPapers ) {
+                this.logger.error('Failed to find paper after patching version!')
+                return response.status(500).json({ error: 'server-error' })
+            } else {
+                return response.status(200).json(returnPapers[0])
+            }
+        } catch (error) {
+            this.logger.error(error)
+            response.status(500).json({error: 'unknown'})
         }
 
     }

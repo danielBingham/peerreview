@@ -216,6 +216,9 @@ module.exports = function(database, logger, config) {
         paperController.postPaperVersions(request, response)
     })
 
+    router.patch('/paper/:paper_id/version/:version', function(request, response) {
+        paperController.patchPaperVersion(request, response)
+    })
 
     /**************************************************************************
      *      Paper Review REST Routes

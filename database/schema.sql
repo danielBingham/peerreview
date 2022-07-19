@@ -103,10 +103,14 @@ CREATE TABLE paper_versions (
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
     version int NOT NULL,
     file_id uuid REFERENCES files(id) ON DELETE CASCADE,
+    is_published boolean DEFAULT false,
+    content text NOT NULL,
+    searchable_content tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,
     created_date timestamp,
     updated_date timestamp,
     PRIMARY KEY (paper_id, version)
 );
+CREATE INDEX paper_search_index ON paper_versions USING GIN (searchable_content);
 
 CREATE TABLE paper_authors (
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
