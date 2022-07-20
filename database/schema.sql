@@ -30,8 +30,8 @@ CREATE TABLE users (
     institution varchar(256),
     initial_reputation int DEFAULT 100,
     reputation int DEFAULT 100,
-    created_date timestamp,
-    updated_date timestamp 
+    created_date timestamptz,
+    updated_date timestamptz 
 );
 
 /******************************************************************************
@@ -43,8 +43,8 @@ CREATE TABLE files (
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     filepath varchar(1024),
     type varchar(256),
-    created_date timestamp,
-    updated_date timestamp
+    created_date timestamptz,
+    updated_date timestamptz
 );
 
 /******************************************************************************
@@ -56,8 +56,8 @@ CREATE TABLE fields (
     name varchar(512),
     description text,
     type varchar(512), /* Name of the top level parent, used as a class to give the tag its color. */
-    created_date timestamp,
-    updated_date timestamp
+    created_date timestamptz,
+    updated_date timestamptz
 );
 
 CREATE TABLE field_relationships (
@@ -74,8 +74,8 @@ CREATE TABLE user_settings (
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     welcome_dismissed boolean,
     funding_dismissed boolean,
-    created_date timestamp,
-    updated_date timestamp
+    created_date timestamptz,
+    updated_date timestamptz
 );
 
 CREATE TYPE user_field_setting AS ENUM('ignored', 'isolated');
@@ -95,8 +95,8 @@ CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
     title   varchar(1024),
     is_draft   boolean,
-    created_date    timestamp,
-    updated_date    timestamp
+    created_date    timestamptz,
+    updated_date    timestamptz
 );
 
 CREATE TABLE paper_versions (
@@ -106,8 +106,8 @@ CREATE TABLE paper_versions (
     is_published boolean DEFAULT false,
     content text NOT NULL,
     searchable_content tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,
-    created_date timestamp,
-    updated_date timestamp,
+    created_date timestamptz,
+    updated_date timestamptz,
     PRIMARY KEY (paper_id, version)
 );
 CREATE INDEX paper_search_index ON paper_versions USING GIN (searchable_content);
@@ -172,8 +172,8 @@ CREATE TABLE reviews (
     summary text,
     recommendation review_recommendation,
     status review_status,
-    created_date timestamp,
-    updated_date timestamp
+    created_date timestamptz,
+    updated_date timestamptz
 );
 
 CREATE TABLE review_comment_threads (
@@ -192,7 +192,29 @@ CREATE TABLE review_comments (
     thread_order int,
     status review_comment_status,
     content     text,
-    created_date    timestamp,
-    updated_date    timestamp
+    created_date    timestamptz,
+    updated_date    timestamptz
+);
+
+/******************************************************************************
+ * Responses 
+ *****************************************************************************/
+
+CREATE TYPE response_status AS ENUM('in-progress', 'posted');
+CREATE TABLE responses (
+    id  bigserial PRIMARY KEY,
+    paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+    user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
+    status  response_status,
+    created_date    timestamptz,
+    updated_date    timestamptz
+);
+
+CREATE TABLE response_versions (
+    response_id bigint REFERENCES responses(id) ON DELETE CASCADE,
+    version int,
+    content text,
+    created_date    timestamptz,
+    updated_date    timestamptz
 );
 

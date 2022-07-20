@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router'
 
-import {  patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
+import {  patchPaper, patchPaperVersion, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import {  clearSelected, patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import './DraftPaperControlView.css'

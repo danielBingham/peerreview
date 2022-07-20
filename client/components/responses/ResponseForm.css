@@ -1,0 +1,16 @@
+.paper-response-form {
+    margin: 20px auto;
+}
+.paper-response-form .content textarea {
+    display: block;
+    margin: 0 auto;
+    width: 800px;
+    height: 150px;
+    padding: 10px;
+    border: thin solid #ddd;
+}
+.paper-response-form .submit {
+    margin: 5px auto;
+    width: 820px;
+    text-align: right;
+}

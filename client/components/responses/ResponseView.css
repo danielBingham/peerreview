@@ -1,0 +1,14 @@
+.paper-response-view {
+    display: grid;
+    grid-template-columns: 300px auto;
+    padding: 20px;
+    border-bottom: thin solid #ddd;
+    border-top: thin solid #ddd;
+}
+.paper-response-view .response-author {
+    grid-column: 1/2;
+}
+.paper-response-view .response-content {
+    grid-column: 2 / 3;
+}
+

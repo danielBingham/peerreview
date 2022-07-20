@@ -11,13 +11,13 @@
     grid-column: 3 / 4;
     padding: 10px;
 }
-.published-paper-list-item .votes {
+.published-paper-list-item .score {
     grid-column: 1 / 2; 
 }
 .published-paper-list-item .responses {
     grid-column: 2 / 3;
 }
-.published-paper-list-item .votes, .published-paper-list-item .responses {
+.published-paper-list-item .score, .published-paper-list-item .responses {
     display: block;
 
     height: 54px;
@@ -28,7 +28,7 @@
     vertical-align: center; 
     font-size: 20px;
 }
-.published-paper-list-item .votes .label, .published-paper-list-item .responses .label {
+.published-paper-list-item .score .label, .published-paper-list-item .responses .label {
     font-size: 9px;
 }
 
@@ -42,7 +42,7 @@
 .published-paper-list-item .title a:hover {
     color: #666;
 }
-.published-paper-list-item .authors {
+.published-paper-list-item .date-and-authors {
     font-size: 12px;
     padding: 5px;
 }

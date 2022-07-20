@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
+import DateTag from '/components/DateTag'
 
 import './PublishedPaperListItem.css'
 
@@ -26,11 +27,11 @@ const PublishedPaperListItem = function(props) {
 
     return (
         <div id={paper.id} className="published-paper-list-item">
-            <div className="votes">{score}<br /> <span className="label">votes</span></div> 
+            <div className="score">{score}<br /> <span className="label">score</span></div> 
             <div className="responses">0 <br /><span className="label">responses</span></div>
             <div className="wrapper">
                 <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title} </Link></div> 
-                <div className="authors">by {authors}</div>
+                <div className="date-and-authors">published <DateTag timestamp={paper.updatedDate} /> by {authors}</div>
                 <div className="fields">{fields}</div>
             </div>
         </div>

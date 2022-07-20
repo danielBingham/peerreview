@@ -1,0 +1,22 @@
+.paper-response-list {
+    margin: 50px auto;
+    width: 1200px;
+}
+.paper-response-list .header {
+    display: grid;
+    grid-template-columns: auto 450px;
+    border-bottom: thin solid #ddd;
+}
+.paper-response-list .header h2 {
+    grid-column: 1 / 2;
+    padding: 0;
+    margin: 0;
+}
+.paper-response-list .header .controls {
+    grid-column: 2 / 3;
+}
+.paper-response-list .header .controls .control {
+    display: inline-block;
+    width: 150px;
+}
+

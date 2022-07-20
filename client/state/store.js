@@ -9,6 +9,7 @@ import reviewsReducer from './reviews'
 import authenticationReducer from './authentication'
 import settingsReducer from './settings'
 import filesReducer from './files'
+import responsesReducer from './responses'
 
 
 const reducers = combineReducers({
@@ -19,7 +20,8 @@ const reducers = combineReducers({
     reviews: reviewsReducer,
     fields: fieldsReducer,
     settings: settingsReducer,
-    files: filesReducer
+    files: filesReducer,
+    responses: responsesReducer
 })
 
 const rootReducer = function(state, action) {

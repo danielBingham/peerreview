@@ -9,10 +9,11 @@
  * really ``/api/0.0.0/users``.  This is so that we can load multiple versions
  * of the api as we make changes and leave past versions still accessible.
  **************************************************************************************************/
-const express = require('express')
-const multer = require('multer')
-
 module.exports = function(database, logger, config) {
+    const express = require('express')
+    const multer = require('multer')
+
+    const ControllerError = require('./errors/ControllerError')
     const router = express.Router()
 
     /******************************************************************************
@@ -57,7 +58,7 @@ module.exports = function(database, logger, config) {
     router.put('/user/:id', function(request, response) {
         userController.putUser(request, response)
     })
-        
+
     // Edit an existing user with partial data.
     router.patch('/user/:id', function(request, response) {
         userController.patchUser(request, response)
@@ -98,7 +99,7 @@ module.exports = function(database, logger, config) {
     router.put('/user/:user_id/setting/:id', function(request, response) {
         settingsController.putSetting(request, response)
     })
-        
+
     // Edit an existing setting with partial data.
     router.patch('/user/:user_id/setting/:id', function(request, response) {
         settingsController.patchSetting(request, response)
@@ -159,7 +160,7 @@ module.exports = function(database, logger, config) {
         return response.status(501).send()
         //fieldController.putField(request, response)
     })
-        
+
     // Edit an existing field with partial data.
     router.patch('/field/:id', function(request, response) {
         return response.status(501).send()
@@ -197,7 +198,7 @@ module.exports = function(database, logger, config) {
     router.put('/paper/:id', function(request, response) {
         paperController.putPaper(request, response)
     })
-        
+
     // Edit an existing paper with partial data.
     router.patch('/paper/:id', function(request, response) {
         paperController.patchPaper(request, response)
@@ -296,15 +297,66 @@ module.exports = function(database, logger, config) {
     router.put('/paper/:paper_id/user/:user_id/vote', function(request, response) {
         voteController.putVote(request, response)
     })
-        
+
     // Edit an existing paper with partial data.
     router.patch('/paper/:paper_id/user/:user_id/vote', function(request, response) {
-        return response.status(501).send()
+        return response.status(501).json({ error: 'not-implemented' })
     })
 
     // Delete an existing paper.
     router.delete('/paper/:paper_id/user/:user_id/vote', function(request, response) {
         voteController.deleteVote(request, response)
+    })
+
+    /**************************************************************************
+     *      Paper Response REST Routes
+     *************************************************************************/
+
+    const ResponseController = require('./controllers/responses')
+    const responseController = new ResponseController(database)
+
+    router.get('/paper/:paper_id/responses', function(request, response, next) {
+        responseController.getResponses(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/paper/:paper_id/responses', function(request, response, next) {
+        responseController.postResponses(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/paper/:paper_id/response/:id', function(request, response, next) {
+        responseController.getResponse(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.put('/paper/:paper_id/response/:id', function(request, response, next) {
+        responseController.putResponse(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/paper/:paper_id/response/:id', function(request, response, next) {
+        responseController.patchResponse(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.delete('/paper/:paper_id/response/:id', function(request, response, next) {
+        responseController.deleteResponse(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    /**************************************************************************
+     *      API 404 
+     *************************************************************************/
+
+    router.use('*', function(request, response) {
+        throw new ControllerError(404, 'no-resource', `Request for non-existent resource ${request.originalUrl}.`)
     })
 
     return router

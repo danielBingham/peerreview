@@ -565,6 +565,67 @@ export const deletePaper = function(paper) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
+export const patchPaperVersion = function(paper, version) {
+    return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests())
+
+        const endpoint = `/paper/${paper.id}/version/${version.version}`
+
+        const requestId = uuidv4()
+        const payload = {
+            requestId: requestId
+        }
+
+        dispatch(papersSlice.actions.makeRequest({requestId:requestId, method: 'PATCH', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(version)
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(returnedPaper) {
+            for(const author of returnedPaper.authors) {
+                dispatch(addUsersToDictionary(author.user))
+            }
+            dispatch(addFieldsToDictionary(returnedPaper.fields))
+            dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
+
+            payload.result = returnedPaper
+            dispatch(papersSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(papersSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
+/**
+ * PATCH /paper/:id/version/:version
+ *
+ * Create a new version of a paper.
+ *  
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {object} paper - A populated paper object, minus the `id` member.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
 export const postPaperVersions = function(paper, version) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
