@@ -148,11 +148,11 @@ need a Markdown capable WYSIWYG editor.
 [Issue #52](https://github.com/danielbingham/peerreview/issues/52) **PDF Text overlay**  We need to overlay text on top of the PDF so that
 users can copy and paste out of the PDF.
 
-**Downloading PDF of papers** Users want to download PDFs of Papers.
+[Done] **Downloading PDF of papers** Users want to download PDFs of Papers.
 
-**User Profile Pictures** Users can upload pictures to their profiles.
+[Issue #62](https://github.com/danielbingham/peerreview/issues/62) **User Profile Pictures** Users can upload pictures to their profiles.
 
-**Use routing for Reviews** Right now we're using redux state to track
+[Issue #63](https://github.com/danielbingham/peerreview/issues/63) **Use routing for Reviews** Right now we're using redux state to track
 navigation among reviews and review comments on the draft paper review page.
 We should be using routing.  That way you can link to a particular review or
 comment.
@@ -162,9 +162,9 @@ Authentication epic to build a really solid authentication system.
 
 **Document all the things**
 
-**Integration test all the things**
+[Issue #64](https://github.com/danielbingham/peerreview/issues/64) **Integration test all the things**
 
-**Production deployment infrastructure**
+[Issue #65](https://github.com/danielbingham/peerreview/issues65) **Production deployment infrastructure**
 
 ### Bonus (Or 1.0.0+)
 
