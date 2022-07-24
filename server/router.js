@@ -141,23 +141,29 @@ module.exports = function(database, logger, config) {
     const fieldController = new FieldController(database)
 
     // Get a list of all fields.
-    router.get('/fields', function(request, response) {
-        fieldController.getFields(request, response)
+    router.get('/fields', function(request, response, next) {
+        fieldController.getFields(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Create a new field 
-    router.post('/fields', function(request, response) {
-        fieldController.postFields(request, response)
+    router.post('/fields', function(request, response, next) {
+        fieldController.postFields(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Get the details of a single field 
-    router.get('/field/:id', function(request, response) {
-        fieldController.getField(request, response)
+    router.get('/field/:id', function(request, response, next) {
+        fieldController.getField(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Replace a field wholesale.
     router.put('/field/:id', function(request, response) {
-        return response.status(501).send()
+        return response.status(501).json({ error: 'unimplemented' })
         //fieldController.putField(request, response)
     })
 
@@ -180,8 +186,10 @@ module.exports = function(database, logger, config) {
     const paperController = new PaperController(database, logger)
 
     // Get a list of all papers.
-    router.get('/papers', function(request, response) {
-        paperController.getPapers(request, response)
+    router.get('/papers', function(request, response, next) {
+        paperController.getPapers(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Create a new paper 

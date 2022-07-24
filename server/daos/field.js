@@ -5,6 +5,14 @@ module.exports = class FieldDAO {
         this.logger = logger
     }
 
+    validateField(field) {
+        // Validate the `name` field
+        if ( field.name.length < 3) {
+            throw new ValidationError('name', 'length', 'Field names must be at least 3 characters long.')
+        }
+
+    }
+
     /**
      * Translate the database rows returned by our join queries into objects.
      *
@@ -129,6 +137,23 @@ module.exports = class FieldDAO {
         } while(previous.length > 0)
 
         return fieldIds
+    }
+
+    async insertField(field) {
+        const results = await this.database.query(`
+                    INSERT INTO fields (name, parent_id,  created_date, updated_date) 
+                        VALUES ($1, $2, now(), now()) 
+                        RETURNING id
+
+                `, 
+            [ field.name, field.parentId ]
+        )
+
+        if ( results.rowCount == 0 ) {
+            throw new Error('Insert field failed.')
+        }
+
+
     }
 
 

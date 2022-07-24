@@ -3,14 +3,15 @@ const fs = require('fs')
 module.exports = class FileService {
 
     constructor(logger) {
-        this.base = 'public'
+        this.base = '/public'
     }
 
     withBase(path) {
+
         if ( path.substring(0, this.base.length) !== this.base) { 
-            return this.base + path
+            return process.cwd() + this.base + path
         } else {
-            return path
+            return process.cwd() + path
         }
     }
 
@@ -25,5 +26,9 @@ module.exports = class FileService {
 
     removeFile(path) {
         fs.rmSync(this.withBase(path))
+    }
+
+    readFile(path) {
+        return fs.readFileSync(this.withBase(path))
     }
 }

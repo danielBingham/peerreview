@@ -5,13 +5,15 @@
  *
  ******************************************************************************/
 const FieldDAO = require('../daos/field')
+const ControllerError = require('../errors/ControllerError')
 
 
 module.exports = class FieldController {
 
-    constructor(database) {
+    constructor(database, logger) {
         this.database = database
-        this.fieldDAO = new FieldDAO(database)
+        this.logger = logger
+        this.fieldDAO = new FieldDAO(database, logger)
     }
 
     /**
@@ -20,32 +22,26 @@ module.exports = class FieldController {
      * Return a JSON array of all fields in thethis.database.
      */
     async getFields(request, response) {
-        try {
-            let where = 'WHERE'
-            let params = []
-            if ( request.query ) {
-                if ( request.query.name && request.query.name.length > 0) {
-                    where += ` fields.name ILIKE $1`
-                    params.push(request.query.name+'%')
-                }
+        let where = 'WHERE'
+        let params = []
+        if ( request.query ) {
+            if ( request.query.name && request.query.name.length > 0) {
+                where += ` fields.name ILIKE $1`
+                params.push(request.query.name+'%')
             }
+        }
 
-            // We didn't end up adding any parameters.
-            if ( where == 'WHERE') {
-                where = ''
-            }
+        // We didn't end up adding any parameters.
+        if ( where == 'WHERE') {
+            where = ''
+        }
 
-            const fields = await this.fieldDAO.selectFields(where, params)
+        const fields = await this.fieldDAO.selectFields(where, params)
 
-            if ( ! fields ) {
-                return response.status(200).json([])
-            } else {
-                return response.status(200).json(fields)
-            }
-        } catch (error) {
-            console.error(error)
-            response.status(500).json({ error: 'server-error' })
-            return
+        if ( ! fields ) {
+            return response.status(200).json([])
+        } else {
+            return response.status(200).json(fields)
         }
     }
 
@@ -55,39 +51,28 @@ module.exports = class FieldController {
      * Create a new field in the this.database from the provided JSON.
      */
     async postFields(request, response) {
+        if ( ! request.session || ! request.session.user ) {
+            throw new ControllerError(403, 'not-authorized', `Attempt to create a new field from an unauthenticated user.`)
+        }
+
         const field = request.body
 
         // If a field already exists with that name, send a 400 error.
         //
-        try {
-            const fieldExistsResults = await this.database.query(
-                'SELECT id, name FROM fields WHERE name=$1',
-                [ field.name ]
-            )
+        const fieldExistsResults = await this.database.query(
+            'SELECT id, name FROM fields WHERE name=$1',
+            [ field.name ]
+        )
 
-            if (fieldExistsResults.rowCount > 0) {
-                return response.status(400).json({error: 'field-exists'})
-            }
-
-            const results = await this.database.query(`
-                    INSERT INTO fields (name, parent_id,  created_date, updated_date) 
-                        VALUES ($1, $2, now(), now()) 
-                        RETURNING id
-
-                `, 
-                [ field.name, field.parentId ]
-            )
-
-            if ( results.rowCount == 0 ) {
-                throw new Error('Insert field failed.')
-            }
-
-            const returnField = await this.fieldDAO.selectFields('WHERE fields.id=$1', [results.rows[0].id])
-            return response.status(201).json(returnField)
-        } catch (error) {
-            console.error(error)
-            return response.status(500).json({error: 'unknown'})
+        if (fieldExistsResults.rowCount > 0) {
+            throw new ControllerError(400, 'field-exists', `Attempt to create a new field(${field.name}), when a field of that name already exists.`)
         }
+
+        field.id = await this.fieldDAO.insertField(field)
+        await this.fieldDAO.insertFieldRelationships(field)
+
+        const returnField = await this.fieldDAO.selectFields('WHERE fields.id=$1', [results.rows[0].id])
+        return response.status(201).json(returnField)
     }
 
     /**

@@ -11,19 +11,22 @@ module.exports = class FilesDAO {
         this.fileService = new FileService(database, logger)
     }
 
+    hydrateFile(row) {
+        return {
+            id: row.file_id,
+            userId: row.file_userId,
+            filepath: row.file_filepath,
+            type: row.file_type,
+            createdDate: row.file_createdDate,
+            updatedDate: row.file_updatedDate
+        }
+    }
+
     hydrateFiles(rows) {
         const files = {}
 
         for(const row of rows) {
-            const file = {
-                id: row.id,
-                userId: row.userId,
-                filepath: row.filepath,
-                type: row.type,
-                createdDate: row.createdDate,
-                updatedDate: row.updatedDate
-            }
-
+            const file = this.hydrateFile(row)
             if ( ! files[row.id] ) {
                 files[row.id] = file
             }
@@ -33,6 +36,11 @@ module.exports = class FilesDAO {
         return Object.values(files)
     }
 
+    getFilesSelectionString() {
+        return `files.id as file_id, files.user_id as "file_userId", files.filepath as file_filepath, files.type as file_type,
+            files.created_date as "file_createdDate", files.updated_date as "file_updatedDate"` 
+    }
+
     async selectFiles(where, params) {
         if ( ! where ) {
             where = ''
@@ -40,7 +48,7 @@ module.exports = class FilesDAO {
         }
         const sql = `
             SELECT 
-                files.id, files.user_id as "userId", files.filepath, files.type, files.created_date as "createdDate", files.updated_date as "updatedDate" 
+                ${ this.getFilesSelectionString() } 
                 FROM files 
                 ${where}
         `

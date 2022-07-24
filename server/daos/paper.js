@@ -3,6 +3,8 @@ const sanitizeFilename = require('sanitize-filename')
 const fs = require('fs')
 const pdfjslib = require('pdfjs-dist/legacy/build/pdf.js')
 
+const DAOError = require('../errors/DAOError')
+
 const UserDAO = require('./user')
 const FileDAO = require('./files')
 const FileService = require('../services/files')
@@ -30,7 +32,7 @@ module.exports = class PaperDAO {
 
         const papers = {}
 
-        rows.forEach(function(row) {
+        for(const row of rows) {
             const paper = {
                 id: row.paper_id,
                 title: row.paper_title,
@@ -58,11 +60,7 @@ module.exports = class PaperDAO {
             }
 
             const paper_version = {
-                file: {
-                    id: row.file_id,
-                    filepath: row.file_filepath,
-                    type: row.file_type
-                },
+                file: this.fileDAO.hydrateFile(row),
                 version: row.version_version,
                 createdDate: row.version_createdDate,
                 updatedDate: row.version_updatedDate
@@ -76,6 +74,7 @@ module.exports = class PaperDAO {
                 id: row.field_id,
                 name: row.field_name,
                 type: row.field_type,
+                description: row.field_description,
                 parents: [],
                 children: [],
                 createdDate: row.field_createdDate,
@@ -97,7 +96,7 @@ module.exports = class PaperDAO {
             if ( ! papers[paper.id].votes.find((v) => v.paperId == paper_vote.paperId && v.userId == paper_vote.userId) ) {
                 papers[paper.id].votes.push(paper_vote)
             }
-        })
+        }
 
         return papers
     }
@@ -109,12 +108,24 @@ module.exports = class PaperDAO {
 
         const sql = `
                SELECT 
-                    papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft", papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
-                    paper_authors.user_id as author_id, paper_authors.author_order as author_order, paper_authors.owner as author_owner,
-                    paper_versions.version as version_version, paper_versions.created_date as "version_createdDate", paper_versions.updated_date as "version_updatedDate",
-                    files.id as file_id, files.filepath as file_filepath, files.type as file_type,
-                    fields.id as field_id, fields.name as field_name, fields.type as field_type, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
+
+                    papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft",
+                    papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
+
+                    paper_authors.user_id as author_id, paper_authors.author_order as author_order,
+                    paper_authors.owner as author_owner,
+
+                    paper_versions.version as version_version,
+                    paper_versions.created_date as "version_createdDate", paper_versions.updated_date as "version_updatedDate",
+
+                    ${ this.fileDAO.getFilesSelectionString() } 
+
+                    fields.id as field_id, fields.name as field_name, 
+                    fields.description as field_description, fields.type as field_type,
+                    fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
+
                     paper_votes.paper_id as "vote_paperId", paper_votes.user_id as "vote_userId", paper_votes.score as vote_score
+
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
                     LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
@@ -125,14 +136,10 @@ module.exports = class PaperDAO {
                 ${where} 
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
         `
-        console.log('SQL: ')
-        console.log(sql)
-        console.log('params: ')
-        console.log(params)
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length == 0 ) {
-            return null
+            return [] 
         } else {
             const papers = Object.values(this.hydratePapers(results.rows))
             for( const paper of papers) {
@@ -155,7 +162,7 @@ module.exports = class PaperDAO {
             [ paper.title, paper.isDraft ]
         )
         if ( results.rows.length == 0 ) {
-           throw new Error('Failed to insert a paper.')
+           throw new DAOError('failed-insertion', 'Failed to insert a paper.')
         }
 
         return results.rows[0].id
@@ -183,7 +190,7 @@ module.exports = class PaperDAO {
         const results = await this.database.query(sql, params)
 
         if (results.rowCount == 0 )  {
-            throw new Error('Something went wrong with the author insertion.')
+            throw new DAOError('failed-insertion', 'Something went wrong with the author insertion.')
         }
     }
 
@@ -213,7 +220,7 @@ module.exports = class PaperDAO {
         const results = await this.database.query(sql, params)
 
         if ( results.rowCount == 0) {
-            throw new Error('Something went wrong with field insertion.')
+            throw new DAOError('failed-insertion', 'Something went wrong with field insertion.')
         }
     }
 
@@ -226,7 +233,7 @@ module.exports = class PaperDAO {
     async insertVersion(paper, version) {
         const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ version.file.id ])
         if ( files.length <= 0) {
-            throw new Error(`Invalid file_id posted with paper ${paper.id}.`)
+            throw new DAOError('invalid-file', `Invalid file_id posted with paper ${paper.id}.`)
         }
         const file = files[0]
 
@@ -239,7 +246,7 @@ module.exports = class PaperDAO {
             versionNumber = maxVersionResults.rows[0].version
         }
 
-        const data = new Uint8Array(fs.readFileSync('public' + file.filepath))
+        const data = new Uint8Array(this.fileService.readFile(file.filepath))
         const pdf = await pdfjslib.getDocument({data}).promise
         let content = ''
         for(let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
@@ -251,11 +258,11 @@ module.exports = class PaperDAO {
             }
         }
 
-        console.log('Extracted Content: ')
-        console.log(content)
-        console.log('Successfully extracted content.')
-
         content = content.replace(/\0/g, '')
+
+        if ( content.trim().length == 0 ) {
+            console.log('Empty PDF!')
+        }
 
         const versionResults = await this.database.query(`
             INSERT INTO paper_versions (paper_id, version, file_id, is_published, content, created_date, updated_date)
@@ -263,7 +270,7 @@ module.exports = class PaperDAO {
         `, [ paper.id, versionNumber, file.id, version.isPublished, content ])
 
         if ( versionResults.rowCount <= 0) {
-            throw new Error(`Failed to insert version for paper ${paper.id} and file ${file.id}.`)
+            throw new DAOError('failed-insertion', `Failed to insert version for paper ${paper.id} and file ${file.id}.`)
         }
 
         const title = paper.title
@@ -282,6 +289,54 @@ module.exports = class PaperDAO {
         this.fileService.copyFile(file.filepath, filepath)
         this.fileDAO.updateFile(newFile)
         this.fileService.removeFile(file.filepath)
+    }
+
+
+    async updatePartialPaper(paper) {
+        // We'll ignore these fields when assembling the patch SQL.  These are
+        // fields that either need more processing (authors) or that we let the
+        // database handle (date fields, id, etc)
+        const ignoredFields = [ 'id', 'authors', 'fields', 'versions', 'votes', 'createdDate', 'updatedDate' ]
+
+        let sql = 'UPDATE papers SET '
+        let params = []
+        let count = 1
+        for(let key in paper) {
+            if (ignoredFields.includes(key)) {
+                continue
+            }
+
+            if ( key == 'isDraft') {
+                sql += 'is_draft = $' + count + ', '
+            } else {
+                sql += key + ' = $' + count + ', '
+            }
+
+            params.push(paper[key])
+            count = count + 1
+        }
+        sql += 'updated_date = now() WHERE id = $' + count
+
+        params.push(paper.id)
+
+        const results = await this.database.query(sql, params)
+
+        if ( results.rowCount <= 0 ) {
+            throw new DAOError('update-failure', `Failed to update paper ${paper.id} with partial update.`) 
+        }
+
+    }
+
+    async deletePaper(id) {
+        const results = await this.database.query(
+            'delete from papers where id = $1',
+            [ id ]
+        )
+
+        if ( results.rowCount == 0) {
+            throw new DAOError('deletion-failed', `Attempt to delete paper(${id}) returned no rows modified.`)
+        }
+
     }
 
 }

@@ -9,6 +9,7 @@
     "client": "webpack-dev-server --mode development --devtool inline-source-map --no-hot --no-live-reload",
     "server": "nodemon ./server/bin/www",
     "dev": "export NODE_ENV=hot-dev && concurrently \"npm run server\" \"npm run client\"",
+    "jest": "jest",
     "test": "jest test"
   },
   "jest": {

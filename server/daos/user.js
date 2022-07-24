@@ -45,7 +45,9 @@ module.exports = class UserDAO {
                     description: row.field_description,
                     type: row.field_type,
                     createdDate: row.field_createdDate,
-                    updatedDate: row.field_updatedDate
+                    updatedDate: row.field_updatedDate,
+                    children: [],
+                    parents: []
                 }
             }
             if ( userField.field.id && ! users[row.user_id].fields.find((f) => f.field.id == userField.field.id) ) {
@@ -67,9 +69,17 @@ module.exports = class UserDAO {
 
         const sql = `
                 SELECT 
-                    users.id as user_id, users.name as user_name, users.email as user_email, users.bio as user_bio, users.location as user_location, users.institution as user_institution, users.initial_reputation as "user_initialReputation", users.reputation as user_reputation, users.created_date as "user_createdDate", users.updated_date as "user_updatedDate",
+
+                    users.id as user_id, users.name as user_name, users.email as user_email, 
+                    users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
+                    users.initial_reputation as "user_initialReputation", users.reputation as user_reputation, 
+                    users.created_date as "user_createdDate", users.updated_date as "user_updatedDate",
+
                     user_field_reputation.reputation as field_reputation,
-                    fields.id as field_id, fields.name as field_name, fields.description as field_description, fields.type as field_type, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate"
+
+                    fields.id as field_id, fields.name as field_name, fields.description as field_description, 
+                    fields.type as field_type, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate"
+
                 FROM users
                 LEFT OUTER JOIN user_field_reputation on users.id = user_field_reputation.user_id
                 LEFT OUTER JOIN fields on fields.id = user_field_reputation.field_id
