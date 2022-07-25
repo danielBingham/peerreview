@@ -96,7 +96,7 @@ const stateUpdate = function(store) {
     })
 }
 
-describe('in client/state/users.js', function() {
+xdescribe('in client/state/users.js', function() {
 
     beforeAll(function() {
         // disable logging

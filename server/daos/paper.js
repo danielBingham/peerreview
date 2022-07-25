@@ -118,7 +118,7 @@ module.exports = class PaperDAO {
                     paper_versions.version as version_version,
                     paper_versions.created_date as "version_createdDate", paper_versions.updated_date as "version_updatedDate",
 
-                    ${ this.fileDAO.getFilesSelectionString() } 
+                    ${ this.fileDAO.getFilesSelectionString() },
 
                     fields.id as field_id, fields.name as field_name, 
                     fields.description as field_description, fields.type as field_type,

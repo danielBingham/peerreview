@@ -13,7 +13,15 @@
     "test": "jest test"
   },
   "jest": {
-    "verbose": true
+    "verbose": true,
+    "moduleNameMapper": {
+        "^/configuration": "<rootDir>/client/configuration",
+        "^/logger": "<rootDir>/client/logger",
+        "^/state/(.*)": "<rootDir>/client/state/$1",
+        "^/errors/(.*)": "<rootDir>/client/errors/$1",
+        "^/components/(.*)": "<rootDir>/client/components/$1",
+        "^/pages/(.*)": "<rootDir>/client/pages/$1"
+    }
   },
   "dependencies": {
     "@heroicons/react": "^1.0.6",

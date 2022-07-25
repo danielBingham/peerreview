@@ -48,7 +48,7 @@ const stateUpdate = function(store) {
     })
 }
 
-describe('in client/state/authentication.js', function() {
+xdescribe('in client/state/authentication.js', function() {
 
     beforeAll(function() {
         // disable logging
