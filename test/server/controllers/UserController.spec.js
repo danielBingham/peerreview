@@ -1,190 +1,282 @@
-const UserController = require('../../../server/controllers/users');
-const AuthenticationService = require('../../../server/services/authentication');
+const UserController = require('../../../server/controllers/users')
+const AuthenticationService = require('../../../server/services/authentication')
+
 const Logger = require('../../../server/logger')
+const ControllerError = require('../../../server/errors/ControllerError')
+const DAOError = require('../../../server/errors/DAOError')
+
+const DatabaseFixtures = require('../fixtures/database')
+const ExpectedFixtures = require('../fixtures/expected')
+const SubmittedFixtures = require('../fixtures/submitted')
 
 describe('UserController', function() {
     
-    const auth = new AuthenticationService();
+    const auth = new AuthenticationService()
     const logger = new Logger()
     // Disable logging.
     logger.level = -1
 
     // ====================== Fixture Data ====================================
 
-    const submittedUsers = [
-        {
-            name: 'John Doe',
-            email: 'john.doe@university.edu',
-            password: 'password'
-        },
-        {
-            name: 'Jane Doe',
-            email: 'jane.doe@university.edu',
-            password: 'different-password'
-        }
-    ];
-
-    const database = [
-        {
-            id: 1,
-            name: 'John Doe',
-            email: 'john.doe@university.edu',
-            createdDate: 'TIMESTAMP',
-            updatedDate: 'TIMESTAMP'
-        },
-        {
-            id: 2,
-            name: 'Jane Doe',
-            email: 'jane.doe@university.edu',
-            createdDate: 'TIMESTAMP',
-            updatedDate: 'TIMESTAMP'
-        }
-    ];
-
-    const expectedUsers = [
-        {
-            id: 1,
-            name: 'John Doe',
-            email: 'john.doe@university.edu',
-            createdDate: 'TIMESTAMP',
-            updatedDate: 'TIMESTAMP'
-        },
-        {
-            id: 2,
-            name: 'Jane Doe',
-            email: 'jane.doe@university.edu',
-            createdDate: 'TIMESTAMP',
-            updatedDate: 'TIMESTAMP'
-        }
-    ];
+    const submittedUsers = SubmittedFixtures.users 
+    const database = DatabaseFixtures.database 
+    const expectedUsers = ExpectedFixtures.users 
 
     // ====================== Mocks ===========================================
 
     const Response = function() {
-        this.status = jest.fn(() => this);
-        this.json = jest.fn(() => this);
-        this.send = jest.fn(() => this);
-    };
+        this.status = jest.fn(() => this)
+        this.json = jest.fn(() => this)
+        this.send = jest.fn(() => this)
+    }
 
     const connection = {
         query: jest.fn()
-    };
+    }
 
 
     beforeEach(function() {
-        connection.query.mockReset();
-    });
+        connection.query.mockReset()
+    })
 
     describe('.getUsers()', function() {
         it('should return 200 and the users', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: 2, rows: database }); 
+            connection.query.mockReturnValueOnce({ 
+                rowCount: database.users[1].length + database.users[2].length, 
+                rows: [ ...database.users[1], ...database.users[2] ] 
+            }) 
 
-            const userController = new UserController(connection, logger);
+            const userController = new UserController(connection, logger)
 
-            const response = new Response();
-            await userController.getUsers(null, response);
+            const request = {
+                query: {}
+            }
 
-            expect(response.status.mock.calls[0][0]).toEqual(200);
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers);
-            
-        });
+            const response = new Response()
+            await userController.getUsers(request, response)
 
-        it('should handle a thrown error by returning 500 and an "unknown" error', async function() {
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers)
+        })
+
+        it('should pass any errors on to the error handler', async function() {
             connection.query.mockImplementation(function(sql, params) {
                 throw new Error('Something went wrong!')
             })
 
             const userController = new UserController(connection, logger)
 
+            const request = {
+                query: {}
+            }
+
             const response = new Response()
-            await userController.getUsers(null, response)
+            try {
+                await userController.getUsers(quest, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error)
+            }
 
-            expect(response.status.mock.calls[0][0]).toEqual(500);
-            expect(response.json.mock.calls[0][0]).toEqual({ error: 'unknown' })
-        });
-
-    });
+            expect.hasAssertions()
+        })
+    })
 
    describe('.postUsers()', function() {
        it('should hash the password and return 201 with the modified user', async function() {
-
            connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
-               .mockReturnValue({rowCount:1, rows: [ { id: database[0].id } ]})
-               .mockReturnValue({rowCount:1, rows: [ database[0] ] })
+               .mockReturnValueOnce({rowCount: 1, rows: [ { id: database.users[1].id } ]})
+               .mockReturnValueOnce({rowCount: database.users[1].length, rows: database.users[1] })
+               .mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 } ]})
 
            // Do this so that submittedUsers[0].password doesn't get
            // overwritten and we can use it in future tests.
-           const submittedUser = {...submittedUsers[0] };
+           const submittedUser = {...submittedUsers[0] }
            const request = {
                body: submittedUser,
-           };
 
-           const response = new Response();
-           const userController = new UserController(connection, logger);
-           await userController.postUsers(request, response);
+           }
 
-           const databaseCall = connection.query.mock.calls[1];
-           expect(auth.checkPassword(submittedUsers[0].password, databaseCall[1][2])).toEqual(true);
-           expect(response.status.mock.calls[0][0]).toEqual(201);
-           expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-       });
+           const response = new Response()
+           const userController = new UserController(connection, logger)
+           await userController.postUsers(request, response)
 
-        it('should handle a thrown error by returning 500 and an "unknown" error', async function() {
-            connection.query.mockImplementation(function(sql, params) {
-                throw new Error('Something went wrong!')
-            })
+           const databaseCall = connection.query.mock.calls[1]
+           expect(auth.checkPassword(submittedUsers[0].password, databaseCall[1][3])).toEqual(true)
+           expect(response.status.mock.calls[0][0]).toEqual(201)
+           expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
+       })
+        
+       it('should throw ControllerError(409) when the posted user already exists', async function() {
+           connection.query.mockReturnValueOnce({ rowCount: 1, rows: [ { id: 1, email: 'jwatson@university.edu' } ] })
+           // Do this so that submittedUsers[0].password doesn't get
+           // overwritten and we can use it in future tests.
+           const submittedUser = {...submittedUsers[0] }
+           const request = {
+               body: submittedUser,
 
-            // Do this so that submittedUsers[0].password doesn't get
-            // overwritten and we can use it in future tests.
-            const submittedUser = {...submittedUsers[0] };
-            const request = {
-                body: submittedUser,
-            };
+           }
 
-            const response = new Response()
-            const userController = new UserController(connection, logger)
-            await userController.postUsers(request, response)
+           const response = new Response()
+           const userController = new UserController(connection, logger)
 
-            expect(response.status.mock.calls[0][0]).toEqual(500);
-            expect(response.json.mock.calls[0][0]).toEqual({ error: 'unknown' })
-        });
+           try {
+               await userController.postUsers(request, response)
+           } catch (error) {
+               expect(error).toBeInstanceOf(ControllerError)
+               expect(error.status).toEqual(409)
+               expect(error.type).toEqual('user-exists')
+           }
 
-    });
+           expect.hasAssertions()
+       })
+
+       it('should throw DAOError if insertion fails', async function() {
+           connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
+               .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+           // Do this so that submittedUsers[0].password doesn't get
+           // overwritten and we can use it in future tests.
+           const submittedUser = {...submittedUsers[0] }
+           const request = {
+               body: submittedUser,
+
+           }
+
+           const response = new Response()
+           const userController = new UserController(connection, logger)
+
+           try {
+               await userController.postUsers(request, response)
+           } catch (error) {
+               expect(error).toBeInstanceOf(DAOError)
+               expect(error.type).toEqual('insertion-failure')
+           }
+
+           expect.hasAssertions()
+       })
+
+       it('should throw ControllerError(500) if we fail to find the posted user after insertion', async function() {
+           connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
+               .mockReturnValueOnce({rowCount: 1, rows: [ { id: database.users[1].id } ]})
+               .mockReturnValueOnce({rowCount: 0, rows: []  })
+
+           // Do this so that submittedUsers[0].password doesn't get
+           // overwritten and we can use it in future tests.
+           const submittedUser = {...submittedUsers[0] }
+           const request = {
+               body: submittedUser,
+
+           }
+
+           const response = new Response()
+           const userController = new UserController(connection, logger)
+
+           try {
+               await userController.postUsers(request, response)
+           } catch (error) {
+               expect(error).toBeInstanceOf(ControllerError)
+               expect(error.status).toEqual(500)
+               expect(error.type).toEqual('server-error')
+           }
+
+           expect.hasAssertions()
+       })
+
+       it('should throw DAOError if settings insertion fails', async function() {
+           connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
+               .mockReturnValueOnce({ rowCount: 1, rows: [ { id: database.users[1].id } ] })
+               .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+               .mockReturnValueOnce({ rowCount: 0, rows: [ ] })
+
+           // Do this so that submittedUsers[0].password doesn't get
+           // overwritten and we can use it in future tests.
+           const submittedUser = {...submittedUsers[0] }
+           const request = {
+               body: submittedUser,
+
+           }
+
+           const response = new Response()
+           const userController = new UserController(connection, logger)
+
+           try {
+               await userController.postUsers(request, response)
+           } catch (error) {
+               expect(error).toBeInstanceOf(DAOError)
+               expect(error.type).toEqual('insertion-failure')
+           }
+
+           expect.hasAssertions()
+       })
+
+       it('should pass thrown errors on to the error handler', async function() {
+           connection.query.mockImplementation(function(sql, params) {
+               throw new Error('Something went wrong!')
+           })
+
+           // Do this so that submittedUsers[0].password doesn't get
+           // overwritten and we can use it in future tests.
+           const submittedUser = {...submittedUsers[0] }
+           const request = {
+               body: submittedUser,
+           }
+
+           const response = new Response()
+           const userController = new UserController(connection, logger)
+           try {
+               await userController.postUsers(request, response)
+           } catch (error) {
+               expect(error).toBeInstanceOf(Error)
+           }
+
+           expect.hasAssertions()
+       })
+    })
 
     describe('.getUser()', function() {
         it('should return 200 and the requested user', async function() {
-            connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
+            connection.query.mockReturnValueOnce({ 
+                rowCount: database.users[1].length, 
+                rows: database.users[1] 
+            }) 
+
             const request = {
                 params: {
                     id: 1
                 }
-            };
+            }
 
-            const response = new Response();
-            const userController = new UserController(connection, logger);
-            await userController.getUser(request, response);
+            const response = new Response()
+            const userController = new UserController(connection, logger)
+            await userController.getUser(request, response)
 
-            expect(response.status.mock.calls[0][0]).toEqual(200);
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-        });
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
+        })
 
         it('should return 404 when the user does not exist', async function() {
             connection.query.mockReturnValue({rowCount:0, rows: []})
+
             const request = {
                 params: {
                     id: 3
                 }
-            };
+            }
 
-            const response = new Response();
-            const userController = new UserController(connection, logger);
-            await userController.getUser(request, response);
+            const response = new Response()
+            const userController = new UserController(connection, logger)
+            try {
+                await userController.getUser(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(404)
+                expect(error.type).toEqual('not-found')
+            }
 
-            expect(response.status.mock.calls[0][0]).toEqual(404);
-            expect(response.json.mock.calls[0][0]).toEqual([]);
-        });
+            expect.hasAssertions()
+        })
 
-        it('should handle a thrown error by returning 500 and an "unknown" error', async function() {
+        it('should pass a thrown error on to the error handler', async function() {
             connection.query.mockImplementation(function(sql, params) {
                 throw new Error('Something went wrong!')
             })
@@ -193,254 +285,271 @@ describe('UserController', function() {
                 params: {
                     id: 1
                 }
-            };
+            }
 
             const response = new Response()
             const userController = new UserController(connection, logger)
-            await userController.getUser(request, response)
-
-            expect(response.status.mock.calls[0][0]).toEqual(500);
-            expect(response.json.mock.calls[0][0]).toEqual({ error: 'unknown' })
-        });
-
-    });
+            try {
+                await userController.getUser(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(Error)
+            }
+            expect.hasAssertions()
+        })
+    })
 
     describe('putUser()', function() {
-       it('should return 200 and the modified user', async function() {
-           connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
-
-           const submittedUser = {...submittedUsers[0]};
-           const request = {
-               body: submittedUser,
-               params: {
-                   id: 1
-               }
-           };
-           const response = new Response();
-           const userController = new UserController(connection, logger);
-           await userController.putUser(request, response);
-
-           expect(response.status.mock.calls[0][0]).toEqual(200);
-           expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-
-        });
-
-        it('should use request.params.id and ignore user.id', async function() {
-           connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
-
-           const submittedUser = {...submittedUsers[0]};
-           submittedUser.id = 2;
-           const request = {
-                body: submittedUser,
-                params: {
-                    id: 1
-                }
-            };
-            const response = new Response();
-
-            const userController = new UserController(connection, logger);
-            await userController.putUser(request, response);
-
-            const databaseCall = connection.query.mock.calls[0];
-            expect(databaseCall[1][3]).toEqual(request.params.id);
-
-
-            expect(response.status.mock.calls[0][0]).toEqual(200);
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-        });
-
-        it('should hash the password', async function() {
-          connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
-
-          const submittedUser = {...submittedUsers[0]};
-          submittedUser.id = 1;
-          // Patch user replaces password on the user object with the hash.
-          // So we need to store it here if we want to check it after
-          // `patchUser()` has run.
-          var password = submittedUser.password;
-
-          // Mocked API
-          const auth = new AuthenticationService();
-          const request = {
-              body: submittedUser,
-              params: {
-                  id: 1
-              }
-          };
-          const response = new Response();
-
-          const userController = new UserController(connection, logger);
-          await userController.putUser(request, response);
-
-          const databaseCall = connection.query.mock.calls[0];
-          expect(await auth.checkPassword(password, databaseCall[1][2])).toEqual(true);
-
-
-          expect(response.status.mock.calls[0][0]).toEqual(200);
-          expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-        });
-
-        it('should return 404 when the user does not exist', async function() {
-            connection.query.mockReturnValue({rowCount:0, rows: []})
-
-            const submittedUser = {...submittedUsers[0]};
+        it('should return ControllerError(501)', async function() {
             const request = {
-                body: submittedUser,
                 params: {
-                    id: 1
+                    id: 1,
+                    body: { ...submittedUsers[0] }
                 }
-            };
-
-            const response = new Response();
-            const userController = new UserController(connection, logger);
-            await userController.getUser(request, response);
-
-            expect(response.status.mock.calls[0][0]).toEqual(404);
-            expect(response.json.mock.calls[0][0]).toEqual([]);
-        });
-
-        it('should handle a thrown error by returning 500 and an "unknown" error', async function() {
-            connection.query.mockImplementation(function(sql, params) {
-                throw new Error('Something went wrong!')
-            })
-
-            const submittedUser = {...submittedUsers[0]};
-            const request = {
-                body: submittedUser,
-                params: {
-                    id: 1
-                }
-            };
+            }
 
             const response = new Response()
             const userController = new UserController(connection, logger)
-            await userController.getUser(request, response)
+            try {
+                await userController.putUser(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(501)
+                expect(error.type).toEqual('not-implemented')
+            }
 
-            expect(response.status.mock.calls[0][0]).toEqual(500);
-            expect(response.json.mock.calls[0][0]).toEqual({ error: 'unknown' })
-        });
+            expect.hasAssertions()
+        })
 
-    });
+    })
 
     describe('patchUser()', function() {
-        it('should construct update SQL', async function() {
-            connection.query.mockReturnValue({rowCount:1, rows: [database[0]]});
+        it('should construct update SQL and respond with status 200 and the updated user', async function() {
+            connection.query.mockReturnValueOnce({ rowCount:1, rows: [] })
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
 
-            // Fixture data.
-            const submittedUser = {
-                name: 'John Doe',
-                email: 'john.doe@email.com',
-            };
+
             const request = {
-                body: submittedUser,
+                body: { id: 1, bio: 'I am creditted with discovering the structure of DNA.' },
                 params: {
                     id: 1
+                },
+                session: {
+                    user: {
+                        id: 1
+                    }
                 }
-            };
-            const response = new Response();
+            }
+            const response = new Response()
 
-            const userController = new UserController(connection, logger);
-            await userController.patchUser(request, response);
+            const userController = new UserController(connection, logger)
+            await userController.patchUser(request, response)
 
-            const expectedSQL = 'UPDATE users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3';
-            const expectedParams = [ 'John Doe', 'john.doe@email.com', 1 ];
+            const expectedSQL = 'UPDATE users SET bio = $1, updated_date = now() WHERE id = $2'
+            const expectedParams = [ request.body.bio, 1 ]
 
-            const databaseCall = connection.query.mock.calls[0];
-            expect(databaseCall[0]).toEqual(expectedSQL);
-            expect(databaseCall[1]).toEqual(expectedParams);
+            const databaseCall = connection.query.mock.calls[0]
+            expect(databaseCall[0]).toEqual(expectedSQL)
+            expect(databaseCall[1]).toEqual(expectedParams)
 
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-
-        });
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
+        })
 
         it('should ignore the id in the body and use the id in request.params', async function() {
-            connection.query.mockReturnValue({rowCount:1, rows: [database[0]]});
-
-            // Fixture data.
-            const submittedUser = {
-                id: 2,
-                name: 'John Doe',
-                email: 'john.doe@email.com'
-            };
-
+            connection.query.mockReturnValueOnce({ rowCount:1, rows: [] })
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
             const request = {
-                body: submittedUser,
+                body: { id: 2, bio: 'I am credited with discovering the structure of DNA.' },
                 params: {
                     id: 1
+                },
+                session: {
+                    user: {
+                        id: 1,
+                    }
                 }
-            };
-
-            const response = new Response();
-            const userController = new UserController(connection, logger);
-            await userController.patchUser(request, response);
-
-            const expectedSQL = 'UPDATE users SET name = $1 and email = $2 and updated_date = now() WHERE id = $3';
-            const expectedParams = [ 'John Doe', 'john.doe@email.com', 1 ];
-
-            const databaseCall = connection.query.mock.calls[0];
-            expect(databaseCall[0]).toEqual(expectedSQL);
-            expect(databaseCall[1]).toEqual(expectedParams);
-
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-
-        });
+            }
+            const response = new Response()
+            const userController = new UserController(connection, logger)
+            await userController.patchUser(request, response)
+            
+            const expectedSQL = 'UPDATE users SET bio = $1, updated_date = now() WHERE id = $2'
+            const expectedParams = [ request.body.bio, 1 ]
+            
+            const databaseCall = connection.query.mock.calls[0]
+            expect(databaseCall[0]).toEqual(expectedSQL)
+            expect(databaseCall[1]).toEqual(expectedParams)
+            
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
+        })
 
         it('should hash the password', async function() {
-            connection.query.mockReturnValue({rowCount:1, rows: [database[0]]});
-
+            connection.query.mockReturnValueOnce({ rowCount:1, rows: [] })
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
 
             // Patch user replaces password on the user object with the hash.
             // So we need to store it here if we want to check it after
             // `patchUser()` has run.
-            var password = 'password';             
-            const submittedUser = {
-                password: password 
-            };
-
-            // Mocked API
-            const auth = new AuthenticationService();
+            var password = 'password'             
             const request = {
-                body: submittedUser,
+                body: {
+                    id: 1,
+                    password: password 
+                },
                 params: {
                     id: 1
+                },
+                session: {
+                    user: {
+                        id: 1
+                    }
                 }
-            };
+            }
 
-            const response = new Response();
-            const userController = new UserController(connection, logger);
-            await userController.patchUser(request, response);
+            const auth = new AuthenticationService()
 
-            const expectedSQL = 'UPDATE users SET password = $1 and updated_date = now() WHERE id = $2';
+            const response = new Response()
+            const userController = new UserController(connection, logger)
 
-            const databaseCall = connection.query.mock.calls[0];
-            expect(databaseCall[0]).toEqual(expectedSQL);
-            expect(await auth.checkPassword(password, databaseCall[1][0])).toEqual(true);
+            await userController.patchUser(request, response)
 
+            const expectedSQL = 'UPDATE users SET password = $1, updated_date = now() WHERE id = $2'
 
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0]);
-        });
+            const databaseCall = connection.query.mock.calls[0]
+            expect(databaseCall[0]).toEqual(expectedSQL)
+            expect(await auth.checkPassword(password, databaseCall[1][0])).toEqual(true)
 
-    });
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
+        })
+
+        it('should throw ControllerError(403) if no user is authenticated', async function() {
+            const request = {
+                body: { id: 1, bio: 'I am creditted with discovering the structure of DNA.' },
+                params: {
+                    id: 1
+                },
+                session: {
+                }
+            }
+
+            const response = new Response()
+            const userController = new UserController(connection, logger)
+            try {
+                await userController.patchUser(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(403)
+                expect(error.type).toEqual('not-authorized')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw ControllerError(403) if the authenticated user is not the user being modified', async function() {
+            const request = {
+                body: { id: 1, bio: 'I am creditted with discovering the structure of DNA.' },
+                params: {
+                    id: 1
+                },
+                session: {
+                    user: {
+                        id: 2
+                    }
+                }
+            }
+
+            const response = new Response()
+            const userController = new UserController(connection, logger)
+            try {
+                await userController.patchUser(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(403)
+                expect(error.type).toEqual('not-authorized')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw DAOEerror if the update attempt fails to modify any rows', async function() {
+            connection.query.mockReturnValueOnce({ rowCount:0, rows: [] })
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+
+            const request = {
+                body: { id: 1, bio: 'I am creditted with discovering the structure of DNA.' },
+                params: {
+                    id: 1
+                },
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+
+            const response = new Response()
+            const userController = new UserController(connection, logger)
+            try {
+                await userController.patchUser(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(DAOError)
+                expect(error.type).toEqual('update-failure')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw ControllerError(500) if no user is found after update', async function() {
+            connection.query.mockReturnValueOnce({ rowCount:1, rows: [] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+            const request = {
+                body: { id: 1, bio: 'I am creditted with discovering the structure of DNA.' },
+                params: {
+                    id: 1
+                },
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+
+            const response = new Response()
+            const userController = new UserController(connection, logger)
+            try {
+                await userController.patchUser(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(500)
+                expect(error.type).toEqual('server-error')
+            }
+
+            expect.hasAssertions()
+        })
+
+    })
 
     describe('deleteUser()', function() {
-        it('return `200` and the id of the deleted user on success', async function() {
-            connection.query.mockReturnValue({rowcount:1});
-
+        it('should return ControllerError(501)', async function() {
             const request = {
                 params: {
-                    id: 1
+                    id: 1,
+                    body: { ...submittedUsers[0] }
                 }
-            };
+            }
 
-            const response = new Response();
+            const response = new Response()
+            const userController = new UserController(connection, logger)
+            try {
+                await userController.deleteUser(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(501)
+                expect(error.type).toEqual('not-implemented')
+            }
 
-            const userController = new UserController(connection, logger);
-            await userController.deleteUser(request, response);
+            expect.hasAssertions()
+        })
+    })
 
-            expect(response.status.mock.calls[0][0]).toEqual(200);
-            expect(response.json.mock.calls[0][0]).toEqual({userId: 1});
-        });
-
-    });
-
-});
+})

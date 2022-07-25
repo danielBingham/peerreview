@@ -9,6 +9,9 @@ const AuthenticationService = require('../services/authentication')
 const UserDAO = require('../daos/user')
 const SettingsDAO = require('../daos/settings')
 
+const ControllerError = require('../errors/ControllerError')
+const DAOError = require('../errors/DAOError')
+
 module.exports = class UserController {
 
     constructor(database, logger) {
@@ -23,28 +26,19 @@ module.exports = class UserController {
      * GET /users
      *
      * Return a JSON array of all users in thethis.database.
-     *
-     * TODO Should we check the users for the session user and update the
-     * session if we find them?
      */
     async getUsers(request, response) {
-        try {
-            let where = 'WHERE'
-            let params = []
-            if ( request.query.name && request.query.name.length > 0) {
-                where += ` users.name ILIKE $1`
-                params.push(request.query.name+"%")
-            }
-            if ( where == 'WHERE') {
-                where = ''
-            }
-            const users = await this.userDAO.selectUsers(where, params)
-            return response.status(200).json(users)
-        } catch (error) {
-            this.logger.error(error)
-            response.status(500).json({ error: 'server-error' })
-            return
+        let where = 'WHERE'
+        let params = []
+        if ( request.query.name && request.query.name.length > 0) {
+            where += ` users.name ILIKE $1`
+            params.push(request.query.name+"%")
         }
+        if ( where == 'WHERE') {
+            where = ''
+        }
+        const users = await this.userDAO.selectUsers(where, params)
+        return response.status(200).json(users)
     }
 
     /**
@@ -58,45 +52,28 @@ module.exports = class UserController {
         // If a user already exists with that email, send a 409 Conflict
         // response.
         //
-        try {
-            const userExistsResults = await this.database.query(
-                'SELECT id, email FROM users WHERE email=$1',
-                [ user.email ]
-            )
+        const userExistsResults = await this.database.query(
+            'SELECT id, email FROM users WHERE email=$1',
+            [ user.email ]
+        )
 
-            if (userExistsResults.rowCount > 0) {
-                return response.status(409).json({error: 'user-exists'})
-            }
-
-            user.password = this.auth.hashPassword(user.password)
-
-            const results = await this.database.query(`
-                    INSERT INTO users (name, email, institution, password, created_date, updated_date) 
-                        VALUES ($1, $2, $3, $4, now(), now()) 
-                        RETURNING id
-
-                `, 
-                [ user.name, user.email, user.institution, user.password ]
-            )
-
-            if ( results.rowCount == 0 ) {
-                throw new Error('Insert user failed.')
-            }
-
-
-            const returnUser = await this.userDAO.selectUsers('WHERE users.id=$1', [results.rows[0].id])
-
-            if ( returnUser.length <= 0) {
-                throw new Error(`No user found after insertion. Looking for id ${results.rows[0].id}.`)
-            }
-
-            await this.settingsDAO.initializeSettingsForUser(returnUser[0])
-
-            return response.status(201).json(returnUser[0])
-        } catch (error) {
-            this.logger.error(error)
-            return response.status(500).json({error: 'unknown'})
+        if (userExistsResults.rowCount > 0) {
+            throw new ControllerError(409, 'user-exists', `Attempting to create a user(${userExistsResults.rows[0].id}) that already exists!`)
         }
+
+        user.password = this.auth.hashPassword(user.password)
+
+        user.id = await this.userDAO.insertUser(user)
+
+        const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
+
+        if ( returnUsers.length <= 0) {
+            throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
+        }
+
+        await this.settingsDAO.initializeSettingsForUser(returnUsers[0])
+
+        return response.status(201).json(returnUsers[0])
     }
 
     /**
@@ -105,22 +82,13 @@ module.exports = class UserController {
      * Get details for a single user in thethis.database.
      */
     async getUser(request, response) {
+        const returnUsers = await this.userDAO.selectUsers('WHERE users.id = $1', [request.params.id])
 
-        try {
-            const returnUsers = await this.userDAO.selectUsers('WHERE users.id = $1', [request.params.id])
-
-            if ( returnUsers.length == 0 ) {
-                return response.status(404).json([])
-            }
-
-            if ( request.session && request.session.user && request.session.user.id == returnUsers[0].id) {
-                request.session.user = returnUsers[0]
-            }
-            return response.status(200).json(returnUsers[0])
-        } catch (error) {
-            this.logger.error(error)
-            return response.status(500).json({ error: 'unknown'})
+        if ( returnUsers.length == 0 ) {
+            throw new ControllerError(404, 'not-found', `User(${request.params.id}) not found.`)
         }
+
+        return response.status(200).json(returnUsers[0])
     }
 
     /**
@@ -129,35 +97,34 @@ module.exports = class UserController {
      * Replace an existing user wholesale with the provided JSON.
      */
     async putUser(request, response) {
-        try {
-            const user = request.body
-            user.password = this.auth.hashPassword(user.password)
+        // We're not using this right now and can't think of a situation where
+        // we would use it.  So for now, it's being marked unimplemented and
+        // ignored.  
+        throw new ControllerError(501, 'not-implemented', `Attempt to call unimplemented PUT /user for user(${request.params.id}).`)
+        /*const user = request.body
+        user.password = this.auth.hashPassword(user.password)
 
-            const results = await this.database.query(`
+        const results = await this.database.query(`
                     UPDATE users SET name = $1 AND email = $2 AND password = $3 AND updated_date = now() 
                         WHERE id = $4 
                         RETURNING id
                 `,
-                [ user.name, user.email, user.password, request.params.id ]
-            )
+            [ user.name, user.email, user.password, request.params.id ]
+        )
 
-            if (results.rowCount == 0 && results.rows.length == 0) {
-                return response.status(404).json({error: 'no-resource'})
-            }
-
-            const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', results.rows[0].id)
-            if ( returnUsers.length == 0 ) {
-                throw new Error('Updated user somehow does not exist.')
-            }
-
-            if ( request.session && request.session.user && request.session.user.id == returnUsers[0].id) {
-                request.session.user = returnUsers[0]
-            }
-            return response.status(200).json(returnUsers[0])
-        } catch (error) {
-            this.logger.error(error)
-            response.status(500).json({error: 'unknown'})
+        if (results.rowCount == 0 && results.rows.length == 0) {
+            return response.status(404).json({error: 'no-resource'})
         }
+
+        const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', results.rows[0].id)
+        if ( returnUsers.length == 0 ) {
+            throw new Error('Updated user somehow does not exist.')
+        }
+
+        if ( request.session && request.session.user && request.session.user.id == returnUsers[0].id) {
+            request.session.user = returnUsers[0]
+        }
+        return response.status(200).json(returnUsers[0]) */
     }
 
     /**
@@ -169,52 +136,30 @@ module.exports = class UserController {
         const user = request.body
         user.id = request.params.id
 
-        let sql = 'UPDATE users SET '
-        let params = []
-        let count = 1
-        const ignored = [ 'id', 'blindId', 'initialReputation', 'reputation', 'createdDate', 'updatedDate', 'fields']
-        for(let key in user) {
-            if (ignored.includes(key)) {
-                continue
-            }
-
-            sql += key + ' = $' + count + ', '
-
-            if ( key == 'password' ) {
-                try {
-                    user[key] = await this.auth.hashPassword(user[key])
-                } catch (error) {
-                    this.logger.error(error)
-                    return response.status(500).json({error: 'unknown'})
-                }
-            } 
-
-            params.push(user[key])
-            count = count + 1
+        if ( ! request.session.user ) {
+            throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to update user(${user.id}).`)
+        } else if ( request.session.user.id != user.id) {
+            throw new ControllerError(403, 'not-authorized', `User(${request.session.user.id}) attempted to update another user(${user.id}).`)
         }
-        sql += 'updated_date = now() WHERE id = $' + count
-        params.push(user.id)
 
-        try {
-            const results = await this.database.query(sql, params)
-
-            if ( results.rowCount == 0 ) {
-                return response.status(404).json({error: 'no-resource'})
-            }
-
-            const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
-            if ( ! returnUsers ) {
-                throw new Error('Updated user somehow does not exist!')
-            }
-
-            if ( request.session && request.session.user && request.session.user.id == returnUsers[0].id) {
-                request.session.user = returnUsers[0]
-            }
-            return response.status(200).json(returnUsers[0])
-        } catch (error) {
-            this.logger.error(error)
-            response.status(500).json({error: 'unknown'})
+        if( user.password ) {
+            user.password  = await this.auth.hashPassword(user.password)
         }
+
+        await this.userDAO.updatePartialUser(user)
+
+        const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
+
+        if ( returnUsers.length <= 0 ) {
+            throw new ControllerError(500, 'server-error', `Failed to find user(${user.id}) after update!`)
+        }
+
+        // If we get to this point, we know the user being updated is the same
+        // as the user in the session.  No one else is allowed to update the
+        // user.
+        request.session.user = returnUsers[0]
+
+        return response.status(200).json(returnUsers[0])
     }
 
     /**
@@ -227,21 +172,21 @@ module.exports = class UserController {
      * are.
      */
     async deleteUser(request, response) {
-        try {
-            const results = await this.database.query(
-                'delete from users where id = $1',
-                [ request.params.id ]
-            )
+        // Currently leaving this unimplemented.  We will someday want to allow
+        // users to delete themselves.  Probably some day soon.  But it is not
+        // this day.  Trying to reduce the maintenance surface by removing
+        // anything we're not actively using for now.
+        throw new ControllerError(501, 'not-implemented', `Attempt to delete User(${request.params.id}).`)
+        /*const results = await this.database.query(
+            'delete from users where id = $1',
+            [ request.params.id ]
+        )
 
-            if ( results.rowCount == 0) {
-                return response.status(404).json({error: 'no-resource'})
-            }
-
-            return response.status(200).json({userId: request.params.id})
-        } catch (error) {
-            this.logger.error(error)
-            return response.status(500).json({error: 'unknown'})
+        if ( results.rowCount == 0) {
+            return response.status(404).json({error: 'no-resource'})
         }
+
+        return response.status(200).json({userId: request.params.id})*/
     }
 
 } 

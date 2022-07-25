@@ -1,3 +1,6 @@
+
+const DAOError = require('../errors/DAOError')
+
 module.exports = class SettingsDAO {
 
     constructor(database, logger) {
@@ -101,7 +104,7 @@ module.exports = class SettingsDAO {
         `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed ])
 
         if ( results.rowCount == 0 ) {
-            throw new Error(`Something went wrong while inserting setting ${setting.id}.`)
+            throw new DAOError('insertion-failure', `Something went wrong while inserting setting ${setting.id}.`)
         }
 
         setting.id = results.rows[0].id
@@ -113,7 +116,6 @@ module.exports = class SettingsDAO {
         }
 
         return results.rows[0].id
-
     }
 
 

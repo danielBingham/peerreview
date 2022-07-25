@@ -1,3 +1,19 @@
+const users = [
+    {
+        name: 'James Watson',
+        email: 'jwatson@university.edu',
+        institution: 'University of Cambridge',
+        password: 'password'
+    },
+    {
+        name: 'Francis Crick',
+        email: 'fcrick@university.edu',
+        institution: 'University of Cambridge',
+        password: 'p4ssw0rd'
+    }
+]
+
+
 const fields = [
     {
         id: 1,
@@ -17,7 +33,8 @@ const fields = [
     }
 ]
 
-const users = [
+
+const paperUsers = [
     {
         id: 1,
         name: 'James Watson',
@@ -73,12 +90,12 @@ const papers = [
         updatedDate: 'TIMESTAMP',
         authors: [
             {
-                user: users[0],
+                user: paperUsers[0],
                 order: 1,
                 owner: true
             },
             {
-                user: users[1],
+                user: paperUsers[1],
                 order: 2,
                 owner: false 
             }

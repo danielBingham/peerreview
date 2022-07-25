@@ -1,3 +1,4 @@
+const DAOError = require('../errors/DAOError')
 
 module.exports = class UserDAO {
 
@@ -12,13 +13,15 @@ module.exports = class UserDAO {
      * @param {Object[]}    rows    An array of rows returned from the database.
      *
      * @return {Object}     The users parsed into a dictionary keyed using user.id. 
+     *
+     * TODO This needs to preserve order, right now - it doesn't.
      */
     hydrateUsers(rows) {
         if ( rows.length == 0 ) {
-            return null 
+            return [] 
         }
 
-        const users = {};
+        const users = {}
 
         for( const row of rows ) {
             const user = {
@@ -56,7 +59,7 @@ module.exports = class UserDAO {
                 
         }
 
-        return users;
+        return Object.values(users)
     }
 
     async selectUsers(where, params) {
@@ -84,39 +87,55 @@ module.exports = class UserDAO {
                 LEFT OUTER JOIN user_field_reputation on users.id = user_field_reputation.user_id
                 LEFT OUTER JOIN fields on fields.id = user_field_reputation.field_id
                 ${where} 
-        `;
-
-        const results = await this.database.query(sql, params);
-
-        if ( results.rows.length == 0 ) {
-            return [] 
-        } else {
-            const users = this.hydrateUsers(results.rows)
-            return Object.values(users);
-        }
-    }
-
-    async selectUserPapers(id) {
-
-        const sql = `
-            SELECT DISTINCT
-                papers.id
-            FROM papers
-                LEFT OUTER JOIN paper_authors on papers.id = paper_authors.paper_id
-            WHERE paper_authors.user_id = $1
         `
 
-        const results = await this.database.query(sql, [ id ])
+        const results = await this.database.query(sql, params)
 
-        if ( results.rows.length == 0) {
-            return null
+        if ( results.rows.length <= 0 ) {
+            return [] 
+        } else {
+            return this.hydrateUsers(results.rows)
         }
-
-        let paperIds = []
-        for ( const row of results.rows ) {
-            paperIds.push(row.id)
-        }
-        return paperIds
     }
 
+    async insertUser(user) {
+        const results = await this.database.query(`
+                    INSERT INTO users (name, email, institution, password, created_date, updated_date) 
+                        VALUES ($1, $2, $3, $4, now(), now()) 
+                        RETURNING id
+
+                `, 
+            [ user.name, user.email, user.institution, user.password ]
+        )
+
+        if ( results.rowCount == 0 ) {
+            throw new DAOError('insertion-failure', `Attempt to insert new user(${user.name}) failed.`)
+        }
+        return results.rows[0].id
+    }
+
+    async updatePartialUser(user) {
+        let sql = 'UPDATE users SET '
+        let params = []
+        let count = 1
+        const ignored = [ 'id', 'blindId', 'initialReputation', 'reputation', 'createdDate', 'updatedDate', 'fields']
+        for(let key in user) {
+            if (ignored.includes(key)) {
+                continue
+            }
+
+            sql += key + ' = $' + count + ', '
+
+            params.push(user[key])
+            count = count + 1
+        }
+        sql += 'updated_date = now() WHERE id = $' + count
+        params.push(user.id)
+
+        const results = await this.database.query(sql, params)
+
+        if ( results.rowCount == 0 ) {
+            throw new DAOError('update-failure', `Attempt to update user(${user.id}) failed!`)
+        }
+    }
 }
