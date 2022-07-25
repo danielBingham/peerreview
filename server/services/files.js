@@ -7,9 +7,13 @@ module.exports = class FileService {
     }
 
     withBase(path) {
-
-        if ( path.substring(0, this.base.length) !== this.base) { 
+        // public/...
+        if ( path.substring(0, this.base.length-1) == this.base.substring(1)) {
+            return process.cwd() + '/' + path
+        // We need to add /public to the front
+        } else if ( path.substring(0, this.base.length) !== this.base) { 
             return process.cwd() + this.base + path
+        // /public, we don't need to do anything
         } else {
             return process.cwd() + path
         }

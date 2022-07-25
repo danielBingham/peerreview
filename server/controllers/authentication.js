@@ -126,7 +126,7 @@ module.exports = class AuthenticationController {
     deleteAuthentication(request, response) {
         request.session.destroy(function(error) {
             if (error) {
-                console.log(error)
+                console.error(error)
                 response.status(500).json({error: 'server-error'})
             } else {
                 response.status(200).json(null)

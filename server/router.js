@@ -25,12 +25,16 @@ module.exports = function(database, logger, config) {
     const upload = new multer({ dest: 'public/uploads/tmp' })
 
     // Upload a version of the paper.
-    router.post('/upload', upload.single('file'), function(request, response) {
-        fileController.upload(request, response)
+    router.post('/upload', upload.single('file'), function(request, response, next) {
+        fileController.upload(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.delete('/file/:id', function(request, response) {
-        fileController.deleteFile(request, response)
+    router.delete('/file/:id', function(request, response, next) {
+        fileController.deleteFile(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     /******************************************************************************
@@ -40,33 +44,45 @@ module.exports = function(database, logger, config) {
     const userController = new UserController(database, logger)
 
     // Get a list of all users.
-    router.get('/users', function(request, response) {
-        userController.getUsers(request, response)
+    router.get('/users', function(request, response, next) {
+        userController.getUsers(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Create a new user 
-    router.post('/users', function(request, response) {
-        userController.postUsers(request, response)
+    router.post('/users', function(request, response, next) {
+        userController.postUsers(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Get the details of a single user 
-    router.get('/user/:id', function(request, response) {
-        userController.getUser(request, response)
+    router.get('/user/:id', function(request, response, next) {
+        userController.getUser(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Replace a user wholesale.
-    router.put('/user/:id', function(request, response) {
-        userController.putUser(request, response)
+    router.put('/user/:id', function(request, response, next) {
+        userController.putUser(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Edit an existing user with partial data.
-    router.patch('/user/:id', function(request, response) {
-        userController.patchUser(request, response)
+    router.patch('/user/:id', function(request, response, next) {
+        userController.patchUser(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Delete an existing user.
-    router.delete('/user/:id', function(request, response) {
-        userController.deleteUser(request, response)
+    router.delete('/user/:id', function(request, response, next) {
+        userController.deleteUser(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     /******************************************************************************
@@ -76,38 +92,52 @@ module.exports = function(database, logger, config) {
     const settingsController = new SettingsController(database, logger)
 
     // Get a list of all settings.
-    router.get('/user/:user_id/settings', function(request, response) {
-        settingsController.getSettings(request, response)
+    router.get('/user/:user_id/settings', function(request, response, next) {
+        settingsController.getSettings(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Create a new setting 
-    router.post('/user/:user_id/settings', function(request, response) {
-        settingsController.postSettings(request, response)
+    router.post('/user/:user_id/settings', function(request, response, next) {
+        settingsController.postSettings(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // When we don't have a use, just store settings on the session.
-    router.post('/settings', function(request, response) {
-        settingsController.postSettings(request, response)
+    router.post('/settings', function(request, response, next) {
+        settingsController.postSettings(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Get the details of a single setting 
-    router.get('/user/:user_id/setting/:id', function(request, response) {
-        settingsController.getSetting(request, response)
+    router.get('/user/:user_id/setting/:id', function(request, response, next) {
+        settingsController.getSetting(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Replace a setting wholesale.
-    router.put('/user/:user_id/setting/:id', function(request, response) {
-        settingsController.putSetting(request, response)
+    router.put('/user/:user_id/setting/:id', function(request, response, next) {
+        settingsController.putSetting(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Edit an existing setting with partial data.
-    router.patch('/user/:user_id/setting/:id', function(request, response) {
-        settingsController.patchSetting(request, response)
+    router.patch('/user/:user_id/setting/:id', function(request, response, next) {
+        settingsController.patchSetting(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Delete an existing setting.
-    router.delete('/user/:user_id/setting/:id', function(request, response) {
-        settingsController.deleteSetting(request, response)
+    router.delete('/user/:user_id/setting/:id', function(request, response, next) {
+        settingsController.deleteSetting(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
 
@@ -117,16 +147,22 @@ module.exports = function(database, logger, config) {
     const AuthenticationController = require('./controllers/authentication')
     const authenticationController = new AuthenticationController(database, logger)
 
-    router.post('/authentication', function(request, response) {
-        authenticationController.postAuthentication(request, response)
+    router.post('/authentication', function(request, response, next) {
+        authenticationController.postAuthentication(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.patch('/authentication', function(request, response) {
-        authenticationController.patchAuthentication(request, response)
+    router.patch('/authentication', function(request, response, next) {
+        authenticationController.patchAuthentication(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.get('/authentication', function(request, response) {
-        authenticationController.getAuthentication(request,response)
+    router.get('/authentication', function(request, response, next) {
+        authenticationController.getAuthentication(request,response).catch(function(error) {
+            next(error)
+        })
     })
 
     router.delete('/authentication', function(request, response) {
@@ -174,8 +210,10 @@ module.exports = function(database, logger, config) {
     })
 
     // Delete an existing field.
-    router.delete('/field/:id', function(request, response) {
-        fieldController.deleteField(request, response)
+    router.delete('/field/:id', function(request, response, next) {
+        fieldController.deleteField(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     /******************************************************************************
@@ -193,40 +231,55 @@ module.exports = function(database, logger, config) {
     })
 
     // Create a new paper 
-    router.post('/papers', function(request, response) {
-        paperController.postPapers(request, response)
+    router.post('/papers', function(request, response, next) {
+        paperController.postPapers(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Get the details of a single paper 
-    router.get('/paper/:id', function(request, response) {
-        paperController.getPaper(request, response)
+    router.get('/paper/:id', function(request, response, next) {
+        paperController.getPaper(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Replace a paper wholesale.
-    router.put('/paper/:id', function(request, response) {
-        paperController.putPaper(request, response)
+    router.put('/paper/:id', function(request, response, next) {
+        paperController.putPaper(request, response).catch(function(error) {
+            next(error)
+        })
+
     })
 
     // Edit an existing paper with partial data.
-    router.patch('/paper/:id', function(request, response) {
-        paperController.patchPaper(request, response)
+    router.patch('/paper/:id', function(request, response, next) {
+        paperController.patchPaper(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Delete an existing paper.
-    router.delete('/paper/:id', function(request, response) {
-        paperController.deletePaper(request, response)
+    router.delete('/paper/:id', function(request, response, next) {
+        paperController.deletePaper(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     /******************************************************************************
      *          Version REST Routes
      ******************************************************************************/
 
-    router.post('/paper/:id/versions', function(request, response) {
-        paperController.postPaperVersions(request, response)
+    router.post('/paper/:id/versions', function(request, response, next) {
+        paperController.postPaperVersions(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.patch('/paper/:paper_id/version/:version', function(request, response) {
-        paperController.patchPaperVersion(request, response)
+    router.patch('/paper/:paper_id/version/:version', function(request, response, next) {
+        paperController.patchPaperVersion(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     /**************************************************************************

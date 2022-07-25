@@ -63,7 +63,7 @@ const DraftPaperControlView = function(props) {
             version: latestVersion.version,
             isPublished: true
         }
-        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(paperVersionPatch)))
+        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(props.paper, paperVersionPatch)))
     }
 
     const uploadVersion = function(event) {
