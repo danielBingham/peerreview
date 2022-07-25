@@ -96,7 +96,7 @@ describe('AuthenticationController', function() {
         connection.query.mockReset()
     })
 
-    describe('.getAuthentication()', function() {
+    xdescribe('.getAuthentication()', function() {
         it('should return 204 and null when no user is in the session', async function() {
             const request = {
                 session: new SessionReturnsUndefined() 

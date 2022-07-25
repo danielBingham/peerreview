@@ -25,8 +25,6 @@ module.exports = class AuthenticationController {
                 if ( settings.length == 0 ) {
                     throw new Error('Failed to retrieve settings for authenticated user.')
                 }
-                console.log('settings')
-                console.log(settings)
                 return response.status(200).json({
                     user: request.session.user,
                     settings: settings[0] 
