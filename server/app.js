@@ -9,6 +9,7 @@
 var express = require('express')
 var path = require('path')
 var morgan = require('morgan')
+var debug = require('debug')('peer-review:server')
 var { Client, Pool } = require('pg')
 var session = require('express-session')
 var pgSession = require('connect-pg-simple')(session)
@@ -72,7 +73,10 @@ app.use('/api/0.0.0/', router)
 
 // We'll handle general 404 on the front end.  Router handles its own 404s.
 app.use('*', function(request,response) {
-    response.sendFile(path.join(__dirname+'/dist/index.html'))
+    debug('request.originalUrl: ' + request.originalUrl)
+    const filepath = path.join(process.cwd(), '/public/', request.originalUrl)
+    debug('Generated path: ' + filepath)
+    response.sendFile(filepath)
 })
 
 // error handler
