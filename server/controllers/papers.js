@@ -301,12 +301,14 @@ module.exports = class PaperController {
         // We'll ignore these fields when assembling the patch SQL.  These are
         // fields that either need more processing (authors) or that we let the
         // database handle (date fields, id, etc)
-        const ignoredFields = [ 'paper_id', 'version', 'createdDate', 'updatedDate' ]
+        const ignoredFields = [ 'paperId', 'version', 'createdDate', 'updatedDate' ]
+
+        
 
         let sql = 'UPDATE paper_versions SET '
         let params = []
         let count = 1
-        for(let key in paper) {
+        for(let key in paper_version) {
             if (ignoredFields.includes(key)) {
                 continue
             }
@@ -317,12 +319,20 @@ module.exports = class PaperController {
                 sql += key + ' = $' + count + ', '
             }
 
-            params.push(paper[key])
+            params.push(paper_version[key])
             count = count + 1
         }
-        sql += `updated_date = now() WHERE paper_id = ${count} AND version = ${count+1}`
+
+        sql += `updated_date = now() WHERE paper_id = $${count} AND version = $${count+1}`
 
         params.push(paper_version.paperId, paper_version.version )
+
+        console.log('paper_version')
+        console.log(paper_version)
+        console.log('sql')
+        console.log(sql)
+        console.log('params')
+        console.log(params)
 
         try {
             const results = await this.database.query(sql, params)

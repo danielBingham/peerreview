@@ -24,7 +24,7 @@ const DraftPaperControlView = function(props) {
     const [ patchPaperVersionRequestId, setPatchPaperVersionRequestId] = useState(null)
     const patchPaperVersionRequest = useSelector(function(state) {
         if ( patchPaperVersionRequestId ) {
-            return state.papers.requests[patchPaperVersionReqeustId]
+            return state.papers.requests[patchPaperVersionRequestId]
         } else {
             return null
         }
