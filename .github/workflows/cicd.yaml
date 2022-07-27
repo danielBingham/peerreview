@@ -1,0 +1,44 @@
+name: CI/CD 
+
+on:
+  push:
+    branches: 
+      - main 
+      - 'release/**'
+  pull_request:
+    branches:
+      - main 
+      - 'release/**' 
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [ 16.x ]
+
+    steps:
+      - name: Git Checkout
+        uses: actions/checkout@v2
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - name: Install NPM Modules
+        run: |
+          npm ci
+      - name: Run unit tests
+        run: | 
+          npm run test
+      - name: Build the docker container
+        run: |
+          docker build -t ghcr.io/danielbingham/peerreview:latest --filename Dockerfile
+      - name: Login to Github Container Repository
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
+      - name: Push the newly built container to the Repostory under the "latest" tag
+        run: |
+          docker push ghcr.io/danielbingham/peerreview:latest
+
