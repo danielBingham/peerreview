@@ -28,15 +28,12 @@ jobs:
           node-version: ${{ matrix.node-version }}
       - name: Install NPM Modules
         run: |
-          node --version
-          npm --version
           npm ci
       - name: Run unit tests
         run: | 
           npm run test
       - name: Build the docker container
         run: |
-          ls
           docker build -t ghcr.io/danielbingham/peerreview:latest . 
       - name: Login to Github Container Repository
         run: |
