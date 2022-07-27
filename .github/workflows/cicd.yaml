@@ -34,7 +34,7 @@ jobs:
           npm run test
       - name: Build the docker container
         run: |
-          docker build -t ghcr.io/danielbingham/peerreview:latest --filename Dockerfile
+          docker build -t ghcr.io/danielbingham/peerreview:latest --file Dockerfile
       - name: Login to Github Container Repository
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
