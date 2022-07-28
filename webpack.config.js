@@ -2,7 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
-const outputDirectory = 'public';
+const outputDirectory = 'public/dist';
 
 module.exports = {
     entry: './client/index.js',

@@ -71,10 +71,26 @@ const router = require('./router')(connection, logger, config)
 // ``/api/v1/`` and so on, with out impacting the old versions of the router.
 app.use('/api/0.0.0/', router)
 
-// We'll handle general 404 on the front end.  Router handles its own 404s.
+// Javascript files go to dist.
+app.get(/.*\.(css|js)$/, function(request, response) {
+    debug('request.originalUrl: ' + request.originalUrl)
+    const filepath = path.join(process.cwd(), 'public/dist', request.originalUrl)
+    debug('Generated path: ' + filepath)
+    response.sendFile(filepath)
+})
+
+// Requests for static files.
+app.get(/.*\.(svg|pdf|jpg|png)$/, function(request, response) {
+    debug('request.originalUrl: ' + request.originalUrl)
+    const filepath = path.join(process.cwd(), 'public', request.originalUrl)
+    debug('Generated path: ' + filepath)
+    response.sendFile(filepath)
+})
+
+// Everything else goes to the index file.
 app.use('*', function(request,response) {
     debug('request.originalUrl: ' + request.originalUrl)
-    const filepath = path.join(process.cwd(), '/public/', request.originalUrl)
+    const filepath = path.join(process.cwd(), 'public/dist/index.html')
     debug('Generated path: ' + filepath)
     response.sendFile(filepath)
 })

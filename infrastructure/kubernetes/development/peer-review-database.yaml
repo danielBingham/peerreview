@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peer-review-database-deployment
+  labels: 
+    application: peer-review
+    function: database 
+    environment: local
+spec:
+  selector:
+    matchLabels:
+      application: peer-review
+      function: database 
+      environment: local
+  replicas: 1
+  template: 
+    metadata:
+      name: peer-review-database-pod-template
+      labels:
+        application: peer-review
+        function: database 
+        environment: local
+        container: peer-sql 
+    spec:
+      containers:
+        - name: peer-review-database-container
+          image: peer-sql:latest 
+          ports:
+            - containerPort: 5432 
+          resources:
+            limits:
+              cpu: 1 
+              memory: 2Gi
+          imagePullPolicy: Never
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer-review-database-service
+spec:
+  selector:
+    application: peer-review
+    function: database 
+    environment: local
+  ports:
+    - protocol: TCP
+      port: 5432 
+      targetPort: 5432 
+
+
+

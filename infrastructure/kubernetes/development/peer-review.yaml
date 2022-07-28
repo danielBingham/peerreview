@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peer-review-app-deployment
+  labels: 
+    application: peer-review
+    function: frontend-api 
+    environment: development
+spec:
+  selector:
+    matchLabels:
+      application: peer-review
+      function: frontend-api 
+      environment: development
+  replicas: 1
+  template: 
+    metadata:
+      name: peer-review-app-pod-template
+      labels:
+        application: peer-review
+        function: frontend-api 
+        environment: development
+        container: peerreview
+    spec:
+      containers:
+        - name: peer-review-app-container
+          image: peerreview:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DEBUG
+              value: "peer-review:*"
+            - name: NODE_ENV
+              value: development
+          resources:
+            limits:
+              cpu: 0.5
+              memory: 0.5Gi
+          imagePullPolicy: Never
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer-review-app-service
+spec:
+  type: NodePort 
+  selector:
+    application: peer-review
+    function: frontend-api
+    environment: development
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+      nodePort: 30000
+
+
+

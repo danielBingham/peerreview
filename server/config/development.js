@@ -11,7 +11,7 @@
 module.exports = {
     // Database configuration
     database: {
-        host: '172.17.0.2',
+        host: 'peer-review-database-service',
         user: 'app',
         password: 'local-development',
         name: 'peer_review' 
