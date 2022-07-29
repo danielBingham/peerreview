@@ -38,7 +38,7 @@ const databaseConfig = {
 }
 
 if ( config.database.certificate ) {
-    databaseConfig.cert = fs.readFileSync(config.database.certificate)
+    databaseConfig.cert = fs.readFileSync(config.database.certificate).toString()
 }
 
 const connection = new Pool(databaseConfig)
