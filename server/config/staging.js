@@ -9,6 +9,7 @@ module.exports = {
     // Database configuration
     database: {
         host: 'peer-review-database-do-user-4811995-0.b.db.ondigitalocean.com',
+        port: 25060,
         user: process.env.DATABASE_USER,
         password: process.env.DATABASE_PASSWORD,
         name: 'peer_review' 

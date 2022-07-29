@@ -12,6 +12,7 @@ module.exports = {
     // Database configuration
     database: {
         host: 'localhost',
+        port: 5432,
         user: 'app',
         password: 'local-development',
         name: 'peer_review' 

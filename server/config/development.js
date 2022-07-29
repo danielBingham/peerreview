@@ -8,6 +8,7 @@ module.exports = {
     // Database configuration
     database: {
         host: 'peer-review-database-service',
+        port: 5432,
         user: 'app',
         password: 'local-development',
         name: 'peer_review' 

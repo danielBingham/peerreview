@@ -9,5 +9,6 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     CREATE DATABASE peer_review OWNER app;
 EOSQL
 
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "peer_review" --file="/permissions.sql"
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "peer_review" --file="/schema.sql"
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "peer_review" --file="/fields.sql"
