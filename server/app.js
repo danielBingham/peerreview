@@ -13,6 +13,7 @@ var debug = require('debug')('peer-review:server')
 var { Client, Pool } = require('pg')
 var session = require('express-session')
 var pgSession = require('connect-pg-simple')(session)
+const Uuid = require('uuid')
 
 const Logger = require('./logger')
 const ControllerError = require('./errors/ControllerError')
@@ -62,6 +63,23 @@ app.use(session({
 
     } 
 }))
+
+// Set the id the logger will use to identify the session.  We don't want to
+// use the actual session id, since that value is considered sensitive.  So
+// instead we'll just use a uuid.
+app.use(function(request, response, next) {
+    if ( request.session.user ) {
+        logger.setId(request.session.user.id)
+    } else {
+        if ( request.session.logId ) {
+            logger.setId(request.session.logId)
+        } else {
+            request.session.logId = Uuid.v4()
+            logger.setId(request.session.logId)
+        }
+    }
+    next()
+})
 
 // Get the api router, pre-wired up to the controllers.
 const router = require('./router')(connection, logger, config)

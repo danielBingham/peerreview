@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peer-review-app-deployment
+  labels: 
+    application: peer-review
+    function: frontend-api 
+    environment: staging
+spec:
+  selector:
+    matchLabels:
+      application: peer-review
+      function: frontend-api 
+      environment: staging
+  replicas: 1
+  template: 
+    metadata:
+      name: peer-review-app-pod-template
+      labels:
+        application: peer-review
+        function: frontend-api 
+        environment: staging
+        container: peerreview
+    spec:
+      containers:
+        - name: peer-review-app-container
+          image: peerreview:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: DEBUG
+              value: "peer-review:*"
+            - name: NODE_ENV
+              value: staging
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-database-credentials
+                  key: username
+                  optional: false
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-database-credentials
+                  key: password
+                  optional: false
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-session-secret
+                  key: session_secret
+                  optional: false
+          resources:
+            limits:
+              cpu: 0.25
+              memory: 0.5Gi
+          imagePullPolicy: Never
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer-review-app-service
+spec:
+  selector:
+    application: peer-review
+    function: frontend-api
+    environment: staging
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+
+

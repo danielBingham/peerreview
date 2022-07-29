@@ -33,14 +33,22 @@ module.exports = class Logger  {
                 this.level = Logger.levels.silly
             }
         }
+        this.id = 'unknown' 
+    }
+
+    setId(id) {
+        this.id = id
     }
 
     log(level, message) {
+        const now = Date()
+        const logPrefix = `${now}:${this.id}:: `
         if ( level <= this.level ) {
             if ( level == Logger.levels.error) {
-                console.error(message)
+                cosnole.log(logPrefix + 'Error encountered.') 
+                console.error( message)
             } else {
-                console.log(message)
+                console.log(logPrefix + message)
             }
         } 
     }
