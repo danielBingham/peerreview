@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
         - name: peer-review-app-container
-          image: peerreview:latest
+          image: ghcr.io/danielbingham/peerreview:latest
           ports:
             - containerPort: 8080
           env:
@@ -50,25 +50,23 @@ spec:
                   name: peer-review-session-secret
                   key: session_secret
                   optional: false
-          resources:
-            limits:
-              cpu: 0.25
-              memory: 0.5Gi
-          imagePullPolicy: Never
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: peer-review-app-service
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "http"
 spec:
+  type: LoadBalancer
   selector:
     application: peer-review
     function: frontend-api
     environment: staging
   ports:
     - protocol: TCP
-      port: 8080
+      port: 80 
       targetPort: 8080
 
 
