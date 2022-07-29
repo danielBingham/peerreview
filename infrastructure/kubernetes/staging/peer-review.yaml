@@ -22,11 +22,20 @@ spec:
         environment: staging
         container: peerreview
     spec:
+      volumes:
+        - name: certificates
+          secret:
+            secretName: database-certificate
+            optional: false
       containers:
         - name: peer-review-app-container
           image: ghcr.io/danielbingham/peerreview:latest
           ports:
             - containerPort: 8080
+          volumeMounts:
+            - name: certificates
+              mountPath: "/etc/certificates"
+              readOnly: true
           env:
             - name: DEBUG
               value: "peer-review:*"
@@ -50,6 +59,7 @@ spec:
                   name: peer-review-session-secret
                   key: session_secret
                   optional: false
+      
 
 ---
 apiVersion: v1

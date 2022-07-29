@@ -12,7 +12,8 @@ module.exports = {
         port: 25060,
         user: process.env.DATABASE_USER,
         password: process.env.DATABASE_PASSWORD,
-        name: 'peer_review' 
+        name: 'peer_review',
+        certificate: '/etc/certificates/ca-certificate.crt'
     },
     session: {
         key: 'peer_review_id',

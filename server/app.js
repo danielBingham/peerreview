@@ -14,6 +14,7 @@ var { Client, Pool } = require('pg')
 var session = require('express-session')
 var pgSession = require('connect-pg-simple')(session)
 const Uuid = require('uuid')
+const fs = require('fs')
 
 const Logger = require('./logger')
 const ControllerError = require('./errors/ControllerError')
@@ -28,13 +29,19 @@ var config = require('./config')
 
 const logger = new Logger(config.log_level)
 
-const connection = new Pool({
+const databaseConfig = {
     host: config.database.host,
     user: config.database.user,
     password: config.database.password,
     database: config.database.name,
     port: config.database.port 
-})
+}
+
+if ( config.database.certificate ) {
+    databaseConfig.cert = fs.readFileSync(config.database.certificate)
+}
+
+const connection = new Pool(databaseConfig)
 
 // Load express.
 var app = express()
