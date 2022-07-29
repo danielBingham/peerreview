@@ -37,9 +37,9 @@ const databaseConfig = {
     port: config.database.port 
 }
 
-if ( config.database.certificate ) {
+    /*if ( config.database.certificate ) {
     databaseConfig.cert = fs.readFileSync(config.database.certificate)
-}
+}*/
 
 const connection = new Pool(databaseConfig)
 
