@@ -45,7 +45,7 @@ module.exports = class Logger  {
         const logPrefix = `${now}:${this.id}:: `
         if ( level <= this.level ) {
             if ( level == Logger.levels.error) {
-                cosnole.log(logPrefix + 'Error encountered.') 
+                console.log(logPrefix + 'Error encountered.') 
                 console.error( message)
             } else {
                 console.log(logPrefix + message)
