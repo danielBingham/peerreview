@@ -5,3 +5,4 @@ public/uploads/*
 *.tfstate.*
 *.tfvars
 .terraform
+infrastructure/kubernetes/staging/secrets/
