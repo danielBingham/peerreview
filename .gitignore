@@ -6,3 +6,4 @@ public/uploads/*
 *.tfvars
 .terraform
 infrastructure/kubernetes/staging/secrets/
+**/*.lock.hcl
