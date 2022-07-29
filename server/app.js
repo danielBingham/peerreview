@@ -39,6 +39,7 @@ const databaseConfig = {
 
 if ( config.database.certificate ) {
     databaseConfig.ssl = {
+        rejectUnauthorized: false,
         cert: fs.readFileSync(config.database.certificate).toString()
     }
 }
