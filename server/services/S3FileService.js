@@ -1,14 +1,14 @@
 const fs = require('fs')
 
-const config = require('../config')
-
 const { S3 } = require('@aws-sdk/client-s3')
 const { PutObjectCommand, DeleteObjectCommand, CopyObjectCommand } = require('@aws-sdk/client-s3')
 
 
 module.exports = class S3FileService {
 
-    constructor() {
+    constructor(config) {
+        this.config = config
+
         const s3SpacesConfig = {
             endpoint: config.spaces.endpoint,
             region: 'us-east-1',
@@ -25,7 +25,7 @@ module.exports = class S3FileService {
         const filestream = fs.createReadStream(sourcePath)
 
         const params = {
-            Bucket: config.spaces.bucket,
+            Bucket: this.config.spaces.bucket,
             Key: targetPath,
             Body: filestream,
             ACL: 'public-read'
@@ -36,8 +36,8 @@ module.exports = class S3FileService {
 
     async copyFile(currentPath, newPath) {
         const params = {
-            Bucket: config.spaces.bucket,
-            CopySource: config.spaces.bucket + '/' + currentPath,
+            Bucket: this.config.spaces.bucket,
+            CopySource:this. config.spaces.bucket + '/' + currentPath,
             Key: newPath,
             ACL: 'public-read'
 
@@ -55,7 +55,7 @@ module.exports = class S3FileService {
 
     async removeFile(path) {
         const params = {
-            Bucket: config.spaces.bucket,
+            Bucket: this.config.spaces.bucket,
             Key: path
         }
         console.log(`removeFile(${path})`)

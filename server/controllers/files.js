@@ -1,8 +1,6 @@
 const mime = require('mime')
 const { v4: uuidv4 } = require('uuid')
 
-const config = require('../config')
-
 const S3FileService = require('../services/S3FileService')
 const FileDAO = require('../daos/files')
 const ControllerError = require('../errors/ControllerError')
@@ -10,11 +8,12 @@ const DAOError = require('../errors/DAOError')
 
 module.exports = class FileController {
 
-    constructor(database, logger) {
+    constructor(database, logger, config) {
         this.database = database
         this.logger = logger
+        this.config = config
 
-        this.fileService = new S3FileService()
+        this.fileService = new S3FileService(config)
         this.fileDAO = new FileDAO(this.database, this.logger)
     }
 
@@ -35,7 +34,7 @@ module.exports = class FileController {
             id: id,
             userId: request.session.user.id,
             type: type,
-            location: config.spaces.bucket_url,
+            location: this.config.spaces.bucket_url,
             filepath: filepath
         }
 

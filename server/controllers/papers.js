@@ -17,10 +17,10 @@ const DAOError = require('../errors/DAOError')
  */
 module.exports = class PaperController {
 
-    constructor(database, logger) {
+    constructor(database, logger, config) {
         this.database = database
         this.logger = logger
-        this.paperDAO = new PaperDAO(database)
+        this.paperDAO = new PaperDAO(database, config)
         this.fieldDAO = new FieldDAO(database)
     }
 

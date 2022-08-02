@@ -20,7 +20,7 @@ module.exports = function(database, logger, config) {
      *          File REST Routes
      ******************************************************************************/
     const FileController = require('./controllers/files')
-    const fileController = new FileController(database, logger)
+    const fileController = new FileController(database, logger, config)
 
     const upload = new multer({ dest: 'public/uploads/tmp' })
 
@@ -221,7 +221,7 @@ module.exports = function(database, logger, config) {
      ******************************************************************************/
 
     const PaperController = require('./controllers/papers')
-    const paperController = new PaperController(database, logger)
+    const paperController = new PaperController(database, logger, config)
 
     // Get a list of all papers.
     router.get('/papers', function(request, response, next) {

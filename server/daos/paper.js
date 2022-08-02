@@ -11,11 +11,11 @@ const S3FileService = require('../services/S3FileService')
 
 module.exports = class PaperDAO {
 
-    constructor(database) {
+    constructor(database, config) {
         this.database = database
         this.userDAO = new UserDAO(database)
         this.fileDAO = new FileDAO(database)
-        this.fileService = new S3FileService()
+        this.fileService = new S3FileService(config)
     }
 
     /**

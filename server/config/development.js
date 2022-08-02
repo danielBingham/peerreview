@@ -17,5 +17,12 @@ module.exports = {
         key: 'peer_review_id',
         secret: 'development' 
     },
+    spaces: {
+        endpoint: 'https://nyc3.digitaloceanspaces.com',
+        bucket_url: 'https://peer-review-development-files.nyc3.digitaloceanspaces.com/',
+        access_id: process.env.SPACES_ACCESS_ID,
+        access_key: process.env.SPACES_ACCESS_KEY,
+        bucket: 'peer-review-development-files'
+    },
     log_level: 'debug'
 };
