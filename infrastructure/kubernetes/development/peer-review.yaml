@@ -2,23 +2,23 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: peer-review-app-deployment
-  labels: 
+  labels:
     application: peer-review
-    function: frontend-api 
+    function: frontend-api
     environment: development
 spec:
   selector:
     matchLabels:
       application: peer-review
-      function: frontend-api 
+      function: frontend-api
       environment: development
   replicas: 1
-  template: 
+  template:
     metadata:
       name: peer-review-app-pod-template
       labels:
         application: peer-review
-        function: frontend-api 
+        function: frontend-api
         environment: development
         container: peerreview
     spec:
@@ -32,6 +32,18 @@ spec:
               value: "peer-review:*"
             - name: NODE_ENV
               value: development
+            - name: SPACES_ACCESS_ID
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-spaces-credentials
+                  key: access_id
+                  optional: false
+            - name: SPACES_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-spaces-credentials
+                  key: access_key
+                  optional: false
           resources:
             limits:
               cpu: 0.5
@@ -44,7 +56,7 @@ kind: Service
 metadata:
   name: peer-review-app-service
 spec:
-  type: NodePort 
+  type: NodePort
   selector:
     application: peer-review
     function: frontend-api
