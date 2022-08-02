@@ -59,6 +59,18 @@ spec:
                   name: peer-review-session-secret
                   key: session_secret
                   optional: false
+            - name: SPACES_ACCESS_ID
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-spaces-credentials
+                  key: access_id
+                  optional: false
+            - name: SPACES_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-spaces-credentials
+                  key: access_key
+                  optional: false
       
 
 ---

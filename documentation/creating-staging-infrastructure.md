@@ -115,6 +115,9 @@ INSERT 0 6
 INSERT 0 1
 ```
 
+Once you've run these, remove your IP from the Database Firewall. It can always
+be added back in at need.
+
 At this point, the database is ready to go.  We'll need to hang on to the
 credentials for the doadmin user, because we'll need to supply them to
 kubernetes.
@@ -124,9 +127,70 @@ kubernetes.
 At this point, we need to prepare the Kubernetes cluster before we can push our
 deployments.
 
-Push the deployments using kubectl apply.
+First we'll need to configure kubectl to talk to the cluster.  To do this,
+follow the instructions on Digital Ocean for using the `doctl`.
 
-Populate the secrets in `infrastructure/kubernetes/staging/secrets` from the
-digital ocean console and then push them to kubernetes using kubectl apply.
-Create the certificate secret using kubectl create secret.
+Next create the secrets by pushing each of the secrets manifests.  We'll need
+to edit some of the manifests - or if this is your first time, create them in
+the first place.
+
+Create or edit the following secrets manifests.
+
+The Digital Ocean Database Connection certificate:
+`infrastructure/kubernetes/staging/secrets/certificate-secret.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: peer-review-database-certificate
+type: Opaque
+stringData:
+  certificate.crt: |
+    -----BEGIN CERTIFICATE-----
+    [... snip ...]
+    -----END CERTIFICATE-----
+
+```
+
+The database credentials: `infrastructure/kubernetes/staging/secrets/database-secrets.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: peer-review-database-credentials 
+type: Opaque
+stringData:
+  username: doadmin 
+  password: <Password from digital ocean>
+```
+
+The session secret key: `infrastructure/kubernetes/staging/secrets/session-secret.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: peer-review-session-secret
+type: Opaque
+stringData:
+  session_secret: <Generate a random key> 
+```
+
+The Spaces Acess ID and Access Key: `infrastructure/kubernetes/staging/secrets/spaces-secrets.yaml`:
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: peer-review-spaces-credentials
+type: Opaque
+data:
+  access_id: <base64 encoded access id> 
+  access_key: <base64 encoded access key> 
+```
+
+Then use `kubectl apply -f <file>` to push the each of the secrets to the
+cluster in turn.
 
