@@ -1,5 +1,6 @@
 .pdf-viewer {
     position: relative;
+    min-height: 1000px;
 }
 .pdf-viewer .controls {
     display: grid;
@@ -34,6 +35,14 @@
     width: 50px;
     padding: 5px;
     border: thin solid #ddd;
+}
+.pdf-viewer .pdf-viewer-document {
+    min-width: 900px;
+    min-height: 1000px;
+}
+.pdf-viewer .pdf-viewer-page {
+    min-width: 900px;
+    min-height: 1000px;
 }
 .pdf-viewer canvas {
     border: thin solid #ddd;

@@ -136,6 +136,7 @@ const App = function(props) {
                         { /* ========= Published Papers ===================== */ }
                         <Route path="/search" element={ <PaperSearchPage /> } />
                         <Route path="/paper/:id" element={ <PublishedPaperPage /> } />
+                        <Route path="/spinner" element={ <Spinner local={true} /> } />
                     </Routes>
                 </main>
             </Router>

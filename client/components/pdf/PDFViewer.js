@@ -83,8 +83,8 @@ const PDFViewer = function(props) {
                     <a href="" onClick={nextPage}>next <ChevronDoubleRightIcon /></a>
                 </div>
             </div>
-            <Document file={props.url} onLoadSuccess={onLoadSuccess} >
-                <Page pageNumber={pageNumber} width={900} />
+            <Document className="pdf-viewer-document" file={props.url} loading={<Spinner />} onLoadSuccess={onLoadSuccess} >
+                <Page className="pdf-viewer-page" pageNumber={pageNumber} loading={<Spinner local={true} />} width={900} /> 
             </Document>
         </section>
     )

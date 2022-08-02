@@ -245,16 +245,9 @@ module.exports = class PaperDAO {
         if ( maxVersionResults.rows.length > 0 && maxVersionResults.rows[0].version) {
             versionNumber = maxVersionResults.rows[0].version
         }
-        console.log(file.location)
-        console.log(file.filepath)
 
         const url = new URL(file.filepath, file.location)
-        console.log(url)
-        console.log(url.toString())
-        console.log('Loading PDF: ' + url.toString())
         const pdf = await pdfjslib.getDocument(url.toString()).promise
-        console.log('PDF loaded: ')
-        console.log(pdf)
         let content = ''
         for(let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
             const page = await pdf.getPage(pageNumber)
@@ -293,9 +286,9 @@ module.exports = class PaperDAO {
 
         // TODO Should moving the file when the file is updated be the
         // responsibility of the FileDAO?  Probably.
-        this.fileService.copyFile(file.filepath, filepath)
-        this.fileDAO.updateFile(newFile)
-        this.fileService.removeFile(file.filepath)
+        await this.fileService.copyFile(file.filepath, filepath)
+        await this.fileDAO.updateFile(newFile)
+        await this.fileService.removeFile(file.filepath)
     }
 
 

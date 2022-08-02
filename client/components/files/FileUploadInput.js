@@ -113,7 +113,7 @@ const FileUploadInput = function(props) {
     if ( (deleteRequestId && ! deleteRequest) || (deleteRequest && deleteRequest.state == 'pending') 
         || ( uploadRequestId && ! uploadRequest) || (uploadRequest && uploadRequest.state == 'pending') ) 
     {
-        content = ( <Spinner /> )
+        content = ( <Spinner local={true} /> )
 
     // Request failure - report an error.
     } else if (  deleteRequest && deleteRequest.state == 'failed') {
@@ -134,7 +134,7 @@ const FileUploadInput = function(props) {
                 </div>
             )
         } else if (( fileData && ! file) ) {
-            content = ( <Spinner /> )
+            content = ( <Spinner local={true} /> )
         } else {
             content = (
                 <div className="upload-input">

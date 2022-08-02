@@ -62,7 +62,7 @@ const PublishedPaperList = function(props) {
 
     // ======= Render ===============================================
     
-    let content = (<div className="spinner-wrapper"> <Spinner /> </div>) 
+    let content = (<Spinner local={true} /> ) 
     if ( request && request.state == 'fulfilled') { 
         content = []
         for (const paper of paperList) {

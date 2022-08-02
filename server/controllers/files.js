@@ -45,6 +45,8 @@ module.exports = class FileController {
         if ( files.length <= 0) {
             throw new ControllerError(500, 'insertion-failure', `Failed to select newly inserted file ${id}.`)
         }
+
+        this.fileService.removeLocalFile(currentPath)
         return response.status(200).json(files[0])
     }
 

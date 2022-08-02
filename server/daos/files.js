@@ -1,4 +1,3 @@
-const FileService = require('../services/files')
 const DAOError = require('../errors/DAOError')
 
 
@@ -7,8 +6,6 @@ module.exports = class FilesDAO {
     constructor(database, logger) {
         this.database = database
         this.logger = logger
-
-        this.fileService = new FileService(database, logger)
     }
 
     hydrateFile(row) {
@@ -137,8 +134,6 @@ module.exports = class FilesDAO {
         if ( results.rowCount !== 1 ) {
             throw new DAOError('failed-delete', `Failed to delete file ${fileId}`)
         }
-
-        this.fileService.removeFile(filepath)
     }
 
 }

@@ -17,3 +17,22 @@
   border-top-color: #000;
   animation: spinner .6s linear infinite;
 }
+
+.spinner-wrapper.local {
+    padding: 20px;
+    text-align: center;
+    margin: auto auto;
+}
+
+.spinner-wrapper.local .spinner-local:before {
+  content: '';
+  display: inline-block;
+  box-sizing: border-box;
+  margin: auto auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid #ccc;
+  border-top-color: #000;
+  animation: spinner .6s linear infinite;
+}
