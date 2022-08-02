@@ -6,15 +6,18 @@
  *
  **************************************************************************************************/
 
-var express = require('express')
-var path = require('path')
-var morgan = require('morgan')
-var debug = require('debug')('peer-review:server')
-var { Client, Pool } = require('pg')
-var session = require('express-session')
-var pgSession = require('connect-pg-simple')(session)
-const Uuid = require('uuid')
+const express = require('express')
+const session = require('express-session')
+const cors = require('cors')
+
+const morgan = require('morgan')
+const debug = require('debug')('peer-review:server')
+const { Client, Pool } = require('pg')
+const pgSession = require('connect-pg-simple')(session)
+
+const path = require('path')
 const fs = require('fs')
+const Uuid = require('uuid')
 
 const Logger = require('./logger')
 const ControllerError = require('./errors/ControllerError')
@@ -25,7 +28,7 @@ const ControllerError = require('./errors/ControllerError')
 // the configuration values.
 //
 // For sturcture, see config/default.js
-var config = require('./config')
+const config = require('./config')
 
 const logger = new Logger(config.log_level)
 
@@ -43,12 +46,16 @@ if ( config.database.certificate ) {
         cert: fs.readFileSync(config.database.certificate).toString()
     }
 }
-console.log(databaseConfig)
 
 const connection = new Pool(databaseConfig)
 
 // Load express.
-var app = express()
+const app = express()
+
+app.use(cors({
+    origin: config.spaces.bucket_url,
+    methods: [ 'GET' ]
+}))
 
 // Use a development http logger.
 app.use(morgan('dev'))
@@ -56,7 +63,7 @@ app.use(morgan('dev'))
 app.use(express.json())
 app.use(express.urlencoded({ extended: false }))
 
-let sessionStore = new pgSession({
+const sessionStore = new pgSession({
     pool: connection,
     createTableIfMissing: true
 })

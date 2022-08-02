@@ -15,6 +15,7 @@ module.exports = class FilesDAO {
         return {
             id: row.file_id,
             userId: row.file_userId,
+            location: row.file_location,
             filepath: row.file_filepath,
             type: row.file_type,
             createdDate: row.file_createdDate,
@@ -37,7 +38,7 @@ module.exports = class FilesDAO {
     }
 
     getFilesSelectionString() {
-        return `files.id as file_id, files.user_id as "file_userId", files.filepath as file_filepath, files.type as file_type,
+        return `files.id as file_id, files.user_id as "file_userId", files.location as file_location, files.filepath as file_filepath, files.type as file_type,
             files.created_date as "file_createdDate", files.updated_date as "file_updatedDate"` 
     }
 
@@ -64,9 +65,9 @@ module.exports = class FilesDAO {
 
     async insertFile(file) {
         const results = await this.database.query(`
-            INSERT INTO files (id, user_id, filepath, type, created_date, updated_date)
-                VALUES ($1, $2, $3, $4, now(), now())
-        `, [ file.id, file.userId, file.filepath, file.type ])
+            INSERT INTO files (id, user_id, location, filepath, type, created_date, updated_date)
+                VALUES ($1, $2, $3, $4, $5, now(), now())
+        `, [ file.id, file.userId, file.location, file.filepath, file.type ])
 
         if ( results.rowCount == 0) {
             throw new DAOError('failed-insert', `Failed to insert file ${file.id}.`)
@@ -75,9 +76,9 @@ module.exports = class FilesDAO {
 
     async updateFile(file) {
         const results = await this.database.query(`
-            UPDATE files SET user_id = $1, filepath=$2, type=$3, updated_date=now()
-                WHERE id=$4
-        `, [ file.userId, file.filepath, file.type, file.id ])
+            UPDATE files SET user_id = $1, location=$2, filepath=$3, type=$4, updated_date=now()
+                WHERE id=$5
+        `, [ file.userId, file.location, file.filepath, file.type, file.id ])
 
         if ( results.rowCount == 0) {
             throw new DAOError('failed-update', `Filed to update file ${file.id}.`)

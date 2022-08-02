@@ -9,9 +9,10 @@ const PublishedPaperPDFView = function(props) {
 
     // ================= Render ===============================================
 
+    const url = new URL(props.paper.versions[0].file.filepath, props.paper.versions[0].file.location)
     let content = ( <Spinner /> ) 
     if ( props.paper.versions.length > 0 ) {
-        content = ( <PDFViewer filepath={props.paper.versions[0].file.filepath} /> )
+        content = ( <PDFViewer url={url.href} /> )
     }
 
     return (

@@ -41,27 +41,6 @@ resource "digitalocean_database_firewall" "peer_review_database_firewall" {
   }
 }
 
-provider "kubernetes" {
-  host             = data.digitalocean_kubernetes_cluster.example.endpoint
-  token            = data.digitalocean_kubernetes_cluster.example.kube_config[0].token
-  cluster_ca_certificate = base64decode(
-    data.digitalocean_kubernetes_cluster.example.kube_config[0].cluster_ca_certificate
-  )
-}
-
-resource "kubernetes_secret" "example" {
-  metadata {
-    name = "basic-auth"
-  }
-
-  data = {
-    username = "admin"
-    password = "P4ssw0rd"
-  }
-
-  type = "kubernetes.io/basic-auth"
-}
-
 resource "digitalocean_project" "peer_review" {
 
   name = "peer-review/staging"

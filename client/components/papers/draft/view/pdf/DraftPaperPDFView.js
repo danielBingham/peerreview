@@ -60,7 +60,8 @@ const DraftPaperPDFView = function(props) {
                 version = props.paper.versions[0]
             }
 
-            const loadingTask = PDFLib.getDocument('http://' + window.location.host + version.file.filepath)
+            const url = new URL(version.file.filepath, version.file.location)
+            const loadingTask = PDFLib.getDocument(url.toString())
             loadingTask.promise.then(function(pdf) {
                 pdfRef.current = pdf
                 setLoaded(true)

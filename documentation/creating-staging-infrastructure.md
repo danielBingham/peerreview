@@ -121,4 +121,12 @@ kubernetes.
 
 ### Initializing Kubernetes
 
+At this point, we need to prepare the Kubernetes cluster before we can push our
+deployments.
+
+Push the deployments using kubectl apply.
+
+Populate the secrets in `infrastructure/kubernetes/staging/secrets` from the
+digital ocean console and then push them to kubernetes using kubectl apply.
+Create the certificate secret using kubectl create secret.
 

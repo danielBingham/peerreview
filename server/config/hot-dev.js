@@ -7,6 +7,9 @@
  * localhost:3306.  So we need to point the database configuration at localhost.
  *
  **************************************************************************************************/
+// We only use this for hotdev.  We have other ways of getting the environment
+// variables set properly in other contexts.
+require('dotenv').config()
 
 module.exports = {
     // Database configuration
@@ -20,6 +23,13 @@ module.exports = {
     session: {
         key: 'peer_review_id',
         secret: 'hot-dev' 
+    },
+    spaces: {
+        endpoint: 'https://nyc3.digitaloceanspaces.com',
+        bucket_url: 'https://peer-review-development-files.nyc3.digitaloceanspaces.com/',
+        access_id: process.env.SPACES_ACCESS_ID,
+        access_key: process.env.SPACES_ACCESS_KEY,
+        bucket: 'peer-review-development-files'
     },
     log_level: 'debug'
 

@@ -7,7 +7,7 @@ const DAOError = require('../errors/DAOError')
 
 const UserDAO = require('./user')
 const FileDAO = require('./files')
-const FileService = require('../services/files')
+const S3FileService = require('../services/S3FileService')
 
 module.exports = class PaperDAO {
 
@@ -15,7 +15,7 @@ module.exports = class PaperDAO {
         this.database = database
         this.userDAO = new UserDAO(database)
         this.fileDAO = new FileDAO(database)
-        this.fileService = new FileService(database)
+        this.fileService = new S3FileService()
     }
 
     /**
@@ -245,9 +245,16 @@ module.exports = class PaperDAO {
         if ( maxVersionResults.rows.length > 0 && maxVersionResults.rows[0].version) {
             versionNumber = maxVersionResults.rows[0].version
         }
+        console.log(file.location)
+        console.log(file.filepath)
 
-        const data = new Uint8Array(this.fileService.readFile(file.filepath))
-        const pdf = await pdfjslib.getDocument({data}).promise
+        const url = new URL(file.filepath, file.location)
+        console.log(url)
+        console.log(url.toString())
+        console.log('Loading PDF: ' + url.toString())
+        const pdf = await pdfjslib.getDocument(url.toString()).promise
+        console.log('PDF loaded: ')
+        console.log(pdf)
         let content = ''
         for(let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
             const page = await pdf.getPage(pageNumber)
@@ -279,7 +286,7 @@ module.exports = class PaperDAO {
         titleFilename = sanitizeFilename(titleFilename)
 
         const filename = `${paper.id}-${versionNumber}-${titleFilename}.${mime.getExtension(file.type)}`
-        const filepath = '/uploads/papers/' + filename
+        const filepath = 'papers/' + filename
 
         const newFile = { ...file }
         newFile.filepath = filepath

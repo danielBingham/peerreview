@@ -15,26 +15,26 @@
   "jest": {
     "verbose": true,
     "moduleNameMapper": {
-        "^/configuration": "<rootDir>/client/configuration",
-        "^/logger": "<rootDir>/client/logger",
-        "^/state/(.*)": "<rootDir>/client/state/$1",
-        "^/errors/(.*)": "<rootDir>/client/errors/$1",
-        "^/components/(.*)": "<rootDir>/client/components/$1",
-        "^/pages/(.*)": "<rootDir>/client/pages/$1"
+      "^/configuration": "<rootDir>/client/configuration",
+      "^/logger": "<rootDir>/client/logger",
+      "^/state/(.*)": "<rootDir>/client/state/$1",
+      "^/errors/(.*)": "<rootDir>/client/errors/$1",
+      "^/components/(.*)": "<rootDir>/client/components/$1",
+      "^/pages/(.*)": "<rootDir>/client/pages/$1"
     }
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.141.0",
     "@heroicons/react": "^1.0.6",
     "@reduxjs/toolkit": "^1.8.1",
     "bcrypt": "^5.0.1",
     "connect-pg-simple": "^7.0.0",
     "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
     "debug": "^4.3.4",
     "express": "^4.18.0",
     "express-session": "^1.17.2",
-    "hbs": "^4.2.0",
     "http-errors": "^2.0.0",
-    "lodash.debounce": "^4.0.8",
     "mime": "^3.0.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.4",
@@ -64,6 +64,7 @@
     "clean-webpack-plugin": "^4.0.0",
     "concurrently": "^7.1.0",
     "css-loader": "^6.7.1",
+    "dotenv": "^16.0.1",
     "fetch-mock": "^9.11.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^28.0.3",

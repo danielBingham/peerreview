@@ -74,7 +74,7 @@ const PDFViewer = function(props) {
                     <a href="" onClick={prevPage}><ChevronDoubleLeftIcon /> previous</a>
                 </div>
                 <div className="control">
-                    <a href={`http://${window.location.host}${props.filepath}`}><DownloadIcon /></a>
+                    <a href={props.url}><DownloadIcon /></a>
                     <div className="page-control">
                         <input type="text" value={pageNumber} onChange={changePageNumber} /> / { totalPages }
                     </div>
@@ -83,7 +83,7 @@ const PDFViewer = function(props) {
                     <a href="" onClick={nextPage}>next <ChevronDoubleRightIcon /></a>
                 </div>
             </div>
-            <Document file={`http://${window.location.host}${props.filepath}`} onLoadSuccess={onLoadSuccess} >
+            <Document file={props.url} onLoadSuccess={onLoadSuccess} >
                 <Page pageNumber={pageNumber} width={900} />
             </Document>
         </section>
