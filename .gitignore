@@ -6,5 +6,5 @@ public/uploads/*
 *.tfstate.*
 *.tfvars
 .terraform
-infrastructure/kubernetes/staging/secrets/
+infrastructure/kubernetes/**/secrets/
 **/*.lock.hcl
