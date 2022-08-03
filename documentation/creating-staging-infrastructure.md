@@ -103,12 +103,12 @@ Then logout.  Next you'll run two `psql` commands to load in the database
 schema and the field structure.  From the root repo directory:
 
 ```bash
-$ psql --host <host> --username app --dbname peer_review --port 25060 --file="database/schema.sql"
+$ psql --host <host> --username doadmin --dbname peer_review --port 25060 --file="database/schema.sql"
 Password for user doadmin:
 CREATE TABLE
 [... more statements ...]
 CREATE TABLE
-$ psql --host <host> --username app --dbname peer_review --port 25060 --file="database/fields.sql"
+$ psql --host <host> --username doadmin --dbname peer_review --port 25060 --file="database/fields.sql"
 Password for user doadmin:
 INSERT 0 6
 [... more statements ...]

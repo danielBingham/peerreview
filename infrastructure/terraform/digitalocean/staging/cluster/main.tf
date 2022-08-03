@@ -2,6 +2,12 @@ resource "digitalocean_spaces_bucket" "peer_review_files" {
   name = "peer-review-files"
   region = var.region 
   acl = "public-read"
+
+  cors_rule {
+    allowed_methods = ["GET"]
+    allowed_origins = ["http://staging.peer-review.io"]
+    max_age_seconds = 3000
+  }
 }
 
 resource "digitalocean_database_cluster" "peer_review_database" {

@@ -12,7 +12,7 @@ spec:
       application: peer-review
       function: frontend-api 
       environment: staging
-  replicas: 1
+  replicas: 2
   template: 
     metadata:
       name: peer-review-app-pod-template
@@ -25,7 +25,7 @@ spec:
       volumes:
         - name: certificates
           secret:
-            secretName: database-certificate
+            secretName: peer-review-database-certificate
             optional: false
       containers:
         - name: peer-review-app-container
@@ -87,9 +87,13 @@ spec:
     function: frontend-api
     environment: staging
   ports:
-    - protocol: TCP
+    - name: http
+      protocol: TCP
       port: 80 
       targetPort: 8080
-
+    - name: https
+      protocol: TCP
+      port: 443 
+      targetPort: 8080
 
 
