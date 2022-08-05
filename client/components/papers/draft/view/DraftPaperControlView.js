@@ -111,7 +111,7 @@ const DraftPaperControlView = function(props) {
     // ======= Render ===============================================
     
     let contents = ''
-     if ( isAuthor ) {
+     if ( isAuthor && isOwner ) {
          contents = (
              <div className="author-controls">
                  <button onClick={uploadVersion}>Upload New Version</button>

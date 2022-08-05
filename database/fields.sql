@@ -74,9 +74,11 @@ INSERT INTO fields (name, type, created_date, updated_date)
         ('atomic-molecular-optical-physics', 'physics', now(), now()),
             ('optics', 'physics', now(), now()),
         ('biophysics', 'physics-biology', now(), now()),
+            ('biomechanics', 'physics-biology', now(), now()),
             ('neurophysics', 'physics-biology', now(), now()),
             ('polymer-physics', 'physics-biology', now(), now()),
             ('quantum-biology', 'physics-biology', now(), now()),
+            ('virophysics', 'physics-biology', now(), now()),
         ('chemical-physics', 'physics-chemistry', now(), now()),
         ('computational-physics', 'physics', now(), now()),
         ('condensed-matter-physics', 'physics', now(), now()),
@@ -207,7 +209,105 @@ INSERT INTO fields (name, type, created_date, updated_date)
         ('radiochemistry', 'chemistry', now(), now()),
         ('sonochemistry', 'chemistry', now(), now()),
         ('synthetic-chemistry', 'chemistry', now(), now()),
-        ('toxicology', 'chemistry', now(), now());
+        ('toxicology', 'chemistry', now(), now()),
+
+/******************************************************************************
+ * Sub-fields of Biology 
+ *****************************************************************************/
+        ('anatomy', 'biology', now(), now()),
+            ('comparative-anatomy', 'biology', now(), now()),
+            ('osteology', 'biology', now(), now()),
+            ('osteomyoarthrology', 'biology', now(), now()),
+            ('viscerology', 'biology', now(), now()),
+            ('neuroanatomy', 'biology', now(), now()),
+            ('histology', 'biology', now(), now()),
+        ('astrobiology', 'biology-space-science', now(), now()),
+        ('bioarchaeology', 'biology-archaeology', now(), now()),
+        ('biocultural-anthropology', 'biology-anthropology', now(), now()),
+        ('biogeography', 'biology-geography', now(), now()),
+        ('biolinguistics', 'biology-linguistics', now(), now()),
+        ('biological-economics', 'biology-economics', now(), now()),
+        ('biotechnology', 'biology', now(), now()),
+            ('bioinformatics', 'biology', now(), now()),
+            ('bioengineering', 'biology', now(), now()),
+            ('synthetic-biology', 'biology', now(), now()),
+        ('botany', 'biology', now(), now()),
+            ('photobiology', 'biology', now(), now()),
+            ('phycology', 'biology', now(), now()),
+            ('plant-physiology', 'biology', now(), now()),
+        ('cell-biology', 'biology', now(), now()),
+        ('chronobiology', 'biology', now(), now()),
+            ('dendrochronology', 'biology', now(), now()),
+        ('developmental-biology', 'biology', now(), now()),
+            ('embryology', 'biology', now(), now()),
+            ('geontology', 'biology', now(), now()),
+        ('ecology', 'biology', now(), now()),
+        ('epidemiology', 'biology', now(), now()),
+        ('evolutionary-biology', 'biology', now(), now()),
+            ('evolutionary-developmental-biology', 'biology', now(), now()),
+            ('paleobiology', 'biology', now(), now()),
+            ('paleoanthropology', 'biology', now(), now()),
+            ('paleobotany', 'biology', now(), now()),
+            ('paleontology', 'biology', now(), now()),
+            ('paleopathology', 'biology', now(), now()),
+        ('genetics', 'biology', now(), now()),
+            ('quantitative-genetics', 'biology', now(), now()),
+        ('geobiology', 'biology', now(), now()),
+        ('immunology', 'biology', now(), now()),
+        ('marine-biology', 'biology', now(), now()),
+        ('microbiology', 'biology', now(), now()),
+            ('bacteriology', 'biology', now(), now()),
+            ('mycology', 'biology', now(), now()),
+            ('parasitology', 'biology', now(), now()),
+            ('virology', 'biology', now(), now()),
+        ('molecular-biology', 'biology', now(), now()),
+            ('structural-biology', 'biology', now(), now()),
+        ('neuroscience', 'biology', now(), now()),
+            ('behavioral-neuroscience', 'biology', now(), now()),
+            ('cellular-neuroscience', 'biology', now(), now()),
+            ('cognitive-neuroscience', 'biology', now(), now()),
+            ('computational-neuroscience', 'biology', now(), now()),
+            ('developmental-neuroscience', 'biology', now(), now()),
+            ('molecular-neuroscience', 'biology', now(), now()),
+            ('neuroendocrinology', 'biology', now(), now()),
+            ('neuroethology', 'biology', now(), now()),
+            ('neuroimmunology', 'biology', now(), now()),
+            ('neuropharmacology', 'biology', now(), now()),
+            ('neurophysiology', 'biology', now(), now()),
+            ('systems-neuroscience', 'biology', now(), now()),
+        ('physiology', 'biology', now(), now()),
+            ('endocrinology', 'biology', now(), now()),
+            ('oncology', 'biology', now(), now()),
+        ('systems-biology', 'biology', now(), now()),
+        ('theoretical-biology', 'biology', now(), now());
+        /* We'll come back to zoology later.
+        ('zoology', 'biology', now(), now()),
+            ('arthropodology', 'biology', now(), now()),
+                ('acarology', 'biology', now(), now()),
+                ('arachnology', 'biology', now(), now()),
+                ('entomology', 'biology', now(), now()),
+                    ('coleopterology', 'biology', now(), now()),
+                    ('lepidopterology', 'biology', now(), now()),
+                    ('myrmecology', 'biology', now(), now()),
+                ('carcinology', 'biology', now(), now()),
+                ('myriapodology', 'biology', now(), now()),
+            ('ethology', 'biology', now(), now()),
+            ('helminthology', 'biology', now(), now()),
+            ('herpetology', 'biology', now(), now()),
+                ('batrachology', 'biology', now(), now()),
+            ('ichthyology', 'biology', now(), now()),
+            ('malacology', 'biology', now(), now()),
+                ('teuthology', 'biology', now(), now()),
+            ('mammalogy', 'biology', now(), now()),
+                ('cetology', 'biology', now(), now()),
+                ('primatology', 'biology', now(), now()),
+                ('human-biology', 'biology', now(), now()),
+                ('biological-anthropology', 'biology', now(), now()),
+                    ('human-behavioral-ecology', 'biology', now(), now()),
+            ('nematology', 'biology', now(), now()),
+            ('ornithology', 'biology', now(), now()); */
+
+        
 
 /**
  * Build the parent relationships. We're going to create a temporary table from the cross join of fields against itself
@@ -512,3 +612,152 @@ insert INTO field_relationships (parent_id, child_id)
             AND  ( 
                 child_name='cosmochemistry'
             );
+
+/******************************************************************************
+ * Relationships for Space Science 
+ *****************************************************************************/
+INSERT INTO field_relationships (parent_id, child_id) 
+    SELECT parent_id, child_id FROM fields_cross
+        WHERE parent_name='biology' 
+        AND  ( 
+            child_name='anatomy'
+            OR child_name='astrobiology'
+            OR child_name='bioarchaeology'
+            OR child_name='biocultural-anthropology'
+            OR child_name='biogeography'
+            OR child_name='biolinguistics'
+            OR child_name='biological-economics'
+            OR child_name='biotechnology'
+            OR child_name='botany'
+            OR child_name='cell-biology'
+            OR child_name='chronobiology'
+            OR child_name='developmental-biology'
+            OR child_name='ecology'
+            OR child_name='epidemiology'
+            OR child_name='evolutionary-biology'
+            OR child_name='genetics'
+            OR child_name='geobiology'
+            OR child_name='immunology'
+            OR child_name='marine-biology'
+            OR child_name='microbiology'
+            OR child_name='molecular-biology'
+            OR child_name='neuroscience'
+            OR child_name='physiology'
+            OR child_name='systems-biology'
+            OR child_name='theoretical-biology'
+            OR child_name='zoology'
+        );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='anatomy' 
+            AND  ( 
+                child_name='comparative-anatomy'
+                OR child_name='osteology'
+                OR child_name='osteomyoarthrology'
+                OR child_name='viscerology'
+                OR child_name='neuroanatomy'
+                OR child_name='histology'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='biotechnology' 
+            AND  ( 
+                child_name='bioinformatics'
+                OR child_name='bioengineering'
+                OR child_name='synthetic-biology'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='botany' 
+            AND  ( 
+                child_name='photobiology'
+                OR child_name='phycology'
+                OR child_name='plant-physiology'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='chronobiology' 
+            AND  ( 
+                child_name='dendrochronology'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='developmental-biology' 
+            AND  ( 
+                child_name='embryology'
+                OR child_name='geontology'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='evolutionary-biology' 
+            AND  ( 
+                child_name='evolutionary-developmental-biology'
+                OR child_name='paleobiology'
+                OR child_name='paleoanthropology'
+                OR child_name='paleobotany'
+                OR child_name='paleontology'
+                OR child_name='paleopathology'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='genetics' 
+            AND  ( 
+                child_name='quantitative-genetics'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='microbiology' 
+            AND  ( 
+                child_name='bacteriology'
+                OR child_name='mycology'
+                OR child_name='parasitology'
+                OR child_name='virology'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='molecular-biology' 
+            AND  ( 
+                child_name='structural-biology'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='neuroscience' 
+            AND  ( 
+                child_name='behavioral-neuroscience'
+                OR child_name='cellular-neuroscience'
+                OR child_name='cognitive-neuroscience'
+                OR child_name='computational-neuroscience'
+                OR child_name='developmental-neuroscience'
+                OR child_name='molecular-neuroscience'
+                OR child_name='neuroendocrinology'
+                OR child_name='neuroethology'
+                OR child_name='neuroimmunology'
+                OR child_name='neuropharmacology'
+                OR child_name='neurophysiology'
+                OR child_name='systems-neuroscience'
+            );
+
+    INSERT INTO field_relationships (parent_id, child_id) 
+        SELECT parent_id, child_id FROM fields_cross
+            WHERE parent_name='physiology' 
+            AND  ( 
+                child_name='endocrinology'
+                OR child_name='oncology'
+            );
+
+
+/* 
+ * We only need this table to create the field relationships.  Once we're done
+ * with that, remove it to save space. 
+ */
+DROP TABLE fields_cross;

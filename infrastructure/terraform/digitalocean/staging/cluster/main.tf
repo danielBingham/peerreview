@@ -1,5 +1,5 @@
 resource "digitalocean_spaces_bucket" "peer_review_files" {
-  name = "peer-review-files"
+  name = "peer-review-staging-files"
   region = var.region 
   acl = "public-read"
 
@@ -27,7 +27,7 @@ resource "digitalocean_kubernetes_cluster" "peer_review_cluster" {
 
   node_pool {
     name = "primary-pool"
-    size = "s-1vcpu-2gb"
+    size = "s-2vcpu-2gb"
     node_count = 2
   }
 } 
@@ -35,11 +35,6 @@ resource "digitalocean_kubernetes_cluster" "peer_review_cluster" {
 
 resource "digitalocean_database_firewall" "peer_review_database_firewall" {
   cluster_id = digitalocean_database_cluster.peer_review_database.id
-
-  rule {
-    type  = "ip_addr"
-    value = var.admin_ip 
-  }
 
   rule {
       type = "k8s"

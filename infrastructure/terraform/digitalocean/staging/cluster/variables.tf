@@ -15,7 +15,3 @@ variable "spaces_secret_key" {
   description = "Access key for Digital Ocean Spaces."
 }
 
-variable "admin_ip" {
-  description = "Your IP address to allow you to access the database through the firewall."
-}
-

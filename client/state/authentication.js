@@ -11,6 +11,7 @@ import { makeRequest as makeTrackedRequest,
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
 import { addSettingsToDictionary } from '/state/settings'
+import { reset } from '/state/system'
 
 export const authenticationSlice = createSlice({
     name: 'authentication',
@@ -278,10 +279,8 @@ export const deleteAuthentication = function() {
             payload.status = response.status
             payload.result = null
             if (response.ok) {
-                dispatch(authenticationSlice.actions.setCurrentUser(null))
-                dispatch(authenticationSlice.actions.setSettings(null))
-
                 dispatch(authenticationSlice.actions.completeRequest(payload))
+                dispatch(reset())
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
