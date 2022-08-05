@@ -39,6 +39,7 @@ const ReviewSummaryView = function(props) {
     })
 
     const isAuthor = (currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
+    const isOwner = (currentUser && isAuthor && props.paper.authors.find((a) => a.user.id == currentUser.id).owner ? true : false)
     const reviewerIsAuthor = (props.paper.authors.find((a) => a.user.id == props.selectedReview.userId) ? true : false)
 
     // ======= Actions and Event Handling ===========================
@@ -94,7 +95,7 @@ const ReviewSummaryView = function(props) {
         return null
     } else if ( props.selectedReview ) {
         let authorControls = null
-        if ( isAuthor && ! reviewerIsAuthor 
+        if ( isAuthor && isOwner && ! reviewerIsAuthor 
             && props.selectedReview.status == 'submitted' && props.selectedReview.recommendation !== 'commentary' ) 
         {
             authorControls = (
