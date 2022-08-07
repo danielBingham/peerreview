@@ -5,7 +5,7 @@ resource "digitalocean_spaces_bucket" "peer_review_files" {
 
   cors_rule {
     allowed_methods = ["GET"]
-    allowed_origins = ["http://staging.peer-review.io"]
+    allowed_origins = ["http://staging.peer-review.io", "https://staging.peer-review.io"]
     max_age_seconds = 3000
   }
 }

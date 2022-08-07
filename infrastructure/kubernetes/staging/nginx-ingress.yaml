@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: peer-review-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "peer-review-letsencrypt"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: 50m
+spec:
+  tls:
+    - hosts:
+      - staging.peer-review.io
+      secretName: peer-review-letsencrypt
+  rules:
+  - host: staging.peer-review.io 
+    http:
+        paths:
+        - pathType: Prefix
+          path: "/"
+          backend:
+            service:
+              name: peer-review-app-service 
+              port:
+                number: 80

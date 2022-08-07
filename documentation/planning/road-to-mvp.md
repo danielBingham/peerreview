@@ -194,3 +194,5 @@ use pandoc to convert them to HTML clientside for a better review experience.
 to Peer Review.  It's the system currently in wide adoption in academia (though
 we could easily replace it with something better, in this case it's probably
 better to just go with it.)
+
+**ORCID Integration** Integration with ORCID.
