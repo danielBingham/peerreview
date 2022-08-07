@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -36,6 +36,7 @@ const AuthenticationNavigation = function(props) {
     // ======= Actions and Event Handling ===========================
 
     const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     /**
      * Handle a Logout request by dispatching the appropriate action.
@@ -52,6 +53,12 @@ const AuthenticationNavigation = function(props) {
     }
 
     // ======= Effect Handling ======================================
+
+    useEffect(function() {
+        if ( deleteAuthenticationRequestId && ! deleteAuthenticationRequest) {
+            navigate('/')
+        }
+    }, [deleteAuthenticationRequest])
 
     // Cleanup our request tracking.
     useEffect(function() {
