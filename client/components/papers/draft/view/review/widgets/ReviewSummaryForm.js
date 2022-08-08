@@ -36,10 +36,6 @@ const ReviewSummaryForm = function(props) {
         return state.authentication.currentUser
     })
 
-    const selectedReview = useSelector(function(state) {
-        return state.reviews.selected[props.paper.id]
-    })
-
     const reviewInProgress = useSelector(function(state) {
         return state.reviews.inProgress[props.paper.id]
     })
@@ -104,7 +100,7 @@ const ReviewSummaryForm = function(props) {
         return (
             <div id={reviewInProgress.id} 
                 className="review-summary-form" 
-                style={ selectedReview && reviewInProgress.id == selectedReview.id ? { display: 'block' } : { display: 'none' } }
+                style={ props.selectedReview && reviewInProgress.id == props.selectedReview.id ? { display: 'block' } : { display: 'none' } }
             >
                 <div className="summary-wrapper">
                     <div className="summary-field">

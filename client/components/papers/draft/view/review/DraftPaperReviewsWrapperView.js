@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import { getReviews, clearList, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
@@ -35,8 +36,14 @@ const DraftPaperReviewsWrapperView = function(props) {
 
     // ======= Redux State ==========================================
 
+    const [ searchParams, setSearchParams ] = useSearchParams()
+    const reviewId = searchParams.get('review')
     const selectedReview = useSelector(function(state) {
-        return state.reviews.selected[props.paper.id]
+        if ( reviewId && state.reviews.dictionary[props.paper.id] ) {
+            return state.reviews.dictionary[props.paper.id][reviewId]
+        } else {
+            return null
+        }
     })
 
     // ======= Effect Handling ======================================
@@ -68,7 +75,7 @@ const DraftPaperReviewsWrapperView = function(props) {
         return (
             <div id={id} className="draft-paper-reviews-wrapper">
                 <ReviewHeaderView paper={props.paper}  selectedReview={selectedReview} />
-                <ReviewListView paper={props.paper} versionNumber={props.versionNumber} />
+                <ReviewListView paper={props.paper} selectedReview={selectedReview} versionNumber={props.versionNumber} />
                 <DraftPaperPDFView paper={props.paper} selectedReview={selectedReview} versionNumber={props.versionNumber} />
             </div>
         )

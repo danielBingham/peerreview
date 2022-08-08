@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import { setSelected } from '/state/reviews'
 
@@ -19,11 +20,13 @@ import './ReviewListItemView.css'
  */
 const ReviewListItemView = function(props) {
 
+    const [searchParams, setSearchParams] = useSearchParams()
+
     // ======= Actions and Event Handling ===========================
     
     const dispatch = useDispatch()
     const selectReview = function(event) {
-        dispatch(setSelected(props.review))
+       setSearchParams({ review: props.review.id })  
     }
 
     // ======= Render ===============================================

@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router'
 
 import {  patchPaper, patchPaperVersion, cleanupRequest as cleanupPaperRequest } from '/state/papers'
-import {  clearSelected, patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
+import {  patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import './DraftPaperControlView.css'
 
@@ -34,10 +34,6 @@ const DraftPaperControlView = function(props) {
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
-    })
-
-    const selectedReview = useSelector(function(state) {
-        return state.reviews.selected[props.paper.id]
     })
 
     const isAuthor = (currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
@@ -74,9 +70,6 @@ const DraftPaperControlView = function(props) {
     const changeVersion = function(event) {
         const versionNumber = event.target.value
         const uri = `/draft/${props.paper.id}/version/${versionNumber}`
-        if ( selectedReview && selectedReview.version != versionNumber) {
-            dispatch(clearSelected(props.paper.id))
-        }
         navigate(uri)
     }
 

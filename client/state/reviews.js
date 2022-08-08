@@ -23,14 +23,6 @@ export const reviewsSlice = createSlice({
         inProgress: {},
 
         /**
-         * A hash of reviews current selected, keyed by paperId, one review for
-         * each paper.
-         *
-         * @type {object}
-         */
-        selected: {},
-
-        /**
          * A dictionary of requests in progress or that we've made and completed,
          * keyed with a uuid requestId.
          *
@@ -65,17 +57,6 @@ export const reviewsSlice = createSlice({
             const paperId = action.payload
 
             state.inProgress[paperId] = null
-        },
-
-        setSelected: function(state, action) {
-            const review = action.payload
-
-            state.selected[review.paperId] = review
-        },
-
-        clearSelected: function(state, action) {
-            const paperId = action.payload
-            state.selected[paperId] = null
         },
 
         replaceReview: function(state, action) {
@@ -177,11 +158,6 @@ export const updateReview = function(review) {
         } else if ( state.reviews.inProgress[review.paperId] && review.id == state.reviews.inProgress[review.paperId].id && review.status != 'in-progress') {
             dispatch(reviewsSlice.actions.clearInProgress(review.paperId)) 
         }
-
-        if ( state.reviews.selected[review.paperId] && state.reviews.selected[review.paperId].id == review.id) {
-            dispatch(reviewsSlice.actions.setSelected(review))
-        }
-
     }
 }
 
@@ -230,9 +206,7 @@ export const getReviews = function(paperId) {
                     for ( const review of reviews ) {
                         if ( review.status == 'in-progress' && review.userId == state.authentication.currentUser.id) {
                             dispatch(reviewsSlice.actions.setInProgress(review))
-                        } else if ( state.reviews.selected[review.paperId] && state.reviews.selected[review.paperId].id == review) {
-                            dispatch(reviewsSlice.actions.setSelected(review))
-                        }
+                        } 
                     }
                 }
             }
@@ -782,6 +756,6 @@ export const deleteReviewComment = function(paperId, reviewId, threadId, comment
 } 
 
 
-export const { setSelected, clearSelected, setInProgress, replaceReview, appendReviewsToList, clearList, addReviewsToDictionary, makeRequest, failRequest, completeRequest, cleanupRequest }  = reviewsSlice.actions
+export const {  setInProgress, replaceReview, appendReviewsToList, clearList, addReviewsToDictionary, makeRequest, failRequest, completeRequest, cleanupRequest }  = reviewsSlice.actions
 
 export default reviewsSlice.reducer

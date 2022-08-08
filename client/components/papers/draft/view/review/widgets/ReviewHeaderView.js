@@ -15,7 +15,7 @@ const ReviewHeaderView = function(props) {
     let content = null 
     if ( props.selectedReview ) {
         if ( props.selectedReview.status == 'in-progress' ) {
-            content = ( <ReviewSummaryForm paper={props.paper} /> )
+            content = ( <ReviewSummaryForm paper={props.paper} selectedReview={props.selectedReview} /> )
         } else {
             content = ( <ReviewSummaryView paper={props.paper} selectedReview={props.selectedReview} /> )
         }

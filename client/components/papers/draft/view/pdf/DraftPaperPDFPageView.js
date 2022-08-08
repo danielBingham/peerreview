@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import * as PDFLib from 'pdfjs-dist/webpack'
 
@@ -20,6 +21,8 @@ import './DraftPaperPDFPageView.css'
  *
  */
 const DraftPaperPDFPageView = function(props) {
+    const [ searchParams, setSearchParams ] = useSearchParams()
+
     // ======= Render State =========================================
     
     const [ haveRendered, setHaveRendered ] = useState(false)
@@ -58,8 +61,8 @@ const DraftPaperPDFPageView = function(props) {
     })
 
     const threads = useSelector(function(state) {
-        if ( state.reviews.selected[props.paper.id] ) {
-            return state.reviews.selected[props.paper.id].threads.filter((t) => t.page == props.pageNumber)
+        if ( props.selectedReview && state.reviews.dictionary[props.paper.id] ) {
+            return state.reviews.dictionary[props.paper.id][props.selectedReview.id].threads.filter((t) => t.page == props.pageNumber)
         } else {
             if ( state.reviews.list[props.paper.id] ) {
                 const reviews = state.reviews.list[props.paper.id].filter((r) => r.version == props.versionNumber)
@@ -181,7 +184,8 @@ const DraftPaperPDFPageView = function(props) {
 
     useEffect(function() {
         if ( newReviewRequest && newReviewRequest.state == 'fulfilled') {
-            dispatch(setSelected(reviewInProgress)) 
+            searchParams.set('review', reviewInProgress.id)
+            setSearchParams(searchParams)
         }
     }, [ newReviewRequest ])
 

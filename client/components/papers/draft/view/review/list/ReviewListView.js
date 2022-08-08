@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router'
-import { useParams } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -23,6 +23,8 @@ import './ReviewListView.css'
  */
 const ReviewListView = function(props) {
 
+    const [ searchParams, setSearchParams ] = useSearchParams()
+
     // ======= Request Tracking =====================================
 
     const [ postReviewsRequestId, setPostReviewRequestId ] = useState(null)
@@ -39,10 +41,6 @@ const ReviewListView = function(props) {
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
-    })
-
-    const selected = useSelector(function(state) {
-        return state.reviews.selected[props.paper.id]
     })
 
     const reviews = useSelector(function(state) {
@@ -68,7 +66,12 @@ const ReviewListView = function(props) {
     }
 
     const showAll = function(event) {
-        dispatch(clearSelected(props.paper.id))
+        const comment = searchParams.get('comment')
+        const params = {}
+        if ( comment ) {
+            params.comment = comment
+        }
+        setSearchParams(params)
     }
 
     // ======= Effect Handling ======================================
@@ -87,7 +90,7 @@ const ReviewListView = function(props) {
     const reviewItems = []
     if ( reviews ) {
         for(const review of reviews) {
-            reviewItems.push(<ReviewListItemView key={review.id} review={review} selected={ selected && selected.id == review.id } />)
+            reviewItems.push(<ReviewListItemView key={review.id} review={review} selected={ props.selectedReview && props.selectedReview.id == review.id } />)
         }
     }
 
