@@ -37,7 +37,6 @@ const DraftPaperPDFView = function(props) {
     // ======= Render State =========================================
     const [ loaded, setLoaded] = useState(false)
     const [ error, setError ] = useState(null)
-    const [ selectedThread, setSelectedThread ] = useState(null)
 
     // ======= Refs =================================================
     
@@ -88,8 +87,6 @@ const DraftPaperPDFView = function(props) {
                         key={pageNumber} 
                         paper={props.paper}
                         selectedReview={props.selectedReview}
-                        selectedThread={selectedThread}
-                        setSelectedThread={setSelectedThread}
                         versionNumber={props.versionNumber}
                         pageNumber={pageNumber} 
                         pdf={pdfRef.current} 

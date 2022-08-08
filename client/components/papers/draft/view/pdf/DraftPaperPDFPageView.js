@@ -232,8 +232,6 @@ const DraftPaperPDFPageView = function(props) {
                     thread={thread} 
                     pinPosition={pinPosition} 
                     threadPosition={threadPosition} 
-                    selected={( props.selectedThread && props.selectedThread.id == thread.id ? true : false )} 
-                    selectThread={props.setSelectedThread}
                 />
             )
         }

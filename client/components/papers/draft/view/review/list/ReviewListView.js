@@ -66,12 +66,8 @@ const ReviewListView = function(props) {
     }
 
     const showAll = function(event) {
-        const comment = searchParams.get('comment')
-        const params = {}
-        if ( comment ) {
-            params.comment = comment
-        }
-        setSearchParams(params)
+        searchParams.delete('review')
+        setSearchParams(searchParams)
     }
 
     // ======= Effect Handling ======================================

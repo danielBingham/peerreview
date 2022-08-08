@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import { postReviewComments, cleanupRequest } from '/state/reviews'
 
@@ -11,6 +12,8 @@ import Spinner from '/components/Spinner'
 import './ReviewCommentThreadView.css'
 
 const ReviewCommentThreadView = function(props) {
+    const [ searchParams, setSearchParams ] = useSearchParams()
+
     // ======= Request Tracking =====================================
 
     const [ requestId, setRequestId ] = useState(null)
@@ -52,11 +55,13 @@ const ReviewCommentThreadView = function(props) {
     }
 
     const pinClicked = function(event) {
-        props.selectThread(thread)
+        searchParams.set('thread', thread.id)
+        setSearchParams(searchParams)
     }
 
     const threadClicked = function(event) {
-        props.selectThread(thread)
+        searchParams.set('thread', thread.id)
+        setSearchParams(searchParams)
     }
 
 
@@ -74,8 +79,10 @@ const ReviewCommentThreadView = function(props) {
     useEffect(function() {
         const onBodyClick = function(event) {
             if ( ! event.target.matches('.pin') &&  ! event.target.matches('.comment-thread') 
-                && ! event.target.matches('.pin :scope') && ! event.target.matches('.comment-thread :scope') ) {
-                props.selectThread(null)
+                && ! event.target.matches('.pin :scope') && ! event.target.matches('.comment-thread :scope') ) 
+            {
+                searchParams.delete('thread')
+                setSearchParams(searchParams)
             } 
         }
         document.body.addEventListener('click', onBodyClick)
@@ -83,7 +90,7 @@ const ReviewCommentThreadView = function(props) {
         return function cleanup() {
             document.body.removeEventListener('click', onBodyClick)
         }
-    }, [])
+    }, [ searchParams ])
 
     // ======= Rendering ============================================
 
@@ -98,9 +105,9 @@ const ReviewCommentThreadView = function(props) {
     for ( const comment of sortedComments) {
         if ( comment.status == 'in-progress' && comment.userId == currentUser.id) {
             inProgress = true
-            commentViews.push(<ReviewCommentForm key={comment.id} paper={props.paper} review={review} thread={props.thread} comment={comment} />)
+            commentViews.push(<ReviewCommentForm key={comment.id} paper={props.paper} review={review} thread={thread} comment={comment} />)
         } else if ( comment.status == 'posted' ) {
-            commentViews.push(<ReviewCommentView key={comment.id} paper={props.paper} review={review} thread={props.thread} comment={comment} />)
+            commentViews.push(<ReviewCommentView key={comment.id} paper={props.paper} review={review} thread={thread} comment={comment} />)
         }
     }
 
@@ -115,10 +122,11 @@ const ReviewCommentThreadView = function(props) {
     }
 
     const id = `comment-thread-${props.thread.id}`
+    const selected = searchParams.get('thread') == thread.id 
     return (
         <div className="comment-thread-outer">
             <div 
-                className={( props.selected ? "pin selected "+props.paper.fields[0].type : "pin "+props.paper.fields[0].type)} 
+                className={( selected ? "pin selected "+props.paper.fields[0].type : "pin "+props.paper.fields[0].type)} 
                 onClick={pinClicked} 
                 style={ pinPosition }
             >
@@ -127,7 +135,7 @@ const ReviewCommentThreadView = function(props) {
                 key={props.thread.id} 
                 id={id} 
                 onClick={threadClicked} 
-                className={( props.selected ? "comment-thread selected "+props.paper.fields[0].type : "comment-thread "+props.paper.fields[0].type )} 
+                className={( selected ? "comment-thread selected "+props.paper.fields[0].type : "comment-thread "+props.paper.fields[0].type )} 
                 style={ threadPosition}
             >
                 { commentViews }
