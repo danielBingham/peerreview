@@ -1,4 +1,4 @@
-# Peer Review 
+# Peer Review
 
 Peer Review is an open access, reputation based scientific publishing system
 that has the potential to replace the journal system with a single, community
@@ -30,7 +30,7 @@ To learn more about why we think the journal system need replacing, what
 problems we hope Peer Review will solve, and how - read [the
 Rationale](./rationale.md).
 
-## Contributing 
+## Contributing
 
 The tech stack is Nodejs and Express on the backend, React and Redux on the
 frontend, and Postgres as a database. 
@@ -55,8 +55,9 @@ Documentation is partial and incomplete, but will be fleshed out over time.
 
 ### Running Locally
 
-After pulling the github repo, you can run the development server by first running the MySql docker
-container and then running nodemon and the react dev server.
+After pulling the github repo, you can run the development server by first running the PostgreSQL docker
+container. To run peerreview, you can either use nodemon and the react dev server or build a Docker
+container.
 
 From the root project directory, build the postgres docker container:
 
@@ -69,7 +70,8 @@ Navigate back to the root directory and run the Postgres docker container:
 
 ```
 $ cd ..
-$ docker run -d -p 5432:5432 --name peer-sql peer-sql
+$ docker network create peer-network
+$ docker run -d -p 5432:5432 --name peer-review-database-service --net peer-network peer-sql
 ```
 
 Run ``npm install`` to install project dependencies:
@@ -91,7 +93,7 @@ From the root project directory:
 
 ```
 $ docker build -t peer .
-$ docker run -d -p 3000:3000 --name peer peer 
+$ docker run -d -p 8080:8080 --name peer --net peer-network peer 
 ```
 
 When you're done, make sure to clean up the two docker containers:
