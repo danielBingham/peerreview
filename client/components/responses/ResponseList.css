@@ -1,6 +1,6 @@
 .paper-response-list {
     margin: 50px auto;
-    width: 1200px;
+    padding: 0 50px;
 }
 .paper-response-list .header {
     display: grid;

@@ -5,7 +5,7 @@
 .pdf-viewer .controls {
     display: grid;
     grid-template-columns: 150px auto 150px;
-    width: 900px;
+    width: 800px;
 }
 .pdf-viewer .controls .control {
     padding: 10px;

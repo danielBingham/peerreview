@@ -85,7 +85,7 @@ const PDFViewer = function(props) {
                 </div>
             </div>
             <Document className="pdf-viewer-document" file={props.url} loading={<Spinner />} onLoadSuccess={onLoadSuccess} >
-                <Page className="pdf-viewer-page" renderTextLayer={true} pageNumber={pageNumber} loading={<Spinner local={true} />} width={900} /> 
+                <Page className="pdf-viewer-page" renderTextLayer={true} pageNumber={pageNumber} loading={<Spinner local={true} />} width={800} /> 
             </Document>
         </section>
     )

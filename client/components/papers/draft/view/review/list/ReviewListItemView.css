@@ -24,7 +24,3 @@
 .review-list-item .accepted svg {
     color: green;
 }
-.threads-wrapper {
-    border: thin solid #ddd;
-    background-color: #efefef;
-}
