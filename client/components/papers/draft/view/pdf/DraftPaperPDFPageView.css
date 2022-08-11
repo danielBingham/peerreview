@@ -1,8 +1,9 @@
 .draft-paper-pdf-page {
-    margin: 0px auto;
+    position: relative;
+    margin: 5px auto 10px auto;
+    width: 782px;
 }
 
-.draft-paper-pdf-page canvas {
+.draft-paper-pdf-page .react-pdf__Page {
     border: thin solid #DDD;
-    width: 900px;
 }

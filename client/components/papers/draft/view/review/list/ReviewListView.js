@@ -1,13 +1,11 @@
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router'
+import React, { useState, useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 
-import { useDispatch, useSelector } from 'react-redux'
-
-import { setInProgress, clearSelected, newReview, cleanupRequest } from '/state/reviews'
+import { useSelector } from 'react-redux'
 
 import Spinner from '/components/Spinner'
 
+import ReviewCommentThreadView from '../comments/ReviewCommentThreadView'
 import ReviewListItemView from './ReviewListItemView'
 import './ReviewListView.css'
 
@@ -25,17 +23,9 @@ const ReviewListView = function(props) {
 
     const [ searchParams, setSearchParams ] = useSearchParams()
 
-    // ======= Request Tracking =====================================
+    const [ height, setHeight ] = useState(0)
+    const [ heightOffset, setHeightOffset ] = useState(0)
 
-    const [ postReviewsRequestId, setPostReviewRequestId ] = useState(null)
-
-    const postReviewsRequest = useSelector(function(state) {
-        if ( ! postReviewsRequestId ) {
-            return null
-        } else {
-            return state.reviews.requests[postReviewsRequestId]
-        }
-    })
 
     // ======= Redux State ==========================================
 
@@ -44,8 +34,8 @@ const ReviewListView = function(props) {
     })
 
     const reviews = useSelector(function(state) {
-        if ( state.reviews.list[props.paper.id] ) {
-            return state.reviews.list[props.paper.id].filter((r) => r.version == props.versionNumber)
+        if ( state.reviews.list[props.paper.id] && state.reviews.list[props.paper.id][props.versionNumber] ) {
+            return state.reviews.list[props.paper.id][props.versionNumber]
         } else {
             return null 
         }
@@ -55,51 +45,140 @@ const ReviewListView = function(props) {
         return state.reviews.inProgress[props.paper.id]
     })
 
-    // ======= Actions and Event Handling ===========================
-    
-    const dispatch = useDispatch()
-
-    const startReview = function(event) {
-        if ( ! reviewInProgress ) {
-            setPostReviewRequestId(dispatch(newReview(props.paper.id, props.versionNumber, currentUser.id)))
+    const threads = useSelector(function(state) {
+        if ( searchParams.get('review') == 'all' ) {
+            const results = []
+            for ( const review of state.reviews.list[props.paper.id][props.versionNumber]) {
+                results.push(...review.threads)
+            }
+            results.sort((a,b) => {
+                if ( a.page != b.page ) {
+                    return a.page - b.page
+                } else {
+                    return a.pinY - b.pinY
+                }
+            })
+            return results
         }
-    }
+        return null
+    })
+
+    // ======= Refs ==========================
+
+    const ref = useRef(null)
+    const initialOffset = useRef(null)
+    const scrollPaneRef = useRef(null)
+
+    // ======= Actions and Event Handling ===========================
 
     const showAll = function(event) {
+        searchParams.set('review', 'all')
+        setSearchParams(searchParams)
+    }
+
+    const showReviews = function(event) {
         searchParams.delete('review')
         setSearchParams(searchParams)
     }
 
+    const scrollToPosition = function(y) {
+        if ( scrollPaneRef.current ) {
+            scrollPaneRef.current.scrollTo({
+                top: y-(window.innerHeight/2),
+                behavior: 'smooth'
+            })
+        }
+    }
+
     // ======= Effect Handling ======================================
 
-    // Request tracker cleanup.
     useEffect(function() {
-        return function cleanup() {
-            if ( postReviewsRequestId ) {
-                dispatch(cleanupRequest({ requestId: postReviewsRequestId }))
+        const onScroll = function(event) {
+            if ( ref.current ) {
+                const rect = ref.current.getBoundingClientRect()
+                if ( ! initialOffset.current ) {
+                    initialOffset.current = rect.top 
+                }
+
+                if ( initialOffset.current ) {
+                    const newHeightOffset = (initialOffset.current - window.scrollY > 10 ? initialOffset.current - window.scrollY : 10)
+                    setHeightOffset(newHeightOffset)
+                    setHeight(window.innerHeight - newHeightOffset- 20)
+                } else if (initialOffset.current && window.scrollY < initialOffset.current) {
+                    const newHeightOffset = initialOffset.current
+                    setHeightOffset(newHeightOffset)
+                    setHeight(window.innerHeight - newHeightOffset- 20)
+                }
             }
         }
-    }, [ postReviewsRequestId ])
+
+        document.addEventListener('scroll', onScroll)
+        window.addEventListener('resize', onScroll)
+
+        return function cleanup() {
+            document.removeEventListener('scroll', onScroll)
+            window.addEventListener('resize', onScroll)
+        }
+
+    })
+
 
     // ======= Render ===============================================
 
     const reviewItems = []
-    if ( reviews ) {
+    if ( reviews && ! threads ) {
         for(const review of reviews) {
-            reviewItems.push(<ReviewListItemView key={review.id} review={review} selected={ props.selectedReview && props.selectedReview.id == review.id } />)
+            reviewItems.push(
+                <ReviewListItemView 
+                    key={review.id} 
+                    paper={props.paper} 
+                    review={review} 
+                    selected={ props.selectedReview && props.selectedReview.id == review.id } 
+                    scrollToPosition={scrollToPosition}
+                />
+            )
         }
     }
+    let style = { }
+    if ( heightOffset != 0 && height != 0) {
+        style.top = heightOffset +'px' 
+        style.height = height + 'px'
+    }
 
+    let wrapperStyle = {}
+    if ( heightOffset != 0 && height != 0) {
+        wrapperStyle.height = (height-36) + 'px'
+    }
+
+    let threadWrapper = ( null )
+    if ( threads ) {
+        const threadViews = [] 
+        for (const thread of threads) {
+            threadViews.push(
+                <ReviewCommentThreadView 
+                    key={thread.id} 
+                    paper={props.paper} 
+                    reviewId={thread.reviewId}
+                    id={thread.id}
+                    scrollToPosition={scrollToPosition}
+                />
+            )
+        }
+        threadWrapper = (<div className="threads-wrapper">{threadViews}</div>)
+    }
+
+    const reviewsSelected = threads ? '' : 'selected'
+    const allSelected = threads ? 'selected' : ''
     return (
-        <div className="review-list">
-            <div className="header review-list-item">
-                Reviews
+        <div ref={ref} className="review-list" style={style}>
+            <div className="header">
+                <div className={`reviews button ${reviewsSelected}`} onClick={showReviews}>Reviews</div>
+                <div className={`show-all button ${allSelected}`} onClick={showAll}>All Comments</div>
             </div>
-            <div className="review-controls review-list-item">
-                <button onClick={showAll}>Show All</button>
-                { ! reviewInProgress && <button onClick={startReview}>Start Review</button> }
+            <div ref={scrollPaneRef} className="items-wrapper" style={wrapperStyle}>
+                { reviewItems }
+                { threadWrapper }
             </div>
-            { reviewItems }
         </div>
     )
 

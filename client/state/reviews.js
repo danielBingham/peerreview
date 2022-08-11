@@ -64,13 +64,18 @@ export const reviewsSlice = createSlice({
             if ( ! state.dictionary[review.paperId] ) {
                 state.dictionary[review.paperId] = {}
             }
-            if ( ! state.list[review.paperId] ) {
-                state.list[review.paperId] = [] 
-            }
             state.dictionary[review.paperId][review.id] = review
-            const index = state.list[review.paperId].findIndex((r) => r.id == review.id)
+
+            if ( ! state.list[review.paperId] ) {
+                state.list[review.paperId] = {} 
+            }
+            if ( ! state.list[review.paperId][review.version] ) {
+                state.list[review.paperId][review.version] = []
+            }
+
+            const index = state.list[review.paperId][review.version].findIndex((r) => r.id == review.id)
             if ( index >= 0 ) {
-                state.list[review.paperId][index] = review
+                state.list[review.paperId][review.version][index] = review
             }
         },
 
@@ -96,16 +101,19 @@ export const reviewsSlice = createSlice({
 
             for ( const review of reviews) {
                 if ( ! state.list[review.paperId]) {
-                    state.list[review.paperId] = []
+                    state.list[review.paperId] = {} 
                 }
-                state.list[review.paperId].push(review)
+                if ( ! state.list[review.paperId][review.version] ) {
+                    state.list[review.paperId][review.version] = [] 
+                }
+                state.list[review.paperId][review.version].push(review)
             }
         },
 
         removeReview: function(state, action) {
             const review = action.payload
-            if ( state.list[review.paperId] ) {
-                state.list[review.paperId] = state.list[review.paperId].filter((r) => r.id != review.id)
+            if ( state.list[review.paperId] && state.list[review.paperId][review.version]) {
+                state.list[review.paperId][review.version] = state.list[review.paperId][review.version].filter((r) => r.id != review.id)
             }
             if ( state.dictionary[review.paperId] ) {
                 delete state.dictionary[review.paperId][review.id]
@@ -114,7 +122,7 @@ export const reviewsSlice = createSlice({
 
         clearList: function(state, action) {
             const paperId = action.payload
-            state.list[paperId] = [] 
+            state.list[paperId] = {}
         },
 
         // ========== Request Tracking Methods =============
@@ -197,7 +205,9 @@ export const getReviews = function(paperId) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(reviews) {
-            if ( reviews ) {
+            if ( reviews && reviews.length > 0) {
+                console.log('Reviews')
+                console.log(reviews)
                 dispatch(reviewsSlice.actions.addReviewsToDictionary(reviews))
                 dispatch(reviewsSlice.actions.appendReviewsToList(reviews))
 
@@ -559,10 +569,10 @@ export const postReviewThreads = function(paperId, reviewId, threads) {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(returnedReview) {
-            dispatch(updateReview(returnedReview))
+        }).then(function(returned) {
+            dispatch(updateReview(returned.review))
 
-            payload.result = returnedReview
+            payload.result = returned 
             dispatch(reviewsSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
@@ -756,6 +766,12 @@ export const deleteReviewComment = function(paperId, reviewId, threadId, comment
 } 
 
 
-export const {  setInProgress, replaceReview, appendReviewsToList, clearList, addReviewsToDictionary, makeRequest, failRequest, completeRequest, cleanupRequest }  = reviewsSlice.actions
+export const {  
+    setInProgress, clearInProgress,
+    replaceReview, 
+    appendReviewsToList, clearList, 
+    addReviewsToDictionary, 
+    makeRequest, failRequest, completeRequest, cleanupRequest 
+}  = reviewsSlice.actions
 
 export default reviewsSlice.reducer

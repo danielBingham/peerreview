@@ -339,14 +339,14 @@ module.exports = class ReviewController {
                 paperId: paperId,
                 threads: threads
             }
-            await this.reviewDAO.insertThreads(review)
+            const threadIds = await this.reviewDAO.insertThreads(review)
 
             const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
             if ( ! returnReviews || returnReviews.length == 0) {
                 throw new Error(`Failed to find review ${reviewId} after inserting new threads.`)
             }
             this.reviewDAO.selectVisibleComments(userId, returnReviews)
-            return response.status(200).json(returnReviews[0])
+            return response.status(200).json({ review: returnReviews[0], threadIds: threadIds })
         } catch (error) {
             console.log(error)
             return response.status(500).json({ error: 'server-error' })

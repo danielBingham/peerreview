@@ -1,15 +1,13 @@
 .comment-thread {
-    position: absolute;
     border: thin solid #ccc;
     background: white;
     z-index: 1;
-    width: 400px;
+    width: 378px;
+    margin: 15px auto;
 }
 .comment-thread.selected {
     z-index: 2;
-}
-.comment-thread.selected.biology {
-    border: thin solid rgba(112,181,112,1);
+    border: 2px solid rgba(211, 178, 14, 0.75);
 }
 .comment-thread .controls {
     text-align: right;
@@ -18,35 +16,3 @@
     padding: 10px;
 }
 
-.comment-thread-outer .pin {
-    position: absolute;
-    background: rgba(50, 50, 50, 0.75);
-    border-radius: 18px;
-    width: 16px;
-    height: 16px;
-    z-index: 100;
-    margin-left: -8px;
-    margin-top: -8px;
-}
-
-.comment-thread-outer .pin.biology {
-    color: white;
-    background-color: rgba(112,181,112,0.75);
-}
-.comment-thread-outer .pin.biology:hover {
-    background-color: rgba(129,193,129,0.75);
-    width: 18px;
-    height: 18px;
-    border-radius: 18px;
-    margin-left:-9px;
-    margin-top:-9px;
-}
-
-
-.comment-thread-outer .pin.selected {
-    width: 20px;
-    height: 20px;
-    border-radius: 20px;
-    margin-left: -10px;
-    margin-top: -10px;
-}

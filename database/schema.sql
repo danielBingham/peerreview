@@ -155,6 +155,7 @@ CREATE TABLE reviews (
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     version int,
+    number int, /* Number of review on this paper version. 0 - n where n is the number of reviews on this paper specifically. */
     summary text,
     recommendation review_recommendation,
     status review_status,
@@ -166,8 +167,8 @@ CREATE TABLE review_comment_threads (
     id bigserial PRIMARY KEY,
     review_id bigint REFERENCES reviews(id) ON DELETE CASCADE,
     page        int, 
-    pin_x       int,
-    pin_y       int
+    pin_x       numeric(20,20),
+    pin_y       numeric(20,20) 
 );
 
 CREATE TYPE review_comment_status as ENUM('in-progress', 'posted');
@@ -175,6 +176,7 @@ CREATE TABLE review_comments (
     id          bigserial PRIMARY KEY,
     thread_id   bigint REFERENCES review_comment_threads(id) ON DELETE CASCADE, 
     user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
+    number      int, /* Which number comment on this review is this? */
     thread_order int,
     status review_comment_status,
     content     text,

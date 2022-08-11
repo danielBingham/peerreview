@@ -103,7 +103,7 @@ const WelcomeNotice = function(props) {
 
                 <p>
                     The peer review process is self selected, using a
-                    reputation system to ensure that only knolwedgeable peers
+                    reputation system to ensure that only knowledgeable peers
                     are offering reviews. Review is split into two pieces:
                     pre-publish editorial review and post publish refereeing.
                     The first is visible only to peers in your field, the

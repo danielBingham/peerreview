@@ -125,6 +125,7 @@ module.exports = class ReviewDAO {
         }
 
 
+        const threadIds = []
         for ( const thread of review.threads) {
 
             if ( ! thread.reviewId ) {
@@ -141,8 +142,10 @@ module.exports = class ReviewDAO {
             }
             thread.id = results.rows[0].id
 
+            threadIds.push(thread.id)
             await this.insertComments(thread)
         }
+        return threadIds
     }
     
 

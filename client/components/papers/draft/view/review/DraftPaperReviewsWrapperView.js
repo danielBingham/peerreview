@@ -34,18 +34,6 @@ const DraftPaperReviewsWrapperView = function(props) {
         }
     })
 
-    // ======= Redux State ==========================================
-
-    const [ searchParams, setSearchParams ] = useSearchParams()
-    const reviewId = searchParams.get('review')
-    const selectedReview = useSelector(function(state) {
-        if ( reviewId && state.reviews.dictionary[props.paper.id] ) {
-            return state.reviews.dictionary[props.paper.id][reviewId]
-        } else {
-            return null
-        }
-    })
-
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
@@ -74,9 +62,9 @@ const DraftPaperReviewsWrapperView = function(props) {
         const id = `paper-${props.paper.id}-reviews`
         return (
             <div id={id} className="draft-paper-reviews-wrapper">
-                <ReviewHeaderView paper={props.paper}  selectedReview={selectedReview} />
-                <ReviewListView paper={props.paper} selectedReview={selectedReview} versionNumber={props.versionNumber} />
-                <DraftPaperPDFView paper={props.paper} selectedReview={selectedReview} versionNumber={props.versionNumber} />
+                <ReviewHeaderView paper={props.paper} />
+                <ReviewListView paper={props.paper} versionNumber={props.versionNumber} />
+                <DraftPaperPDFView paper={props.paper} versionNumber={props.versionNumber} />
             </div>
         )
     } else {

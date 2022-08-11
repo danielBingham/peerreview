@@ -1,6 +1,12 @@
 .review-list {
+    position: fixed;
     grid-column: 1 / 2;
     grid-row: 1 / 3; 
+    width: 400px;
+    border: thin solid #ddd;
+}
+.review-list .items-wrapper {
+    overflow: scroll;
 }
 #show-all-reviews {
     min-height: 0px;
@@ -9,18 +15,28 @@
 }
 
 .review-list .header {
-    min-height: 0px;
-    padding: 10px 5px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.review-list .header .button {
     text-align: center;
-    background-color: white;
+    background-color: #fafafa;
     font-weight: bold;
     font-size: 16px;
+    border: thin solid #ddd;
+    padding: 10px 5px;
+    height: 16px;
 }
-.review-list .review-controls {
-    min-height: 0px;
-    text-align: center;
+.review-list .header .button.selected {
     background-color: white;
 }
-.review-list .review-controls button {
-    margin: 0 5px;
+.review-list .header .reviews {
+    grid-column: 1/2;
+}
+.review-list .header .show-all {
+    grid-column: 2/3;
+}
+.review-list .items-wrapper .threads-wrapper {
+    border: thin solid #ddd;
+    background-color: #efefef;
 }

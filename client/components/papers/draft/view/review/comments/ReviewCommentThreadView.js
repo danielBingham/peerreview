@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback} from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
@@ -27,36 +27,38 @@ const ReviewCommentThreadView = function(props) {
 
     // ======= Redux State ==========================================
 
-    const review = useSelector(function(state) {
-        return state.reviews.dictionary[props.paper.id][props.thread.reviewId]
-    })
-
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
+    // We need the thread to update based on changes to the redux store. For
+    // some reason, even though we pull it from the redux store in
+    // DraftPaperPDFView, that's not triggering the ThreadView to re-render
+    // appropriately.  This does.
     const thread = useSelector(function(state) {
-        return state.reviews.dictionary[props.paper.id][props.thread.reviewId].threads.find((t) => t.id == props.thread.id)
+        return state.reviews.dictionary[props.paper.id][props.reviewId].threads.find((t) => t.id == props.id)
     })
 
+    const review = useSelector(function(state) {
+        return state.reviews.dictionary[props.paper.id][thread.reviewId]
+    })
+
+    const threadRef = useRef(null)
+
     // ======= Actions and Event Handling ===========================
+    
 
     const dispatch = useDispatch()
 
     const newComment = function(event) {
         const comment = {
-            threadId: props.thread.id,
+            threadId: thread.id,
             userId: currentUser.id,
-            threadOrder: props.thread.comments.length+1,
+            threadOrder: thread.comments.length+1,
             status: 'in-progress',
             content: ''
         }
-        setRequestId(dispatch(postReviewComments(props.paper.id, review.id, props.thread.id, comment))) 
-    }
-
-    const pinClicked = function(event) {
-        searchParams.set('thread', thread.id)
-        setSearchParams(searchParams)
+        setRequestId(dispatch(postReviewComments(props.paper.id, review.id, thread.id, comment))) 
     }
 
     const threadClicked = function(event) {
@@ -66,6 +68,12 @@ const ReviewCommentThreadView = function(props) {
 
 
     // ======= Effect Handling ======================================
+
+    useLayoutEffect(function() {
+        if ( searchParams.get('thread') == thread.id && threadRef.current ) {
+            props.scrollToPosition(threadRef.current.offsetTop)
+        }
+    }, [ searchParams ])
 
     // Cleanup our requests.
     useEffect(function() {
@@ -78,8 +86,8 @@ const ReviewCommentThreadView = function(props) {
 
     useEffect(function() {
         const onBodyClick = function(event) {
-            if ( ! event.target.matches('.pin') &&  ! event.target.matches('.comment-thread') 
-                && ! event.target.matches('.pin :scope') && ! event.target.matches('.comment-thread :scope') ) 
+            if ( ! event.target.matches('.comment-thread-pin') &&  ! event.target.matches('.comment-thread') 
+                && ! event.target.matches('.comment-thread-pin :scope') && ! event.target.matches('.comment-thread :scope') ) 
             {
                 searchParams.delete('thread')
                 setSearchParams(searchParams)
@@ -94,10 +102,6 @@ const ReviewCommentThreadView = function(props) {
 
     // ======= Rendering ============================================
 
-    if ( ! thread ) {
-        return (null)
-    }
-
     let inProgress = false
     const commentViews = []
     const sortedComments = [ ...thread.comments ]
@@ -111,32 +115,14 @@ const ReviewCommentThreadView = function(props) {
         }
     }
 
-    const threadPosition = {
-        top: props.threadPosition.top + 'px',
-        left: props.threadPosition.left + 'px'
-    }
-
-    const pinPosition = {
-        top: props.pinPosition.top + 'px',
-        left: props.pinPosition.left + 'px'
-    }
-
-    const id = `comment-thread-${props.thread.id}`
     const selected = searchParams.get('thread') == thread.id 
     return (
-        <div className="comment-thread-outer">
+        <div  ref={threadRef} className="comment-thread-outer">
             <div 
-                className={( selected ? "pin selected "+props.paper.fields[0].type : "pin "+props.paper.fields[0].type)} 
-                onClick={pinClicked} 
-                style={ pinPosition }
-            >
-            </div> 
-            <div 
-                key={props.thread.id} 
-                id={id} 
+                key={thread.id} 
+                id={`comment-thread-${thread.id}`} 
                 onClick={threadClicked} 
                 className={( selected ? "comment-thread selected "+props.paper.fields[0].type : "comment-thread "+props.paper.fields[0].type )} 
-                style={ threadPosition}
             >
                 { commentViews }
                 { ! inProgress && <div onClick={newComment} className="reply">Post a reply...</div> }
@@ -144,4 +130,5 @@ const ReviewCommentThreadView = function(props) {
         </div>
     )
 }
+
 export default ReviewCommentThreadView

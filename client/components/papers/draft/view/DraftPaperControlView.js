@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router'
+import { useSearchParams } from 'react-router-dom'
 
 import {  patchPaper, patchPaperVersion, cleanupRequest as cleanupPaperRequest } from '/state/papers'
-import {  patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
+import {  newReview, patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import './DraftPaperControlView.css'
 
 const DraftPaperControlView = function(props) {
-
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ================= Request Tracking =====================================
     
@@ -29,11 +30,24 @@ const DraftPaperControlView = function(props) {
             return null
         }
     })
+
+    const [ postReviewsRequestId, setPostReviewRequestId ] = useState(null)
+    const postReviewsRequest = useSelector(function(state) {
+        if ( ! postReviewsRequestId ) {
+            return null
+        } else {
+            return state.reviews.requests[postReviewsRequestId]
+        }
+    })
    
     // ================= Redux State ==========================================
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
+    })
+
+    const reviewInProgress = useSelector(function(state) {
+        return state.reviews.inProgress[props.paper.id]
     })
 
     const isAuthor = (currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
@@ -73,6 +87,12 @@ const DraftPaperControlView = function(props) {
         navigate(uri)
     }
 
+    const startReview = function(event) {
+        if ( ! reviewInProgress ) {
+            setPostReviewRequestId(dispatch(newReview(props.paper.id, props.versionNumber, currentUser.id)))
+        }
+    }
+
     // ======= Effect Handling ======================================
 
     useEffect(function() {
@@ -83,6 +103,13 @@ const DraftPaperControlView = function(props) {
             navigate(paperPath)
         }
     }, [ patchPaperRequest, patchPaperVersionRequest ])
+
+    useEffect(function() {
+        if ( postReviewsRequest && postReviewsRequest.state == 'fulfilled') {
+            searchParams.set('review', postReviewsRequest.result.id)
+            setSearchParams(searchParams)
+        }
+    }, [ postReviewsRequest ])
 
     // Request cleanup. 
     useEffect(function() {
@@ -100,6 +127,16 @@ const DraftPaperControlView = function(props) {
             }
         }
     }, [ patchPaperVersionRequestId ])
+
+
+    // Request tracker cleanup.
+    useEffect(function() {
+        return function cleanup() {
+            if ( postReviewsRequestId ) {
+                dispatch(cleanupRequest({ requestId: postReviewsRequestId }))
+            }
+        }
+    }, [ postReviewsRequestId ])
 
     // ======= Render ===============================================
     
@@ -127,6 +164,7 @@ const DraftPaperControlView = function(props) {
                 <select name="versionNumber" value={props.versionNumber} onChange={changeVersion}>
                     {paperVersionOptions}
                 </select>
+                { ! reviewInProgress && <button onClick={startReview}>Start Review</button> }
             </div>
         </div>
     )

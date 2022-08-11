@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import Spinner from '/components/Spinner'
 
@@ -12,17 +12,33 @@ import './ReviewHeaderView.css'
 const ReviewHeaderView = function(props) {
     const dispatch = useDispatch()
 
-    let content = null 
-    if ( props.selectedReview ) {
-        if ( props.selectedReview.status == 'in-progress' ) {
-            content = ( <ReviewSummaryForm paper={props.paper} selectedReview={props.selectedReview} /> )
+    const [ searchParams, setSearchParams ] = useSearchParams()
+
+    const selectedReviewId = searchParams.get('review')
+    const selectedReview = useSelector(function(state) {
+        if ( selectedReviewId && selectedReviewId != 'all' ) {
+            return state.reviews.dictionary[props.paper.id][selectedReviewId]
         } else {
-            content = ( <ReviewSummaryView paper={props.paper} selectedReview={props.selectedReview} /> )
+            return null
         }
+    })
+
+    let content = null 
+    if ( selectedReview ) {
+        if ( selectedReview.status == 'in-progress' ) {
+            content = ( <ReviewSummaryForm paper={props.paper} selectedReview={selectedReview} /> )
+        } else {
+            content = ( <ReviewSummaryView paper={props.paper} selectedReview={selectedReview} /> )
+        }
+    } else if ( selectedReviewId == 'all' ) {
+        content = (
+            <p style={{ textAlign: 'center' }}>Viewing comments from all reviews.  Select a review to see
+                summary details and only comments from that review.</p>
+        )
     } else {
         content = (
-            <p>Viewing comments from all reviews.  Select a review to see
-                summary details and only comments from that review.</p>
+            <p style={{ textAlign: 'center' }}>Select a review to see
+                summary details and comments from that review.</p>
         )
     }
     return (

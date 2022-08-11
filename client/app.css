@@ -19,12 +19,12 @@ a:hover {
 
 
 main {
-    width: 1600px;
+    width: 100%;
     margin: 0 auto;
 }
 
 main .page {
-    width: 1600px;
+    width: 1200px;
     margin: 50px auto;
     border: thin solid #ddd;
     background-color: white;
