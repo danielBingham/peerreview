@@ -133,7 +133,7 @@ const DraftPaperControlView = function(props) {
     useEffect(function() {
         return function cleanup() {
             if ( postReviewsRequestId ) {
-                dispatch(cleanupRequest({ requestId: postReviewsRequestId }))
+                dispatch(cleanupReviewRequest({ requestId: postReviewsRequestId }))
             }
         }
     }, [ postReviewsRequestId ])
