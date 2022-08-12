@@ -32,6 +32,7 @@ CREATE TABLE files (
     created_date timestamptz,
     updated_date timestamptz
 );
+CREATE INDEX files__user_id ON files (user_id);
 
 /******************************************************************************
  * Fields 
@@ -48,7 +49,8 @@ CREATE TABLE fields (
 
 CREATE TABLE field_relationships (
     parent_id bigint REFERENCES fields(id) ON DELETE CASCADE,
-    child_id bigint REFERENCES fields(id) ON DELETE CASCADE
+    child_id bigint REFERENCES fields(id) ON DELETE CASCADE,
+    PRIMARY KEY (parent_id, child_id)
 );
 
 /******************************************************************************
@@ -96,7 +98,8 @@ CREATE TABLE paper_versions (
     updated_date timestamptz,
     PRIMARY KEY (paper_id, version)
 );
-CREATE INDEX paper_search_index ON paper_versions USING GIN (searchable_content);
+CREATE INDEX paper_versions__search_index ON paper_versions USING GIN (searchable_content);
+CREATE INDEX paper_versions__file_id_index ON paper_versions (file_id); 
 
 CREATE TABLE paper_authors (
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
@@ -162,6 +165,9 @@ CREATE TABLE reviews (
     created_date timestamptz,
     updated_date timestamptz
 );
+CREATE INDEX reviews__paper_id ON reviews (paper_id);
+CREATE INDEX reviews__user_id ON reviews (user_id);
+CREATE INDEX reviews__version ON reviews (version);
 
 CREATE TABLE review_comment_threads (
     id bigserial PRIMARY KEY,
@@ -170,6 +176,7 @@ CREATE TABLE review_comment_threads (
     pin_x       numeric(20,20),
     pin_y       numeric(20,20) 
 );
+CREATE INDEX review_comment_threads__review_id ON review_comment_threads (review_id);
 
 CREATE TYPE review_comment_status as ENUM('in-progress', 'posted');
 CREATE TABLE review_comments (
@@ -183,6 +190,8 @@ CREATE TABLE review_comments (
     created_date    timestamptz,
     updated_date    timestamptz
 );
+CREATE INDEX review_comments__thread_id ON review_comments (thread_id);
+CREATE INDEX review_comments__user_id ON review_comments (user_id);
 
 /******************************************************************************
  * Responses 
@@ -198,11 +207,13 @@ CREATE TABLE responses (
     updated_date    timestamptz
 );
 
+/* Tech debt: stage database doesn't have this table up to date right now. */
 CREATE TABLE response_versions (
     response_id bigint REFERENCES responses(id) ON DELETE CASCADE,
-    version int,
+    version int NOT NULL,
     content text,
     created_date    timestamptz,
-    updated_date    timestamptz
+    updated_date    timestamptz,
+    PRIMARY KEY(response_id, version)
 );
 

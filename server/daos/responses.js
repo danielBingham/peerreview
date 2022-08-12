@@ -80,10 +80,8 @@ module.exports = class ResponseDAO {
             SELECT MAX(version) as version FROM response_versions WHERE response_id = $1
         `, [ version.responseId ])
 
-        let versionNumber = 0
-        if ( versionResults.rows.length <= 0 ) {
-            versionNumber = 1
-        } else {
+        let versionNumber = 1
+        if (versionResults.rows.length > 0 && versionResults.rows[0].version) {
             versionNumber = versionResults.rows[0].version
         }
 
