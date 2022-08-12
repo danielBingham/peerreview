@@ -119,6 +119,36 @@ module.exports = class ReviewDAO {
         return this.hydrateReviews(results.rows)
     }
 
+    async countReviews(where, params) {
+        where = ( where ? where : '' )
+        params = ( params ? params : [])
+
+        const sql = `
+            SELECT
+                COUNT(reviews.id) as review_count, reviews.paper_id as "review_paperId", reviews.version as review_version
+            FROM reviews
+            ${where}
+            GROUP BY reviews.paper_id, reviews.version
+       `
+
+        const results = await this.database.query(sql, params)
+
+        if ( results.rows.length <= 0 ) {
+            return {} 
+        }
+
+        const counts = {} 
+        for(const row of results.rows) {
+            if ( ! counts[row.review_paperId] ) {
+                counts[row.review_paperId] = {}
+            }
+            if ( ! counts[row.review_paperId][row.review_version] ) {
+                counts[row.review_paperId][row.review_version] = row.review_count
+            }
+        }
+        return counts
+    }
+
     async insertThreads(review) {
         if ( review.threads.length == 0) {
             return

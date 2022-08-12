@@ -1,10 +1,12 @@
 #publish-page.page {
     border: none;
     background-color: inherit;
+    padding: 0;
 }
 
 #publish-page .login-notice {
-    margin: 50px auto;
-    width: 900px;
-    font-size: 16px;
+    border: thin solid #ddd;
+    background-color: white;
+    padding: 20px;
+    text-align: center;
 }

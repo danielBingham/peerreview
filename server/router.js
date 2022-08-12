@@ -289,6 +289,10 @@ module.exports = function(database, logger, config) {
     const ReviewController = require('./controllers/reviews')
     const reviewController = new ReviewController(database)
 
+    router.get('/reviews/count', function(request, response) {
+        reviewController.countReviews(request, response)
+    })
+
     router.get('/paper/:paper_id/reviews', function(request, response) {
         reviewController.getReviews(request, response)
     })

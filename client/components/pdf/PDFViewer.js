@@ -6,7 +6,6 @@ import Spinner from '/components/Spinner'
 
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
-import 'react-pdf/dist/esm/Page/TextLayer.css'
 
 import { DownloadIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon } from '@heroicons/react/outline'
 
@@ -85,7 +84,7 @@ const PDFViewer = function(props) {
                 </div>
             </div>
             <Document className="pdf-viewer-document" file={props.url} loading={<Spinner />} onLoadSuccess={onLoadSuccess} >
-                <Page className="pdf-viewer-page" renderTextLayer={true} pageNumber={pageNumber} loading={<Spinner local={true} />} width={800} /> 
+                <Page className="pdf-viewer-page" renderTextLayer={false} pageNumber={pageNumber} loading={<Spinner local={true} />} width={800} /> 
             </Document>
         </section>
     )

@@ -1,9 +1,8 @@
 
-import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router'
-import { useParams, Link } from 'react-router-dom'
+import React from 'react'
+import { Link } from 'react-router-dom'
 
-import { useDispatch, useSelector } from 'react-redux'
+import { useSelector } from 'react-redux'
 
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
@@ -25,6 +24,18 @@ import './DraftPapersListItemView.css'
  */
 const DraftPapersListItemView = function(props) {
 
+    const reviewCount = useSelector(function(state) {
+        if ( state.reviews.counts[props.paper.id] ) {
+            if ( state.reviews.counts[props.paper.id][props.paper.versions[0].version] ) {
+                return state.reviews.counts[props.paper.id][props.paper.versions[0].version]
+            } else {
+                return 0
+            }
+        } else {
+            return 0
+        }
+    })
+
     // ======= Render ===============================================
     
     const authors = [] 
@@ -40,8 +51,12 @@ const DraftPapersListItemView = function(props) {
     const paperPath = `/draft/${props.paper.id}`
     return (
         <div id={props.paper.id} className="draft-paper-list-item">
-            <div className="reviews list-score-box">0 <br /><span className="label">reviews</span></div>
-            <div className="version list-score-box">1 <br /><span className="label">version</span></div>
+            <div className="reviews list-score-box">
+                {reviewCount} <br />
+                <span className="label">{ reviewCount == 1 ? 'review' : 'reviews' }</span></div>
+            <div className="version list-score-box"> 
+                {props.paper.versions.length} <br />
+                <span className="label">{ props.paper.versions.length == 1 ? 'version' : 'versions' }</span></div>
             <div className="wrapper">
                 <div className="title"> <Link to={paperPath}>{props.paper.title}</Link></div>
                 <div className="authors">by {authors}</div>

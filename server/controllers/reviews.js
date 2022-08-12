@@ -12,6 +12,15 @@ module.exports = class ReviewController {
         this.reputationService = new ReputationService(database)
     }
 
+    async countReviews(request, response) {
+        if ( ! request.session.user ) {
+           throw new ControllerError(403, 'not-authorized', `Must be logged in to view reviews.`) 
+        }
+
+        const counts = await this.reviewDAO.countReviews(`WHERE reviews.status != 'in-progress'`)
+        return response.status(200).json(counts)
+    }
+
 
     /**
      * GET /paper/:paper_id/reviews
@@ -24,8 +33,8 @@ module.exports = class ReviewController {
             if ( request.session && request.session.user ) {
                 userId = request.session.user.id
             }
-            let reviews = []
 
+            let reviews = []
             if ( userId ) {
                 reviews = await this.reviewDAO.selectReviews(`WHERE reviews.paper_id=$1 AND (reviews.status != 'in-progress' OR reviews.user_id =$2)`, [ request.params.paper_id, userId ])
             } else {

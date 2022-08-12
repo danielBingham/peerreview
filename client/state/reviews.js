@@ -39,12 +39,33 @@ export const reviewsSlice = createSlice({
         dictionary: {},
 
         /**
-         * A dictionary, keyed by paper.id, of lists of reviews we've retrieved
-         * for each paper.  The lists preserve order.
+         * A dictionary, keyed by paper.id and paper.version, of lists of
+         * reviews we've retrieved for each paper.  The lists preserve order.
+         *
+         * Structure:
+         * ```
+         * { 
+         *  1: {
+         *      1: []
+         *      2: []
+         *      3: []
+         *      }
+         *  2: {
+         *      1: []
+         *      2: []
+         *     }
+         * }
+         * ```
          *
          * @type {Object[]}
          */
-        list: {} 
+        list: {},
+
+        /**
+         * A hash of review counts, keyed by paper.id and paper.version.
+         */
+        counts: {}
+
     },
     reducers: {
         setInProgress: function(state, action) {
@@ -125,6 +146,10 @@ export const reviewsSlice = createSlice({
             state.list[paperId] = {}
         },
 
+        setCounts: function(state, action) {
+            state.counts = action.payload
+        },
+
         // ========== Request Tracking Methods =============
 
         makeRequest: makeTrackedRequest, 
@@ -170,6 +195,60 @@ export const updateReview = function(review) {
 }
 
 /**
+ * GET /reviews/count
+ *
+ * Get counts of reviews by paper.id and paper.version 
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const countReviews = function() {
+    return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(reviewsSlice.actions.garbageCollectRequests())
+
+        const requestId = uuidv4() 
+        const endpoint = `/reviews/count`
+
+        let payload = {
+            requestId: requestId
+        }
+
+        dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(counts) {
+            dispatch(reviewsSlice.actions.setCounts(counts))
+
+            payload.result = counts 
+            dispatch(reviewsSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(reviewsSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
+/**
  * GET /reviews
  *
  * Get all reviews in the database.  Populates state.reviews.
@@ -206,8 +285,6 @@ export const getReviews = function(paperId) {
             }
         }).then(function(reviews) {
             if ( reviews && reviews.length > 0) {
-                console.log('Reviews')
-                console.log(reviews)
                 dispatch(reviewsSlice.actions.addReviewsToDictionary(reviews))
                 dispatch(reviewsSlice.actions.appendReviewsToList(reviews))
 

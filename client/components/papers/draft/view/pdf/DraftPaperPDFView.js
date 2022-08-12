@@ -4,7 +4,8 @@ import { useSearchParams } from 'react-router-dom'
 
 import { newReview, postReviewThreads, cleanupRequest } from '/state/reviews'
 
-import { Document } from 'react-pdf/dist/esm/entry.webpack'
+import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
+
 
 import DraftPaperPDFPageView from './DraftPaperPDFPageView'
 import ReviewCommentThreadView from '../review/comments/ReviewCommentThreadView'
@@ -35,11 +36,13 @@ const DraftPaperPDFView = function(props) {
 
     // ======= Render State =========================================
     const [ numberOfPages, setNumberOfPages ] = useState(0)
+    const [ renderedVersion, setRenderedVersion ] = useState(null)
 
     // ======= Actions and Event Handling ===========================
 
     const onLoadSuccess = function(pdf) {
         setNumberOfPages(pdf.numPages)
+        setRenderedVersion(props.versionNumber)
     }
 
     // ================= Render ===============================================
@@ -52,15 +55,17 @@ const DraftPaperPDFView = function(props) {
         }
 
         const pageViews = []
-        for(let pageNumber = 1; pageNumber <= numberOfPages; pageNumber++) {
-            pageViews.push(
-                <DraftPaperPDFPageView 
-                    key={`page-${pageNumber}`} 
-                    pageNumber={pageNumber}
-                    paper={props.paper}
-                    versionNumber={props.versionNumber}
-                />
-            )
+        if ( props.versionNumber == renderedVersion ) {
+            for(let pageNumber = 1; pageNumber <= numberOfPages; pageNumber++) {
+                pageViews.push(
+                    <DraftPaperPDFPageView 
+                        key={`page-${pageNumber}`} 
+                        pageNumber={pageNumber}
+                        paper={props.paper}
+                        versionNumber={props.versionNumber}
+                    />
+                )
+            }
         }
         const url = new URL(version.file.filepath, version.file.location)
         return (
@@ -70,6 +75,8 @@ const DraftPaperPDFView = function(props) {
                     file={url.toString()} 
                     loading={<Spinner />} 
                     onLoadSuccess={onLoadSuccess} 
+                    onSourceError={(error) => console.log(error)}
+                    onLoadError={(error) => console.log(error)}
                 >
                     { pageViews }
                 </Document>
