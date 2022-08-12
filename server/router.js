@@ -380,6 +380,12 @@ module.exports = function(database, logger, config) {
     const ResponseController = require('./controllers/responses')
     const responseController = new ResponseController(database)
 
+    router.get('/responses/count', function(request, response, next) {
+        responseController.countResponses(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
     router.get('/paper/:paper_id/responses', function(request, response, next) {
         responseController.getResponses(request, response).catch(function(error) {
             next(error)

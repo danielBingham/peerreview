@@ -1,4 +1,5 @@
 import React  from 'react'
+import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 
 import UserTag from '/components/users/UserTag'
@@ -9,6 +10,10 @@ import './PublishedPaperListItem.css'
 
 const PublishedPaperListItem = function(props) {
     const paper = props.paper
+
+    const responseCount = useSelector(function(state) {
+        return  ( state.responses.counts[paper.id] ? state.responses.counts[paper.id] : 0)
+    })
 
     // ======= Render ===============================================
     const authors = []
@@ -28,7 +33,7 @@ const PublishedPaperListItem = function(props) {
     return (
         <div id={paper.id} className="published-paper-list-item">
             <div className="score">{score}<br /> <span className="label">score</span></div> 
-            <div className="responses">0 <br /><span className="label">responses</span></div>
+            <div className="responses">{responseCount} <br /><span className="label">responses</span></div>
             <div className="wrapper">
                 <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title} </Link></div> 
                 <div className="date-and-authors">published <DateTag timestamp={paper.updatedDate} /> by {authors}</div>

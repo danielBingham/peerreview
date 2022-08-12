@@ -18,6 +18,11 @@ module.exports = class ResponseController {
         this.responseDAO = new ResponseDAO(database, logger)
     }
 
+    async countResponses(request, response) {
+        const counts = await this.responseDAO.countResponses()
+        return response.status(200).json(counts)
+    }
+
     /**
      * GET /paper/:paper_id/responses
      *

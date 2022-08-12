@@ -59,6 +59,33 @@ module.exports = class ResponseDAO {
         return this.hydrateResponses(results.rows)
     }
 
+    async countResponses(where, params) {
+        where = ( where ? where : '')
+        params = ( params ? params : [])
+
+        const sql = `
+            SELECT
+                count(responses.id) as response_count, responses.paper_id as "response_paperId"
+            FROM responses
+            ${where}
+            GROUP BY responses.paper_id
+       `
+
+        const results = await this.database.query(sql, params)
+
+        if ( results.rows.length <= 0) {
+            return {} 
+        } else if ( ! results.rows[0] ) {
+            return {}
+        }
+
+        const count = {}
+        for(const row of results.rows) {
+            count[row.response_paperId] = row.response_count
+        }
+        return count
+    }
+
     async insertResponse(response) {
         const results = await this.database.query(`
                     INSERT INTO responses (paper_id, user_id, created_date, updated_date) 
@@ -74,6 +101,7 @@ module.exports = class ResponseDAO {
 
         return results.rows[0].id
     }
+
 
     async insertResponseVersion(response, version) {
         const versionResults = await this.database.query(`

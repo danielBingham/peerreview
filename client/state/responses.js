@@ -37,7 +37,14 @@ export const responsesSlice = createSlice({
          *
          * @type {Object[]}
          */
-        list: {} 
+        list: {},
+
+        /**
+         * A dictionary of counts keyed by paper.id.  The number of responses
+         * on each paper.
+         */
+        counts: {}
+
     },
     reducers: {
 
@@ -99,6 +106,10 @@ export const responsesSlice = createSlice({
             state.list[paperId] = [] 
         },
 
+        setCounts: function(state, action) {
+            state.counts = action.payload
+        },
+
         // ========== Request Tracking Methods =============
 
         makeRequest: makeTrackedRequest, 
@@ -109,6 +120,64 @@ export const responsesSlice = createSlice({
     }
 })
 
+/**
+ * GET /responses/count
+ *
+ * Gets a count of all responses on each paper.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from `state.responses.results`.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const countResponses = function() {
+    return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(responsesSlice.actions.garbageCollectRequests())
+
+        const requestId = uuidv4() 
+        const endpoint = `/responses/count`
+
+        let payload = {
+            requestId: requestId
+        }
+
+        dispatch(responsesSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            payload.status = response.status
+            payload.ok = response.ok
+            return response.json()
+        }).then(function(json) {
+            if ( payload.ok ) {
+                const counts = json
+                dispatch(responsesSlice.actions.setCounts(counts))
+
+                payload.result = counts
+                dispatch(responsesSlice.actions.completeRequest(payload))
+            } else {
+                const type = json.error
+                throw new RequestError(payload.status, type, 'Something went wrong with the request.')
+            }
+        }).catch(function(error) {
+            logger.error(error)
+            if ( error instanceof RequestError ) {
+                payload.error = error.type
+            } else if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            dispatch(responsesSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
 /**
  * GET /paper/:paper_id/responses
  *

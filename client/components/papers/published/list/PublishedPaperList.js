@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { clearList, getPapers, cleanupRequest } from '/state/papers'
+import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
 
 import Spinner from '/components/Spinner'
 
@@ -28,6 +29,15 @@ const PublishedPaperList = function(props) {
         }
     })
 
+    const [responseRequestId, setResponseRequestId ] = useState(null)
+    const responseRequest = useSelector(function(state) {
+        if (responseRequestId) {
+            return state.papers.requests[responseRequestId]
+        } else {
+            null
+        }
+    })
+
 
     // ======= Redux State ==========================================
    
@@ -49,6 +59,7 @@ const PublishedPaperList = function(props) {
         query.isDraft = false
 
         setRequestId(dispatch(getPapers(query, true)))
+        setResponseRequestId(dispatch(countResponses()))
     }, [ props.query ])
 
     // Cleanup our request.
@@ -59,6 +70,15 @@ const PublishedPaperList = function(props) {
             }
         }
     }, [ requestId ])
+
+    // Cleanup our request.
+    useEffect(function() {
+        return function cleanup() {
+            if ( responseRequestId ) {
+                dispatch(cleanupResponseRequest({requestId: responseRequestId}))
+            }
+        }
+    }, [ responseRequestId ])
 
     // ======= Render ===============================================
     

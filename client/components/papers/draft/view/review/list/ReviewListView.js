@@ -48,17 +48,19 @@ const ReviewListView = function(props) {
     const threads = useSelector(function(state) {
         if ( searchParams.get('review') == 'all' ) {
             const results = []
-            for ( const review of state.reviews.list[props.paper.id][props.versionNumber]) {
-                results.push(...review.threads)
-            }
-            results.sort((a,b) => {
-                if ( a.page != b.page ) {
-                    return a.page - b.page
-                } else {
-                    return a.pinY - b.pinY
+            if ( state.reviews.list[props.paper.id] && state.reviews.list[props.paper.id][props.versionNumber]) {
+                for ( const review of state.reviews.list[props.paper.id][props.versionNumber]) {
+                    results.push(...review.threads)
                 }
-            })
-            return results
+                results.sort((a,b) => {
+                    if ( a.page != b.page ) {
+                        return a.page - b.page
+                    } else {
+                        return a.pinY - b.pinY
+                    }
+                })
+                return results
+            }
         }
         return null
     })

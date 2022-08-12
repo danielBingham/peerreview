@@ -408,6 +408,7 @@ insert INTO field_relationships (parent_id, child_id)
                 child_name='neurophysics'
                 OR child_name='polymer-physics'
                 OR child_name='quantum-biology'
+                OR child_name='virophysics'
             );
 
     insert INTO field_relationships (parent_id, child_id) 
