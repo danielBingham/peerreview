@@ -49,7 +49,7 @@ const ReviewListView = function(props) {
         } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
             return null
         }
-        return state.reviews.inProgress[props.paper.id]
+        return state.reviews.inProgress[props.paper.id][props.versionNumber]
     })
 
     const threads = useSelector(function(state) {
@@ -136,13 +136,27 @@ const ReviewListView = function(props) {
 
     const reviewItems = []
     if ( reviews && ! threads ) {
+        if ( reviewInProgress ) {
+            reviewItems.push(
+                <ReviewListItemView 
+                    key={reviewInProgress.id} 
+                    paper={props.paper} 
+                    versionNumber={props.versionNumber}
+                    review={reviewInProgress} 
+                    scrollToPosition={scrollToPosition}
+                />
+            )
+        }
         for(const review of reviews) {
+            if (reviewInProgress && review.id == reviewInProgress.id ) {
+                continue
+            }
             reviewItems.push(
                 <ReviewListItemView 
                     key={review.id} 
                     paper={props.paper} 
+                    versionNumber={props.versionNumber}
                     review={review} 
-                    selected={ props.selectedReview && props.selectedReview.id == review.id } 
                     scrollToPosition={scrollToPosition}
                 />
             )

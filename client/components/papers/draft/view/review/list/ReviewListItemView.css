@@ -7,6 +7,9 @@
 .review-list-item.selected {
     background-color: white;
 }
+.review-list-item.in-progress {
+    border: 2px solid rgba(211, 178, 14, 0.75);
+}
 .review-list-item svg {
     width: 24px;
     height: 24px;

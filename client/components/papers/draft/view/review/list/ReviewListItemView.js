@@ -19,6 +19,15 @@ import './ReviewListItemView.css'
 /**
  * Assumes we have a current user logged in.  Leaves it to the Page object to handle that.
  *
+ * @param {Object} props    Standard react props object.
+ * @param {Object} props.paper  A populated paper object.  This is the paper
+ * this review is on.
+ * @param {integer} props.versionNumber The version of the paper we're
+ * currently viewing.
+ * @param {Object} props.review A populated review object.  This is the review
+ * this item represents.
+ * @param {function} props.scrollToPosition A function allowing the review list scroll pane to be
+ * scrolled to a certain y position.  Used by comments to center themselves.
  */
 const ReviewListItemView = function(props) {
 
@@ -38,6 +47,15 @@ const ReviewListItemView = function(props) {
                 }
             })
         }
+    })
+
+    const reviewInProgress = useSelector(function(state) {
+        if ( ! state.reviews.inProgress[props.paper.id] ) {
+            return null
+        } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
+            return null
+        }
+        return state.reviews.inProgress[props.paper.id][props.versionNumber]
     })
 
     // ======= Actions and Event Handling ===========================
@@ -111,7 +129,9 @@ const ReviewListItemView = function(props) {
         }
     }
 
-    const classes = 'review-list-item' + (isOpen ? ' selected' : '')
+    const classes = 'review-list-item' 
+        + (isOpen ? ' selected' : '') 
+        + ( reviewInProgress && reviewInProgress.id == props.review.id ? ' in-progress' : '')
     return (
         <>
             <div className={classes} onClick={onClick} >
