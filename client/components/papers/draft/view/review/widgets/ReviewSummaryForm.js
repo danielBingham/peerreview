@@ -22,6 +22,7 @@ const ReviewSummaryForm = function(props) {
 
     const [ summary, setSummary ] = useState('')
     const [ recommendation, setRecommendation ] = useState('request-changes')
+    const [ errorType, setErrorType ] = useState(null)
 
     // ======= Request Tracking =====================================
     
@@ -52,8 +53,20 @@ const ReviewSummaryForm = function(props) {
     // ======= Actions and Event Handling ===========================
     
     const dispatch = useDispatch()
+
     const finish = function(event) {
         event.preventDefault()
+
+        // Determine if there are any comments still in progress, if there are,
+        // bail out.
+        for ( const thread of reviewInProgress.threads ) {
+            for( const comment of thread.comments ) {
+                if ( comment.status == 'in-progress' ) {
+                    setErrorType('comment-in-progress')
+                    return
+                }
+            }
+        }
 
         const reviewPatch = {
             id: reviewInProgress.id,
@@ -132,6 +145,9 @@ const ReviewSummaryForm = function(props) {
                                 <option value="reject">Recommend Rejection</option>
                         </select>
                         <button name="finish" onClick={finish} >Finish Review</button>
+                        <div className="submission-error">
+                            { errorType == 'comment-in-progress' && 'There are still comments in progress on your review.  Submit or cancel all comments and then submit your review.' }
+                        </div>
                     </div>
                 </div>
             </div>

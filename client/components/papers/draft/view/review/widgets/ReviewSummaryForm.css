@@ -11,3 +11,7 @@
 .review-summary-form .recommendation-wrapper {
     text-align: right;
 }
+.review-summary-form .submission-error {
+    padding: 20px;
+    color: red;
+}
