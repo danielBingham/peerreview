@@ -11,6 +11,10 @@ import './ReviewSummaryForm.css'
 /**
  * Assumes we have a current user logged in.  Leaves it to the Page object to handle that.
  *
+ * @param {Object} props    Standard React props object.
+ * @param {Object} props.paper  The paper we're rendering review summaries for.
+ * @param {integer} props.versionNumber The version of the paper we're currently viewing.
+ * @param {Object} props.selectedReview The currently selected review.
  */
 const ReviewSummaryForm = function(props) {
 
@@ -37,7 +41,12 @@ const ReviewSummaryForm = function(props) {
     })
 
     const reviewInProgress = useSelector(function(state) {
-        return state.reviews.inProgress[props.paper.id]
+        if ( ! state.reviews.inProgress[props.paper.id] ) {
+            return null
+        } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
+            return null
+        }
+        return state.reviews.inProgress[props.paper.id][props.versionNumber]
     })
 
     // ======= Actions and Event Handling ===========================

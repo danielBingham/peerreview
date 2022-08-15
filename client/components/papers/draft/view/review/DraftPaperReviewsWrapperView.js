@@ -20,6 +20,8 @@ import './DraftPaperReviewsWrapperView.css'
  *
  * @param {Object} paper - A populated paper object representing the paper
  * we're intending to display.
+ * @param {integer} versionNumber   The version of the paper we currently have
+ * selected.
  */
 const DraftPaperReviewsWrapperView = function(props) {
 
@@ -62,7 +64,7 @@ const DraftPaperReviewsWrapperView = function(props) {
         const id = `paper-${props.paper.id}-reviews`
         return (
             <div id={id} className="draft-paper-reviews-wrapper">
-                <ReviewHeaderView paper={props.paper} />
+                <ReviewHeaderView paper={props.paper} versionNumber={props.versionNumber} />
                 <ReviewListView paper={props.paper} versionNumber={props.versionNumber} />
                 <DraftPaperPDFView paper={props.paper} versionNumber={props.versionNumber} />
             </div>

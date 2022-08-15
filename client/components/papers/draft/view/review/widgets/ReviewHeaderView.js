@@ -9,6 +9,13 @@ import ReviewSummaryForm from './ReviewSummaryForm'
 
 import './ReviewHeaderView.css'
 
+/**
+ * Render the Header for the Draft View page.  Currently used on `/draft/:id`
+ *
+ * @param {Object} props    Standard React props object.
+ * @param {Object} props.paper  Populated paper object. The draft we're viewing.
+ * @param {integer} props.versionNumber The version of the paper we're currently viewing.
+ */
 const ReviewHeaderView = function(props) {
     const dispatch = useDispatch()
 
@@ -26,9 +33,9 @@ const ReviewHeaderView = function(props) {
     let content = null 
     if ( selectedReview ) {
         if ( selectedReview.status == 'in-progress' ) {
-            content = ( <ReviewSummaryForm paper={props.paper} selectedReview={selectedReview} /> )
+            content = ( <ReviewSummaryForm paper={props.paper} versionNumber={props.versionNumber} selectedReview={selectedReview} /> )
         } else {
-            content = ( <ReviewSummaryView paper={props.paper} selectedReview={selectedReview} /> )
+            content = ( <ReviewSummaryView paper={props.paper} versionNumber={props.versionNumber} selectedReview={selectedReview} /> )
         }
     } else if ( selectedReviewId == 'all' ) {
         content = (

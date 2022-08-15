@@ -8,6 +8,13 @@ import {  newReview, patchReview, cleanupRequest as cleanupReviewRequest } from 
 
 import './DraftPaperControlView.css'
 
+/**
+ * Renders the control panel for the review screen.
+ *
+ * @param {Object} props    Standard react props object.
+ * @param {Object} props.paper  The draft paper we're rendering controls for.
+ * @param {integer} props.versionNumber The version of the paper we currently have selected.
+ */
 const DraftPaperControlView = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
 
@@ -47,7 +54,12 @@ const DraftPaperControlView = function(props) {
     })
 
     const reviewInProgress = useSelector(function(state) {
-        return state.reviews.inProgress[props.paper.id]
+        if ( ! state.reviews.inProgress[props.paper.id] ) {
+            return null
+        } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
+            return null
+        }
+        return state.reviews.inProgress[props.paper.id][props.versionNumber]
     })
 
     const isAuthor = (currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)

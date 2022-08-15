@@ -15,9 +15,11 @@ import './ReviewListView.css'
  * ASSUMPTIONS:
  * - We have a current user logged in.  Leaves it to the Page object to handle that.
  * - We've already refreshed the reviews in state.
- *
- * @param {object} paper - The populated paper object who's reviews we're
+ * 
+ * @param {object} props    The standard react props object.
+ * @param {object} props.paper - The populated paper object who's reviews we're
  * displaying.
+ * @param {integer} props.versionNumber The number of the version we're currently viewing.
  */
 const ReviewListView = function(props) {
 
@@ -42,6 +44,11 @@ const ReviewListView = function(props) {
     })
 
     const reviewInProgress = useSelector(function(state) {
+        if ( ! state.reviews.inProgress[props.paper.id] ) {
+            return null
+        } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
+            return null
+        }
         return state.reviews.inProgress[props.paper.id]
     })
 

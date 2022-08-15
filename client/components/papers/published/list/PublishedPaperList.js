@@ -49,7 +49,7 @@ const PublishedPaperList = function(props) {
 
     const dispatch = useDispatch()
 
-    useLayoutEffect(function() {
+    const queryForPapers = function() {
         let query = {}
         if ( props.query ) {
             query = {
@@ -60,7 +60,17 @@ const PublishedPaperList = function(props) {
 
         setRequestId(dispatch(getPapers(query, true)))
         setResponseRequestId(dispatch(countResponses()))
+    }
+
+    useLayoutEffect(function() {
+        queryForPapers()
     }, [ props.query ])
+
+    useEffect(function() {
+        if ( requestId && ! request ) {
+            queryForPapers()
+        }
+    }, [ request ])
 
     // Cleanup our request.
     useEffect(function() {

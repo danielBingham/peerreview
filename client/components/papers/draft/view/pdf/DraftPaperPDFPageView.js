@@ -15,7 +15,17 @@ import Spinner from '/components/Spinner'
 import './DraftPaperPDFPageView.css'
 
 /**
+ * Renders a page of a Draft Paper's PDF file.
  *
+ * Also handles rendering the pins for any review comments on that page.
+ *
+ * @param {Object} props    The standard React props object.
+ * @param {integer} props.pageNumber    The number of page the we're viewing,
+ * used to select it from the PDF object.  1 indexed.
+ * @param {Object} props.paper  The populated paper object of the paper we're
+ * viewing.
+ * @param {Object} props.versionNumber  The number of the paper's version that
+ * we're viewing. 1 index.
  *
  */
 const DraftPaperPDFPageView = function(props) {
@@ -51,7 +61,12 @@ const DraftPaperPDFPageView = function(props) {
     })
 
     const reviewInProgress = useSelector(function(state) {
-        return state.reviews.inProgress[props.paper.id]
+        if ( ! state.reviews.inProgress[props.paper.id] ) {
+            return null
+        } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
+            return null
+        }
+        return state.reviews.inProgress[props.paper.id][props.versionNumber]
     })
 
     const selectedReview = searchParams.get('review')

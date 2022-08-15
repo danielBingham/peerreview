@@ -15,8 +15,8 @@ export const reviewsSlice = createSlice({
     name: 'reviews',
     initialState: {
         /**
-         * A hash of reviews current in progress, keyed by paperId - one review
-         * for each paper.
+         * A hash of reviews current in progress, keyed by paperId and version - one review
+         * for each paper version.
          *
          * @type {object}
          */
@@ -70,14 +70,20 @@ export const reviewsSlice = createSlice({
     reducers: {
         setInProgress: function(state, action) {
             const review = action.payload
+            if ( ! state.inProgress[review.paperId] ) {
+                state.inProgress[review.paperId] = {}
+            }
 
-            state.inProgress[review.paperId] = review
+            state.inProgress[review.paperId][review.version] = review
         },
 
         clearInProgress: function(state, action) {
-            const paperId = action.payload
+            const paperId = action.payload.paperId
+            const version = action.payload.version
 
-            state.inProgress[paperId] = null
+            if ( state.inProgress[paperId] ) {
+                state.inProgress[paperId][version] = null
+            }
         },
 
         replaceReview: function(state, action) {
@@ -188,8 +194,10 @@ export const updateReview = function(review) {
         const state = getState()
         if ( state.authentication.currentUser && review.userId == state.authentication.currentUser.id && review.status == 'in-progress') {
             dispatch(reviewsSlice.actions.setInProgress(review))
-        } else if ( state.reviews.inProgress[review.paperId] && review.id == state.reviews.inProgress[review.paperId].id && review.status != 'in-progress') {
-            dispatch(reviewsSlice.actions.clearInProgress(review.paperId)) 
+        } else if ( state.reviews.inProgress[review.paperId] && state.reviews.inProgress[review.paperId][review.version] 
+            && review.id == state.reviews.inProgress[review.paperId][review.version].id && review.status != 'in-progress') 
+        {
+            dispatch(reviewsSlice.actions.clearInProgress({ paperId: review.paperId, version: review.version })) 
         }
     }
 }
