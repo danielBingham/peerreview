@@ -15,3 +15,17 @@
 .comment-outer .comment-inner {
     clear: both;
 }
+.comment-outer .controls {
+    float: right;
+    margin-top: -15px;
+}
+.comment-outer .controls svg {
+    width: 24px;
+    height: 24px;
+    margin-bottom: -6px;
+    padding-left: 5px;
+    color: #666;
+}
+.comment-outer .controls svg:hover {
+    color: red;
+}

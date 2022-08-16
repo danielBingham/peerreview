@@ -10,6 +10,8 @@ import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 import AreYouSure from '/components/AreYouSure'
 
+import { XCircleIcon } from '@heroicons/react/outline'
+
 import './ReviewCommentView.css'
 
 const ReviewCommentView = function(props) {
@@ -110,9 +112,14 @@ const ReviewCommentView = function(props) {
                 cancel={() => setAreYouSure(false)} 
             /> 
             <div key={props.comment.id} id={props.comment.id} className="comment-outer">
+                { props.review.status == 'in-progress' && (
+                    <span className="controls">
+                        <a href={`?review=${props.review.id}&thread=${props.thread.id}`} onClick={edit} className="edit">edit</a> 
+                        <span onClick={(e) => setAreYouSure(true)} className="delete"><XCircleIcon /></span>
+                    </span>
+                ) }
                 <div className="profile-picture"></div>
                 <UserTag id={props.comment.userId} />
-                { props.review.status == 'in-progress' && (<span className="controls"><span onClick={edit} className="edit link">edit</span> <span onClick={(e) => setAreYouSure(true)} className="delete link">delete</span></span>) }
                 <div className="datetime">posted <a onClick={goToComment} href={`?review=${props.review.id}&thread=${props.thread.id}`}><DateTag timestamp={props.comment.updatedDate} /></a> in <a onClick={goToReview} href={`?review=${props.review.id}&thread=${props.thread.id}`}>review #{props.review.id}</a></div>
                 <div className="comment-inner" style={{ padding: '5px' }} >
                     <ReactMarkdown>
