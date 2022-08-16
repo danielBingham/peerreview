@@ -1,5 +1,22 @@
 .draft-paper-reviews-wrapper {
     display: grid;
     grid-template-columns: 400px auto;
-    grid-template-rows: auto auto;
+    grid-template-rows: 38px 1200px;
+}
+
+.draft-paper-reviews-wrapper .toolbar {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+
+    height: 100%;
+    width: 100%;
+    border: thin solid #ddd;
+}
+
+
+.draft-paper-reviews-wrapper .scroll-pane {
+    grid-column: 2 / 3;
+    grid-row: 2 / 3;
+    overflow: hidden scroll;
+    width: 810px;
 }

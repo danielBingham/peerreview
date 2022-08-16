@@ -1,4 +1,4 @@
-import React, { useLayoutEffect }  from 'react'
+import React, { useLayoutEffect, useEffect, useRef }  from 'react'
 import { useSelector } from 'react-redux'
 
 import { useSearchParams } from 'react-router-dom'
@@ -7,6 +7,9 @@ import './ReviewCommentThreadPinView.css'
 
 const ReviewCommentThreadPinView = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
+
+
+    const pinRef = useRef(null)
 
     // ======= Redux State ==========================================
 
@@ -31,11 +34,26 @@ const ReviewCommentThreadPinView = function(props) {
     const pinClicked = function(event) {
         searchParams.set('thread', thread.id)
         setSearchParams(searchParams)
+        if ( pinRef.current ) {
+            pinRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center'
+
+            })
+        }
     }
 
-    useLayoutEffect(function() {
+    useEffect(function() {
         if ( searchParams.get('thread') == thread.id ) {
-            props.scrollToPin(thread.pinY)
+            if ( pinRef.current ) {
+                pinRef.current.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'center',
+                    inline: 'center'
+
+                })
+            }
         }
     }, [ searchParams ])
 
@@ -45,6 +63,7 @@ const ReviewCommentThreadPinView = function(props) {
     const selected = searchParams.get('thread') == thread.id 
     return (
         <div 
+            ref={pinRef}
             className={( selected ? "comment-thread-pin selected" : "comment-thread-pin ")} 
             onClick={pinClicked} 
             style={{ 

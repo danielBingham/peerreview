@@ -12,6 +12,7 @@
     text-align: right;
 }
 .review-summary-form .submission-error {
+    text-align: center;
     padding: 20px;
     color: red;
 }

@@ -72,12 +72,6 @@ const ReviewListView = function(props) {
         return null
     })
 
-    // ======= Refs ==========================
-
-    const ref = useRef(null)
-    const initialOffset = useRef(null)
-    const scrollPaneRef = useRef(null)
-
     // ======= Actions and Event Handling ===========================
 
     const showAll = function(event) {
@@ -89,47 +83,6 @@ const ReviewListView = function(props) {
         searchParams.delete('review')
         setSearchParams(searchParams)
     }
-
-    const scrollToPosition = function(y) {
-        if ( scrollPaneRef.current ) {
-            scrollPaneRef.current.scrollTo({
-                top: y-(window.innerHeight/2),
-                behavior: 'smooth'
-            })
-        }
-    }
-
-    // ======= Effect Handling ======================================
-
-    useEffect(function() {
-        const onScroll = function(event) {
-            if ( ref.current ) {
-                const rect = ref.current.getBoundingClientRect()
-                if ( ! initialOffset.current ) {
-                    initialOffset.current = rect.top 
-                }
-
-                if ( initialOffset.current ) {
-                    const newHeightOffset = (initialOffset.current - window.scrollY > 10 ? initialOffset.current - window.scrollY : 10)
-                    setHeightOffset(newHeightOffset)
-                    setHeight(window.innerHeight - newHeightOffset- 20)
-                } else if (initialOffset.current && window.scrollY < initialOffset.current) {
-                    const newHeightOffset = initialOffset.current
-                    setHeightOffset(newHeightOffset)
-                    setHeight(window.innerHeight - newHeightOffset- 20)
-                }
-            }
-        }
-
-        document.addEventListener('scroll', onScroll)
-        window.addEventListener('resize', onScroll)
-
-        return function cleanup() {
-            document.removeEventListener('scroll', onScroll)
-            window.addEventListener('resize', onScroll)
-        }
-
-    })
 
 
     // ======= Render ===============================================
@@ -143,7 +96,6 @@ const ReviewListView = function(props) {
                     paper={props.paper} 
                     versionNumber={props.versionNumber}
                     review={reviewInProgress} 
-                    scrollToPosition={scrollToPosition}
                 />
             )
         }
@@ -157,20 +109,9 @@ const ReviewListView = function(props) {
                     paper={props.paper} 
                     versionNumber={props.versionNumber}
                     review={review} 
-                    scrollToPosition={scrollToPosition}
                 />
             )
         }
-    }
-    let style = { }
-    if ( heightOffset != 0 && height != 0) {
-        style.top = heightOffset +'px' 
-        style.height = height + 'px'
-    }
-
-    let wrapperStyle = {}
-    if ( heightOffset != 0 && height != 0) {
-        wrapperStyle.height = (height-36) + 'px'
     }
 
     let threadWrapper = ( null )
@@ -183,7 +124,6 @@ const ReviewListView = function(props) {
                     paper={props.paper} 
                     reviewId={thread.reviewId}
                     id={thread.id}
-                    scrollToPosition={scrollToPosition}
                 />
             )
         }
@@ -193,16 +133,18 @@ const ReviewListView = function(props) {
     const reviewsSelected = threads ? '' : 'selected'
     const allSelected = threads ? 'selected' : ''
     return (
-        <div ref={ref} className="review-list" style={style}>
-            <div className="header">
+        <>
+            <div className="review-list-header">
                 <div className={`reviews button ${reviewsSelected}`} onClick={showReviews}>Reviews</div>
                 <div className={`show-all button ${allSelected}`} onClick={showAll}>All Comments</div>
             </div>
-            <div ref={scrollPaneRef} className="items-wrapper" style={wrapperStyle}>
-                { reviewItems }
-                { threadWrapper }
+            <div className="review-list">
+                <div className="items-wrapper">
+                    { reviewItems }
+                    { threadWrapper }
+                </div>
             </div>
-        </div>
+        </>
     )
 
 }

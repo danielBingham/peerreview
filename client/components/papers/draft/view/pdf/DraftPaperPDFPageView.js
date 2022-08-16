@@ -128,17 +128,6 @@ const DraftPaperPDFPageView = function(props) {
         }
     }
 
-    const scrollToPin = function(pinY) {
-        if ( canvasRef.current ) {
-            const rect = canvasRef.current.getBoundingClientRect()
-            window.scrollTo({
-                top: parseInt(pinY*height)+rect.top+window.scrollY-(window.innerHeight/2),
-                behavior: 'smooth'
-            })
-        }
-
-    }
-
     useEffect(function() {
         if ( newReviewRequest && newReviewRequest.state == 'fulfilled') {
             searchParams.set('review', reviewInProgress.id)
@@ -185,7 +174,6 @@ const DraftPaperPDFPageView = function(props) {
                     reviewId={thread.reviewId}
                     width={width}
                     height={height}
-                    scrollToPin={scrollToPin}
                 />
             )
         }

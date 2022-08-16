@@ -64,14 +64,25 @@ const ReviewCommentThreadView = function(props) {
     const threadClicked = function(event) {
         searchParams.set('thread', thread.id)
         setSearchParams(searchParams)
+        if ( threadRef.current ) {
+            threadRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center'
+            })
+        }
     }
 
 
     // ======= Effect Handling ======================================
 
-    useLayoutEffect(function() {
+    useEffect(function() {
         if ( searchParams.get('thread') == thread.id && threadRef.current ) {
-            props.scrollToPosition(threadRef.current.offsetTop)
+            threadRef.current.scrollIntoView({
+                behavior: 'smooth',
+                block: 'center',
+                inline: 'center'
+            })
         }
     }, [ searchParams ])
 

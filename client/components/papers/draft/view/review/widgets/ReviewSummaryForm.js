@@ -145,7 +145,7 @@ const ReviewSummaryForm = function(props) {
                                 <option value="reject">Recommend Rejection</option>
                         </select>
                         <button name="finish" onClick={finish} >Finish Review</button>
-                        <div className="submission-error">
+                        <div className="submission-error" style={ ( errorType ? { display: 'block' } : { display: 'none' } ) }>
                             { errorType == 'comment-in-progress' && 'There are still comments in progress on your review.  Submit or cancel all comments and then submit your review.' }
                         </div>
                     </div>

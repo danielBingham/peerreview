@@ -11,8 +11,11 @@ import './DraftPaperControlView.css'
 /**
  * Renders the control panel for the review screen.
  *
+ * Assumptions:
+ *  - paper already exists in the store
+ *
  * @param {Object} props    Standard react props object.
- * @param {Object} props.paper  The draft paper we're rendering controls for.
+ * @param {Object} props.id The id of the draft paper we're rendering controls for.
  * @param {integer} props.versionNumber The version of the paper we currently have selected.
  */
 const DraftPaperControlView = function(props) {
@@ -53,17 +56,21 @@ const DraftPaperControlView = function(props) {
         return state.authentication.currentUser
     })
 
-    const reviewInProgress = useSelector(function(state) {
-        if ( ! state.reviews.inProgress[props.paper.id] ) {
-            return null
-        } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
-            return null
-        }
-        return state.reviews.inProgress[props.paper.id][props.versionNumber]
+    const paper = useSelector(function(state) {
+        return state.papers.dictionary[props.id]
     })
 
-    const isAuthor = (currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
-    const isOwner = (currentUser && isAuthor && props.paper.authors.find((a) => a.user.id == currentUser.id).owner ? true : false)
+    const reviewInProgress = useSelector(function(state) {
+        if ( ! state.reviews.inProgress[paper.id] ) {
+            return null
+        } else if ( ! state.reviews.inProgress[paper.id][props.versionNumber] ) {
+            return null
+        }
+        return state.reviews.inProgress[paper.id][props.versionNumber]
+    })
+
+    const isAuthor = (currentUser && paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
+    const isOwner = (currentUser && isAuthor && paper.authors.find((a) => a.user.id == currentUser.id).owner ? true : false)
 
     // ================= User Action Handling  ================================
 
@@ -74,34 +81,34 @@ const DraftPaperControlView = function(props) {
         event.preventDefault()
 
         const paperPatch = {
-            id: props.paper.id,
+            id: paper.id,
             isDraft: false
         }
         setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
 
-        const latestVersion = props.paper.versions[0]
+        const latestVersion = paper.versions[0]
         const paperVersionPatch = {
             paperId: latestVersion.paperId,
             version: latestVersion.version,
             isPublished: true
         }
-        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(props.paper, paperVersionPatch)))
+        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(paper, paperVersionPatch)))
     }
 
     const uploadVersion = function(event) {
-        const uri = `/draft/${props.paper.id}/versions/upload`
+        const uri = `/draft/${paper.id}/versions/upload`
         navigate(uri)
     }
 
     const changeVersion = function(event) {
         const versionNumber = event.target.value
-        const uri = `/draft/${props.paper.id}/version/${versionNumber}`
+        const uri = `/draft/${paper.id}/version/${versionNumber}`
         navigate(uri)
     }
 
     const startReview = function(event) {
         if ( ! reviewInProgress ) {
-            setPostReviewRequestId(dispatch(newReview(props.paper.id, props.versionNumber, currentUser.id)))
+            setPostReviewRequestId(dispatch(newReview(paper.id, props.versionNumber, currentUser.id)))
         }
     }
 
@@ -163,7 +170,7 @@ const DraftPaperControlView = function(props) {
      }
 
     const paperVersionOptions = []
-    for( const paperVersion of props.paper.versions ) {
+    for( const paperVersion of paper.versions ) {
         paperVersionOptions.push(<option key={paperVersion.version} value={paperVersion.version}>{ paperVersion.version }</option>)     
     }
 

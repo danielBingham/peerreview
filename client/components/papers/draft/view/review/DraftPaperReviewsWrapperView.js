@@ -39,7 +39,6 @@ const DraftPaperReviewsWrapperView = function(props) {
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
-
     /**
      * Retrieve the reviews on mount.  Cleanup the request on dismount.
      */
@@ -64,9 +63,13 @@ const DraftPaperReviewsWrapperView = function(props) {
         const id = `paper-${props.paper.id}-reviews`
         return (
             <div id={id} className="draft-paper-reviews-wrapper">
-                <ReviewHeaderView paper={props.paper} versionNumber={props.versionNumber} />
-                <ReviewListView paper={props.paper} versionNumber={props.versionNumber} />
-                <DraftPaperPDFView paper={props.paper} versionNumber={props.versionNumber} />
+                <ReviewListView paper={props.paper} versionNumber={props.versionNumber}  />
+                <div className="toolbar">
+                </div>
+                <div className="scroll-pane">
+                    <ReviewHeaderView paper={props.paper} versionNumber={props.versionNumber} />
+                    <DraftPaperPDFView paper={props.paper} versionNumber={props.versionNumber} />
+                </div>
             </div>
         )
     } else {

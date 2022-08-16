@@ -123,7 +123,6 @@ const ReviewListItemView = function(props) {
                     paper={props.paper} 
                     reviewId={props.review.id}
                     id={thread.id}
-                    scrollToPosition={props.scrollToPosition}
                 />
             )
         }
