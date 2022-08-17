@@ -24,7 +24,11 @@ const ReviewHeaderView = function(props) {
     const selectedReviewId = searchParams.get('review')
     const selectedReview = useSelector(function(state) {
         if ( selectedReviewId && selectedReviewId != 'all' ) {
-            return state.reviews.dictionary[props.paper.id][selectedReviewId]
+            if ( state.reviews.dictionary[props.paper.id] ) {
+                return state.reviews.dictionary[props.paper.id][selectedReviewId]
+            } else {
+                return null
+            }
         } else {
             return null
         }

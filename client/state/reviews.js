@@ -145,6 +145,10 @@ export const reviewsSlice = createSlice({
             if ( state.dictionary[review.paperId] ) {
                 delete state.dictionary[review.paperId][review.id]
             }
+
+            if ( state.inProgress[review.paperId] && state.inProgress[review.paperId][review.version] && state.inProgress[review.paperId][review.version].id == review.id) {
+                state.inProgress[review.paperId][review.version] = null
+            }
         },
 
         clearList: function(state, action) {
@@ -734,6 +738,24 @@ export const postReviewComments = function(paperId, reviewId, threadId, comments
 }
 
 /**
+ * Handle a race condition that can occur sometimes if the user goes straight
+ * from editing a comment to cancelling their review.
+ *
+ * Clicking the cancel button fires the delete request, but bluring the comment
+ * fires the patch request.  The order of these actions is not gauranteed, and
+ * they can interleave in such a way that it causes a flicker and the review
+ * to reappear after deletion.
+ *
+ * TECHDEBT There's gotta be a better way to do this.
+ */
+const checkForDeleteRequest = function(paperId, reviewId, state) {
+    const deleteEndpoint = `/paper/${paperId}/review/${reviewId}`
+    const searchableRequests = Object.entries(state.reviews.requests)
+    const deleteRequest = searchableRequests.find((kv) => kv[1].method == "DELETE" && kv[1].endpoint == deleteEndpoint) 
+    return deleteRequest ? true : false
+}
+
+/**
  * PATCH /paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id
  *
  * Patch a comment.
@@ -768,6 +790,11 @@ export const patchReviewComment = function(paperId, reviewId, threadId, comment)
             },
             body: JSON.stringify(comment)
         }).then(function(response) {
+            // Handle a race condition - see method comment.
+            if ( checkForDeleteRequest(paperId, reviewId, getState()) ) {
+                return Promise.reject(new Error('Review deleted mid patch.'))
+            }
+
             payload.status = response.status
             if ( response.ok ) {
                 return response.json()
@@ -775,6 +802,11 @@ export const patchReviewComment = function(paperId, reviewId, threadId, comment)
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedReview) {
+            // Handle a race condition - see method comment.
+            if ( checkForDeleteRequest(paperId, reviewId, getState()) ) {
+                return Promise.reject(new Error('Review deleted mid patch.'))
+            }
+
             dispatch(updateReview(returnedReview))
 
             payload.result = returnedReview

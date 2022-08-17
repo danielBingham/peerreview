@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router'
-import { useParams } from 'react-router-dom'
+import { useParams, useSearchParams } from 'react-router-dom'
 
 import { getPaper, cleanupRequest } from '/state/papers'
 
@@ -13,6 +13,7 @@ import Error404 from '/components/Error404'
 const DraftPaperPage = function(props) {
 
     const { id, versionNumber } = useParams()
+    const { searchParams, setSearchParams } = useSearchParams()
 
     // ================= Request Tracking =====================================
     

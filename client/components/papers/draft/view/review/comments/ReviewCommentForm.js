@@ -50,6 +50,11 @@ const ReviewCommentForm = function(props) {
     const dispatch = useDispatch()
 
     const commit = function(event) {
+        // Nothing to commit.
+        if ( content.trim().length <= 0 ) {
+            return
+        }
+
         const comment = {
             id: props.comment.id,
             threadId: props.comment.threadId,

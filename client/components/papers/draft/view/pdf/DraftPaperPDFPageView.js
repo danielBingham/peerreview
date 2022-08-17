@@ -71,7 +71,7 @@ const DraftPaperPDFPageView = function(props) {
 
     const selectedReview = searchParams.get('review')
     const threads = useSelector(function(state) {
-        if ( selectedReview && selectedReview !== 'all' && state.reviews.dictionary[props.paper.id] ) {
+        if ( selectedReview && selectedReview !== 'all' && state.reviews.dictionary[props.paper.id] && state.reviews.dictionary[props.paper.id][selectedReview]) {
             return state.reviews.dictionary[props.paper.id][selectedReview].threads.filter((t) => t.page == props.pageNumber)
         } else if ( ! selectedReview ) {
             return []

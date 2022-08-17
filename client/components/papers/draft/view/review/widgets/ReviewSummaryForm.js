@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { patchReview, setInProgress, cleanupRequest} from '/state/reviews'
+import { patchReview, deleteReview, cleanupRequest} from '/state/reviews'
 
 import Spinner from '/components/Spinner'
 
@@ -30,6 +30,15 @@ const ReviewSummaryForm = function(props) {
     const patchReviewRequest = useSelector(function(state) {
         if ( patchReviewRequestId) {
             return state.reviews.requests[patchReviewRequestId]
+        } else {
+            return null
+        }
+    })
+
+    const [deleteReviewRequestId, setDeleteReviewRequestId] = useState(null)
+    const deleteReviewRequest = useSelector(function(state) {
+        if ( deleteReviewRequestId) {
+            return state.reviews.requests[deleteReviewRequestId]
         } else {
             return null
         }
@@ -76,10 +85,13 @@ const ReviewSummaryForm = function(props) {
             status: 'submitted'
         }
 
-        if ( patchReviewRequest ) {
-            dispatch(cleanupRequest(patchReviewRequest))
-        }
         setPatchReviewRequestId(dispatch(patchReview(reviewPatch)))
+    }
+
+    const cancel = function(event) {
+        event.preventDefault()
+
+        setDeleteReviewRequestId(dispatch(deleteReview(reviewInProgress)))
     }
 
     const commitChange = function(event) {
@@ -101,6 +113,15 @@ const ReviewSummaryForm = function(props) {
             setRecommendation(reviewInProgress.recommendation)
         }
     }, [ reviewInProgress])
+
+    // Cleanup request tracking.
+    useEffect(function() {
+        return function cleanup() {
+            if ( deleteReviewRequestId ) {
+                dispatch(cleanupRequest({ requestId: deleteReviewRequestId }))
+            }
+        }
+    }, [ deleteReviewRequestId ])
 
     // Cleanup request tracking.
     useEffect(function() {
@@ -144,7 +165,10 @@ const ReviewSummaryForm = function(props) {
                                 <option value="approve">Recommend Approval</option>
                                 <option value="reject">Recommend Rejection</option>
                         </select>
-                        <button name="finish" onClick={finish} >Finish Review</button>
+                        <div className="submission-buttons">
+                            <button name="cancel" onClick={cancel} >Cancel Review</button>
+                            <button name="finish" onClick={finish} >Finish Review</button>
+                        </div>
                         <div className="submission-error" style={ ( errorType ? { display: 'block' } : { display: 'none' } ) }>
                             { errorType == 'comment-in-progress' && 'There are still comments in progress on your review.  Submit or cancel all comments and then submit your review.' }
                         </div>
