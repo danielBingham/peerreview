@@ -22,16 +22,18 @@ module.exports = class FilesDAO {
 
     hydrateFiles(rows) {
         const files = {}
+        const list = []
 
         for(const row of rows) {
             const file = this.hydrateFile(row)
             if ( ! files[row.id] ) {
                 files[row.id] = file
+                list.push(file)
             }
 
         }
 
-        return Object.values(files)
+        return list 
     }
 
     getFilesSelectionString() {

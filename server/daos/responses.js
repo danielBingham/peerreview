@@ -13,6 +13,7 @@ module.exports = class ResponseDAO {
         }
 
         const responses = {}
+        const list = []
         for( const row of rows) {
             const response = {
                 id: row.response_id,
@@ -25,6 +26,7 @@ module.exports = class ResponseDAO {
 
             if ( ! responses[row.response_id] ) {
                 responses[row.response_id] = response
+                list.push(response)
             }
 
             const version = {
@@ -38,7 +40,7 @@ module.exports = class ResponseDAO {
                 responses[row.response_id].versions.push(version)
             }
         }
-        return Object.values(responses)
+        return list 
     }
 
     async selectResponses(where, params) {

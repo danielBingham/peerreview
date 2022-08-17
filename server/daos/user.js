@@ -22,6 +22,7 @@ module.exports = class UserDAO {
         }
 
         const users = {}
+        const list = []
 
         for( const row of rows ) {
             const user = {
@@ -39,6 +40,7 @@ module.exports = class UserDAO {
             }
             if ( ! users[row.user_id] ) {
                 users[user.id] = user
+                list.push(user)
             }
             const userField = {
                 reputation: row.field_reputation,
@@ -59,7 +61,7 @@ module.exports = class UserDAO {
                 
         }
 
-        return Object.values(users)
+        return list 
     }
 
     async selectUsers(where, params) {

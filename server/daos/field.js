@@ -26,6 +26,7 @@ module.exports = class FieldDAO {
         }
 
         const fields = {}
+        const list = []
 
         for(const row of rows) {
             const field = {
@@ -41,6 +42,7 @@ module.exports = class FieldDAO {
 
             if ( ! fields[field.id] ) {
                 fields[field.id] = field
+                list.push(field)
             }
 
             if ( row.parent_id && ! fields[row.field_id].parents.find((p) => p == row.parent_id) ) {
@@ -52,7 +54,7 @@ module.exports = class FieldDAO {
             }
         }
 
-        return Object.values(fields)
+        return list 
     }
 
     async selectFields(where, params) {

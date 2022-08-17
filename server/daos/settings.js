@@ -19,6 +19,7 @@ module.exports = class SettingsDAO {
 
     hydrateSettings(rows) {
         const settings = {}
+        const list = []
         for(const row of rows) {
             const setting = {
                 id: row.setting_id,
@@ -32,6 +33,7 @@ module.exports = class SettingsDAO {
 
             if ( ! settings[row.setting_id] ) {
                 settings[row.setting_id] = setting
+                list.push(setting)
             }
 
             const field = {
@@ -44,7 +46,7 @@ module.exports = class SettingsDAO {
             }
         }
 
-        return Object.values(settings)
+        return list 
     }
 
     async selectSettings(where, params) {

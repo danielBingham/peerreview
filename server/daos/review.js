@@ -17,6 +17,8 @@ module.exports = class ReviewDAO {
         }
 
         const reviews = {}
+        const list = []
+
         for ( const row of rows ) {
 
             if ( ! reviews[row.review_id] ) {
@@ -33,6 +35,7 @@ module.exports = class ReviewDAO {
                     threads: []
                 }
                 reviews[review.id] = review
+                list.push(review)
             }
 
             if ( row.thread_id != null && ! reviews[row.review_id].threads.find((t) => t.id == row.thread_id) ) {
@@ -65,8 +68,7 @@ module.exports = class ReviewDAO {
             }
         }
 
-        const reviewArray = Object.values(reviews)
-        return reviewArray 
+        return list 
     }
 
     /**

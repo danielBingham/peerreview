@@ -31,6 +31,7 @@ module.exports = class PaperDAO {
         }
 
         const papers = {}
+        const list = []
 
         for(const row of rows) {
             const paper = {
@@ -47,6 +48,7 @@ module.exports = class PaperDAO {
 
             if ( ! papers[paper.id] ) {
                 papers[paper.id] = paper
+                list.push(paper)
             }
 
             const author = {
@@ -93,12 +95,12 @@ module.exports = class PaperDAO {
                 score: row.vote_score
             }
 
-            if ( ! papers[paper.id].votes.find((v) => v.paperId == paper_vote.paperId && v.userId == paper_vote.userId) ) {
+            if ( paper_vote.paperId && ! papers[paper.id].votes.find((v) => v.paperId == paper_vote.paperId && v.userId == paper_vote.userId) ) {
                 papers[paper.id].votes.push(paper_vote)
             }
         }
 
-        return papers
+        return list 
     }
 
     async selectPapers(where, params, order) {
@@ -141,7 +143,7 @@ module.exports = class PaperDAO {
         if ( results.rows.length == 0 ) {
             return [] 
         } else {
-            const papers = Object.values(this.hydratePapers(results.rows))
+            const papers = this.hydratePapers(results.rows)
             for( const paper of papers) {
                 for ( const author of paper.authors ) {
                     const users = await this.userDAO.selectUsers('WHERE users.id = $1', [ author.id])
