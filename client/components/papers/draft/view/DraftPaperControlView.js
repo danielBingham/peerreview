@@ -102,8 +102,8 @@ const DraftPaperControlView = function(props) {
 
     const changeVersion = function(event) {
         const versionNumber = event.target.value
-        const uri = `/draft/${paper.id}/version/${versionNumber}`
-        navigate(uri)
+        searchParams.set('version', versionNumber)
+        setSearchParams(searchParams)
     }
 
     const startReview = function(event) {
@@ -158,9 +158,11 @@ const DraftPaperControlView = function(props) {
     }, [ postReviewsRequestId ])
 
     // ======= Render ===============================================
+   
+    const viewOnly = ! paper.isDraft
     
     let contents = ''
-     if ( isAuthor && isOwner ) {
+     if ( ! viewOnly && isAuthor && isOwner ) {
          contents = (
              <div className="author-controls">
                  <button onClick={uploadVersion}>Upload New Version</button>
@@ -183,7 +185,7 @@ const DraftPaperControlView = function(props) {
                 <select name="versionNumber" value={props.versionNumber} onChange={changeVersion}>
                     {paperVersionOptions}
                 </select>
-                { ! reviewInProgress && <button onClick={startReview}>Start Review</button> }
+                { ! reviewInProgress && ! viewOnly && <button onClick={startReview}>Start Review</button> }
             </div>
         </div>
     )

@@ -89,6 +89,8 @@ const DraftPaperView = function({ id, versionNumber }) {
         )
     }
 
+    const mostRecentVersion = paper.versions[0].version
+
     let authors = [] 
     for(const author of paper.authors) {
         authors.push(<UserTag key={author.user.id} id={author.user.id} />)
@@ -105,8 +107,8 @@ const DraftPaperView = function({ id, versionNumber }) {
             <div className="submitted date">submitted <DateTag timestamp={paper.createdDate} /></div>
             <div className="authors">by {authors}</div>
             <div className="fields">{fields}</div>
-            <DraftPaperControlView id={id} versionNumber={versionNumber} />
-            <DraftPaperReviewsWrapperView paper={paper} versionNumber={versionNumber} />
+            <DraftPaperControlView id={id} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
+            <DraftPaperReviewsWrapperView paper={paper} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
         </div>
     )
 

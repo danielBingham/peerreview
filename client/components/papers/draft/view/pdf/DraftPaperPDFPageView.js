@@ -104,6 +104,10 @@ const DraftPaperPDFPageView = function(props) {
      * progress, start one.  Otherwise, start a new thread.
      */
     const handleClick = function(event, pageNumber) {
+        if ( ! props.isDraft ) {
+            return
+        }
+
         event.preventDefault()
 
         if ( canvasRef.current ) {

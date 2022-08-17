@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -20,12 +19,12 @@ import ResponseList from '/components/responses/ResponseList'
 
 import './PublishedPaperView.css'
 
-
-const PublishedPaperView = function(props) {
-
-    // ======= Routing Parameters ===================================
-    
-    const { id } = useParams() 
+/**
+ * 
+ * @param {Object} props    Standard React props object.
+ * @param {integer} props.id    The id of the paper we're going to display.
+ */
+const PublishedPaperView = function({ id }) {
 
     // ================= Request Tracking =====================================
 

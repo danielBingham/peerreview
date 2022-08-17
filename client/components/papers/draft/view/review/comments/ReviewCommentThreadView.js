@@ -114,6 +114,7 @@ const ReviewCommentThreadView = function(props) {
     // ======= Rendering ============================================
 
     let inProgress = false
+    const viewOnly = ! props.paper.isDraft
     const commentViews = []
     const sortedComments = [ ...thread.comments ]
     sortedComments.sort((a,b) => a.threadOrder - b.threadOrder)
@@ -136,7 +137,7 @@ const ReviewCommentThreadView = function(props) {
                 className={( selected ? "comment-thread selected "+props.paper.fields[0].type : "comment-thread "+props.paper.fields[0].type )} 
             >
                 { commentViews }
-                { ! inProgress && <div onClick={newComment} className="reply">Post a reply...</div> }
+                { ! inProgress && ! viewOnly && <div onClick={newComment} className="reply">Post a reply...</div> }
             </div>
         </div>
     )

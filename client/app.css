@@ -4,7 +4,7 @@ body {
 
     font-family: Georgia, serif;
     font-size: 14px;
-    background-color: #eee;
+    background-color: #ccc;
 }
 
 a:link, a:active, a:visited {
@@ -26,8 +26,25 @@ main {
 main .page {
     width: 1200px;
     margin: 50px auto;
-    border: thin solid #ddd;
+    border: thin solid #aaa;
     background-color: white;
     padding: 20px;
+}
+main .page-tab-bar {
+    width: 1200px;
+    margin: 50px auto -50px auto;
+    padding: 0 20px;
+}
+main .page-tab-bar .page-tab {
+    display: inline-block;
+    padding: 5px 20px;
+    border: thin solid #aaa;
+    background-color: #ddd;
+}
+main .page-tab-bar .page-tab.selected  {
+   background-color: white; 
+   padding-bottom: 7px;
+   margin-bottom: -2px;
+   border-bottom: none;
 }
 
