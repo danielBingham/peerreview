@@ -47,8 +47,8 @@ module.exports = class VoteController {
 
         try {
             const results = await this.database.query(`
-                INSERT INTO paper_votes (paper_id, user_id, score) 
-                    VALUES ($1, $2, $3) 
+                INSERT INTO paper_votes (paper_id, user_id, score, created_date, updated_date) 
+                    VALUES ($1, $2, $3, now(), now()) 
                 RETURNING paper_id as "paperId", user_id as "userId", score
                 `, 
                 [ request.params.paper_id, vote.userId, vote.score]
@@ -105,7 +105,7 @@ module.exports = class VoteController {
             // Update the vote.
             const results = await this.database.query(`
                 UPDATE paper_votes 
-                    SET score = $1 
+                    SET score = $1, updated_date = now() 
                 WHERE paper_id = $2 and user_id=$3
                 RETURNING paper_id as "paperId", user_id as "userId", score
                 `,

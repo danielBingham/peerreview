@@ -1,6 +1,7 @@
 
-const cacheTTL = 60 * 1000 // 1 minute 
-const isStale = function(tracker) {
+const defaultCacheTTL = 60 * 1000 // 1 minute 
+const isStale = function(tracker, overrideCacheTTL) {
+    const cacheTTL = overrideCacheTTL ? overrideCacheTTL : defaultCacheTTL
     return (Date.now() - tracker.timestamp) > cacheTTL
 }
 
@@ -49,27 +50,37 @@ export const completeRequest = function(state, action) {
     tracker.result = action.payload.result
 }
 
+export const useRequest = function(state, action) {
+    const tracker = state.requests[action.payload.requestId]
+    tracker.cleaned = false
+}
+
 export const cleanupRequest = function(state, action) {
     const tracker = state.requests[action.payload.requestId]
+    const cacheTTL = action.payload.cacheTTL
 
     if ( ! tracker ) {
         console.error('Warning: attempt to cleanup request that does not exit: ' + action.payload.requestId)
         return
     }
 
-    if ( isStale(tracker) ) {
+    if ( isStale(tracker, cacheTTL) ) {
+        console.log(`cleanupRequest(${tracker.method}, ${tracker.endpoint}) - Deleting request: ${action.payload.requestId}.`)
         delete state.requests[action.payload.requestId]
     } else {
+        console.log(`cleanupRequest(${tracker.method}, ${tracker.endpoint}) - Marking request cleaned: ${action.payload.requestId}.`)
         tracker.cleaned = true
     }
 }
 
 export const garbageCollectRequests = function(state, action) {
+    const cacheTTL = action.payload
     for ( const requestId in state.requests ) {
         // Only garbage collect requests that are both stale and have been
         // cleaned.  This prevents us from collecting a request that's still in
         // use because it's component hasn't unmounted yet.
-        if ( state.requests[requestId].cleaned && isStale(state.requests[requestId])) {
+        if ( state.requests[requestId].cleaned && isStale(state.requests[requestId], cacheTTL)) {
+            console.log(`garbatecollectRequests() - Deleting request: ${requestId} (${state.requests[requestId].method}, ${state.requests[requestId].endpoint}).`)
             delete state.requests[requestId]
         }
     }

@@ -119,6 +119,8 @@ CREATE TABLE paper_votes (
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     score int,
+    created_date timestamptz,
+    updated_date timestamptz,
     PRIMARY KEY (paper_id, user_id)
 );
 

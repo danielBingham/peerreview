@@ -9,8 +9,11 @@ import { addUsersToDictionary } from './users'
 import { makeRequest as makeTrackedRequest, 
     failRequest as failTrackedRequest, 
     completeRequest as completeTrackedRequest, 
+    useRequest as useTrackedRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
+
+const cacheTTL = 5 * 1000 // 5 seconds 
 
 export const papersSlice = createSlice({
     name: 'papers',
@@ -140,18 +143,27 @@ export const papersSlice = createSlice({
         makeRequest: makeTrackedRequest, 
         failRequest: failTrackedRequest, 
         completeRequest: completeTrackedRequest,
-        cleanupRequest: cleanupTrackedRequest, 
+        useRequest: useTrackedRequest,
+        cleanupRequest: function(state, action) {
+            action.payload.cacheTTL = cacheTTL
+            cleanupTrackedRequest(state, action)
+        }, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
 })
 
-const getRequestFromCache = function(state, method, endpoint) {
-    for ( const id in state.papers.requests) {
-        if ( state.papers.requests[id].method == method && state.papers.requests[id].endpoint == endpoint ) {
-            return state.papers.requests[id]
+//
+const getRequestFromCache = function(method, endpoint) {
+    return function(dispatch, getState) {
+        const state = getState()
+        for ( const id in state.papers.requests) {
+            if ( state.papers.requests[id].method == method && state.papers.requests[id].endpoint == endpoint ) {
+                dispatch(papersSlice.actions.useRequest({ requestId: id }))
+                return state.papers.requests[id]
+            }
         }
+        return null
     }
-    return null
 }
 
 /**
@@ -167,11 +179,8 @@ const getRequestFromCache = function(state, method, endpoint) {
 export const getPapers = function(params, replaceList) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
-        console.log('getPapers')
-        console.log('params')
-        console.log(params)
         const queryString = new URLSearchParams()
         for ( const key in params ) {
             if ( Array.isArray(params[key]) ) {
@@ -185,11 +194,8 @@ export const getPapers = function(params, replaceList) {
 
         const endpoint = '/papers' + ( params ? '?' + queryString.toString() : '')
 
-        console.log('endpoint')
-        console.log(endpoint)
-        const request = getRequestFromCache(getState(), 'GET', endpoint)
+        const request = dispatch(getRequestFromCache('GET', endpoint))
         if ( request ) {
-            console.log('Got request from cache.')
             if ( replaceList ) {
                 dispatch(papersSlice.actions.clearList())
 
@@ -272,7 +278,7 @@ export const getPapers = function(params, replaceList) {
 export const postPapers = function(paper) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
         const endpoint = '/papers'
 
@@ -333,7 +339,7 @@ export const postPapers = function(paper) {
 export const getPaper = function(id) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
         const endpoint = '/paper/' + id
 
@@ -393,7 +399,7 @@ export const getPaper = function(id) {
 export const putPaper = function(paper) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
     
         const endpoint = '/paper/' + paper.id
 
@@ -455,7 +461,7 @@ export const putPaper = function(paper) {
 export const patchPaper = function(paper) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
         const requestId = uuidv4()
         const endpoint = '/paper/' + paper.id
@@ -515,7 +521,7 @@ export const patchPaper = function(paper) {
 export const deletePaper = function(paper) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
         const requestId = uuidv4()
         const endpoint = '/paper/' + paper.id
@@ -568,7 +574,7 @@ export const deletePaper = function(paper) {
 export const patchPaperVersion = function(paper, version) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
         const endpoint = `/paper/${paper.id}/version/${version.version}`
 
@@ -629,7 +635,7 @@ export const patchPaperVersion = function(paper, version) {
 export const postPaperVersions = function(paper, version) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
         const endpoint = `/paper/${paper.id}/versions`
 
@@ -691,7 +697,7 @@ export const postPaperVersions = function(paper, version) {
 export const postVotes = function(vote) {
     return function(dispatch, getState) {
         // Cleanup dead requests before making a new one.
-        dispatch(papersSlice.actions.garbageCollectRequests())
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
         const endpoint = `/paper/${vote.paperId}/votes`
 

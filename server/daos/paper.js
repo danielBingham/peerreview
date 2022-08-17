@@ -33,6 +33,8 @@ module.exports = class PaperDAO {
         const papers = {}
         const list = []
 
+        console.log('Building the result from: ')
+        console.log(rows)
         for(const row of rows) {
             const paper = {
                 id: row.paper_id,
@@ -98,6 +100,12 @@ module.exports = class PaperDAO {
             if ( paper_vote.paperId && ! papers[paper.id].votes.find((v) => v.paperId == paper_vote.paperId && v.userId == paper_vote.userId) ) {
                 papers[paper.id].votes.push(paper_vote)
             }
+            console.log('Processed row: ')
+            console.log(row)
+            console.log('object: ')
+            console.log(papers)
+            console.log('list: ')
+            console.log(list)
         }
 
         return list 
@@ -106,7 +114,17 @@ module.exports = class PaperDAO {
     async selectPapers(where, params, order) {
         where = (where ? where : '')
         params = (params ? params : [])
-        order = ( order ? order+', ' : '')
+
+        // TECHDEBT - Definitely not the ideal way to handle this.  But so it goes.
+        let activeOrderJoins = ''
+        if ( order == 'active' ) {
+            activeOrderJoins = `
+                LEFT OUTER JOIN responses ON responses.paper_id = papers.id
+            `
+            order = 'greatest(paper_votes.updated_date, responses.updated_date, papers.updated_date) DESC NULLS LAST, '
+        } else {
+            order = ( order ? order+', ' : '')
+        }
 
         const sql = `
                SELECT 
@@ -135,9 +153,11 @@ module.exports = class PaperDAO {
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
                     LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
                     LEFT OUTER JOIN paper_votes ON paper_votes.paper_id = papers.id
+                    ${activeOrderJoins}
                 ${where} 
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
         `
+        console.log(sql)
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length == 0 ) {

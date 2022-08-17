@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import { clearList, getPapers, cleanupRequest } from '/state/papers'
 import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
@@ -17,6 +18,7 @@ import './PublishedPaperList.css'
  * @param {object} props - An empty object, takes no props.
  */
 const PublishedPaperList = function(props) { 
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ======= Request Tracking =====================================
 
@@ -49,7 +51,12 @@ const PublishedPaperList = function(props) {
 
     const dispatch = useDispatch()
 
-    const queryForPapers = function() {
+    const setSort = function(sortBy) {
+        searchParams.set('sort', sortBy)
+        setSearchParams(searchParams)
+    }
+
+    const queryForPapers = function(sortBy) {
         let query = {}
         if ( props.query ) {
             query = {
@@ -57,14 +64,20 @@ const PublishedPaperList = function(props) {
             }
         }
         query.isDraft = false
+        if ( ! sortBy ) {
+            query.sort = 'newest'
+        } else {
+            query.sort = sortBy
+        }
 
         setRequestId(dispatch(getPapers(query, true)))
         setResponseRequestId(dispatch(countResponses()))
     }
 
-    useLayoutEffect(function() {
-        queryForPapers()
-    }, [ props.query ])
+    useEffect(function() {
+        queryForPapers(searchParams.get('sort'))
+    }, [ props.query, searchParams ])
+
 
     useEffect(function() {
         if ( requestId && ! request ) {
@@ -109,14 +122,15 @@ const PublishedPaperList = function(props) {
         error = (<div className="error">Something went wrong with our attempt to retreive the paper list: { request.error }.</div>)
     }
 
+    const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
     return (
         <section className="published-paper-list">
             <div className="header">
                 <h2>Published Papers</h2>
                 <div className="controls">
                     <div className="sort">
-                        <div>Newest</div>
-                        <div>Active</div>
+                        <a href="" onClick={(e) => { e.preventDefault(); setSort('newest')}} className={( sort == 'newest' ? 'selected' : '' )} >Newest</a>
+                        <a href="" onClick={(e) => { e.preventDefault(); setSort('active')}} className={( sort == 'active' ? 'selected' : '' )} >Active</a>
                     </div>
                 </div>
             </div>

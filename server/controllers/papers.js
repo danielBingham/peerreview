@@ -117,6 +117,16 @@ module.exports = class PaperController {
 
         }
 
+        if ( request.query.sort ) {
+            if ( request.query.sort == 'newest') {
+                order = 'papers.created_date desc'
+            } else if ( request.query.sort == 'active' ) {
+                // TECHDEBT -- Special Snowflake: We need to do a little more
+                // work for this one, so we handle it inside `papersDAO.selectPapers`.
+                order = 'active'
+            }
+        }
+
         // We don't actually have any query parameters.
         if ( count < 1 ) {
             where = ''
