@@ -12,8 +12,8 @@ import Error404 from '/components/Error404'
 
 const DraftPaperPage = function(props) {
 
-    const { id, versionNumber } = useParams()
-    const { searchParams, setSearchParams } = useSearchParams()
+    const { id } = useParams()
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ================= Request Tracking =====================================
     
@@ -72,11 +72,15 @@ const DraftPaperPage = function(props) {
         }
     }, [ requestId ])
 
+    
 
     if ( currentUser && paper ) {
+        const versionNumber = searchParams.get('version')
+        const mostRecentVersion = paper.versions[0].version
+
         return (
             <div id="draft-paper-page" className="page">
-                <DraftPaperView id={id} versionNumber={( versionNumber ? versionNumber : 1 )} />
+                <DraftPaperView id={id} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
             </div>
         )
     } else if (request && request.state == 'failed' ) {
