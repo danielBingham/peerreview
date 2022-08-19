@@ -3,7 +3,7 @@
     margin: 0px auto;
 }
 .pdf-viewer-page canvas {
-    border: thin solid #ddd;
+    border: thin solid #bbb;
 }
 .text-layer > span{
     position: absolute;

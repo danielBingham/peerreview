@@ -1,6 +1,7 @@
 .review-header {
-    border: thin solid #ddd;
+    border: thin solid #bbb;
     width: 800px;
+    background-color: white;
 }
 
 .review-header .inner {

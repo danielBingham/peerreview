@@ -222,6 +222,12 @@ module.exports = function(database, logger, config) {
 
     const PaperController = require('./controllers/papers')
     const paperController = new PaperController(database, logger, config)
+    
+    router.get('/papers/count', function(request, response, next) {
+        paperController.countPapers(request, response).catch(function(error) {
+            next(error)
+        })
+    })
 
     // Get a list of all papers.
     router.get('/papers', function(request, response, next) {

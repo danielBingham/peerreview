@@ -48,7 +48,16 @@ export const papersSlice = createSlice({
          *
          * @type {object[]}
          */
-        list: []
+        list: [],
+
+        /**
+         * An object holding counts for the current list.
+         */
+        counts: { 
+            count: 0,
+            pageSize: 0,
+            numberOfPages: 0
+        }
     },
     reducers: {
 
@@ -138,6 +147,10 @@ export const papersSlice = createSlice({
             state.list = []
         },
 
+        setCounts: function(state, action) {
+            state.counts = action.payload
+        },
+
         // ========== Request Tracking Methods =============
 
         makeRequest: makeTrackedRequest, 
@@ -165,6 +178,83 @@ const getRequestFromCache = function(method, endpoint) {
         return null
     }
 }
+
+/**
+ * GET /papers/count
+ *
+ * Get all papers in the database.  Populates state.papers.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const countPapers = function(params, replaceList) {
+    return function(dispatch, getState) {
+        // Cleanup dead requests before making a new one.
+        dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
+
+        const queryString = new URLSearchParams()
+        for ( const key in params ) {
+            if ( Array.isArray(params[key]) ) {
+                for ( const value of params[key] ) {
+                    queryString.append(key+'[]', value)
+                }
+            } else {
+                queryString.append(key, params[key])
+            }
+        }
+
+        const endpoint = '/papers/count' + ( params ? '?' + queryString.toString() : '')
+
+        const request = dispatch(getRequestFromCache('GET', endpoint))
+        if ( request ) {
+            console.log('Got request from cache: ')
+            console.log(request)
+            dispatch(papersSlice.actions.setCounts(request.result))
+            return request.requestId
+        }
+
+
+        const requestId = uuidv4() 
+        let payload = {
+            requestId: requestId
+        }
+
+        dispatch(papersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            payload.status = response.status
+            if ( response.ok ) {
+                return response.json()
+            } else {
+                return Promise.reject(new Error('Request failed with status: ' + response.status))
+            }
+        }).then(function(counts) {
+            console.log('Got Counts: ')
+            console.log(counts)
+            dispatch(papersSlice.actions.setCounts(counts))
+
+            payload.result = counts 
+            dispatch(papersSlice.actions.completeRequest(payload))
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(papersSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
 
 /**
  * GET /papers
@@ -201,6 +291,10 @@ export const getPapers = function(params, replaceList) {
 
                 if ( request.result && request.result.length > 0) {
                     const state = getState()
+
+                    // Update the entries in the list from the dictionary,
+                    // because the papers in the dictionary are going to be the
+                    // most up to date.
                     const list = [ ...request.result ]
                     for(const [index, paper] of list.entries()) {
                         if ( state.papers.dictionary[paper.id] ) {

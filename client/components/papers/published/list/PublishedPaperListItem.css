@@ -3,8 +3,7 @@
     grid-template-columns: 50px 50px auto;
     grid-template-rows: auto;
     margin: 0px auto;
-    border-top: thin solid #ddd;
-    border-bottom: thin solid #ddd;
+    border-bottom: thin solid #bbb;
 }
 .published-paper-list-item .wrapper {
     display: block; 

@@ -10,7 +10,7 @@ const UserProfilePage = function(props) {
     return (
         <div id="user-profile-page" className="page">
             <UserView id={id} />
-            <PublishedPaperList query={ { authorId: id } } />
+            <PublishedPaperList authorId={ id }  />
         </div>
     )
 }

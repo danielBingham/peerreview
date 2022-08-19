@@ -130,8 +130,8 @@ const ReviewListView = function(props) {
         threadWrapper = (<div className="threads-wrapper">{threadViews}</div>)
     }
 
-    const reviewsSelected = threads ? '' : 'selected'
-    const allSelected = threads ? 'selected' : ''
+    const reviewsSelected = searchParams.get('review') != 'all' ? 'selected' : ''
+    const allSelected = searchParams.get('review') == 'all' ? 'selected' : ''
     return (
         <>
             <div className="review-list-header">

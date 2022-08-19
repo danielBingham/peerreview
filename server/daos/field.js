@@ -71,6 +71,7 @@ module.exports = class FieldDAO {
                     LEFT OUTER JOIN field_relationships child_connection on child_connection.parent_id = fields.id
                     LEFT OUTER JOIN fields children on children.id = child_connection.child_id
                 ${where} 
+                ORDER BY fields.name asc
         `
 
         const results = await this.database.query(sql, params)

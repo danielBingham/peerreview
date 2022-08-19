@@ -2,13 +2,13 @@
     width: 100%;
     margin: 0 auto;
     background-color: white;
-    border: thin solid #ddd;
+    border: thin solid #bbb;
 }
 .draft-paper-list .header {
     display: grid;
     grid-template-columns: 1fr, 1fr;
     grid-template-rows: auto;
-    border-bottom: thin solid #ddd;
+    border-bottom: thin solid #bbb;
     padding: 10px 20px;
 }
 .draft-paper-list .header h2 {

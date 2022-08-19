@@ -2,10 +2,13 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 
-import { clearList, getPapers, cleanupRequest } from '/state/papers'
+import isEqual from 'lodash.isequal'
+
+import { clearList, countPapers, getPapers, cleanupRequest } from '/state/papers'
 import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
 
 import Spinner from '/components/Spinner'
+import PaginationControls from '/components/PaginationControls'
 
 import PublishedPaperListItem from './PublishedPaperListItem'
 
@@ -31,6 +34,15 @@ const PublishedPaperList = function(props) {
         }
     })
 
+    const [countRequestId, setCountRequestId ] = useState(null)
+    const countRequest = useSelector(function(state) {
+        if (countRequestId) {
+            return state.papers.requests[countRequestId]
+        } else {
+            null
+        }
+    })
+
     const [responseRequestId, setResponseRequestId ] = useState(null)
     const responseRequest = useSelector(function(state) {
         if (responseRequestId) {
@@ -47,6 +59,10 @@ const PublishedPaperList = function(props) {
         return state.papers.list
     })
 
+    const counts = useSelector(function(state) {
+        return state.papers.counts 
+    })
+
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
@@ -56,34 +72,74 @@ const PublishedPaperList = function(props) {
         setSearchParams(searchParams)
     }
 
-    const queryForPapers = function(sortBy) {
+
+    const queryForPapers = function({searchString, sortBy, page}) {
+        let newQuery = false
+
         let query = {}
         if ( props.query ) {
             query = {
                 ...props.query
             }
         }
+
+        if ( searchString ) {
+            query.searchString = searchString
+        }
+
+        if ( props.authorId ) {
+            query.authorId = props.authorId
+        }
+
         query.isDraft = false
+
         if ( ! sortBy ) {
             query.sort = 'newest'
         } else {
             query.sort = sortBy
         }
 
+        if ( ! page ) {
+            query.page = 1
+        } else {
+            query.page = page
+        }
+
+        setCountRequestId(dispatch(countPapers(query, true)))
         setRequestId(dispatch(getPapers(query, true)))
         setResponseRequestId(dispatch(countResponses()))
     }
 
     useEffect(function() {
-        queryForPapers(searchParams.get('sort'))
-    }, [ props.query, searchParams ])
+        const params = {
+            searchString: searchParams.get('q'),
+            sortBy: searchParams.get('sort'),
+            page: searchParams.get('page')
+        }
+        queryForPapers(params)
+    }, [ searchParams ])
 
 
     useEffect(function() {
         if ( requestId && ! request ) {
-            queryForPapers()
+            const params = {
+                searchString: searchParams.get('q'),
+                sortBy: searchParams.get('sort'),
+                page: searchParams.get('page')
+            }
+            queryForPapers(params)
         }
     }, [ request ])
+
+    // Cleanup our request.
+    useEffect(function() {
+        return function cleanup() {
+            if ( countRequestId ) {
+                dispatch(cleanupRequest({requestId: countRequestId}))
+            }
+        }
+    }, [ countRequestId ])
+
 
     // Cleanup our request.
     useEffect(function() {
@@ -122,6 +178,12 @@ const PublishedPaperList = function(props) {
         error = (<div className="error">Something went wrong with our attempt to retreive the paper list: { request.error }.</div>)
     }
 
+    const newestParams = new URLSearchParams(searchParams.toString())
+    newestParams.set('sort', 'newest')
+
+    const activeParams = new URLSearchParams(searchParams.toString())
+    activeParams.set('sort', 'active')
+
     const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
     return (
         <section className="published-paper-list">
@@ -129,8 +191,12 @@ const PublishedPaperList = function(props) {
                 <h2>Published Papers</h2>
                 <div className="controls">
                     <div className="sort">
-                        <a href="" onClick={(e) => { e.preventDefault(); setSort('newest')}} className={( sort == 'newest' ? 'selected' : '' )} >Newest</a>
-                        <a href="" onClick={(e) => { e.preventDefault(); setSort('active')}} className={( sort == 'active' ? 'selected' : '' )} >Active</a>
+                        <a href={`?${newestParams.toString()}`} 
+                            onClick={(e) => { e.preventDefault(); setSort('newest')}} 
+                            className={( sort == 'newest' ? 'selected' : '' )} >Newest</a>
+                        <a href={`?${activeParams.toString()}`} 
+                            onClick={(e) => { e.preventDefault(); setSort('active')}} 
+                            className={( sort == 'active' ? 'selected' : '' )} >Active</a>
                     </div>
                 </div>
             </div>
@@ -138,6 +204,7 @@ const PublishedPaperList = function(props) {
                 {error}
                 {content}
             </div>
+            <PaginationControls />
         </section>
     )
 }

@@ -2,8 +2,8 @@
     display: grid;
     grid-template-columns: 300px auto;
     padding: 20px;
-    border-bottom: thin solid #ddd;
-    border-top: thin solid #ddd;
+    border-bottom: thin solid #bbb;
+    border-top: thin solid #bbb;
 }
 .paper-response-view .response-author {
     grid-column: 1/2;

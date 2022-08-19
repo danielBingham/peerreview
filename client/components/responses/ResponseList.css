@@ -5,7 +5,7 @@
 .paper-response-list .header {
     display: grid;
     grid-template-columns: auto 450px;
-    border-bottom: thin solid #ddd;
+    border-bottom: thin solid #bbb;
 }
 .paper-response-list .header h2 {
     grid-column: 1 / 2;
@@ -19,4 +19,8 @@
     display: inline-block;
     width: 150px;
 }
-
+.paper-response-list .no-content {
+    margin: 20px auto;
+    padding: 20px;
+    text-align: center;
+}

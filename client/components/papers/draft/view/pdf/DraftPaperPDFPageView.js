@@ -191,7 +191,7 @@ const DraftPaperPDFPageView = function(props) {
                 canvasRef={canvasRef}
                 pageNumber={props.pageNumber} 
                 loading={<Spinner local={true} />} 
-                width={780} 
+                width={800} 
                 onClick={(e) => handleClick(e, props.pageNumber)}
                 onLoadSuccess={(page) => {
                     setWidth(page.width)

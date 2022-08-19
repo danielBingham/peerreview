@@ -12,6 +12,7 @@ const ControllerError = require('../errors/ControllerError')
 const DAOError = require('../errors/DAOError')
 
 
+
 /**
  *
  */
@@ -24,6 +25,228 @@ module.exports = class PaperController {
         this.fieldDAO = new FieldDAO(database)
     }
 
+    /**
+     * Takes a query object generated from the query string and creates an SQL
+     * `WHERE` clause, `ORDER` clause, and parameters array.  Also handle
+     * pagination.
+     *
+     * @param {Object}  query    The query object we get from the query string.
+     * @param {boolean} query.isDraft   (Optional) A boolean indicating whether
+     * we're selecting drafts or published papers.
+     * @param {integer} query.authorId  (Optional) The id of an author who's papers
+     * we wish to query for.
+     * @param {integer[]} query.fields  (Optional) An array of fields we want to
+     * restrict the paper query to.
+     * @param {integer[]} query.excludeFields   (Optional) An array of fields we
+     * want to exclude from the query.
+     * @param {string}  query.searchString  (Optional) A string of text we want to
+     * search in paper bodies and titles for.
+     * @param {string}  query.sort  (Optional) The sort we want to apply to our query.
+     * @param {integer} query.page  (Optional) The page we wish to return.
+     * @param {Object} options  (Optional) An optional options object with
+     * settings to tweak our parsing.
+     * @param {boolean} options.ignoreOrder (Optional) Ignore the order clause.
+     *
+     * @return {Object} Returns an object with the following structure:
+     * ```
+     * { 
+     *  where: '', // The WHERE clause
+     *  order: '', // the ORDER clause
+     *  params: [], // An array of paramters matching the `$N` parameterization
+     *  // markers in the where and order clauses.
+     *  }
+     */
+    async parseQuery(query, options) {
+        options =  options || {
+            ignoreOrder: false,
+            ignorePage: false
+        }
+
+        const result = {
+            where: '',
+            params: [],
+            order: '',
+            emptyResult: false
+        }
+
+        let count = 0
+        let and = ''
+
+        // Add `is_draft` to our query to determine whether we're getting
+        // drafts or published papers.
+        //
+        // Adds a single boolean check against `papers.is_draft`
+        if ( query.isDraft ) {
+            count += 1
+            and = ( count > 1 ? ' AND ' : '' )
+            result.where += `${and} papers.is_draft=$${count}`
+            result.params.push(query.isDraft)
+        }
+
+
+        // Query for papers by a certain author.  Currently we're only taking a
+        // single integer for `authorId`, so we can only query for a single
+        // author in each query.
+        //
+        // Generates an array of paperIds and compares `papers.id` against the
+        // array.
+        if ( query.authorId ) {
+            const results = await this.database.query('SELECT paper_id from paper_authors WHERE user_id=$1', [ query.authorId ])
+            if ( results.rows.length > 0) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                result.where += `${and} papers.id = ANY($${count}::bigint[])`
+
+                const paper_ids = []
+                for(let row of results.rows) {
+                    paper_ids.push(row.paper_id)
+                }
+                result.params.push(paper_ids)
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
+
+
+        // Query for papers tagged with certain fields and their children.
+        // These are the fields to limit the query to, in other words a paper
+        // will only be included in the query if it is tagged with one of these
+        // fields (or its children).
+        //
+        // Generates an array of paperIds and compares `papers.id` against the
+        // array.
+        if ( query.fields && query.fields.length > 0) {
+            const fieldIds = await this.fieldDAO.selectFieldChildren(query.fields)
+            const results = await this.database.query(`SELECT paper_id from paper_fields WHERE field_id = ANY ($1::bigint[])`, [ fieldIds])
+            if ( results.rows.length > 0) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                result.where += `${and} papers.id = ANY($${count}::int[])`
+
+                const paper_ids = []
+                for(let row of results.rows) {
+                    paper_ids.push(row.paper_id)
+                }
+                const uniquePaperIds = [ ...new Set(paper_ids) ] 
+                result.params.push(uniquePaperIds)
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
+
+        // Exclude any papers tagged with these fields or their children from
+        // the search.
+        //
+        // Generates an array of paperIds and compares `papers.id` against the
+        // array.
+        if ( query.excludeFields && query.excludeFields.length > 0) {
+            const fieldIds = await this.fieldDAO.selectFieldChildren(query.excludeFields)
+            const results = await this.database.query(`SELECT paper_id from paper_fields WHERE field_id = ANY ($1::bigint[])`, [ fieldIds])
+            if ( results.rows.length > 0) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                result.where += `${and} papers.id != ALL($${count}::bigint[])`
+
+                const paper_ids = []
+                for(let row of results.rows) {
+                    paper_ids.push(row.paper_id)
+                }
+                const uniquePaperIds = [ ...new Set(paper_ids) ]
+                result.params.push(uniquePaperIds)
+            } 
+        }
+
+        // Search the content of the paper for a particular string.
+        //
+        // Generates an array of paperIds and compares `papers.id` against the
+        // array.
+        if ( query.searchString && query.searchString.length > 0) {
+            const results = await this.database.query(`select paper_id from paper_versions WHERE searchable_content @@ websearch_to_tsquery('english', $1) AND is_published=true`, [ query.searchString ])
+            if ( results.rows.length > 0 ) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+
+                const paperIds = results.rows.map((r) => r.paper_id)
+                result.where += `${and} papers.id = ANY($${count}::int[])`
+                result.order += `array_position($${count}::bigint[], papers.id)`
+                result.params.push(paperIds)
+
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
+
+
+        // Generate an `ORDER` clause.  
+        //
+        // If `options.ignoreOrder` then we skip this step.
+        //
+        // TECHDEBT In the case of 'active' ordering, we need to pass it
+        // through to the DAO, because that requires additional joins.
+        if ( query.sort && ! options.ignoreOrder ) {
+            if ( query.sort == 'newest') {
+                result.order = 'papers.created_date desc'
+            } else if ( query.sort == 'active' ) {
+                // TECHDEBT -- Special Snowflake: We need to do a little more
+                // work for this one, so we handle it inside `papersDAO.selectPapers`.
+                result.order = 'active'
+            } else {
+                // Default ordering is by newest.
+                result.order = 'papers.created_date desc'
+            }
+        }
+
+        // Handle paging.
+        //
+        // Generates an array of paperIds representing the papers that should
+        // appear on the current page and compares `papers.id` to it.
+        if ( query.page && ! options.ignorePage ) {
+            const where = ( result.where.length > 0 ? `WHERE ${result.where}` : '')
+            const paperIds = await this.paperDAO.getPage(where, result.params, result.order, query.page)
+            if ( paperIds.length > 0 ) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '')
+
+                result.where += `${and} papers.id = ANY($${count}::int[])`
+                result.params.push(paperIds)
+            } else {
+                result.emptyResult = true
+                return result 
+            }
+        }
+
+        // If we do have a where clause at this point, put 'WHERE' where 
+        if ( result.where.length > 0) {
+            result.where = `WHERE ${result.where}` 
+        }
+
+
+        return result
+    }
+
+    /**
+     * GET /papers/count
+     *
+     * Return an object with counts of papers, pages, and page size.
+     */
+    async countPapers(request, response) {
+        const { where, params, emptyResult } = await this.parseQuery(request.query, { ignoreOrder: true, ignorePage: true })
+
+        if ( emptyResult ) {
+            return response.status(200).json({
+                count: 0,
+                pageSize: 0,
+                numberOfPages: 0
+            })
+        }
+
+        const countResult = await this.paperDAO.countPapers(where, params)
+        console.log(countResult)
+        return response.status(200).json(countResult)
+    }
 
     /**
      * GET /papers
@@ -31,106 +254,12 @@ module.exports = class PaperController {
      * Return a JSON array of all papers in the database.
      */
     async getPapers(request, response) {
-        let where = 'WHERE'
-        const params = []
-        let order = ''
-        let count = 0
-        let and = ''
+        const { where, params, order, emptyResult } = await this.parseQuery(request.query)
 
-        // Query based on isDraft 
-        if ( request.query.isDraft ) {
-            count += 1
-            and = ( count > 1 ? ' AND ' : '' )
-            where += `${and} papers.is_draft=$${count}`
-            params.push(request.query.isDraft)
+        if ( emptyResult ) {
+            return response.status(200).json([])
         }
 
-        // Query for papers by a certain author (or authors) 
-        if ( request.query.authorId ) {
-            const results = await this.database.query('SELECT paper_id from paper_authors where user_id=$1', [ request.query.authorId ])
-            if ( results.rows.length > 0) {
-                count += 1
-                and = ( count > 1 ? ' AND ' : '' )
-                where += `${and} papers.id = ANY($${count}::bigint[])`
-
-                const paper_ids = []
-                for(let row of results.rows) {
-                    paper_ids.push(row.paper_id)
-                }
-                params.push(paper_ids)
-            } else {
-                return response.status(200).json([])
-            }
-        }
-
-        // Query for papers tagged with certain fields and their children 
-        if ( request.query.fields && request.query.fields.length > 0) {
-            const fieldIds = await this.fieldDAO.selectFieldChildren(request.query.fields)
-            const results = await this.database.query(`SELECT paper_id from paper_fields where field_id = ANY ($1::bigint[])`, [ fieldIds])
-            if ( results.rows.length > 0) {
-                count += 1
-                and = ( count > 1 ? ' AND ' : '' )
-                where += `${and} papers.id = ANY($${count}::int[])`
-
-                const paper_ids = []
-                for(let row of results.rows) {
-                    paper_ids.push(row.paper_id)
-                }
-                const uniquePaperIds = [ ...new Set(paper_ids) ] 
-                params.push(uniquePaperIds)
-            } else {
-                return response.status(200).json([])
-            }
-        }
-
-        if ( request.query.excludeFields && request.query.excludeFields.length > 0) {
-            const fieldIds = await this.fieldDAO.selectFieldChildren(request.query.excludeFields)
-            const results = await this.database.query(`SELECT paper_id from paper_fields where field_id = ANY ($1::bigint[])`, [ fieldIds])
-            if ( results.rows.length > 0) {
-                count += 1
-                and = ( count > 1 ? ' AND ' : '' )
-                where += `${and} papers.id != ALL($${count}::bigint[])`
-
-                const paper_ids = []
-                for(let row of results.rows) {
-                    paper_ids.push(row.paper_id)
-                }
-                const uniquePaperIds = [ ...new Set(paper_ids) ]
-                params.push(uniquePaperIds)
-            } 
-        }
-
-        if ( request.query.searchString && request.query.searchString.length > 0) {
-            const results = await this.database.query(`select paper_id from paper_versions where searchable_content @@ websearch_to_tsquery('english', $1) AND is_published=true`, [ request.query.searchString ])
-            if ( results.rows.length > 0 ) {
-                count += 1
-                and = ( count > 1 ? ' AND ' : '' )
-
-                const paperIds = results.rows.map((r) => r.paper_id)
-                where += `${and} papers.id = ANY($${count}::int[])`
-                order += `array_position($${count}::bigint[], papers.id)`
-                params.push(paperIds)
-
-            } else {
-                return response.status(200).json([])
-            }
-
-        }
-
-        if ( request.query.sort ) {
-            if ( request.query.sort == 'newest') {
-                order = 'papers.created_date desc'
-            } else if ( request.query.sort == 'active' ) {
-                // TECHDEBT -- Special Snowflake: We need to do a little more
-                // work for this one, so we handle it inside `papersDAO.selectPapers`.
-                order = 'active'
-            }
-        }
-
-        // We don't actually have any query parameters.
-        if ( count < 1 ) {
-            where = ''
-        }
         const papers = await this.paperDAO.selectPapers(where, params, order)
         return response.status(200).json(papers)
     }
@@ -336,13 +465,6 @@ module.exports = class PaperController {
         sql += `updated_date = now() WHERE paper_id = $${count} AND version = $${count+1}`
 
         params.push(paper_version.paperId, paper_version.version )
-
-        console.log('paper_version')
-        console.log(paper_version)
-        console.log('sql')
-        console.log(sql)
-        console.log('params')
-        console.log(params)
 
         try {
             const results = await this.database.query(sql, params)

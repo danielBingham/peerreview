@@ -34,7 +34,7 @@
 .pdf-viewer .controls .control input {
     width: 50px;
     padding: 5px;
-    border: thin solid #ddd;
+    border: thin solid #bbb;
 }
 .pdf-viewer .pdf-viewer-document {
     min-width: 900px;
@@ -45,5 +45,5 @@
     min-height: 1000px;
 }
 .pdf-viewer canvas {
-    border: thin solid #ddd;
+    border: thin solid #bbb;
 }

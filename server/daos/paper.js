@@ -9,6 +9,8 @@ const UserDAO = require('./user')
 const FileDAO = require('./files')
 const S3FileService = require('../services/S3FileService')
 
+const PAGE_SIZE = 10 
+
 module.exports = class PaperDAO {
 
     constructor(database, config) {
@@ -33,8 +35,6 @@ module.exports = class PaperDAO {
         const papers = {}
         const list = []
 
-        console.log('Building the result from: ')
-        console.log(rows)
         for(const row of rows) {
             const paper = {
                 id: row.paper_id,
@@ -100,17 +100,20 @@ module.exports = class PaperDAO {
             if ( paper_vote.paperId && ! papers[paper.id].votes.find((v) => v.paperId == paper_vote.paperId && v.userId == paper_vote.userId) ) {
                 papers[paper.id].votes.push(paper_vote)
             }
-            console.log('Processed row: ')
-            console.log(row)
-            console.log('object: ')
-            console.log(papers)
-            console.log('list: ')
-            console.log(list)
         }
 
         return list 
     }
 
+    /**
+     * Select papers from the database, along with all of the data necessary to
+     * populate the `paper` object.  Uses a large join to pull all the
+     * necessary data from across multiple tables.
+     *
+     * @param {string}  where   (Optional) An SQL where condition, including the 'WHERE'.
+     * @param {any[]}   params  (Optional) An array of parameters, matching the `where` conditional.
+     * @param {string}  order   (Optional) An SQL order phrase.  If "active", a proper order phrase will be generated.
+     */
     async selectPapers(where, params, order) {
         where = (where ? where : '')
         params = (params ? params : [])
@@ -157,7 +160,6 @@ module.exports = class PaperDAO {
                 ${where} 
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
         `
-        console.log(sql)
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length == 0 ) {
@@ -175,6 +177,94 @@ module.exports = class PaperDAO {
         }
     }
 
+    /**
+     *
+     */
+    async getPage(where, params, order, page) {
+        where = (where && where.length ? where : '')
+        params = (params && params.length ? [...params] : [])
+        order = (order && order.length ? order : 'papers.created_date desc')  
+
+        // TECHDEBT - Definitely not the ideal way to handle this.  But so it goes.
+        let activeOrderJoins = ''
+        let activeOrderFields = ''
+        if ( order == 'active' ) {
+            activeOrderJoins = `
+                LEFT OUTER JOIN responses ON responses.paper_id = papers.id
+            `
+            activeOrderFields = ', greatest(paper_votes.updated_date, responses.updated_date, papers.updated_date) as activity_date' 
+            order = 'greatest(paper_votes.updated_date, responses.updated_date, papers.updated_date) DESC NULLS LAST'
+        } 
+
+        params.push(PAGE_SIZE)
+        params.push((page-1)*PAGE_SIZE)
+        const count = params.length
+
+        const sql = `
+               SELECT 
+                    DISTINCT(papers.id) as paper_id, papers.created_date as "paper_createdDate"${activeOrderFields}
+                FROM papers 
+                    LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
+                    LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
+                    LEFT OUTER JOIN files on paper_versions.file_id = files.id
+                    LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
+                    LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
+                    LEFT OUTER JOIN paper_votes ON paper_votes.paper_id = papers.id
+                    ${activeOrderJoins}
+                ${where} 
+                ORDER BY ${order}
+                LIMIT $${count-1}
+                OFFSET $${count}
+        `
+        const results = await this.database.query(sql, params)
+
+        if ( results.rows.length <= 0 ) {
+            return []
+        }
+
+        return results.rows.map((r) => r.paper_id)
+    }
+
+    /**
+     *
+     */
+    async countPapers(where, params) {
+        console.log(`Counting where ${where}.`)
+        console.log(params)
+        where = (where ? where : '')
+        params = (params ? params : [])
+
+        const sql = `
+               SELECT 
+                    COUNT(DISTINCT(papers.id)) as paper_count
+                FROM papers 
+                    LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
+                    LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
+                    LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
+                ${where} 
+        `
+        const results = await this.database.query(sql, params)
+        console.log(results)
+
+        if ( results.rows.length <= 0 ) {
+            return { 
+                count: 0,
+                pageSize: PAGE_SIZE,
+                numberOfPages: 0
+
+            }
+        }
+
+        return { 
+            count: results.rows[0].paper_count,
+            pageSize: PAGE_SIZE,
+            numberOfPages: parseInt(results.rows[0].paper_count / PAGE_SIZE)+( results.rows[0].paper_count % PAGE_SIZE > 0 ? 1 : 0)
+        }
+    }
+
+    /**
+     *
+     */
     async insertPaper(paper) {
         const results = await this.database.query(`
                 INSERT INTO papers (title, is_draft, created_date, updated_date) 

@@ -9,7 +9,6 @@ import './PaperSearchPage.css'
 
 const PaperSearchPage = function(props) {
     const [ query, setQuery ] = useState({})
-    const [ searchParams, setSearchParams ] = useSearchParams()
 
     const fieldSettings = useSelector(function(state) {
         if ( state.authentication.settings ) {
@@ -18,14 +17,6 @@ const PaperSearchPage = function(props) {
             return []
         }
     })
-
-    useLayoutEffect(function() {
-        if ( searchParams && searchParams.get('q') ) {
-            const newQuery = { ...query }
-            newQuery.searchString = searchParams.get('q')
-            setQuery(newQuery)
-        }
-    }, [searchParams])
 
     useLayoutEffect(function() {
         if (fieldSettings && fieldSettings.length > 0) {

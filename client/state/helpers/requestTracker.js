@@ -65,10 +65,8 @@ export const cleanupRequest = function(state, action) {
     }
 
     if ( isStale(tracker, cacheTTL) ) {
-        console.log(`cleanupRequest(${tracker.method}, ${tracker.endpoint}) - Deleting request: ${action.payload.requestId}.`)
         delete state.requests[action.payload.requestId]
     } else {
-        console.log(`cleanupRequest(${tracker.method}, ${tracker.endpoint}) - Marking request cleaned: ${action.payload.requestId}.`)
         tracker.cleaned = true
     }
 }
@@ -80,7 +78,6 @@ export const garbageCollectRequests = function(state, action) {
         // cleaned.  This prevents us from collecting a request that's still in
         // use because it's component hasn't unmounted yet.
         if ( state.requests[requestId].cleaned && isStale(state.requests[requestId], cacheTTL)) {
-            console.log(`garbatecollectRequests() - Deleting request: ${requestId} (${state.requests[requestId].method}, ${state.requests[requestId].endpoint}).`)
             delete state.requests[requestId]
         }
     }

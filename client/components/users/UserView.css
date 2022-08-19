@@ -1,7 +1,7 @@
 .user-view .header {
     display: grid;
     grid-template-columns: auto auto;
-    border-bottom: thin solid #ddd;
+    border-bottom: thin solid #bbb;
     margin-bottom: 20px;
 }
 .user-view .header h1 {
@@ -26,7 +26,7 @@
     margin: 0 20px 20px 0;
     width: 150px;
     height: 150px;
-    border: thin solid #ddd;
+    border: thin solid #bbb;
     background-color: #eee;
 }
 .user-view .details {
@@ -39,7 +39,7 @@
     clear: both;
     display: grid;
     grid-template-columns: auto 400px;
-    border-bottom: thin solid #ddd;
+    border-bottom: thin solid #bbb;
     margin-top: 30px;
 }
 .user-view .fields-header h2, .user-view .papers-header h2 {

@@ -10,7 +10,7 @@
 }
 .user-profile-edit-form .form-field input {
     padding: 5px;
-    border: thin solid #ddd;
+    border: thin solid #bbb;
     width: 900px;
 }
 .user-profile-edit-form .form-text {
@@ -23,7 +23,7 @@
 .user-profile-edit-form .form-text textarea {
     width: 900px;
     height: 200px;
-    border: thin solid #ddd
+    border: thin solid #bbb;
 }
 .user-profile-edit-form .submit {
     text-align: center;
