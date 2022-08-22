@@ -9,7 +9,7 @@ const UserDAO = require('./user')
 const FileDAO = require('./files')
 const S3FileService = require('../services/S3FileService')
 
-const PAGE_SIZE = 10 
+const PAGE_SIZE = 2 
 
 module.exports = class PaperDAO {
 
@@ -120,11 +120,18 @@ module.exports = class PaperDAO {
 
         // TECHDEBT - Definitely not the ideal way to handle this.  But so it goes.
         let activeOrderJoins = ''
-        if ( order == 'active' ) {
+        if ( order == 'published-active' ) {
             activeOrderJoins = `
                 LEFT OUTER JOIN responses ON responses.paper_id = papers.id
             `
             order = 'greatest(paper_votes.updated_date, responses.updated_date, papers.updated_date) DESC NULLS LAST, '
+        } else if ( order == 'draft-active' ) {
+            activeOrderJoins = `
+                LEFT OUTER JOIN reviews ON reviews.paper_id = papers.id AND reviews.status != 'in-progress'
+                LEFT OUTER JOIN review_comment_threads ON review_comment_threads.review_id = reviews.id
+                LEFT OUTER JOIN review_comments ON review_comments.thread_id = review_comment_threads.id AND review_comments.status != 'in-progress'
+            `
+            order = 'greatest(paper_versions.updated_date, reviews.updated_date, review_comments.updated_date) DESC NULLS LAST, '
         } else {
             order = ( order ? order+', ' : '')
         }
@@ -160,7 +167,11 @@ module.exports = class PaperDAO {
                 ${where} 
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
         `
+        console.log('SelectPapers')
+        console.log(sql)
         const results = await this.database.query(sql, params)
+        console.log('results')
+        console.log(results.rows)
 
         if ( results.rows.length == 0 ) {
             return [] 
@@ -188,21 +199,29 @@ module.exports = class PaperDAO {
         // TECHDEBT - Definitely not the ideal way to handle this.  But so it goes.
         let activeOrderJoins = ''
         let activeOrderFields = ''
-        if ( order == 'active' ) {
+        if ( order == 'published-active' ) {
             activeOrderJoins = `
                 LEFT OUTER JOIN responses ON responses.paper_id = papers.id
             `
-            activeOrderFields = ', greatest(paper_votes.updated_date, responses.updated_date, papers.updated_date) as activity_date' 
-            order = 'greatest(paper_votes.updated_date, responses.updated_date, papers.updated_date) DESC NULLS LAST'
-        } 
+            activeOrderFields = ', greatest(max(paper_votes.updated_date), max(responses.updated_date), max(papers.updated_date)) as activity_date' 
+            order = 'activity_date DESC NULLS LAST'
+        } else if ( order == 'draft-active' ) {
+            activeOrderJoins = `
+                LEFT OUTER JOIN reviews ON reviews.paper_id = papers.id AND reviews.status != 'in-progress'
+                LEFT OUTER JOIN review_comment_threads ON review_comment_threads.review_id = reviews.id
+                LEFT OUTER JOIN review_comments ON review_comments.thread_id = review_comment_threads.id AND review_comments.status != 'in-progress'
+            `
+            activeOrderFields = ', greatest(max(paper_versions.updated_date), max(reviews.updated_date), max(review_comments.updated_date)) as activity_date'
+            order = 'activity_date DESC NULLS LAST, papers.created_date desc'
+        }
 
         params.push(PAGE_SIZE)
         params.push((page-1)*PAGE_SIZE)
         const count = params.length
 
         const sql = `
-               SELECT 
-                    DISTINCT(papers.id) as paper_id, papers.created_date as "paper_createdDate"${activeOrderFields}
+               SELECT DISTINCT
+                    papers.id as paper_id, papers.created_date as "paper_createdDate"${activeOrderFields}
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
                     LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
@@ -212,11 +231,17 @@ module.exports = class PaperDAO {
                     LEFT OUTER JOIN paper_votes ON paper_votes.paper_id = papers.id
                     ${activeOrderJoins}
                 ${where} 
+                GROUP BY papers.id
                 ORDER BY ${order}
                 LIMIT $${count-1}
                 OFFSET $${count}
         `
+        console.log('selectPage')
+        console.log(sql)
+        console.log(params)
         const results = await this.database.query(sql, params)
+        console.log('results')
+        console.log(results.rows)
 
         if ( results.rows.length <= 0 ) {
             return []
@@ -229,8 +254,6 @@ module.exports = class PaperDAO {
      *
      */
     async countPapers(where, params) {
-        console.log(`Counting where ${where}.`)
-        console.log(params)
         where = (where ? where : '')
         params = (params ? params : [])
 
@@ -244,7 +267,6 @@ module.exports = class PaperDAO {
                 ${where} 
         `
         const results = await this.database.query(sql, params)
-        console.log(results)
 
         if ( results.rows.length <= 0 ) {
             return { 

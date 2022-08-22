@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, useSearchParams, Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { clearList, getPapers, cleanupRequest } from '/state/papers'
+import { clearList, countPapers, getPapers, cleanupRequest } from '/state/papers'
 import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import Spinner from '/components/Spinner'
+import PaginationControls from '/components/PaginationControls'
 
 import DraftPapersListItemView from './DraftPapersListItemView'
 
@@ -25,6 +25,7 @@ import './DraftPapersListView.css'
  * @param {object} props    Standard react props object - empty.
  */
 const DraftPapersListView = function(props) {
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ======= Request Tracking =====================================
 
@@ -37,10 +38,19 @@ const DraftPapersListView = function(props) {
         }
     })
 
-    const [countRequestId, setCountRequestId] = useState(null)
+    const [countRequestId, setCountRequestId ] = useState(null)
     const countRequest = useSelector(function(state) {
-        if ( countRequestId) {
-            return state.reviews.requests[countRequestId]
+        if (countRequestId) {
+            return state.papers.requests[countRequestId]
+        } else {
+            null
+        }
+    })
+
+    const [countReviewsRequestId, setCountReviewsRequestId] = useState(null)
+    const countReviewsRequest = useSelector(function(state) {
+        if ( countReviewsRequestId) {
+            return state.reviews.requests[countReviewsRequestId]
         } else {
             return null
         }
@@ -51,6 +61,10 @@ const DraftPapersListView = function(props) {
     const paperList = useSelector(function(state) {
         return state.papers.list
     })
+
+    const counts = useSelector(function(state) {
+        return state.papers.counts 
+    })
     
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
@@ -59,17 +73,72 @@ const DraftPapersListView = function(props) {
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
-    const navigate = useNavigate()
 
-    /**
-     * Make the initial request.  Logging out should destroy the tree and
-     * unmount the component, but just in case, re-run the query if the
-     * currentUser changes.
-     */
+    const setSort = function(sortBy) {
+        searchParams.set('sort', sortBy)
+        setSearchParams(searchParams)
+    }
+
+    const queryForPapers = function({searchString, sortBy, page}) {
+        let query = {}
+        if ( props.query ) {
+            query = {
+                ...props.query
+            }
+        }
+
+        if ( searchString ) {
+            query.searchString = searchString
+        }
+
+        if ( props.authorId ) {
+            query.authorId = props.authorId
+        }
+
+        query.isDraft = true 
+
+        if ( ! sortBy ) {
+            query.sort = 'newest'
+        } else {
+            query.sort = sortBy
+        }
+
+        if ( ! page ) {
+            query.page = 1
+        } else {
+            query.page = page
+        }
+
+        setCountRequestId(dispatch(countPapers(query, true)))
+        setRequestId(dispatch(getPapers(query, true)))
+        setCountReviewsRequestId(dispatch(countReviews()))
+    }
+
+    // Our request is dependent on the searchParams, so whenever they change we
+    // need to make a new request.
     useEffect(function() {
-        setRequestId(dispatch(getPapers(props.query, true)))
-        setCountRequestId(dispatch(countReviews()))
-    }, [])
+        const params = {
+            searchString: searchParams.get('q'),
+            sortBy: searchParams.get('sort'),
+            page: searchParams.get('page')
+        }
+        queryForPapers(params)
+    }, [searchParams])
+
+    // Logging out doesn't always unmount the component.  When that happens, we
+    // can end up in a state where we have a requestId, but don't have a
+    // request.  If that happens, we need to make a new request, because we
+    // really don't want to be in that state.
+    useEffect(function() {
+        if ( requestId && ! request ) {
+            const params = {
+                searchString: searchParams.get('q'),
+                sortBy: searchParams.get('sort'),
+                page: searchParams.get('page')
+            }
+            queryForPapers(params)
+        }
+    }, [ request ])
 
     // Cleanup our request.
     useEffect(function() {
@@ -80,13 +149,22 @@ const DraftPapersListView = function(props) {
         }
     }, [ requestId ])
 
+    // Cleanup our request.
     useEffect(function() {
         return function cleanup() {
             if ( countRequestId ) {
-                dispatch(cleanupReviewRequest({ requestId: countRequestId }))
+                dispatch(cleanupRequest({requestId: countRequestId}))
             }
         }
     }, [ countRequestId ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( countReviewsRequestId ) {
+                dispatch(cleanupReviewRequest({ requestId: countReviewsRequestId }))
+            }
+        }
+    }, [ countReviewsRequestId ])
 
     // ====================== Render ==========================================
 
@@ -94,7 +172,7 @@ const DraftPapersListView = function(props) {
     // up rendering a list generated by a different request.
 
     let content = ( <Spinner /> )
-    if ( request && request.state == 'fulfilled' && countRequest && countRequest.state == 'fulfilled') {
+    if ( request && request.state == 'fulfilled' && countReviewsRequest && countReviewsRequest.state == 'fulfilled') {
         content = []
         for (const paper of paperList) {
             content.push(<DraftPapersListItemView paper={paper} key={paper.id} />)
@@ -106,20 +184,34 @@ const DraftPapersListView = function(props) {
     } else if (request && request.state == 'failed') {
         content = ( <div className="error">Attempt to retrieve drafts failed with error: { request.error }.  Please report this as a bug.</div> ) 
     }
+
+    const newestParams = new URLSearchParams(searchParams.toString())
+    newestParams.set('sort', 'newest')
+
+    const activeParams = new URLSearchParams(searchParams.toString())
+    activeParams.set('sort', 'active')
+
+    const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
+
     return (
         <section className="draft-paper-list">
             <div className="header">
                 <h2>Draft Papers</h2>
                 <div className="controls">
                     <div className="sort">
-                        <div>Newest</div>
-                        <div>Active</div>
+                        <a href={`?${newestParams.toString()}`} 
+                            onClick={(e) => { e.preventDefault(); setSort('newest')}} 
+                            className={( sort == 'newest' ? 'selected' : '' )} >Newest</a>
+                        <a href={`?${activeParams.toString()}`} 
+                            onClick={(e) => { e.preventDefault(); setSort('active')}} 
+                            className={( sort == 'active' ? 'selected' : '' )} >Active</a>
                     </div>
                 </div>
             </div>
             <div>
                 { content }
             </div>
+            <PaginationControls />
         </section>
     )
 

@@ -15,6 +15,7 @@ const MainNavigation = function(props) {
     return (
         <div id="main-navigation" className="navigation-block">
             <Link to="/about">about</Link>
+            <a href="https://blog.peer-review.io">blog</a>
             <Link to="/fields">fields</Link>
             <Link to="/users">users</Link>
         </div>

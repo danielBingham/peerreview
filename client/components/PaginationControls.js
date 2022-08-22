@@ -2,6 +2,8 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 
+import './PaginationControls.css'
+
 const PaginationControls = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
 

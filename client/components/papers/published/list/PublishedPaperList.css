@@ -39,12 +39,3 @@
     padding: 20px;
     text-align: center;
 }
-.published-paper-list .page-controls {
-    padding: 20px;
-    text-align: center;
-}
-.published-paper-list .page-controls .control {
-    display: inline-block;
-    margin: 0 5px;
-}
-

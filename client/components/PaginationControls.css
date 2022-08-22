@@ -1,0 +1,8 @@
+.page-controls {
+    padding: 20px;
+    text-align: center;
+}
+.page-controls .control {
+    display: inline-block;
+    margin: 0 5px;
+}

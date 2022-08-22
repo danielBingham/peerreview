@@ -3,6 +3,7 @@ header {
     padding: 10px 50px;
     border-bottom: thin solid #aaa;
     background-color: white;
+    min-width: 1200px;
 }
 
 header #site-title {

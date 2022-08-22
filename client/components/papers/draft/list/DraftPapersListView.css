@@ -22,11 +22,14 @@
 .draft-paper-list .header .controls .sort {
     text-align: right;
 }
-.draft-paper-list .header .controls .sort div {
+.draft-paper-list .header .controls .sort a {
     display: inline-block;
     padding: 5px;
     margin: 0 10px;
 
+}
+.draft-paper-list .header .controls .sort a.selected {
+    text-decoration: underline;
 }
 .draft-paper-list .empty-search {
     padding: 20px;
