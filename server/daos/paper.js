@@ -9,7 +9,7 @@ const UserDAO = require('./user')
 const FileDAO = require('./files')
 const S3FileService = require('../services/S3FileService')
 
-const PAGE_SIZE = 2 
+const PAGE_SIZE = 50 
 
 module.exports = class PaperDAO {
 
