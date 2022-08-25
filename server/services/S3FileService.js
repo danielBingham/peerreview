@@ -42,8 +42,6 @@ module.exports = class S3FileService {
             ACL: 'public-read'
 
         }
-        console.log(`copyFile(${currentPath}, ${newPath})`)
-        console.log(params)
 
         await this.s3Client.send(new CopyObjectCommand(params))
     }
@@ -58,8 +56,6 @@ module.exports = class S3FileService {
             Bucket: this.config.spaces.bucket,
             Key: path
         }
-        console.log(`removeFile(${path})`)
-        console.log(params)
 
         await this.s3Client.send(new DeleteObjectCommand(params))
     }

@@ -75,8 +75,6 @@ const UserSettingsForm = function(props) {
             })
         }
 
-        console.log(newSetting)
-
         setSettingsRequestId(dispatch(putSetting(newSetting)))
     }
 

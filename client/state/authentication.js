@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '../configuration' 
 import logger from '../logger'
 
 import { makeRequest as makeTrackedRequest, 
@@ -66,6 +65,8 @@ export const authenticationSlice = createSlice({
  */
 export const getAuthentication = function() {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(authenticationSlice.actions.garbageCollectRequests())
 
@@ -134,6 +135,8 @@ export const getAuthentication = function() {
  */
 export const postAuthentication = function(email, password) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(authenticationSlice.actions.garbageCollectRequests())
 
@@ -200,6 +203,8 @@ export const postAuthentication = function(email, password) {
  */
 export const patchAuthentication = function(email, password) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(authenticationSlice.actions.garbageCollectRequests())
 
@@ -259,6 +264,8 @@ export const patchAuthentication = function(email, password) {
  */
 export const deleteAuthentication = function() {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(authenticationSlice.actions.garbageCollectRequests())
 
@@ -284,6 +291,66 @@ export const deleteAuthentication = function() {
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(authenticationSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
+
+/**
+ * POST /orcid/authentication
+ *
+ * Attempt to authenticate a user with the backend, starting the user's session on success.
+ *
+ * Makes the request async and returns an id that can be used to track the
+ * request and get the results of a completed request from this state slice.
+ *
+ * @param {string} email - The email of the user we'd like to authenticate.
+ * @param {string} password - Their password.
+ *
+ * @returns {string} A uuid requestId we can use to track this request.
+ */
+export const postOrcidAuthentication = function(code) {
+    return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
+        // Cleanup dead requests before making a new one.
+        dispatch(authenticationSlice.actions.garbageCollectRequests())
+
+        const requestId = uuidv4()
+        const endpoint = '/orcid/authentication'
+
+        let payload = {
+            requestId: requestId
+        }
+
+        dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'POST', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                code: code
+            })
+        }).then(function(response) {
+            payload.status = response.status
+            return response.json()
+        }).then(function(session) {
+            dispatch(authenticationSlice.actions.setCurrentUser(session.user))
+            dispatch(authenticationSlice.actions.setSettings(session.settings))
+            dispatch(addSettingsToDictionary(session.settings))
+
+            payload.result = session 
+            dispatch(authenticationSlice.actions.completeRequest(payload))
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()

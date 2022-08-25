@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '/configuration'
 import logger from '/logger'
 
 import { makeRequest as makeTrackedRequest, 
@@ -89,6 +88,7 @@ export const settingsSlice = createSlice({
  */
 export const getSettings = function(userId) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(settingsSlice.actions.garbageCollectRequests())
 
@@ -146,6 +146,7 @@ export const getSettings = function(userId) {
  */
 export const postSettings = function(setting) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(settingsSlice.actions.garbageCollectRequests())
 
@@ -213,6 +214,7 @@ export const postSettings = function(setting) {
  */
 export const getSetting = function(userId, id) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(settingsSlice.actions.garbageCollectRequests())
 
@@ -269,6 +271,7 @@ export const getSetting = function(userId, id) {
  */
 export const putSetting = function(setting) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(settingsSlice.actions.garbageCollectRequests())
     
@@ -329,6 +332,7 @@ export const putSetting = function(setting) {
  */
 export const patchSetting = function(setting) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(settingsSlice.actions.garbageCollectRequests())
 
@@ -387,6 +391,7 @@ export const patchSetting = function(setting) {
  */
 export const deleteSetting = function(setting) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(settingsSlice.actions.garbageCollectRequests())
 

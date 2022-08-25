@@ -105,7 +105,24 @@ const router = require('./router')(connection, logger, config)
 // Load our router at the ``/api/v0/`` route.  This allows us to version our api. If,
 // in the future, we want to release an updated version of the api, we can load it at
 // ``/api/v1/`` and so on, with out impacting the old versions of the router.
-app.use('/api/0.0.0/', router)
+app.use(config.backend, router)
+
+/**
+ * Send configuration information up to the front-end.  Be *very careful*
+ * about what goes in here.
+ */
+app.get('/config', function(request, response) {
+    response.status(200).json({
+        backend: config.backend, 
+        environment: process.env.NODE_ENV,
+        log_level: config.log_level,
+        orcid: {
+            authorization_host: config.orcid.authorization_host,
+            client_id: config.orcid.client_id,
+            redirect_uri: config.orcid.redirect_uri
+        }
+    })
+})
 
 // Javascript files go to dist.
 app.get(/.*\.(css|js)$/, function(request, response) {

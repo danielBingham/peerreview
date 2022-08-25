@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '../configuration'
 import logger from '../logger'
 
 import { makeRequest as makeTrackedRequest, 
@@ -123,6 +122,8 @@ export const fieldsSlice = createSlice({
  */
 export const getFields = function(params) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(fieldsSlice.actions.garbageCollectRequests())
 
@@ -183,6 +184,8 @@ export const getFields = function(params) {
  */
 export const postFields = function(field) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(fieldsSlice.actions.garbageCollectRequests())
 
@@ -241,6 +244,8 @@ export const postFields = function(field) {
  */
 export const getField = function(id) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(fieldsSlice.actions.garbageCollectRequests())
 
@@ -297,6 +302,8 @@ export const getField = function(id) {
  */
 export const putField = function(field) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(fieldsSlice.actions.garbageCollectRequests())
     
@@ -356,6 +363,8 @@ export const putField = function(field) {
  */
 export const patchField = function(field) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(fieldsSlice.actions.garbageCollectRequests())
 
@@ -413,6 +422,8 @@ export const patchField = function(field) {
  */
 export const deleteField = function(field) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(fieldsSlice.actions.garbageCollectRequests())
 
@@ -453,6 +464,9 @@ export const deleteField = function(field) {
 } 
 
 
-export const { addFieldsToDictionary, addFieldsWithoutRelationshipsToDictionary, appendFieldsToList, updateField, clearList, makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
+export const { 
+    addFieldsToDictionary, addFieldsWithoutRelationshipsToDictionary, 
+    appendFieldsToList, updateField, clearList, 
+    makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
 
 export default fieldsSlice.reducer

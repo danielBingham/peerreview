@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import {
     BrowserRouter as Router,
     Routes,
@@ -8,7 +8,10 @@ import {
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getAuthentication, cleanupRequest } from '/state/authentication'
+import logger from '/logger'
+
+import { getConfiguration, cleanupRequest as cleanupSystemRequest } from '/state/system'
+import { getAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '/state/authentication'
 
 import Header from '/components/header/Header'
 
@@ -17,6 +20,7 @@ import AboutPage from '/pages/AboutPage'
 
 import RegistrationPage from '/pages/authentication/RegistrationPage'
 import LoginPage from '/pages/authentication/LoginPage'
+import OrcidAuthenticationPage from '/pages/authentication/OrcidAuthenticationPage'
 
 import UsersListPage from '/pages/users/UsersListPage'
 import UserProfilePage from '/pages/users/UserProfilePage'
@@ -47,15 +51,26 @@ import './app.css';
  * and all other components.
  */
 const App = function(props) {
+    const [ retries, setRetries ] = useState(0)
 
     // ======= Request Tracking =====================================
-    
-    const [requestId, setRequestId] = useState(null)
-    const request = useSelector(function(state) {
-        if ( ! requestId ) {
+  
+    const [configurationRequestId, setConfigurationRequestId] = useState(null)
+    const configurationRequest = useSelector(function(state) {
+        if ( ! configurationRequestId ) {
             return null
         } else {
-            return state.authentication.requests[requestId]
+            return state.system.requests[configurationRequestId]
+        }
+    })
+    
+    
+    const [authenticationRequestId, setAuthenticationRequestId] = useState(null)
+    const authenticationRequest = useSelector(function(state) {
+        if ( ! authenticationRequestId ) {
+            return null
+        } else {
+            return state.authentication.requests[authenticationRequestId]
         }
     })
 
@@ -65,38 +80,72 @@ const App = function(props) {
         return state.authentication.currentUser
     })
 
+    const configuration = useSelector(function(state) {
+        return state.system.configuration
+    })
+
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
 
-    useLayoutEffect(function() {
-        setRequestId(dispatch(getAuthentication()))
-    }, [ ])
+    useEffect(function() {
+        setConfigurationRequestId(dispatch(getConfiguration()))
+    }, [])
+
+    useEffect(function() {
+        if ( configurationRequest && configurationRequest.state == 'fulfilled') {
+            // Logger is a singleton, this will effect all other imports.
+            logger.setLevel(configuration.log_level)
+            setAuthenticationRequestId(dispatch(getAuthentication()))
+        } else if ( configurationRequest && configurationRequest.state == 'failed') {
+            if ( retries < 5 ) {
+                setConfigurationRequestId(dispatch(getConfiguration()))
+                setRetries(retries+1)
+            }
+        }
+
+        // We logged out, make a new configuration request.
+        if ( configurationRequestId && ! configurationRequest ) {
+            setConfigurationRequestId(dispatch(getConfiguration()))
+        }
+    }, [ configurationRequest ])
 
     useEffect(function() {
         return function cleanup() {
-            if ( requestId ) {
-                dispatch(cleanupRequest({ requestId: requestId }))
+            if ( configurationRequestId ) {
+                dispatch(cleanupSystemRequest({ requestId: configurationRequestId }))
             }
         }
-    }, [ requestId ])
+    }, [ configurationRequestId ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( authenticationRequestId ) {
+                dispatch(cleanupAuthenticationRequest({ requestId: authenticationRequestId }))
+            }
+        }
+    }, [ authenticationRequestId ])
 
     // ======= Render ===============================================
 
-    if ( ! requestId ) {
+    if ( ! configurationRequestId || ! authenticationRequestId ) {
         return (
             <Spinner />
         )
-    } else if (request && request.state != 'fulfilled') {
-        if ( request.state == 'pending' ) {
-            return (
-                <Spinner />
-            )
-        } else if (request.state == 'failed') {
-            return (
-                <div className="error">Authentication request failed.  Report this as a bug and try reloading.</div>
-            )
+    } else if ( (configurationRequest && configurationRequest.state != 'fulfilled')
+        && (authenticationRequest && authenticationRequest.state != 'fulfilled')) 
+    {
+        if ( configurationRequest.state == 'failed' && retries < 5) {
+            return (<div className="error">Attempt to retrieve configuration from the backend failed, retrying...</div>)
+        } else if (configurationRequest.state == 'failed' && retries >= 5 ) {
+            return (<div className="error">Failed to connect to the backend.  Try refreshing.</div>)
+        } else if ( authenticationRequest.state == 'failed' ) {
+            return (<div className="error">Authentication request failed with error: {authenticationRequest.error}.</div>)
         }
+
+        return (
+            <Spinner />
+        )
     } else {   
         /**
          * Render the header, navigation.
@@ -112,6 +161,7 @@ const App = function(props) {
                         { /* ========== Authentication Controls =============== */ }
                         <Route path="/register" element={ <RegistrationPage /> } />
                         <Route path="/login" element={ <LoginPage /> } />
+                        <Route path="/orcid/authentication" element={<OrcidAuthenticationPage />} />
 
                         { /* ========== Users ================================= */ }
                         <Route path="/users" element={ <UsersListPage /> } />

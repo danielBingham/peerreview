@@ -40,9 +40,6 @@ const PDFViewerPage = function(props) {
                     viewport: viewport
                 }
 
-
-                console.log(PDFLib)
-
                 page.render(renderContext)
                 page.getTextContent().then(function(textContent) {
                     PDFLib.renderTextLayer({

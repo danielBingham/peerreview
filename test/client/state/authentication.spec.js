@@ -1,11 +1,10 @@
 
 import fetchMock from 'fetch-mock'
 
-import configuration from '../../../client/configuration'
 import logger from '../../../client/logger'
 
 import store from '../../../client/state/store'
-import { reset } from '../../../client/state/system'
+import { reset, setConfiguration } from '../../../client/state/system'
 import { makeRequest, completeRequest, getAuthentication, postAuthentication, deleteAuthentication } from '../../../client/state/authentication'
 import RequestTracker from '../../../client/state/helpers/requestTracker'
 
@@ -53,6 +52,8 @@ xdescribe('in client/state/authentication.js', function() {
     beforeAll(function() {
         // disable logging
         logger.level = -1
+
+        store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
     })
 
     describe('getAuthentication()', function() {
@@ -60,6 +61,7 @@ xdescribe('in client/state/authentication.js', function() {
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
+            store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
         })
 
 

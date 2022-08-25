@@ -7,6 +7,7 @@
 CREATE TABLE users (
     id bigserial PRIMARY KEY,
     blind_id uuid DEFAULT gen_random_uuid(), 
+    orcid_id varchar(256),
     name varchar(256),
     password varchar(256),
     email varchar(256),

@@ -1,0 +1,24 @@
+.orcid-authentication {
+    padding: 10px;
+    text-align: center;
+}
+ .orcid-authentication a:link,  .orcid-authentication a:visited,  .orcid-authentication a:active {
+    display: inline-block;
+    color: black;
+    border: thin solid #aaa;
+    padding: 10px;
+    margin: 10px auto;
+}
+ .orcid-authentication a:hover {
+    display: inline-block;
+    color: #666;
+    border: thin solid #ccc;
+    padding: 10px;
+    margin: 10px auto;
+
+}
+.orcid-authentication a img {
+    width: 24px;
+    margin-right: 6px;
+    margin-bottom: -6px;
+}

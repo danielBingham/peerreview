@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '/configuration'
 import logger from '/logger'
 
 import RequestError from '/errors/RequestError' 
@@ -132,6 +131,8 @@ export const responsesSlice = createSlice({
  */
 export const countResponses = function() {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(responsesSlice.actions.garbageCollectRequests())
 
@@ -190,6 +191,8 @@ export const countResponses = function() {
  */
 export const getResponses = function(paperId, replaceList) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(responsesSlice.actions.garbageCollectRequests())
 
@@ -259,6 +262,8 @@ export const getResponses = function(paperId, replaceList) {
  */
 export const postResponses = function(response) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(responsesSlice.actions.garbageCollectRequests())
 
@@ -268,10 +273,6 @@ export const postResponses = function(response) {
         const payload = {
             requestId: requestId
         }
-
-        console.log('Ready to post response: ')
-        console.log(response)
-        console.log(endpoint)
 
         dispatch(responsesSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -296,7 +297,6 @@ export const postResponses = function(response) {
                 return Promise.reject(new RequestError(payload.status, json.error, 'Something went wrong with the request.'))
             }
         }).catch(function(error) {
-            console.log(payload)
             logger.error(error)
             if ( error instanceof RequestError ) {
                 payload.error = error.type
@@ -328,6 +328,8 @@ export const postResponses = function(response) {
  */
 export const getResponse = function(paperId, id) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(responsesSlice.actions.garbageCollectRequests())
 
@@ -395,6 +397,8 @@ export const getResponse = function(paperId, id) {
  */
 export const putResponse = function(response) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(responsesSlice.actions.garbageCollectRequests())
 
@@ -461,6 +465,8 @@ export const putResponse = function(response) {
  */
 export const patchResponse = function(response) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(responsesSlice.actions.garbageCollectRequests())
         
@@ -522,6 +528,8 @@ export const patchResponse = function(response) {
  */
 export const deleteResponse = function(response) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+        
         // Cleanup dead requests before making a new one.
         dispatch(responsesSlice.actions.garbageCollectRequests())
 

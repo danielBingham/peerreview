@@ -126,7 +126,11 @@ module.exports = class UserDAO {
                 continue
             }
 
-            sql += key + ' = $' + count + ', '
+            if ( key == 'orcidId') {
+                sql += `orcid_id = $${count}, `
+            } else {
+                sql += `${key} = $${count}, `
+            }
 
             params.push(user[key])
             count = count + 1

@@ -167,11 +167,7 @@ module.exports = class PaperDAO {
                 ${where} 
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
         `
-        console.log('SelectPapers')
-        console.log(sql)
         const results = await this.database.query(sql, params)
-        console.log('results')
-        console.log(results.rows)
 
         if ( results.rows.length == 0 ) {
             return [] 
@@ -236,12 +232,7 @@ module.exports = class PaperDAO {
                 LIMIT $${count-1}
                 OFFSET $${count}
         `
-        console.log('selectPage')
-        console.log(sql)
-        console.log(params)
         const results = await this.database.query(sql, params)
-        console.log('results')
-        console.log(results.rows)
 
         if ( results.rows.length <= 0 ) {
             return []

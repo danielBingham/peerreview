@@ -1,7 +1,6 @@
 import { createSlice, current } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '/configuration'
 import logger from '/logger'
 
 import { makeRequest as makeTrackedRequest, 
@@ -127,6 +126,7 @@ export const usersSlice = createSlice({
  */
 export const getUsers = function(params) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(usersSlice.actions.garbageCollectRequests())
 
@@ -196,6 +196,7 @@ export const getUsers = function(params) {
  */
 export const postUsers = function(user) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(usersSlice.actions.garbageCollectRequests())
 
@@ -253,6 +254,7 @@ export const postUsers = function(user) {
  */
 export const getUser = function(id) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(usersSlice.actions.garbageCollectRequests())
 
@@ -309,6 +311,7 @@ export const getUser = function(id) {
  */
 export const putUser = function(user) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(usersSlice.actions.garbageCollectRequests())
     
@@ -377,6 +380,7 @@ export const putUser = function(user) {
  */
 export const patchUser = function(user) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(usersSlice.actions.garbageCollectRequests())
 
@@ -443,6 +447,7 @@ export const patchUser = function(user) {
  */
 export const deleteUser = function(user) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(usersSlice.actions.garbageCollectRequests())
 

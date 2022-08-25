@@ -118,11 +118,7 @@ module.exports = class FieldDAO {
      * want to select.
      */
     async selectFieldParents(rootIds) {
-        console.log('rootIds')
-        console.log(rootIds)
         const fieldIds = [ ...rootIds]
-        console.log('fieldIds')
-        console.log(fieldIds)
         let previous = [ ...rootIds]
         do {
             const results = await this.database.query(`SELECT fields.id as id FROM fields JOIN field_relationships on fields.id = field_relationships.parent_id WHERE field_relationships.child_id = ANY ($1::int[])`, [ previous ])

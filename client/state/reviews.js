@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '../configuration'
 import logger from '../logger'
 
 import { addUsers } from './users'
@@ -218,6 +217,8 @@ export const updateReview = function(review) {
  */
 export const countReviews = function() {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 
@@ -272,6 +273,8 @@ export const countReviews = function() {
  */
 export const getReviews = function(paperId) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 
@@ -340,6 +343,7 @@ export const getReviews = function(paperId) {
  */
 export const postReviews = function(review) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 
@@ -400,6 +404,8 @@ export const postReviews = function(review) {
  */
 export const getReview = function(paperId, id) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 
@@ -463,6 +469,8 @@ export const getReview = function(paperId, id) {
  */
 export const putReview = function(review) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 
@@ -522,6 +530,7 @@ export const putReview = function(review) {
  */
 export const patchReview = function(review) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
         
@@ -579,6 +588,7 @@ export const patchReview = function(review) {
  */
 export const deleteReview = function(review) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 
@@ -634,6 +644,7 @@ export const deleteReview = function(review) {
  */
 export const postReviewThreads = function(paperId, reviewId, threads) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
         
@@ -694,6 +705,7 @@ export const postReviewThreads = function(paperId, reviewId, threads) {
  */
 export const postReviewComments = function(paperId, reviewId, threadId, comments) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 
@@ -772,6 +784,7 @@ const checkForDeleteRequest = function(paperId, reviewId, state) {
  */
 export const patchReviewComment = function(paperId, reviewId, threadId, comment) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 
@@ -839,6 +852,7 @@ export const patchReviewComment = function(paperId, reviewId, threadId, comment)
  */
 export const deleteReviewComment = function(paperId, reviewId, threadId, comment) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
         // Cleanup dead requests before making a new one.
         dispatch(reviewsSlice.actions.garbageCollectRequests())
 

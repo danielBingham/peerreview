@@ -23,25 +23,25 @@ main {
     margin: 0 auto;
 }
 
-main .page {
+.page {
     width: 1200px;
     margin: 50px auto;
     border: thin solid #aaa;
     background-color: white;
     padding: 20px;
 }
-main .page-tab-bar {
+.page-tab-bar {
     width: 1200px;
     margin: 50px auto -50px auto;
     padding: 0 20px;
 }
-main .page-tab-bar .page-tab {
+.page-tab-bar .page-tab {
     display: inline-block;
     padding: 5px 20px;
     border: thin solid #aaa;
     background-color: #ddd;
 }
-main .page-tab-bar .page-tab.selected  {
+.page-tab-bar .page-tab.selected  {
    background-color: white; 
    padding-bottom: 7px;
    margin-bottom: -2px;

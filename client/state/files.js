@@ -1,8 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '../configuration'
-import logger from '../logger'
+import logger from '/logger'
 
 import { makeRequest as makeTrackedRequest, 
     failRequest as failTrackedRequest, 
@@ -80,6 +79,8 @@ export const filesSlice = createSlice({
  */
 export const uploadFile = function(file) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(filesSlice.actions.garbageCollectRequests())
 
@@ -137,6 +138,8 @@ export const uploadFile = function(file) {
  */
 export const deleteFile = function(fileId) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(filesSlice.actions.garbageCollectRequests())
 

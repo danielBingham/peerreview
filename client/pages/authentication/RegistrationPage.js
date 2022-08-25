@@ -1,11 +1,17 @@
 import React from 'react'
 
 import RegistrationForm from '/components/authentication/RegistrationForm'
+import ORCIDAuthenticationButton from '/components/authentication/ORCIDAuthenticationButton'
+
+import './RegistrationPage.css'
 
 const RegistrationPage = function(props) {
 
     return (
-        <RegistrationForm />
+        <div id="registration-page" className="page">
+            <RegistrationForm />
+            <ORCIDAuthenticationButton />
+        </div>
     )
 }
 

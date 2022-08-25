@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-
 import { useDispatch, useSelector } from 'react-redux'
+import {  Link } from 'react-router-dom'
 
 import { cleanupRequest, deleteAuthentication } from '/state/authentication'
 
@@ -36,7 +35,6 @@ const AuthenticationNavigation = function(props) {
     // ======= Actions and Event Handling ===========================
 
     const dispatch = useDispatch()
-    const navigate = useNavigate()
 
     /**
      * Handle a Logout request by dispatching the appropriate action.
@@ -56,7 +54,7 @@ const AuthenticationNavigation = function(props) {
 
     useEffect(function() {
         if ( deleteAuthenticationRequestId && ! deleteAuthenticationRequest) {
-            navigate('/')
+            window.location.href= "/" 
         }
     }, [deleteAuthenticationRequest])
 

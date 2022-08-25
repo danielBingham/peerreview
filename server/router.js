@@ -13,6 +13,7 @@ module.exports = function(database, logger, config) {
     const express = require('express')
     const multer = require('multer')
 
+
     const ControllerError = require('./errors/ControllerError')
     const router = express.Router()
 
@@ -145,7 +146,7 @@ module.exports = function(database, logger, config) {
      *          Authentication REST Routes
      ******************************************************************************/
     const AuthenticationController = require('./controllers/authentication')
-    const authenticationController = new AuthenticationController(database, logger)
+    const authenticationController = new AuthenticationController(database, logger, config)
 
     router.post('/authentication', function(request, response, next) {
         authenticationController.postAuthentication(request, response).catch(function(error) {
@@ -166,7 +167,19 @@ module.exports = function(database, logger, config) {
     })
 
     router.delete('/authentication', function(request, response) {
+        // Delete isn't async
         authenticationController.deleteAuthentication(request, response)
+    })
+
+
+    /******************************************************************************
+     *          Authentication REST Routes
+     ******************************************************************************/
+    
+    router.post('/orcid/authentication', function(request, response, next) {
+        authenticationController.postOrcidAuthentication(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     /******************************************************************************

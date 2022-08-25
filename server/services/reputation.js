@@ -169,7 +169,6 @@ module.exports = class ReputationService {
      *
      */
     async recalculateReputationForUser(userId) {
-        console.log(`recalculateReputationForUser(${userId})`)
         const paperResults = await this.database.query(`
             SELECT SUM(reputation) as reputation FROM user_paper_reputation WHERE user_id = $1
         `, [ userId ])
@@ -178,8 +177,6 @@ module.exports = class ReputationService {
             throw new Error('Paper reputation query returned invalid results!')
         }
         const paperReputation = ( paperResults.rows[0].reputation ? paperResults.rows[0].reputation : 0 )
-        console.log('paperReputation')
-        console.log(paperReputation)
 
 
         const reviewResults = await this.database.query(`
@@ -190,8 +187,6 @@ module.exports = class ReputationService {
             throw new Error('Review reputation query returned invalid results!')
         }
         const reviewReputation = ( reviewResults.rows[0].reputation ? reviewResults.rows[0].reputation: 0 ) 
-        console.log('reviewReputation')
-        console.log(reviewReputation)
 
         const userResults = await this.database.query(`
             UPDATE users 

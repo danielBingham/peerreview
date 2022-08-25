@@ -5,6 +5,7 @@
  **************************************************************************************************/
 
 module.exports = {
+    backend: '/api/0.0.0',
     // Database configuration
     database: {
         host: 'peer-review-database-service',
@@ -23,6 +24,13 @@ module.exports = {
         access_id: process.env.SPACES_ACCESS_ID,
         access_key: process.env.SPACES_ACCESS_KEY,
         bucket: 'peer-review-development-files'
+    },
+    orcid: {
+        authorization_host: 'https://sandbox.orcid.org',
+        api_host: 'https://pub.sandbox.orcid.org',
+        client_id: process.env.ORCID_CLIENT_ID,
+        client_secret: process.env.ORCID_CLIENT_SECRET,
+        redirect_uri: 'https://localhost:3000/orcid/authentication'
     },
     log_level: 'debug'
 };

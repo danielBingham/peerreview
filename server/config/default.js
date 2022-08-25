@@ -7,6 +7,7 @@
  **************************************************************************************************/
 
 module.exports = {
+    backend: '/api/v0/',
     // Database configuration
     database: {
         host: null,

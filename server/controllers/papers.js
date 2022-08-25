@@ -72,8 +72,6 @@ module.exports = class PaperController {
         let count = 0
         let and = ''
 
-        console.log('Building query: ')
-        console.log(query)
 
         // Add `is_draft` to our query to determine whether we're getting
         // drafts or published papers.
@@ -196,10 +194,8 @@ module.exports = class PaperController {
                 // TECHDEBT -- Special Snowflake: We need to do a little more
                 // work for this one, so we handle it inside `papersDAO.selectPapers`.
                 if ( query.isDraft == true) {
-                    console.log('Is draft.')
                     result.order = 'draft-active'
                 } else {
-                    console.log('Is not draft.')
                     result.order = 'published-active'
                 }
             } else {

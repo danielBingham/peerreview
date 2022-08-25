@@ -1,7 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import configuration from '../configuration'
 import logger from '../logger'
 
 import { addFieldsToDictionary } from './fields'
@@ -191,6 +190,8 @@ const getRequestFromCache = function(method, endpoint) {
  */
 export const countPapers = function(params, replaceList) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
@@ -209,8 +210,6 @@ export const countPapers = function(params, replaceList) {
 
         const request = dispatch(getRequestFromCache('GET', endpoint))
         if ( request ) {
-            console.log('Got request from cache: ')
-            console.log(request)
             dispatch(papersSlice.actions.setCounts(request.result))
             return request.requestId
         }
@@ -235,8 +234,6 @@ export const countPapers = function(params, replaceList) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(counts) {
-            console.log('Got Counts: ')
-            console.log(counts)
             dispatch(papersSlice.actions.setCounts(counts))
 
             payload.result = counts 
@@ -268,6 +265,8 @@ export const countPapers = function(params, replaceList) {
  */
 export const getPapers = function(params, replaceList) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
@@ -371,6 +370,8 @@ export const getPapers = function(params, replaceList) {
  */
 export const postPapers = function(paper) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
@@ -432,6 +433,8 @@ export const postPapers = function(paper) {
  */
 export const getPaper = function(id) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
@@ -492,6 +495,8 @@ export const getPaper = function(id) {
  */
 export const putPaper = function(paper) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
     
@@ -554,6 +559,8 @@ export const putPaper = function(paper) {
  */
 export const patchPaper = function(paper) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
@@ -614,6 +621,8 @@ export const patchPaper = function(paper) {
  */
 export const deletePaper = function(paper) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
@@ -667,6 +676,8 @@ export const deletePaper = function(paper) {
  */
 export const patchPaperVersion = function(paper, version) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
@@ -728,6 +739,8 @@ export const patchPaperVersion = function(paper, version) {
  */
 export const postPaperVersions = function(paper, version) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 
@@ -790,6 +803,8 @@ export const postPaperVersions = function(paper, version) {
  */
 export const postVotes = function(vote) {
     return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
         // Cleanup dead requests before making a new one.
         dispatch(papersSlice.actions.garbageCollectRequests(cacheTTL))
 

@@ -38,6 +38,10 @@ const LoginForm = function(props) {
         return state.authentication.currentUser
     })
 
+    const config = useSelector(function(state) {
+        return state.system.configuration
+    })
+
     // ======= Actions and Event Handling ===========================
    
     const dispatch = useDispatch()
