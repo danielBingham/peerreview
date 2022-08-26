@@ -19,3 +19,7 @@
 .login-form .submit {
     text-align: center;
 }
+.login-form .error {
+    text-align: center;
+    color: red;
+}

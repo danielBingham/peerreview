@@ -2,11 +2,12 @@ import { configureStore } from '@reduxjs/toolkit'
 import { combineReducers } from 'redux'
 
 import systemReducer from './system'
+import historyReducer from './history'
+import authenticationReducer from './authentication'
 import usersReducer from './users'
 import papersReducer from './papers'
-import fieldsReducer from './fields'
 import reviewsReducer from './reviews'
-import authenticationReducer from './authentication'
+import fieldsReducer from './fields'
 import settingsReducer from './settings'
 import filesReducer from './files'
 import responsesReducer from './responses'
@@ -14,8 +15,9 @@ import responsesReducer from './responses'
 
 const reducers = combineReducers({
     system: systemReducer,
-    users: usersReducer,
+    history: historyReducer,
     authentication: authenticationReducer,
+    users: usersReducer,
     papers: papersReducer,
     reviews: reviewsReducer,
     fields: fieldsReducer,

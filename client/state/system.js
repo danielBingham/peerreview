@@ -13,7 +13,7 @@ const systemSlice = createSlice({
     name: 'system',
     initialState: {
         requests: {},
-        configuration: {}
+        configuration: null 
     },
     reducers: {
         reset: function(state, action) { },

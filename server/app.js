@@ -119,7 +119,9 @@ app.get('/config', function(request, response) {
         orcid: {
             authorization_host: config.orcid.authorization_host,
             client_id: config.orcid.client_id,
-            redirect_uri: config.orcid.redirect_uri
+            authentication_redirect_uri: config.orcid.authentication_redirect_uri,
+            connect_redirect_uri: config.orcid.connect_redirect_uri
+
         }
     })
 })

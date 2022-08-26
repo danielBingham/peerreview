@@ -19,5 +19,20 @@ module.exports = {
         key: null,
         secret: null
     },
+    spaces: {
+        endpoint: null,
+        bucket_url: null,
+        access_id: null,
+        access_key: null,
+        bucket: null
+    },
+    orcid: {
+        authorization_host: null,
+        api_host: null,
+        client_id: null,
+        client_secret: null,
+        authentication_redirect_uri: null,
+        connect_redirect_uri: null
+    },
     log_level: "info"
 };

@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
 import logger from '../logger'
+import RequestError from '/errors/RequestError'
 
 import { makeRequest as makeTrackedRequest, 
     failRequest as failTrackedRequest, 
@@ -146,6 +147,7 @@ export const postAuthentication = function(email, password) {
         let payload = {
             requestId: requestId
         }
+        let responseOk = false
 
         dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'POST', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
@@ -159,25 +161,26 @@ export const postAuthentication = function(email, password) {
             })
         }).then(function(response) {
             payload.status = response.status
-            if(response.ok) {
-                return response.json()
-            } else if (response.status == 403) {
-                return Promise.reject(new Error('Attempt to authenticate "' + email + '" failed.'))
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(session) {
-            dispatch(authenticationSlice.actions.setCurrentUser(session.user))
-            dispatch(authenticationSlice.actions.setSettings(session.settings))
-            dispatch(addSettingsToDictionary(session.settings))
+            responseOk = response.ok
+            return response.json()
+        }).then(function(content) {
+            if ( responseOk ) {
+                dispatch(authenticationSlice.actions.setCurrentUser(content.user))
+                dispatch(authenticationSlice.actions.setSettings(content.settings))
+                dispatch(addSettingsToDictionary(content.settings))
 
-            payload.result = session 
-            dispatch(authenticationSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
+                payload.result = content 
+                dispatch(authenticationSlice.actions.completeRequest(payload))
+            } else if (payload.status >= 400 && payload.status < 500) {
+                return Promise.reject(new RequestError(payload.status, content.error, 'Client error.'))
             } else {
-                payload.error = 'Unknown error.'
+                return Promise.reject(new RequestError(500, 'server-error', 'Server error.'))
+            }
+        }).catch(function(error) {
+            if ( error instanceof RequestError) {
+                payload.error = error.type
+            } else {
+                payload.error = 'unknown'
             }
             logger.error(error)
             dispatch(authenticationSlice.actions.failRequest(payload))
@@ -288,6 +291,10 @@ export const deleteAuthentication = function() {
             if (response.ok) {
                 dispatch(authenticationSlice.actions.completeRequest(payload))
                 dispatch(reset())
+                // As soon as we reset the redux store, we need to redirect to
+                // the home page.  We don't want to go through anymore render
+                // cycles because that could have undefined impacts.
+                window.location.href = "/"
             } else {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
@@ -318,7 +325,7 @@ export const deleteAuthentication = function() {
  *
  * @returns {string} A uuid requestId we can use to track this request.
  */
-export const postOrcidAuthentication = function(code) {
+export const postOrcidAuthentication = function(code, connect) {
     return function(dispatch, getState) {
         const configuration = getState().system.configuration
 
@@ -332,6 +339,8 @@ export const postOrcidAuthentication = function(code) {
             requestId: requestId
         }
 
+        let responseOk = false
+
         dispatch(authenticationSlice.actions.makeRequest({requestId: requestId, method: 'POST', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'POST',
@@ -339,18 +348,27 @@ export const postOrcidAuthentication = function(code) {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                code: code
+                code: code,
+                connect: connect
             })
         }).then(function(response) {
             payload.status = response.status
+            responseOk = response.ok
             return response.json()
-        }).then(function(session) {
-            dispatch(authenticationSlice.actions.setCurrentUser(session.user))
-            dispatch(authenticationSlice.actions.setSettings(session.settings))
-            dispatch(addSettingsToDictionary(session.settings))
+        }).then(function(responseContent) {
+            if ( responseOk ) {
+                dispatch(authenticationSlice.actions.setCurrentUser(responseContent.user))
+                dispatch(authenticationSlice.actions.setSettings(responseContent.settings))
+                dispatch(addSettingsToDictionary(responseContent.settings))
 
-            payload.result = session 
-            dispatch(authenticationSlice.actions.completeRequest(payload))
+                payload.result = responseContent 
+                dispatch(authenticationSlice.actions.completeRequest(payload))
+            } else if ( payload.status >= 400 && payload.status < 500) {
+                payload.error = responseContent.error
+                dispatch(authenticationSlice.actions.failRequest(payload)) 
+            } else {
+                return Promise.reject(new Error('Server error.'))
+            }
         }).catch(function(error) {
             if (error instanceof Error) {
                 payload.error = error.toString()

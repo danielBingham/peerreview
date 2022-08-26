@@ -68,17 +68,29 @@ module.exports = class AuthenticationController {
             [ credentials.email ]
         )
 
-        if (results.rows.length == 1 ) {
-            const userMatch = results.rows[0]
-            const passwords_match = this.auth.checkPassword(credentials.password, userMatch.password)
-            if (passwords_match) {
-                return await this.loginUser(userMatch.id, request, response)
-            } else {
-                return response.status(403).json({error: 'authentication-failed'})
-            } 
-        } else {
-            return response.status(403).json({error: 'authentication-failed'})
+        if ( results.rows.length <= 0) {
+            throw new ControllerError(403, 'authentication-failed', `No users exist with email ${credentials.email}.`)
         }
+
+        if (results.rows.length > 1 ) {
+            throw new ControllerError(403, 'authentication-failed', `Multiple users found for email ${credentials.email}.`)
+        }
+
+        if ( ! results.rows[0].password || results.rows[0].password.trim().length <= 0) {
+            throw new ControllerError(400, 'no-password', `User(${credentials.email}) doesn't have a password set.`)
+        }
+
+        if ( ! credentials.password || credentials.password.trim().length <= 0 ) {
+            throw new ControllerError(400, 'password-required', `User(${credentials.email}) attempted to login with no password.`)
+        }
+
+        const userMatch = results.rows[0]
+        const passwords_match = this.auth.checkPassword(credentials.password, userMatch.password)
+        if (! passwords_match) {
+            throw new ControllerError(403, 'authentication-failed', `Failed login for email ${credentials.email}.`)
+        }
+
+        return await this.loginUser(userMatch.id, request, response)
     }
 
     /**
@@ -95,6 +107,12 @@ module.exports = class AuthenticationController {
 
         if (results.rows.length != 1 ) {
             throw new ControllerError(403, 'authentication-failed', `Multiple users found for email ${credentials.email}.`)
+        }
+        if ( ! results.rows[0].password || results.rows[0].password.trim().length <= 0) {
+            throw new ControllerError(400, 'no-password', `User(${credentials.email}) doesn't have a password set.`)
+        }
+        if ( ! credentials.password || credentials.password.trim().length <= 0 ) {
+            throw new ControllerError(400, 'password-required', `User(${credentials.email}) attempted to login with no password.`)
         }
 
         const userMatch = results.rows[0]
@@ -123,12 +141,16 @@ module.exports = class AuthenticationController {
     }
 
     async postOrcidAuthentication(request, response) {
+        if ( ! request.body.code ) {
+            throw new ControllerError(400, 'no-authorization-code', `User attempted orcid authentication with no authorization code!`)
+        }
+
         const authorizationRequestParams= new URLSearchParams({
             client_id:  this.config.orcid.client_id,
             client_secret: this.config.orcid.client_secret,
             grant_type:  'authorization_code',
             code:  request.body.code,
-            redirect_uri: this.config.orcid.redirect_uri
+            redirect_uri: request.body.connect ? this.config.orcid.connect_redirect_uri : this.config.orcid.authentication_redirect_uri
         })
         const data = authorizationRequestParams.toString()
 
@@ -144,12 +166,25 @@ module.exports = class AuthenticationController {
         if ( ! authorizationResponse.ok ) {
             // TODO Orcid returns more detailed errors in the json, we should
             // parse it and read those to give better errors back to the user.
-
+            const errors = await authorizationResponse.json()
+            console.error(errors)
             throw new ControllerError(401, 'unauthorized', `Authorization request failed.`)
         }
 
         const orcidAuthorization = await authorizationResponse.json()
         const orcidId = orcidAuthorization.orcid
+
+        // If we have a user logged in, then this is a request to connect their
+        // accounts.  Make the connection.
+        if ( request.session.user ) {
+            const user = {
+                id: request.session.user.id,
+                orcidId: orcidId
+            }
+            await this.userDAO.updatePartialUser(user)
+
+            return await this.loginUser(request.session.user.id, request, response)
+        }
 
         const orcidResults = await this.database.query(`
                 SELECT users.id FROM users WHERE users.orcid_id = $1

@@ -52,12 +52,6 @@ const AuthenticationNavigation = function(props) {
 
     // ======= Effect Handling ======================================
 
-    useEffect(function() {
-        if ( deleteAuthenticationRequestId && ! deleteAuthenticationRequest) {
-            window.location.href= "/" 
-        }
-    }, [deleteAuthenticationRequest])
-
     // Cleanup our request tracking.
     useEffect(function() {
         return function cleanup() {

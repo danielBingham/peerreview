@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 
 import { postOrcidAuthentication, cleanupRequest } from '/state/authentication'
 
@@ -28,6 +28,8 @@ const OrcidAuthenticationPage = function(props) {
     
     const dispatch = useDispatch()
     const navigate = useNavigate()
+    const location = useLocation()
+    const connect = location.pathname == '/orcid/connect'
 
     // Retreive the code from the search params and send it to the backend for
     // authentication.
@@ -38,14 +40,18 @@ const OrcidAuthenticationPage = function(props) {
             throw new Error('Did not get a code back!')
         }
 
-         setRequestId(dispatch(postOrcidAuthentication(code)))
+         setRequestId(dispatch(postOrcidAuthentication(code, connect)))
     }, [])
 
     useEffect(function() {
         if ( currentUser && request && request.state == 'fulfilled') {
             setTimeout(function() {
-                navigate("/")
-            }, 2000)
+                if ( location.pathname == '/orcid/connect') {
+                    navigate("/account/details")
+                } else  {
+                    navigate("/")
+                }
+            }, 3000)
         }
     }, [ request ])
 
@@ -65,19 +71,60 @@ const OrcidAuthenticationPage = function(props) {
         </>
     )
 
+
+    let successMessage = ''
+    if ( connect ) {
+        successMessage = `We've successfully connected your ORCID record to your account.`
+    } else {
+        successMessage = `We've successfully authenticated your ORCID iD and logged you in.`
+    }
+
     if ( request && request.state == 'fulfilled') {
         if ( currentUser ) {
             content = (
                 <div className="success">
-                    Welcome, { currentUser.name}!  You've have been logged in with your ORCID ID. <br />
-                    You will be redirected to the home page momentarily.
+                    Welcome, { currentUser.name}!  {successMessage}  <br />
+                    You will be redirected to the { connect ? 'settings page' : 'home page' } momentarily.
                 </div>
             )
         } else {
             throw new Error('Request fulfilled with no currentUser!')
         }
     } else if ( request && request.state == 'failed') {
-        content = request.error
+        if ( request.error == 'no-visible-email' ) {
+            content = ( 
+                <div className="error">
+                    <p>There was no email on your ORCID record that we have
+                        permission to see through the public API.  This can
+                        happen if you haven't added an email to your ORCID
+                        record or if you restrict the visibility on your ORCID
+                        record to either "only me" (the default for emails) or
+                        "trusted accounts" (which requires us to pay a
+                        membership fee to access).  </p>
+            
+                <p>If you'd still like to register and connect your ORCID
+                    record to your account so that you can login with ORCID in
+                    the future, then fill out and submit our <Link
+                    to="/register">registration form</Link>.  After you've
+                    regsitered, edit your profile and go to your "Account
+                    Details" page.  From there you'll be able to connect your
+                    ORCID record to your account with out making your emails
+                    visible on your ORCID record.</p>
+            </div> 
+            )
+        } else if ( request.error == 'unauthorized' ) {
+            content = (
+                <div className="error">
+                    We failed to retreive an authorization token from ORCID.
+                    This can happen for a number of reasons, it probably isn't
+                    fatal.  We recommend going back to where you started,
+                    refreshing, and trying again.  If you still get this
+                    message, file a bug report and we'll look into it.
+                </div>
+            )
+        } else {
+            content = request.error
+        }
     }
 
     return (

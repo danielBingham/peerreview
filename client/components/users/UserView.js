@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown'
 import { getUser, cleanupRequest } from '/state/users'
 
 import Field from '/components/fields/Field'
+import ORCIDTag from '/components/authentication/ORCIDTag'
 
 import Spinner from '/components/Spinner'
 
@@ -101,6 +102,7 @@ const UserView = function(props) {
                 <div className="details">
                     <div><span className="label">Name</span> { user.name }</div>
                     <div><span className="label">Email</span> { user.email }</div>
+                    <div><span className="label">ORCID iD</span> { user.orcidId && <ORCIDTag id={ user.orcidId} />}</div>
                     <div><span className="label">Institution</span> { user.institution } </div>
                     <div><span className="label">Location</span> { user.location }</div>
                     <div><span className="label">Biography</span><ReactMarkdown children={ user.bio } /> </div>

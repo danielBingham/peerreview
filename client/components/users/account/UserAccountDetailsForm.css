@@ -1,1 +1,15 @@
 .user-account-details-form {}
+.user-account-details-form h2 {
+   text-align: center; 
+}
+.user-account-details-form .orcid-connection {
+    padding: 30px;
+    text-align: center;
+}
+.user-account-details-form .orcid-connection img {
+    width: 24px;
+    margin-right: 6px;
+    margin-bottom: -6px;
+}
+
+

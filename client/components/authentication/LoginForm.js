@@ -17,12 +17,13 @@ import './LoginForm.css'
 const LoginForm = function(props) { 
 
     // ======= Render State =========================================
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('')
+    const [password, setPassword] = useState('')
+    const [error, setError] = useState(null)
 
     // ======= Request Tracking =====================================
    
-    const [requestId, setRequestId] = useState(null);
+    const [requestId, setRequestId] = useState(null)
 
     const request = useSelector(function(state) {
         if (requestId) {
@@ -55,7 +56,17 @@ const LoginForm = function(props) {
      * @param {Event} event Standard Javascript event.
      */
     const onSubmit = function(event) {
-        event.preventDefault();
+        event.preventDefault()
+
+        if ( ! email || email.length == 0 ) {
+            setError('no-email')
+            return
+        }
+
+        if ( ! password || password.length == 0 ) {
+            setError('no-password')
+            return
+        } 
 
         setRequestId(dispatch(postAuthentication(email, password)))
     }
@@ -67,7 +78,7 @@ const LoginForm = function(props) {
         // care if we were already logged in or if this is the result of a
         // successful authentication.
         if ( currentUser ) {
-            navigate("/", { replace: true })
+            navigate("/")
         }
     })
 
@@ -82,7 +93,6 @@ const LoginForm = function(props) {
 
     // ====================== Render ==========================================
 
-    let error = null
     // Show a spinner if the request we made is still in progress.
     if (request && request.state == 'pending') {
         return (
@@ -90,19 +100,34 @@ const LoginForm = function(props) {
         )
     } 
 
+    let errorMessage = ''
     if ( request && request.state == 'failed') {
         if ( request.status == 403 ) {
-            error = (<div className="authentication-error">Login failed.</div>)
+            errorMessage = "Login failed."
+        } else if ( request.status == 400) {
+            if ( request.error == 'no-password' ) {
+                errorMessage = "Your account appears to have been created using OAuth.  Please login with the authentication method you used to create it."
+            } else if (request.error == 'password-required' ) {
+                errorMessage = "You must enter a password to login."
+            } else {
+                errorMessage = "Login failed."
+            }
         } else {
-            error = (<div className="general-error">Something went wrong: { request.error }. Please report a bug.</div>)
+            errorMessage = "Something went wrong on the backend. Since this is an authentication error, we can't share any details (security). Please report a bug and we'll try to figure out it out from server logs."
         }
+    } else if ( error == 'no-password' ) {
+        errorMessage = " A password is required to login. "
+    } else if ( error == 'no-email') {
+        errorMessage = "An email is required to login."
     }
+
+    const errorView = ( <div className="error">{ errorMessage }</div> )
 
     return (
         <div className='login-form'>
             <h2>Login</h2>
             <form onSubmit={onSubmit}>
-                <div className="error"> { error } </div>
+                <div className="error"> { errorView } </div>
 
                 <div className="email field-wrapper">
                     <label htmlFor="email">Email</label>

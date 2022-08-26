@@ -103,11 +103,6 @@ const App = function(props) {
                 setRetries(retries+1)
             }
         }
-
-        // We logged out, make a new configuration request.
-        if ( configurationRequestId && ! configurationRequest ) {
-            setConfigurationRequestId(dispatch(getConfiguration()))
-        }
     }, [ configurationRequest ])
 
     useEffect(function() {
@@ -133,65 +128,70 @@ const App = function(props) {
             <Spinner />
         )
     } else if ( (configurationRequest && configurationRequest.state != 'fulfilled')
-        && (authenticationRequest && authenticationRequest.state != 'fulfilled')) 
+        || (authenticationRequest && authenticationRequest.state != 'fulfilled')) 
     {
-        if ( configurationRequest.state == 'failed' && retries < 5) {
+        if (configurationRequest && configurationRequest.state == 'failed' && retries < 5) {
             return (<div className="error">Attempt to retrieve configuration from the backend failed, retrying...</div>)
-        } else if (configurationRequest.state == 'failed' && retries >= 5 ) {
+        } else if (configurationRequest && configurationRequest.state == 'failed' && retries >= 5 ) {
             return (<div className="error">Failed to connect to the backend.  Try refreshing.</div>)
-        } else if ( authenticationRequest.state == 'failed' ) {
+        } else if (authenticationRequest && authenticationRequest.state == 'failed' ) {
             return (<div className="error">Authentication request failed with error: {authenticationRequest.error}.</div>)
         }
 
         return (
             <Spinner />
         )
-    } else {   
-        /**
-         * Render the header, navigation.
-         */
-        return (
-            <Router>
-                <Header />
-                <main>
-                    <Routes>
-                        <Route path="/" element={ <HomePage /> } />
-                        <Route path="/about" element={ <AboutPage />} />
+    } 
 
-                        { /* ========== Authentication Controls =============== */ }
-                        <Route path="/register" element={ <RegistrationPage /> } />
-                        <Route path="/login" element={ <LoginPage /> } />
-                        <Route path="/orcid/authentication" element={<OrcidAuthenticationPage />} />
-
-                        { /* ========== Users ================================= */ }
-                        <Route path="/users" element={ <UsersListPage /> } />
-                        <Route path="/user/:id" element={ <UserProfilePage /> } />
-                        <Route path="/account">
-                            <Route path=":pane" element={ <UserAccountPage /> } />
-                            <Route index element={ <UserAccountPage /> } />
-                        </Route>
-
-                        { /* ========== fields ================================= */ }
-                        <Route path="/fields" element={ <FieldsListPage /> } />
-                        <Route path="/field/:id" element={ <FieldPage /> } />
-
-                        { /* ========= Draft Papers  ============================ */ }
-                        <Route path="/publish" element={ <PublishPage /> } />
-                        <Route path="/review" element={ <ReviewPapersListPage /> } />
-                        <Route path="/drafts/" element={ <DraftPapersListPage /> } />
-                        <Route path="/draft/:id" element={ <DraftPaperPage /> }  />
-                        <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
-                        <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage /> } />
-
-                        { /* ========= Published Papers ===================== */ }
-                        <Route path="/search" element={ <PaperSearchPage /> } />
-                        <Route path="/paper/:id" element={ <PublishedPaperPage /> } />
-                        <Route path="/spinner" element={ <Spinner local={true} /> } />
-                    </Routes>
-                </main>
-            </Router>
-        )
+    if ( configuration == null ) {
+        return (<Spinner />)
     }
+
+    // Once our request have finished successfully, we can render the full
+    // site.  We should only reach here when both the configurationRequest and
+    // authenticationRequest have been fulfilled.
+    return (
+        <Router>
+            <Header />
+            <main>
+                <Routes>
+                    <Route path="/" element={ <HomePage /> } />
+                    <Route path="/about" element={ <AboutPage />} />
+
+                    { /* ========== Authentication Controls =============== */ }
+                    <Route path="/register" element={ <RegistrationPage /> } />
+                    <Route path="/login" element={ <LoginPage /> } />
+                    <Route path="/orcid/authentication" element={<OrcidAuthenticationPage />} />
+                    <Route path="/orcid/connect" element={<OrcidAuthenticationPage />} />
+
+                    { /* ========== Users ================================= */ }
+                    <Route path="/users" element={ <UsersListPage /> } />
+                    <Route path="/user/:id" element={ <UserProfilePage /> } />
+                    <Route path="/account">
+                        <Route path=":pane" element={ <UserAccountPage /> } />
+                        <Route index element={ <UserAccountPage /> } />
+                    </Route>
+
+                    { /* ========== fields ================================= */ }
+                    <Route path="/fields" element={ <FieldsListPage /> } />
+                    <Route path="/field/:id" element={ <FieldPage /> } />
+
+                    { /* ========= Draft Papers  ============================ */ }
+                    <Route path="/publish" element={ <PublishPage /> } />
+                    <Route path="/review" element={ <ReviewPapersListPage /> } />
+                    <Route path="/drafts/" element={ <DraftPapersListPage /> } />
+                    <Route path="/draft/:id" element={ <DraftPaperPage /> }  />
+                    <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
+                    <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage /> } />
+
+                    { /* ========= Published Papers ===================== */ }
+                    <Route path="/search" element={ <PaperSearchPage /> } />
+                    <Route path="/paper/:id" element={ <PublishedPaperPage /> } />
+                    <Route path="/spinner" element={ <Spinner local={true} /> } />
+                </Routes>
+            </main>
+        </Router>
+    )
 }
 
 export default App

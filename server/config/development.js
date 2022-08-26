@@ -30,7 +30,8 @@ module.exports = {
         api_host: 'https://pub.sandbox.orcid.org',
         client_id: process.env.ORCID_CLIENT_ID,
         client_secret: process.env.ORCID_CLIENT_SECRET,
-        redirect_uri: 'https://localhost:3000/orcid/authentication'
+        authentication_redirect_uri: 'https://localhost:3000/orcid/authentication',
+        connect_redirect_uri: 'https://localhost:3000/orcid/connect'
     },
     log_level: 'debug'
 };

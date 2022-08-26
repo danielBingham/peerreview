@@ -27,6 +27,7 @@ module.exports = class UserDAO {
         for( const row of rows ) {
             const user = {
                 id: row.user_id,
+                orcidId: row.user_orcidId,
                 name: row.user_name,
                 email: row.user_email,
                 bio: row.user_bio,
@@ -75,7 +76,7 @@ module.exports = class UserDAO {
         const sql = `
                 SELECT 
 
-                    users.id as user_id, users.name as user_name, users.email as user_email, 
+                    users.id as user_id, users.orcid_id as "user_orcidId", users.name as user_name, users.email as user_email, 
                     users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
                     users.initial_reputation as "user_initialReputation", users.reputation as user_reputation, 
                     users.created_date as "user_createdDate", users.updated_date as "user_updatedDate",
