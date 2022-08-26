@@ -2,7 +2,6 @@ import { configureStore } from '@reduxjs/toolkit'
 import { combineReducers } from 'redux'
 
 import systemReducer from './system'
-import historyReducer from './history'
 import authenticationReducer from './authentication'
 import usersReducer from './users'
 import papersReducer from './papers'
@@ -15,7 +14,6 @@ import responsesReducer from './responses'
 
 const reducers = combineReducers({
     system: systemReducer,
-    history: historyReducer,
     authentication: authenticationReducer,
     users: usersReducer,
     papers: papersReducer,
