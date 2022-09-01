@@ -17,10 +17,11 @@ import './FieldView.css'
  */
 const FieldView = function(props) {
 
+    console.log(`\n\n Rendering FieldView(${props.id}).`)
+
     // ======= Request Tracking =====================================
 
     const [requestId, setRequestId] = useState(null)
-
     const request = useSelector(function(state) {
         if ( ! requestId ) {
             return null
@@ -49,9 +50,10 @@ const FieldView = function(props) {
         if ( ! props.id ) {
             console.error(`Can't render FieldView with out an 'id' number.`)
         } else { 
+            console.log(`ID: ${props.id}`)
             setRequestId(dispatch(getField(props.id)))
         }
-    }, [])
+    }, [ props.id ])
 
     useEffect(function() {
         return function cleanup() {

@@ -243,8 +243,8 @@ module.exports = class PaperController {
         if ( emptyResult ) {
             return response.status(200).json({
                 count: 0,
-                pageSize: 0,
-                numberOfPages: 0
+                pageSize: 1,
+                numberOfPages: 1
             })
         }
 

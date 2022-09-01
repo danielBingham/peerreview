@@ -259,11 +259,11 @@ module.exports = class PaperDAO {
         `
         const results = await this.database.query(sql, params)
 
-        if ( results.rows.length <= 0 ) {
+        if ( results.rows.length <= 0 || results.rows[0].paper_count == 0) {
             return { 
                 count: 0,
                 pageSize: PAGE_SIZE,
-                numberOfPages: 0
+                numberOfPages: 1
 
             }
         }

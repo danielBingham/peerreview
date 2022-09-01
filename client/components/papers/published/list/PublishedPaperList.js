@@ -81,6 +81,14 @@ const PublishedPaperList = function(props) {
             }
         }
 
+        if ( props.fieldId ) {
+            if ( query.fields ) {
+                query.fields.push(props.fieldId)
+            } else {
+                query.fields = [ props.fieldId ]
+            }
+        }
+
         if ( searchString ) {
             query.searchString = searchString
         }
@@ -115,23 +123,7 @@ const PublishedPaperList = function(props) {
             page: searchParams.get('page')
         }
         queryForPapers(params)
-    }, [ searchParams ])
-
-
-    // Logging out doesn't always unmount the component.  When that happens, we
-    // can end up in a state where we have a requestId, but don't have a
-    // request.  If that happens, we need to make a new request, because we
-    // really don't want to be in that state.
-    useEffect(function() {
-        if ( requestId && ! request ) {
-            const params = {
-                searchString: searchParams.get('q'),
-                sortBy: searchParams.get('sort'),
-                page: searchParams.get('page')
-            }
-            queryForPapers(params)
-        }
-    }, [ request ])
+    }, [ searchParams, props.fieldId ])
 
     // Cleanup our request.
     useEffect(function() {
@@ -209,7 +201,7 @@ const PublishedPaperList = function(props) {
                 {error}
                 {content}
             </div>
-            <PaginationControls />
+            <PaginationControls counts={counts} />
         </section>
     )
 }

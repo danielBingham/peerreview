@@ -16,33 +16,87 @@ module.exports = class FieldController {
         this.fieldDAO = new FieldDAO(database, logger)
     }
 
+    async parseQuery(query, options) {
+        options = options || {
+            ignorePage: false
+        }
+
+        if ( ! query) {
+            return
+        }
+
+        let count = 0
+
+        const result = {
+            where: 'WHERE',
+            params: [],
+            page: 1,
+            order: '',
+            emptyResult: false
+        }
+
+        if ( query.name && query.name.length > 0) {
+            count += 1
+            result.where += ` fields.name % $${count}`
+            result.params.push(query.name)
+            result.order = `SIMILARITY(fields.name, $${count}) desc`
+
+        }
+
+        if ( query.parent == 'root' ) {
+            const ids = await this.fieldDAO.selectFieldsWithOutParent()
+            count += 1
+            result.where += `${ count > 1 ? ' AND ' : ''} fields.id = ANY($${count}::int[])`
+            result.params.push(ids)
+        } else if ( query.parent )  {
+            const childIds = await this.fieldDAO.selectFieldsWithParent(query.parent)
+            count += 1
+            result.where += `${ count > 1 ? ' AND ' : ''} fields.id = ANY($${count}::int[])`
+            result.params.push(childIds)
+        }
+
+        if ( query.page && ! options.ignorePage ) {
+            result.page = query.page
+        }
+
+        // We didn't end up adding any parameters.
+        if ( result.where == 'WHERE') {
+            result.where = ''
+        }
+
+        return result 
+    }
+
+    async countFields(request, response) {
+        const { where, params, emptyResult } = await this.parseQuery(request.query, { ignoreOrder: true, ignorePage: true })
+
+        if ( emptyResult ) {
+            return response.status(200).json({
+                count: 0,
+                pageSize: 1,
+                numberOfPages: 1
+            })
+        }
+
+        const countResult = await this.fieldDAO.countFields(where, params)
+        return response.status(200).json(countResult)
+    }
+
     /**
      * GET /fields
      *
      * Return a JSON array of all fields in thethis.database.
      */
     async getFields(request, response) {
-        let where = 'WHERE'
-        let params = []
-        if ( request.query ) {
-            if ( request.query.name && request.query.name.length > 0) {
-                where += ` fields.name ILIKE $1`
-                params.push(request.query.name+'%')
-            }
-        }
 
-        // We didn't end up adding any parameters.
-        if ( where == 'WHERE') {
-            where = ''
-        }
+        const { where, params, order, page, emptyResult } = await this.parseQuery(request.query)
 
-        const fields = await this.fieldDAO.selectFields(where, params)
-
-        if ( ! fields ) {
+        if ( emptyResult ) {
             return response.status(200).json([])
-        } else {
-            return response.status(200).json(fields)
         }
+
+        const fields = await this.fieldDAO.selectFields(where, params, order, page)
+        return response.status(200).json(fields)
     }
 
     /**
@@ -71,28 +125,26 @@ module.exports = class FieldController {
         field.id = await this.fieldDAO.insertField(field)
         await this.fieldDAO.insertFieldRelationships(field)
 
-        const returnField = await this.fieldDAO.selectFields('WHERE fields.id=$1', [results.rows[0].id])
-        return response.status(201).json(returnField)
+        const returnFields = await this.fieldDAO.selectFields('WHERE fields.id=$1', [results.rows[0].id])
+        if ( returnFields.length <= 0) {
+            throw new ControllerError(500, 'server-error', `Field(${results.rows[0].id}) doesn't exist after creation!`)
+        }
+        return response.status(201).json(returnFields[0])
     }
 
     /**
      * GET /field/:id
      *
-     * Get details for a single field in thethis.database.
+     * Get details for a single field in the database.
      */
     async getField(request, response) {
-        try {
-            const returnFields = await this.fieldDAO.selectFields('WHERE fields.id = $1', [request.params.id])
+        const returnFields = await this.fieldDAO.selectFields('WHERE fields.id = $1', [request.params.id])
 
-            if ( ! returnFields ) {
-                return response.status(404).json({})
-            }
-
-            return response.status(200).json(returnFields[0])
-        } catch (error) {
-            console.error(error)
-            return response.status(500).send()
+        if ( returnFields.length <= 0 ) {
+            return response.status(404).json({})
         }
+
+        return response.status(200).json(returnFields[0])
     }
 
     /**
@@ -101,26 +153,24 @@ module.exports = class FieldController {
      * Replace an existing field wholesale with the provided JSON.
      */
     async putField(request, response) {
-        try {
-            const field = request.body
-            const results = await this.database.query(`
+        const field = request.body
+        const results = await this.database.query(`
                     UPDATE fields SET name = $1 AND parent_id = $2 AND updated_date = now() 
                         WHERE id = $3 
                         RETURNING id
                 `,
-                [ field.name, field.parent_id, request.params.id ]
-            )
+            [ field.name, field.parent_id, request.params.id ]
+        )
 
-            if (results.rowCount == 0 && results.rows.length == 0) {
-                return response.status(404).json({error: 'no-resource'})
-            }
-
-            const returnField = await this.fieldDAO.selectFields('WHERE fields.id=$1', results.rows[0].id)
-            return response.status(200).json(returnField)
-        } catch (error) {
-            console.error(error)
-            response.status(500).json({error: 'unknown'})
+        if (results.rowCount == 0 && results.rows.length == 0) {
+            return response.status(404).json({error: 'no-resource'})
         }
+
+        const returnFields = await this.fieldDAO.selectFields('WHERE fields.id=$1', results.rows[0].id)
+        if ( returnFields.length <= 0) {
+            throw new ControllerError(500, 'server-error', `Field(${results.rows[0].id}) doesn't exist after creation!`)
+        }
+        return response.status(200).json(returnFields[0])
     }
 
     /**
@@ -148,19 +198,17 @@ module.exports = class FieldController {
         sql += `updated_date = now() WHERE id = $${count}`
         params.push(field.id)
 
-        try {
-            const results = await this.database.query(sql, params)
+        const results = await this.database.query(sql, params)
 
-            if ( results.rowCount == 0 ) {
-                return response.status(404).json({error: 'no-resource'})
-            }
-
-            const returnField = await this.fieldDAO.selectFields('WHERE fields.id=$1', [field.id])
-            return response.status(200).json(returnField)
-        } catch (error) {
-            console.error(error)
-            response.status(500).json({error: 'unknown'})
+        if ( results.rowCount == 0 ) {
+            return response.status(404).json({error: 'no-resource'})
         }
+
+        const returnFields = await this.fieldDAO.selectFields('WHERE fields.id=$1', [field.id])
+        if ( returnFields.length <= 0) {
+            throw new ControllerError(500, 'server-error', `Field(${results.rows[0].id}) doesn't exist after creation!`)
+        }
+        return response.status(200).json(returnFields[0])
     }
 
     /**
@@ -169,21 +217,15 @@ module.exports = class FieldController {
      * Delete an existing field.
      */
     async deleteField(request, response) {
+        const results = await this.database.query(
+            'delete from fields where id = $1',
+            [ request.params.id ]
+        )
 
-        try {
-            const results = await this.database.query(
-                'delete from fields where id = $1',
-                [ request.params.id ]
-            )
-
-            if ( results.rowCount == 0) {
-                return response.status(404).json({error: 'no-resource'})
-            }
-
-            return response.status(200).json({fieldId: request.params.id})
-        } catch (error) {
-            console.error(error)
-            return response.status(500).json({error: 'unknown'})
+        if ( results.rowCount == 0) {
+            return response.status(404).json({error: 'no-resource'})
         }
+
+        return response.status(200).json({fieldId: request.params.id})
     }
 } 

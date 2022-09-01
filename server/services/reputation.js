@@ -5,6 +5,7 @@
  */
 
 const FieldDAO = require('../daos/field')
+const userDAO = require('../daos/user')
 
 module.exports = class ReputationService {
 
@@ -301,6 +302,87 @@ module.exports = class ReputationService {
         await this.incrementUserReputationForPaperFields(review.userId, review.paperId, 25)
 
         await this.recalculateReputationForUser(review.userId)
+    }
+
+    /**
+     * Add a reputation increment to the initial reputation for a user in each
+     * of the fields passed.  Assumes the array of fields passed as
+     * `fieldNames` represents an group of fields that a single paper was
+     * tagged with, and the reputation passed represents the reputation gained
+     * for that paper.
+     *
+     * Updates the `user_initial_reputation` table to record the reputation
+     * gained in each of the fields passed and each of their parents.
+     *
+     * @param {int} userId  The id of the user we're giving reputation.
+     * @param {string[]} fieldNames An array of fieldNames the user will be
+     * given reputation in.
+     * @param {int} reputation  The reputation increment we'll add to the given
+     * fields and their parents.
+     */
+    async incrementInitialUserReputationForFields(userId, fieldNames, reputation) {
+        const fieldResults = await this.database.query(`
+            SELECT field_id from fields where name in $1
+        `, [ fieldNames ])
+
+        if ( fieldResults.rows.length == 0 ) {
+            return 
+        }
+        const rootIds = fieldResults.rows.map((r) => r.field_id)
+
+        const fieldIds = await this.fieldDAO.selectFieldParents(rootIds)
+        const set = new Set(fieldIds)
+        const uniqueFieldIds = [ ...set ]
+
+        const existingFieldResults = await this.database.query(`
+            SELECT field_id FROM user_initial_reputation WHERE user_id = $1
+        `, [ userId ])
+
+        for ( const fieldId of uniqueFieldIds ) {
+            if ( existingFieldResults.rows.length == 0 || ! existingFieldResults.rows.find((r) => r.field_id == fieldId)) {
+                const insertResults = await this.database.query(`
+                    INSERT INTO user_initial_reputation (field_id, user_id, reputation) VALUES ($1, $2, $3)
+                `, [ fieldId, userId, reputation])
+
+                if ( insertResults.rowCount == 0 ) {
+                    throw new Error(`Something went wrong in an attempt to insert reputation for user ${userId} and paper ${paperId}.`)
+                }
+            } else {
+                const updateResults = await this.database.query(`
+                    UPDATE user_initial_reputation SET reputation = reputation + $1 WHERE user_id = $2 AND field_id = $3 
+                `, [ reputation, userId, fieldId])
+
+                if ( updateResults.rowCount == 0 ) {
+                    throw new Error(`Something went wrong in an attempt to update reputation for user ${userId} and paper ${paperId}.`)
+                }
+            }
+        }
+    }
+
+    /**
+     * Set the initial reputation for a user by querying OpenAlex for their works and giving them 
+     * reputation in each field we have that matches the concepts the work is tagged with.  The 
+     * reputation given is works.citations * 10.
+     *
+     * Basically, we query OpenAlex for their works, citations, and concepts
+     * and treat each concept as a field and each citation as an upvote.
+     *
+     * @param {int} userId  The id of the user who's reputation we wish to initialize.
+     *
+     * @return {void}
+     */
+    async initializeReputationForUser(userId) {
+        const user = await this.userDAO.selectUser('WHERE users.id = $1', [ userId ])
+
+        if ( ! user.orcidId ) {
+            return null
+        }
+
+        const papers = await this.openAlexService.getPapersForOrcidId(user.orcidId)
+
+        for ( const paper of papers ) {
+            await this.incrementInitialUserReputationForFields(user.id, paper.fields, paper.citations*10)
+        } 
     }
 
 }

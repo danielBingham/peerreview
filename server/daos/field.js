@@ -1,3 +1,6 @@
+
+const PAGE_SIZE = 100 
+
 module.exports = class FieldDAO {
 
     constructor(database, logger) {
@@ -57,31 +60,90 @@ module.exports = class FieldDAO {
         return list 
     }
 
-    async selectFields(where, params) {
+    async selectFields(where, params, order, page) {
+        params = params ? params : []
+        where = where ? where : ''
+        order = order ? order : 'fields.name asc'
+        page = page ? page : 1
+        
+        const offset = (page-1) * PAGE_SIZE
+        let count = params.length 
+
+        params.push(PAGE_SIZE)
+        params.push(offset)
+
+        const sql = `
+               SELECT 
+                    fields.id as field_id, fields.name as field_name, fields.type as field_type, fields.description as field_description, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate"
+                FROM fields
+                ${where} 
+                ORDER BY ${order} 
+                LIMIT $${count+1}
+                OFFSET $${count+2}
+        `
+
+        console.log(sql)
+        console.log(params)
+
+        const results = await this.database.query(sql, params)
+        return this.hydrateFields(results.rows)
+    }
+
+    async countFields(where, params) {
         params = params ? params : []
         where = where ? where : ''
 
         const sql = `
                SELECT 
-                    fields.id as field_id, fields.name as field_name, fields.type as field_type, fields.description as field_description, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
-                    parents.id as parent_id, children.id as child_id
+                 COUNT(fields.id) as count
                 FROM fields
-                    LEFT OUTER JOIN field_relationships parent_connection on parent_connection.child_id = fields.id
-                    LEFT OUTER JOIN fields parents on parents.id = parent_connection.parent_id
-                    LEFT OUTER JOIN field_relationships child_connection on child_connection.parent_id = fields.id
-                    LEFT OUTER JOIN fields children on children.id = child_connection.child_id
                 ${where} 
-                ORDER BY fields.name asc
         `
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rows.length == 0 ) {
-            return null
-        } else {
-            return this.hydrateFields(results.rows)
+        if ( results.rows.length <= 0) {
+            return {
+                count: 0,
+                pageSize: PAGE_SIZE,
+                numberOfPages: 1
+            }
+        }
+
+        const count = results.rows[0].count
+        return {
+            count: count,
+            pageSize: PAGE_SIZE,
+            numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
         }
     }
+
+    async selectFieldsWithOutParent() {
+        const results = await this.database.query(`
+            SELECT fields.id FROM fields 
+                LEFT OUTER JOIN field_relationships on fields.id = field_relationships.child_id 
+                WHERE field_relationships.parent_id is null
+         `, [ ])
+
+        if ( results.rows.length <= 0) {
+            return []
+        }
+
+        return results.rows.map((r) => r.id)
+    }
+
+    async selectFieldsWithParent(parentId) {
+        const results = await this.database.query(`
+            SELECT child_id FROM field_relationships WHERE parent_id = $1
+         `, [ parentId ])
+
+        if ( results.rows.length <= 0) {
+            return []
+        }
+
+        return results.rows.map((r) => r.child_id)
+    }
+
 
     /**
      * Select the entire tree under a single field.
@@ -93,7 +155,7 @@ module.exports = class FieldDAO {
         const fieldIds = [ ...rootIds]
         let previous = [ ...rootIds]
         do {
-            const results = await this.database.query(`SELECT fields.id as id FROM fields JOIN field_relationships on fields.id = field_relationships.child_id WHERE field_relationships.parent_id = ANY ($1::int[])`, [ previous ])
+            const results = await this.database.query(`SELECT child_id as id FROM field_relationships WHERE field_relationships.parent_id = ANY ($1::int[])`, [ previous ])
 
             // We've reached the bottom of the tree.
             if ( results.rows.length == 0) {
@@ -121,7 +183,7 @@ module.exports = class FieldDAO {
         const fieldIds = [ ...rootIds]
         let previous = [ ...rootIds]
         do {
-            const results = await this.database.query(`SELECT fields.id as id FROM fields JOIN field_relationships on fields.id = field_relationships.parent_id WHERE field_relationships.child_id = ANY ($1::int[])`, [ previous ])
+            const results = await this.database.query(`SELECT parent_id as id FROM field_relationships WHERE field_relationships.child_id = ANY ($1::int[])`, [ previous ])
 
             // We've reached the top of the tree.
             if ( results.rows.length == 0) {

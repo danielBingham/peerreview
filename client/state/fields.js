@@ -35,7 +35,17 @@ export const fieldsSlice = createSlice({
          * one query at a time, subsequent queries will be assumed to build on
          * it. If you need to start a new query, call the `newQuery` action.
          */
-        list: [] 
+        list: [],
+
+        /**
+         * Entity and page counts, initialized by defaults.
+         */
+        counts: {
+            count: 0,
+            pageSize: 1,
+            numberOfPages: 1
+        }
+
     },
     reducers: {
 
@@ -97,6 +107,10 @@ export const fieldsSlice = createSlice({
             state.list = []
         },
 
+        setCounts: function(state, action) {
+            state.counts = action.payload
+        },
+
         // ========== Request Tracking Methods =============
 
         makeRequest: makeTrackedRequest, 
@@ -108,6 +122,66 @@ export const fieldsSlice = createSlice({
 })
 
 
+/**
+ * GET /fields/count or GET /fields/count?...
+ *
+ * Get counts of entities and pages in a field query.  Populates counts. 
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const countFields = function(params) {
+    return function(dispatch, getState) {
+        const configuration = getState().system.configuration
+
+        // Cleanup dead requests before making a new one.
+        dispatch(fieldsSlice.actions.garbageCollectRequests())
+
+        const queryString = new URLSearchParams(params)
+
+        const requestId = uuidv4() 
+        const endpoint = '/fields/count' + ( params ? '?' + queryString.toString() : '')
+
+        let payload = {
+            requestId: requestId
+        }
+        let responseOk = false
+
+        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
+        fetch(configuration.backend + endpoint, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(function(response) {
+            payload.status = response.status
+            responseOk = response.ok
+            return response.json()
+        }).then(function(body) {
+            if ( responseOk ) {
+                dispatch(fieldsSlice.actions.setCounts(body))
+
+                payload.result = body 
+                dispatch(fieldsSlice.actions.completeRequest(payload))
+            } else {
+                payload.error = body.error
+                dispatch(fieldsSlice.actions.failRequest(payload))
+            }
+        }).catch(function(error) {
+            if (error instanceof Error) {
+                payload.error = error.toString()
+            } else {
+                payload.error = 'Unknown error.'
+            }
+            logger.error(error)
+            dispatch(fieldsSlice.actions.failRequest(payload))
+        })
+
+        return requestId
+    }
+}
 
 /**
  * GET /fields or GET /fields?...

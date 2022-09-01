@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
+
+import { getField, cleanupRequest } from '/state/fields'
 
 import Field from './Field'
 import './FieldBadge.css'
@@ -15,13 +18,51 @@ import './FieldBadge.css'
  */
 const FieldBadge = function(props) {
 
+    // ======= Request Tracking =====================================
+    
+    const [requestId, setRequestId] = useState(null)
+    const request = useSelector(function(state) {
+        if ( ! requestId ) {
+            return null
+        } else {
+            return state.fields.requests[requestId]
+        }
+    })
+
+    // ======= Redux State ==========================================
+    
+    const field = useSelector(function(state) {
+        return state.fields.dictionary[props.id]
+    })
+
+    // ======= Effect Handling ======================================
+    
+    const dispatch = useDispatch()
+
+    useEffect(function() {
+        if ( ! field ) {
+            setRequestId(dispatch(getField(props.id)))
+        }
+    }, [ props.id ])
+
+    /**
+     * Make sure we cleanup the request on unmount.
+     */
+    useEffect(function() {
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId }))
+            }
+        }
+    }, [requestId])
+
+
     // ======= Render ===============================================
     
     return (
         <div className='field-badge'>
-            <div className="wrapper"><Field field={props.field} /> 100 papers</div>
-            <div className="description">{ props.field.description }</div>
-
+            <div className="wrapper"><Field field={field} /></div>
+            <div className="description">{ field.description }</div>
         </div>
     )
 }

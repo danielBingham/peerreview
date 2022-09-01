@@ -189,6 +189,13 @@ module.exports = function(database, logger, config) {
     const FieldController = require('./controllers/fields')
     const fieldController = new FieldController(database)
 
+    // Get a count of fields for a particular query.
+    router.get('/fields/count', function(request, response, next) {
+        fieldController.countFields(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
     // Get a list of all fields.
     router.get('/fields', function(request, response, next) {
         fieldController.getFields(request, response).catch(function(error) {

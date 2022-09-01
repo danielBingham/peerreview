@@ -54,8 +54,8 @@ export const papersSlice = createSlice({
          */
         counts: { 
             count: 0,
-            pageSize: 0,
-            numberOfPages: 0
+            pageSize: 1,
+            numberOfPages: 1
         }
     },
     reducers: {

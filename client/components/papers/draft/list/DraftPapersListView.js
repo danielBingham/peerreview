@@ -211,7 +211,7 @@ const DraftPapersListView = function(props) {
             <div>
                 { content }
             </div>
-            <PaginationControls />
+            <PaginationControls counts={counts} />
         </section>
     )
 

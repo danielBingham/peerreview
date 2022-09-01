@@ -2,9 +2,9 @@ FROM postgres:14.2
 
 ENV POSTGRES_PASSWORD='password'
 
-ADD permissions.sql /
-ADD schema.sql /
-ADD fields.sql /
-ADD initialize.sh /docker-entrypoint-initdb.d
+ADD /initialization-scripts/permissions.sql /
+ADD /dump/dump.sql /
+
+ADD initialize_from_dump.sh /docker-entrypoint-initdb.d
 
 EXPOSE 5432 

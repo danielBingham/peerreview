@@ -140,7 +140,7 @@ const FieldsInput = function(props) {
             if ( fieldName.length > 0) {
                 if ( ! fieldsRequestId ) {
                     clearSuggestions()
-                    setFieldsRequestId(dispatch(getFields({ name: fieldName})))
+                    setFieldsRequestId(dispatch(getFields({ name: fieldName })))
                 } else if( fieldsRequest && fieldsRequest.state == 'fulfilled') {
                     clearSuggestions()
                     setFieldsRequestId(dispatch(getFields({ name: fieldName })))
@@ -148,8 +148,13 @@ const FieldsInput = function(props) {
 
                 if ( fields.length > 0 ) {
                     let newFieldSuggestions = []
+                    let count = 0
                     for(const field of fields) {
+                        count += 1
                         newFieldSuggestions.push(field)
+                        if ( count >= 6 ) {
+                            break
+                        }
                     }
                     setFieldSuggestions(newFieldSuggestions)
                 }
@@ -173,8 +178,13 @@ const FieldsInput = function(props) {
         if (fieldsRequest && fieldsRequest.state == 'fulfilled') {
             let newFieldSuggestions = []
             if ( fields.length > 0) {
+                let count = 0
                 for(const field of fields) {
+                    count += 1
                     newFieldSuggestions.push(field)
+                    if ( count >= 6 ) {
+                        break
+                    }
                 }
             }
             setFieldSuggestions(newFieldSuggestions)
@@ -207,7 +217,7 @@ const FieldsInput = function(props) {
     if ( ! suggestionsError) {
         if ( fieldSuggestions.length > 0) {
             for (const field of fieldSuggestions) {
-                suggestedFieldList.push(<div className='badge-wrapper' key={field.id} onClick={(event) => { appendField(field) }}><FieldBadge   field={field} /></div>)
+                suggestedFieldList.push(<div className='badge-wrapper' key={field.id} onClick={(event) => { appendField(field) }}><FieldBadge id={field.id} /></div>)
             }
         }
     }
