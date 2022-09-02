@@ -28,23 +28,28 @@ export const fieldsSlice = createSlice({
          */
         dictionary: {},
 
-        /** 
-         * A list of fields returned from /fields/query.  We need to use a list
-         * here, because we need to preserve the order returned from the
-         * backend.  The query can include a `sort` parameter.  We can only run
-         * one query at a time, subsequent queries will be assumed to build on
-         * it. If you need to start a new query, call the `newQuery` action.
-         */
-        list: [],
-
         /**
-         * Entity and page counts, initialized by defaults.
+         *
+         * An object containing queries made to query supporting endpoints.
+         *
+         * In the case of fields: /fields, /field/:id/children, and
+         * /field/:id/parents
+         *
+         * Structure:
+         * {
+         *  queryName: {
+         *      meta: {
+         *          page: <int>,
+         *          count: <int>,
+         *          pageSize: <int>,
+         *          numberOfPages: <int>
+         *      },
+         *      list: [] 
+         *  },
+         *  ...
+         * }
          */
-        counts: {
-            count: 0,
-            pageSize: 1,
-            numberOfPages: 1
-        }
+        queries: {}
 
     },
     reducers: {
@@ -61,55 +66,57 @@ export const fieldsSlice = createSlice({
          * @param {object} action   The action payload to be reduced, in this
          * case a list of field objects to be added to the store.
          */
-        addFieldsToDictionary: function(state, action) {
-            const fields = action.payload
-            if ( fields && Array.isArray(fields) ) {
-                for(const field of action.payload) {
-                    state.dictionary[field.id] = field
-                }
-            } else if ( fields ) {
-                state.dictionary[fields.id] = fields
-            }
-        },
-
-        appendFieldsToList: function(state, action) {
-            if ( action.payload && Array.isArray(action.payload)) {
-                const fields = action.payload
-                state.list.push(...fields)
-            } else if(action.payload) {
-                state.list.push(action.payload)
-            }
-        },
-
-        updateField: function(state, action) {
+        setFieldInDictionary: function(state, action) {
             const field = action.payload
             state.dictionary[field.id] = field
-
-            const index = state.list.findIndex((f) => f.id == field.id)
-            state.list[index] = field
         },
 
         removeField: function(state, action) {
             const field = action.payload
             delete state.dictionary[field.id]
-            state.list = state.list.filter((f) => f.id != field.id)
         },
 
-        /**
-         * Reset the query so that you can start a new one.
-         *
-         * Doesn't take a payload.
-         *
-         * @param {object} state - the redux state slice.
-         * @param {object} action - the redux action we're reducing.
-         */
-        clearList: function(state, acton) {
-            state.list = []
+        addFieldsToDictionary: function(state, action) {
+            const fields = action.payload
+            if ( fields && Array.isArray(fields)) {
+                for ( const field of fields) {
+                    state.dictionary[field.id] = field
+                }
+            } else if (fields ) {
+                state.dictionary[fields.id] = fields
+            }
         },
 
-        setCounts: function(state, action) {
-            state.counts = action.payload
+        makeQuery: function(state, action) {
+            const name = action.payload.name
+
+            state.queries[name] = {
+                meta: {
+                    page: 1,
+                    count: 0,
+                    pageSize: 1,
+                    numberOfPages: 1
+                },
+                list: [] 
+            }
         },
+
+        setQueryResults: function(state, action) {
+            const name = action.payload.name
+            const meta = action.payload.meta
+            const result = action.payload.result
+
+            state.queries[name].meta = meta
+            state.queries[name].list = result
+        },
+
+        clearQuery: function(state, action) {
+            const name = action.payload.name
+
+            delete state.queries[name]
+        },
+
+
 
         // ========== Request Tracking Methods =============
 
@@ -123,67 +130,6 @@ export const fieldsSlice = createSlice({
 
 
 /**
- * GET /fields/count or GET /fields/count?...
- *
- * Get counts of entities and pages in a field query.  Populates counts. 
- *
- * Makes the request asynchronously and returns a id that can be used to track
- * the request and retreive the results from the state slice.
- *
- * @returns {string} A uuid requestId that can be used to track this request.
- */
-export const countFields = function(params) {
-    return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(fieldsSlice.actions.garbageCollectRequests())
-
-        const queryString = new URLSearchParams(params)
-
-        const requestId = uuidv4() 
-        const endpoint = '/fields/count' + ( params ? '?' + queryString.toString() : '')
-
-        let payload = {
-            requestId: requestId
-        }
-        let responseOk = false
-
-        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            responseOk = response.ok
-            return response.json()
-        }).then(function(body) {
-            if ( responseOk ) {
-                dispatch(fieldsSlice.actions.setCounts(body))
-
-                payload.result = body 
-                dispatch(fieldsSlice.actions.completeRequest(payload))
-            } else {
-                payload.error = body.error
-                dispatch(fieldsSlice.actions.failRequest(payload))
-            }
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(fieldsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
-    }
-}
-
-/**
  * GET /fields or GET /fields?...
  *
  * Get all fields in the database.  Populates state.dictionary and state.list.
@@ -194,7 +140,7 @@ export const countFields = function(params) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getFields = function(params) {
+export const getFields = function(name, params) {
     return function(dispatch, getState) {
         const configuration = getState().system.configuration
 
@@ -209,8 +155,9 @@ export const getFields = function(params) {
         let payload = {
             requestId: requestId
         }
+        let responseOk = false
 
-
+        dispatch(fieldsSlice.actions.makeQuery({ name: name }))
         dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
         fetch(configuration.backend + endpoint, {
             method: 'GET',
@@ -219,24 +166,33 @@ export const getFields = function(params) {
             }
         }).then(function(response) {
             payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(fields) {
-            dispatch(fieldsSlice.actions.addFieldsToDictionary(fields))
-            dispatch(fieldsSlice.actions.appendFieldsToList(fields))
+            responseOk = response.ok
+            return response.json()
+        }).then(function(responseBody) {
+            if ( responseOk ){
+                const resultIds = []
+                if ( responseBody.result.length > 0 ) {
+                    for(const field of responseBody.result) {
+                        resultIds.push(field.id)
+                        dispatch(fieldsSlice.actions.setFieldInDictionary(field))
+                    }
+                }
+                dispatch(fieldsSlice.actions.setQueryResults({ 
+                    name: name, 
+                    meta: responseBody.meta,
+                    result: resultIds 
+                }))
 
-            payload.result = fields
-            dispatch(fieldsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
+                payload.result = responseBody 
+                dispatch(fieldsSlice.actions.completeRequest(payload))
             } else {
-                payload.error = 'Unknown error.'
+                payload.error = responseBody.error
+                dispatch(fieldsSlice.actions.failRequest(payload))
             }
+        }).catch(function(error) {
             logger.error(error)
+
+            payload.error = 'frontend-error'
             dispatch(fieldsSlice.actions.failRequest(payload))
         })
 
@@ -285,7 +241,7 @@ export const postFields = function(field) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedField) {
-            dispatch(fieldsSlice.actions.updateField(returnedField))
+            dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
 
             payload.result = returnedField
             dispatch(fieldsSlice.actions.completeRequest(payload))
@@ -344,7 +300,7 @@ export const getField = function(id) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(field) {
-            dispatch(fieldsSlice.actions.updateField(field))
+            dispatch(fieldsSlice.actions.setFieldInDictionary(field))
 
             payload.result = field
             dispatch(fieldsSlice.actions.completeRequest(payload))
@@ -405,7 +361,7 @@ export const putField = function(field) {
             }
 
         }).then(function(returnedField) {
-            dispatch(fieldsSlice.actions.updateField(returnedField))
+            dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
 
             payload.result = returnedField
             dispatch(fieldsSlice.actions.completeRequest(payload))
@@ -464,7 +420,7 @@ export const patchField = function(field) {
                 return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
         }).then(function(returnedField) {
-            dispatch(fieldsSlice.actions.updateField(returnedField))
+            dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
 
             payload.result = returnedField
             dispatch(fieldsSlice.actions.completeRequest(payload))
@@ -539,8 +495,8 @@ export const deleteField = function(field) {
 
 
 export const { 
-    addFieldsToDictionary, addFieldsWithoutRelationshipsToDictionary, 
-    appendFieldsToList, updateField, clearList, 
+    setFieldInDictionary, removeField, addFieldsToDictionary,
+    makeQuery, clearQuery, setQueryResults,
     makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
 
 export default fieldsSlice.reducer

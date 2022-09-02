@@ -46,6 +46,8 @@ CREATE TABLE fields (
     name varchar(512),
     description text,
     type varchar(512), /* Name of the top level parent, used as a class to give the tag its color. */
+    depth int, /* The depth in the heirarchy.  When there are multiple paths the highest depth will be used. */
+    average_reputation int, /* The average reputation given per paper in this field.  Initially average citations * 10. */
     created_date timestamptz,
     updated_date timestamptz
 );

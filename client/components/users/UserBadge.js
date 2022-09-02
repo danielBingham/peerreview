@@ -57,17 +57,17 @@ const UserBadge = function(props) {
                 sortedFields = sortedFields.filter((uf) => props.fields.find((f) => f.id == uf.field.id) !== undefined)
 
                 for (const userField of sortedFields ) {
-                    fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {userField.reputation}</div>)
+                    fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {parseInt(userField.reputation).toLocaleString()}</div>)
                 }
             } else {
                 const userField = sortedFields[0]
-                fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {userField.reputation}</div>)
+                fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {parseInt(userField.reputation).toLocaleString()}</div>)
             }
         }
 
         return (
             <div className="user-badge">
-                <div className="user-tag" ><div className="user-profile-picture"></div><Link to={ `/user/${user.id}` }>{user.name}</Link> ({user.reputation})</div> 
+                <div className="user-tag" ><div className="user-profile-picture"></div><Link to={ `/user/${user.id}` }>{user.name}</Link> ({parseInt(user.reputation).toLocaleString()})</div> 
                 <div className="institution">{user.institution}</div>
                 <div className="badge-fields">
                     {fields}

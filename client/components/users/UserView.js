@@ -78,16 +78,8 @@ const UserView = function(props) {
     } else {
         const fields = []
         const sortedFields = [...user.fields]
-        sortedFields.sort((a, b) => {
-            const first = b.reputation - a.reputation
-            if ( first == 0 ) {
-                return a.field.id - b.field.id
-            } else {
-                return first
-            }
-        })
         for ( const userField of sortedFields) {
-            fields.push(<div key={ userField.field.id } className="wrapper"><Field field={ userField.field } /> { userField.reputation } </div>)
+            fields.push(<div key={ userField.field.id } className="wrapper"><Field field={ userField.field } /> { parseInt(userField.reputation).toLocaleString() } </div>)
         }
 
         const shouldRenderControls = ( currentUser && user && currentUser.id == user.id)

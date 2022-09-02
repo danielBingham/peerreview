@@ -1,10 +1,12 @@
 const DAOError = require('../errors/DAOError')
+const FieldDAO = require('./field')
 
 module.exports = class UserDAO {
 
 
     constructor(database) {
         this.database = database
+        this.fieldDAO = new FieldDAO(database)
     }
 
     /**
@@ -33,7 +35,6 @@ module.exports = class UserDAO {
                 bio: row.user_bio,
                 location: row.user_location,
                 institution: row.user_institution,
-                initialReputation: row.user_initialReputation,
                 reputation: row.user_reputation,
                 createdDate: row.user_createdDate,
                 updatedDate: row.user_updatedDate,
@@ -78,27 +79,27 @@ module.exports = class UserDAO {
 
                     users.id as user_id, users.orcid_id as "user_orcidId", users.name as user_name, users.email as user_email, 
                     users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
-                    users.initial_reputation as "user_initialReputation", users.reputation as user_reputation, 
+                    users.reputation as user_reputation, 
                     users.created_date as "user_createdDate", users.updated_date as "user_updatedDate",
 
                     user_field_reputation.reputation as field_reputation,
 
-                    fields.id as field_id, fields.name as field_name, fields.description as field_description, 
-                    fields.type as field_type, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate"
+                    ${this.fieldDAO.selectionString}
 
                 FROM users
                 LEFT OUTER JOIN user_field_reputation on users.id = user_field_reputation.user_id
                 LEFT OUTER JOIN fields on fields.id = user_field_reputation.field_id
                 ${where} 
+                ORDER BY users.created_date asc, user_field_reputation.reputation desc, fields.depth asc
         `
 
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length <= 0 ) {
             return [] 
-        } else {
-            return this.hydrateUsers(results.rows)
-        }
+        } 
+
+        return this.hydrateUsers(results.rows)
     }
 
     async insertUser(user) {

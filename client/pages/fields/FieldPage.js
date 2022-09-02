@@ -16,7 +16,8 @@ const FieldPage = function(props) {
     return (
         <div id="field-page" className="page">
             <FieldView id={ id } />
-            <FieldListView id={ id } />
+            <FieldListView title={ 'Parents' } child={ id } />
+            <FieldListView title={ 'Children' } parent={ id } />
             <PublishedPaperList fieldId={ id } />
         </div>
     )

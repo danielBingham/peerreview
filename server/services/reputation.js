@@ -6,6 +6,7 @@
 
 const FieldDAO = require('../daos/field')
 const userDAO = require('../daos/user')
+const OpenAlexService = require('./OpenAlexService')
 
 module.exports = class ReputationService {
 
@@ -14,6 +15,7 @@ module.exports = class ReputationService {
         this.logger = logger
 
         this.fieldDAO = new FieldDAO(database, logger)
+        this.openAlexService = new OpenAlexService(logger)
     }
 
 
@@ -103,7 +105,7 @@ module.exports = class ReputationService {
         }
         const rootIds = fieldResults.rows.map((r) => r.field_id)
 
-        const fieldIds = await this.fieldDAO.selectFieldParents(rootIds)
+        const fieldIds = await this.fieldDAO.selectFieldAncestors(rootIds)
         const uniqueFieldIds = [ ...new Set(fieldIds) ]
 
 
@@ -170,6 +172,20 @@ module.exports = class ReputationService {
      *
      */
     async recalculateReputationForUser(userId) {
+
+        // ======== Get total reputation gained from works. ===================
+
+        const worksResults = await this.database.query(`
+            SELECT SUM(reputation) as reputation FROM user_initial_works_reputation WHERE user_id = $1
+        `, [ userId ])
+
+        if ( worksResults.rows.length !== 1) {
+            throw new Error('Works reputation query returned invalid results!')
+        }
+        const worksReputation = ( worksResults.rows[0].reputation ? worksResults.rows[0].reputation : 0)
+
+        // ======== Get total reputation gained from papers. ==================
+
         const paperResults = await this.database.query(`
             SELECT SUM(reputation) as reputation FROM user_paper_reputation WHERE user_id = $1
         `, [ userId ])
@@ -180,6 +196,8 @@ module.exports = class ReputationService {
         const paperReputation = ( paperResults.rows[0].reputation ? paperResults.rows[0].reputation : 0 )
 
 
+        // ======== Get total reputation gained from reviews. =================
+        
         const reviewResults = await this.database.query(`
             SELECT SUM(reputation) as reputation FROM user_review_reputation WHERE user_id = $1
         `, [ userId ])
@@ -189,11 +207,16 @@ module.exports = class ReputationService {
         }
         const reviewReputation = ( reviewResults.rows[0].reputation ? reviewResults.rows[0].reputation: 0 ) 
 
+        // ======== Update User total reputation. =============================
+        // Update the user's total reputation as the sum of reputation gained
+        // from papers and reputation gained from reviews.
+        
+        const total = parseInt(worksReputation) + parseInt(paperReputation) + parseInt(reviewReputation)
         const userResults = await this.database.query(`
             UPDATE users 
-                 SET reputation = initial_reputation + $1 + $2 
-            WHERE id = $3
-        `, [ paperReputation, reviewReputation, userId ] )
+                 SET reputation = $1 
+            WHERE id = $2
+        `, [ total, userId ] )
 
         if ( userResults.rowCount == 0) {
             throw new Error(`Attempt to recalculate reputation for user ${userId} failed!`)
@@ -201,46 +224,94 @@ module.exports = class ReputationService {
     }
 
 
+    /**************************************************************************
+     *  Reputation Incremental Calculations
+     *
+     *  Methods to add incremental reputation to a user for various events.
+     *
+     **************************************************************************/
+
+    /**
+     * Give a user incremental reputation in each of the fields attached to the
+     * paper identified by `paperId` and each of their parents.  Don't give any
+     * field more than 1x the reputation increment, so fields included
+     * multiple times through parentage shouldn't get more than
+     * `reputation`. 
+     *
+     * This is the gnarly one.  We approach it by identifying the full set of
+     * fields including the tagged fields and their parents, and then selecting
+     * only unique ids for that set.  Each unique field in the set then gets
+     * incremented by `reputation`.
+     *
+     * @param {int} userId  The id of the `user` we're incrementing reputation for.
+     * @param {int} paperId The id of the `paper` we're incrementing reputation for.
+     * @param {int} reputation  The reputation increment.  Note, this is
+     * reputation, *NOT* score.  This is score * 10 for paper votes. Can also
+     * be used to give review reputation.
+     *
+     * @return {void}
+     */
     async incrementUserReputationForPaperFields(userId, paperId, reputation) {
 
+        // Get fields for the paper identified by `paperId`.
         const fieldResults = await this.database.query(`
             SELECT field_id from paper_fields where paper_id = $1
         `, [ paperId ])
 
+        // Huh... paper doesn't have fields.  That's weird.
         if ( fieldResults.rows.length == 0 ) {
             return 
         }
+
+        // These fields are the `root` fields.  We'll start there and climb the
+        // field heirarchy to the tree's root (the top level fields).
         const rootIds = fieldResults.rows.map((r) => r.field_id)
 
-        const fieldIds = await this.fieldDAO.selectFieldParents(rootIds)
+        // Get all parents for the root fields.
+        const fieldIds = await this.fieldDAO.selectFieldAncestors(rootIds)
+
+        // Get only unique ids from the set of [rootIds, parentIds]
         const set = new Set(fieldIds)
         const uniqueFieldIds = [ ...set ]
 
-        const existingFieldResults = await this.database.query(`
-            SELECT field_id FROM user_field_reputation WHERE user_id = $1
-        `, [ userId ])
+        // Upsert the reputation into the fields table.
+        for (const fieldId of uniqueFieldIds ) {
+            const upsertResults = await this.database.query(`
+                INSERT INTO user_field_reputation (field_id, user_id, reputation) VALUES($1, $2, $3)
+                    ON CONFLICT (field_id, user_id) DO
+                UPDATE SET reputation = user_field_reputation.reputation + $3
+            `, [ fieldId, userId, reputation ])
 
-        for ( const fieldId of uniqueFieldIds ) {
-            if ( existingFieldResults.rows.length == 0 || ! existingFieldResults.rows.find((r) => r.field_id == fieldId)) {
-                const insertResults = await this.database.query(`
-                    INSERT INTO user_field_reputation (field_id, user_id, reputation) VALUES ($1, $2, $3)
-                `, [ fieldId, userId, reputation])
-
-                if ( insertResults.rowCount == 0 ) {
-                    throw new Error(`Something went wrong in an attempt to insert reputation for user ${userId} and paper ${paperId}.`)
-                }
-            } else {
-                const updateResults = await this.database.query(`
-                    UPDATE user_field_reputation SET reputation = reputation + $1 WHERE user_id = $2 AND field_id = $3 
-                `, [ reputation, userId, fieldId])
-
-                if ( updateResults.rowCount == 0 ) {
-                    throw new Error(`Something went wrong in an attempt to update reputation for user ${userId} and paper ${paperId}.`)
-                }
+            if ( upsertResults.rowCount == 0 ) {
+                throw new Error(`Something went wrong in an attempt to upsert reputation for user ${userId} and ${fieldId}.`)
             }
         }
     }
 
+    /**
+     * Give the user identified by `userId` incremental reputation for the
+     * paper identified by `paperId` and `score`.  One up vote is +1 score, one
+     * downvote is -1 score.
+     *
+     * Only increment reputation for a single author.  Gives that author +10
+     * reputation for each upvote (positive score) and -10 for each downvote
+     * (negative score).  The net result is that they should get score*10
+     * total reputation change.
+     *
+     * Also increments field reputation for that user in the fields the given
+     * paper is tagged with and their parents.  Each field the paper is tagged
+     * with should get an equivalent score change to the paper as a whole, but
+     * fields that are both tagged on the paper and parents of the fields
+     * tagged on the paper should only get one instance of the score change.
+     * IE if the paper gets +10 score and is tagged with both 'physics' and
+     * 'astrophysics', 'physics' should only increase +10, not +20.
+     *
+     * @param {int} userId  The id of the `user` we're incrementing reputation for.
+     * @param {int} paperId The id of the `paper` we're incrementing reputation for.
+     * @param {int} score   The score changing we're adding to this paper.
+     *
+     * @return {void}
+     */
     async incrementUserReputationForPaper(userId, paperId, score) {
         const reputation = score*10
 
@@ -259,6 +330,19 @@ module.exports = class ReputationService {
         await this.recalculateReputationForUser(userId)
     }
 
+    /**
+     * Add incremental reputation for a paper to all of the authors who wrote
+     * the paper.
+     *
+     * Each Author on the paper should get Score*10 reputation, where score is
+     * the +/- increment we're adding.
+     *
+     * @param {int} paperId The id of the `paper` we wish to add reputation for.
+     * @param {int} score   The score increment we're adding to the paper.  One
+     * vote is one score.  Up votes are +1, down votes are -1.
+     *
+     * @return {void}
+     */
     async incrementReputationForPaper(paperId, score) {
         const authorsResults = await this.database.query(`
             SELECT user_id from paper_authors WHERE paper_id = $1
@@ -273,6 +357,16 @@ module.exports = class ReputationService {
         }
     }
 
+    /**
+     * Add incremental reputation for a single review to the user who wrote the review.
+     *
+     * If this is the first accepted review on this version of the paper, then
+     * the user who wrote it should get 25 reputaiton.
+     *
+     * @param {Object} review   The `review` object.  @see server/daos/review.js
+     *
+     * @return {void}
+     */
     async incrementReputationForReview(review) {
         if ( review.status !== 'accepted') {
             return
@@ -305,13 +399,40 @@ module.exports = class ReputationService {
     }
 
     /**
+     * Add a work to the `user_initial_works_reputation` table.  A work is Open
+     * Alex's version of a "paper", but can include more than just published
+     * papers.  We're using works as a rough analog for papers here and
+     * citations as a rough analog for up votes in order to give users a base
+     * starting reputation, so that they don't have to start from zero.
+     *
+     * Each work gets one row in the table along with the user its attached to
+     * and the Reputation (citations*10) associated with it.
+     *
+     * @param {int} userId      The `user.id` of the Peer Review user.
+     * @param {string} workId   The work.id from the Open Alex Work record: https://docs.openalex.org/about-the-data/work
+     *
+     * @return {void}
+     */
+    async incrementInitialUserReputationForWork(userId, workId, reputation) {
+        const paperResults = await this.database.query(`
+            INSERT INTO user_initial_works_reputation (user_id, works_id, reputation) VALUES ($1, $2, $3)
+                ON CONFLICT (works_id, user_id) DO
+            UPDATE SET reputation = user_initial_works_reputation.reputation + $3
+        `, [ userId, workId, reputation])
+
+        if ( paperResults.rowCount == 0 ) {
+            throw new Error(`Upsert failed to modify rows for work: ${workId} and user: ${userId}.`)
+        }
+    }
+
+    /**
      * Add a reputation increment to the initial reputation for a user in each
      * of the fields passed.  Assumes the array of fields passed as
      * `fieldNames` represents an group of fields that a single paper was
      * tagged with, and the reputation passed represents the reputation gained
      * for that paper.
      *
-     * Updates the `user_initial_reputation` table to record the reputation
+     * Updates the `user_initial_field_reputation` table to record the reputation
      * gained in each of the fields passed and each of their parents.
      *
      * @param {int} userId  The id of the user we're giving reputation.
@@ -321,40 +442,47 @@ module.exports = class ReputationService {
      * fields and their parents.
      */
     async incrementInitialUserReputationForFields(userId, fieldNames, reputation) {
+        // Get field ids from the array of field names.
         const fieldResults = await this.database.query(`
-            SELECT field_id from fields where name in $1
+            SELECT fields.id FROM fields WHERE fields.name = ANY($1::text[])
         `, [ fieldNames ])
 
         if ( fieldResults.rows.length == 0 ) {
             return 
         }
-        const rootIds = fieldResults.rows.map((r) => r.field_id)
 
-        const fieldIds = await this.fieldDAO.selectFieldParents(rootIds)
+        // Get the root ids from the results of the name query.  The root ids
+        // in this case refers to the root of our search up the field tree.
+        const rootIds = fieldResults.rows.map((r) => r.id)
+
+        // Select the full set of field ids we're going to be working with: our
+        // root ids and all of their parents.
+        const fieldIds = await this.fieldDAO.selectFieldAncestors(rootIds)
+
+        // Get only unique ids from the set of [rootIds, parentIds]
         const set = new Set(fieldIds)
         const uniqueFieldIds = [ ...set ]
 
-        const existingFieldResults = await this.database.query(`
-            SELECT field_id FROM user_initial_reputation WHERE user_id = $1
-        `, [ userId ])
+        // Upsert the reputation into the initial fields reputation table.
+        for (const fieldId of uniqueFieldIds ) {
+            const upsertResults = await this.database.query(`
+                INSERT INTO user_initial_field_reputation (field_id, user_id, reputation) VALUES($1, $2, $3)
+                    ON CONFLICT (field_id, user_id) DO
+                UPDATE SET reputation = user_initial_field_reputation.reputation + $3
+            `, [ fieldId, userId, reputation ])
 
-        for ( const fieldId of uniqueFieldIds ) {
-            if ( existingFieldResults.rows.length == 0 || ! existingFieldResults.rows.find((r) => r.field_id == fieldId)) {
-                const insertResults = await this.database.query(`
-                    INSERT INTO user_initial_reputation (field_id, user_id, reputation) VALUES ($1, $2, $3)
-                `, [ fieldId, userId, reputation])
+            if ( upsertResults.rowCount == 0 ) {
+                throw new Error(`Something went wrong in an attempt to upsert reputation for user ${userId} and ${fieldId}.`)
+            }
 
-                if ( insertResults.rowCount == 0 ) {
-                    throw new Error(`Something went wrong in an attempt to insert reputation for user ${userId} and paper ${paperId}.`)
-                }
-            } else {
-                const updateResults = await this.database.query(`
-                    UPDATE user_initial_reputation SET reputation = reputation + $1 WHERE user_id = $2 AND field_id = $3 
-                `, [ reputation, userId, fieldId])
+            const upsertFieldResults = await this.database.query(`
+                INSERT INTO user_field_reputation (field_id, user_id, reputation) VALUES($1, $2, $3)
+                    ON CONFLICT (field_id, user_id) DO
+                UPDATE SET reputation = user_field_reputation.reputation + $3
+            `, [ fieldId, userId, reputation ])
 
-                if ( updateResults.rowCount == 0 ) {
-                    throw new Error(`Something went wrong in an attempt to update reputation for user ${userId} and paper ${paperId}.`)
-                }
+            if ( upsertFieldResults.rowCount == 0 ) {
+                throw new Error(`Something went wrong in an attempt to upsert reputation for user ${userId} and ${fieldId}.`)
             }
         }
     }
@@ -378,11 +506,55 @@ module.exports = class ReputationService {
             return null
         }
 
-        const papers = await this.openAlexService.getPapersForOrcidId(user.orcidId)
+        await this.initializeReputationForUserWithOrcidId(user.id, user.orcidId)
+    }
+
+    /**
+     * Set the initial reputation for a user using their ORCID iD to match them
+     * to their Open Alex record.
+     *
+     * @param {Object} user     Their Peer Review `user` object.
+     * @param {string} orcidId  Their ORCID iD.
+     *
+     * @return {void}
+     */
+    async initializeReputationForUserWithOrcidId(userId, orcidId) {
+        const papers = await this.openAlexService.getPapersForOrcidId(orcidId)
 
         for ( const paper of papers ) {
-            await this.incrementInitialUserReputationForFields(user.id, paper.fields, paper.citations*10)
+            if ( paper.citations < 10 ) {
+                continue
+            }
+
+            await this.incrementInitialUserReputationForFields(userId, paper.fields, paper.citations*10)
+            await this.incrementInitialUserReputationForWork(userId, paper.workId, paper.citations*10)
         } 
+
+        await this.recalculateReputationForUser(userId)
+    }
+
+    /**
+     * Set the initial reputation for a user using their Open Alex Id to match
+     * them to their Open Alex record.
+     *
+     * @param {Object} user     Their Peer Review `user` object.
+     * @param {string} openAlexId   Their Open Alex Id.
+     *
+     * @return {void}
+     */
+    async initializeReputationForUserWithOpenAlexId(userId, openAlexId) {
+        const papers = await this.openAlexService.getPapersForOpenAlexId(openAlexId)
+
+        for ( const paper of papers ) {
+            if ( paper.citations < 10 ) {
+                continue
+            }
+
+            await this.incrementInitialUserReputationForFields(userId, paper.fields, paper.citations*10)
+            await this.incrementInitialUserReputationForWork(userId, paper.workId, paper.citations*10)
+        } 
+
+        await this.recalculateReputationForUser(userId)
     }
 
 }

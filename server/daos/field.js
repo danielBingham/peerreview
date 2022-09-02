@@ -6,6 +6,19 @@ module.exports = class FieldDAO {
     constructor(database, logger) {
         this.database = database
         this.logger = logger
+
+        /**
+         * SQL used to select a full field object.  Stored as a variable
+         * because function calls can be expensive.
+         *
+         * Useful for when we want to select field objects into joins.
+         * Especially in other DAOs.
+         */
+        this.selectionString = `
+            fields.id as field_id, fields.name as field_name, fields.type as field_type,
+            fields.depth as field_depth, fields.average_reputation as "field_averageReputation", fields.description as field_description, 
+            fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate"
+        `
     }
 
     validateField(field) {
@@ -13,7 +26,6 @@ module.exports = class FieldDAO {
         if ( field.name.length < 3) {
             throw new ValidationError('name', 'length', 'Field names must be at least 3 characters long.')
         }
-
     }
 
     /**
@@ -24,10 +36,6 @@ module.exports = class FieldDAO {
      * @return {Object[]}   The data parsed into one or more objects.
      */
     hydrateFields(rows) {
-        if ( rows.length == 0 ) {
-            return null 
-        }
-
         const fields = {}
         const list = []
 
@@ -36,24 +44,16 @@ module.exports = class FieldDAO {
                 id: row.field_id,
                 name: row.field_name,
                 type: row.field_type,
+                depth: row.field_depth,
+                averageReputation: row.field_averageReputation,
                 description: row.field_description,
                 createdDate: row.field_createdDate,
-                updatedDate: row.field_updatedDate,
-                parents: [],
-                children: []
+                updatedDate: row.field_updatedDate
             }
 
             if ( ! fields[field.id] ) {
                 fields[field.id] = field
                 list.push(field)
-            }
-
-            if ( row.parent_id && ! fields[row.field_id].parents.find((p) => p == row.parent_id) ) {
-                fields[row.field_id].parents.push(row.parent_id)
-            }
-
-            if ( row.child_id && ! fields[row.field_id].children.find((c) => c == row.child_id)) {
-                fields[row.field_id].children.push(row.child_id)
             }
         }
 
@@ -63,27 +63,35 @@ module.exports = class FieldDAO {
     async selectFields(where, params, order, page) {
         params = params ? params : []
         where = where ? where : ''
-        order = order ? order : 'fields.name asc'
-        page = page ? page : 1
-        
-        const offset = (page-1) * PAGE_SIZE
-        let count = params.length 
+        order = order ? order : 'fields.depth asc, fields.name asc'
 
-        params.push(PAGE_SIZE)
-        params.push(offset)
+        // We only want to include the paging terms if we actually want paging.
+        // If we're making an internal call for another object, then we
+        // probably don't want to have to deal with pagination.
+        let paging = ''
+        if ( page ) {
+            page = page ? page : 1
+            
+            const offset = (page-1) * PAGE_SIZE
+            let count = params.length 
+
+            paging = `
+                LIMIT $${count+1}
+                OFFSET $${count+2}
+            `
+
+            params.push(PAGE_SIZE)
+            params.push(offset)
+        }
 
         const sql = `
                SELECT 
-                    fields.id as field_id, fields.name as field_name, fields.type as field_type, fields.description as field_description, fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate"
+                   ${this.selectionString}
                 FROM fields
                 ${where} 
                 ORDER BY ${order} 
-                LIMIT $${count+1}
-                OFFSET $${count+2}
+                ${paging}
         `
-
-        console.log(sql)
-        console.log(params)
 
         const results = await this.database.query(sql, params)
         return this.hydrateFields(results.rows)
@@ -118,21 +126,13 @@ module.exports = class FieldDAO {
         }
     }
 
-    async selectFieldsWithOutParent() {
-        const results = await this.database.query(`
-            SELECT fields.id FROM fields 
-                LEFT OUTER JOIN field_relationships on fields.id = field_relationships.child_id 
-                WHERE field_relationships.parent_id is null
-         `, [ ])
-
-        if ( results.rows.length <= 0) {
-            return []
-        }
-
-        return results.rows.map((r) => r.id)
-    }
-
-    async selectFieldsWithParent(parentId) {
+    /**
+     * Select the immediate children of parent field identified by `parentId`
+     *
+     * @param {int} parentId    The id of the field who's children we want to
+     * select.
+     */
+    async selectFieldChildren(parentId) {
         const results = await this.database.query(`
             SELECT child_id FROM field_relationships WHERE parent_id = $1
          `, [ parentId ])
@@ -144,14 +144,32 @@ module.exports = class FieldDAO {
         return results.rows.map((r) => r.child_id)
     }
 
+    /**
+     * Select the immediate parents of the field identified by `childId`
+     *
+     * @param {int} childId The id of the field who's parents we want to
+     * select.
+     */
+    async selectFieldParents(childId) {
+        const results = await this.database.query(`
+            SELECT parent_id FROM field_relationships WHERE child_id = $1
+        `, [ childId ])
+
+        if ( results.rows.length <= 0) {
+            return []
+        }
+
+        return results.rows.map((r) => r.parent_id)
+    }
+
 
     /**
      * Select the entire tree under a single field.
      *
-     * @param {int[]} fieldIds An array of field ids the children of which we
-     * want to select.
-     */
-    async selectFieldChildren(rootIds) {
+     * @param {int[]} rootIds An array of field ids who's descendents we want
+     * to select. 
+     **/
+    async selectFieldDescendents(rootIds) {
         const fieldIds = [ ...rootIds]
         let previous = [ ...rootIds]
         do {
@@ -179,7 +197,7 @@ module.exports = class FieldDAO {
      * @param {int[]} fieldIds An array of field ids the children of which we
      * want to select.
      */
-    async selectFieldParents(rootIds) {
+    async selectFieldAncestors(rootIds) {
         const fieldIds = [ ...rootIds]
         let previous = [ ...rootIds]
         do {

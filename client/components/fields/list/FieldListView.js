@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 
 import FieldBadge from '../FieldBadge'
-import { getFields, countFields, clearList, cleanupRequest } from '/state/fields'
+import { getFields, clearQuery, cleanupRequest } from '/state/fields'
 
 import Spinner from '/components/Spinner'
 import PaginationControls from '/components/PaginationControls'
@@ -33,23 +33,33 @@ const FieldListView = function(props) {
         }
     })
 
-    const [ countRequestId, setCountRequestId ] = useState(null)
-    const countRequest = useSelector(function(state) {
-        if ( countRequestId ) {
-            return state.fields.requests[countRequestId]
-        } else {
-            return null
-        }
-    })
-
     // ======= Redux State ==========================================
+    const title = props.title ? props.title : title
 
     const fields = useSelector(function(state) {
-        return state.fields.list
+        if ( ! state.fields.queries[title] ) {
+            return []
+        }
+
+        const fields = []
+        for ( const id of state.fields.queries[title].list) {
+            if ( state.fields.dictionary[id] ) {
+                fields.push(state.fields.dictionary[id])
+            }
+        }
+        return fields
     })
 
-    const counts = useSelector(function(state) {
-        return state.fields.counts
+    const meta = useSelector(function(state) {
+        if ( ! state.fields.queries[title] ) {
+            return {
+                count: 0,
+                page: 1,
+                pageSize: 1,
+                numberOfPages: 1
+            }
+        }
+        return state.fields.queries[title].meta 
     })
 
     // ======= Effect Handling ======================================
@@ -57,25 +67,25 @@ const FieldListView = function(props) {
 
     // Make the request to get the fields. We only need to do this on mount.
     useEffect(function() {
-        dispatch(clearList())
+        const params = { }
 
-        const params = {
-            parent: 'root' 
+        if ( props.parent) {
+            params.parent = props.parent
+        } else if ( props.child ) {
+            params.child = props.child
+        } else {
+            params.depth = 1
         }
-        if ( props.id ) {
-            params.parent = props.id
-        }  
 
-        const page = searchParams.get('field-page')
+        const page = searchParams.get(`${title}-page`)
         if ( page ) {
             params.page = page
         }
 
-        console.log('Requesting fields: ')
-        console.log(params)
-        setCountRequestId(dispatch(countFields(params)))
-        setRequestId(dispatch(getFields(params)))
-    }, [ props.id, searchParams ])
+        setRequestId(dispatch(getFields(title, params)))
+            
+            
+    }, [ props.parent, props.child, searchParams ])
 
     // Cleanup when we're done, or any time we make a new request.
     useEffect(function() {
@@ -86,23 +96,13 @@ const FieldListView = function(props) {
         }
     }, [ requestId ])
 
-    // Cleanup when we're done, or any time we make a new request.
-    useEffect(function() {
-        return function cleanup() {
-            if ( countRequestId ) {
-                dispatch(cleanupRequest({ requestId: countRequestId }))
-            }
-        }
-    }, [ countRequestId ])
-
-
     // ======= Render ===============================================
 
 
     // Wait for the request to finish before displaying.  That ensures we don't
     // flicker with partial data.
     let content = ( <Spinner /> ) 
-    if (request && request.state == 'fulfilled' && countRequest && countRequest.state == 'fulfilled') {
+    if (request && request.state == 'fulfilled') {
         content = []
         if ( fields ) {
             for ( const field of fields)  {
@@ -114,17 +114,15 @@ const FieldListView = function(props) {
         }
     } else if ( (request && request.state == 'failed') ) {
         content = ( <div className="error">Request for fields failed with error: { request.error }. Please report this as a bug.</div> )
-    } else if ( countRequest && countRequest.state == 'failed') {
-        content = ( <div className="error">Request for fields failed with error: { countRequest.error }. Please report this as a bug.</div> )
     }
 
     return (
         <div className="field-list">
             <div className="header">
-                { props.id ? <h2>Sub-Fields</h2> : <h2>Fields</h2> }
+                <h2>{ title }</h2>
             </div>
             {content}
-            <PaginationControls prefix={'field'} counts={counts} />
+            { meta.numberOfPages > 1 && <PaginationControls prefix={title} counts={meta} /> }
         </div>
     )
 }

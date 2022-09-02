@@ -118,7 +118,7 @@ module.exports = class PaperController {
         // Generates an array of paperIds and compares `papers.id` against the
         // array.
         if ( query.fields && query.fields.length > 0) {
-            const fieldIds = await this.fieldDAO.selectFieldChildren(query.fields)
+            const fieldIds = await this.fieldDAO.selectFieldDescendents(query.fields)
             const results = await this.database.query(`SELECT paper_id from paper_fields WHERE field_id = ANY ($1::bigint[])`, [ fieldIds])
             if ( results.rows.length > 0) {
                 count += 1
@@ -143,7 +143,7 @@ module.exports = class PaperController {
         // Generates an array of paperIds and compares `papers.id` against the
         // array.
         if ( query.excludeFields && query.excludeFields.length > 0) {
-            const fieldIds = await this.fieldDAO.selectFieldChildren(query.excludeFields)
+            const fieldIds = await this.fieldDAO.selectFieldDescendents(query.excludeFields)
             const results = await this.database.query(`SELECT paper_id from paper_fields WHERE field_id = ANY ($1::bigint[])`, [ fieldIds])
             if ( results.rows.length > 0) {
                 count += 1

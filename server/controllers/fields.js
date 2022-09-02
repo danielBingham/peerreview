@@ -43,20 +43,30 @@ module.exports = class FieldController {
 
         }
 
-        if ( query.parent == 'root' ) {
-            const ids = await this.fieldDAO.selectFieldsWithOutParent()
+        if ( query.parent ) {
             count += 1
-            result.where += `${ count > 1 ? ' AND ' : ''} fields.id = ANY($${count}::int[])`
-            result.params.push(ids)
-        } else if ( query.parent )  {
-            const childIds = await this.fieldDAO.selectFieldsWithParent(query.parent)
-            count += 1
+            const childIds = await this.fieldDAO.selectFieldChildren(query.parent)
             result.where += `${ count > 1 ? ' AND ' : ''} fields.id = ANY($${count}::int[])`
             result.params.push(childIds)
         }
 
+        if ( query.child ) {
+            count += 1
+            const parentIds = await this.fieldDAO.selectFieldParents(query.child)
+            result.where += `${ count > 1 ? ' AND ' : ''} fields.id = ANY($${count}::int[])`
+            result.params.push(parentIds)
+        }
+
+        if ( query.depth ) {
+            count += 1
+            result.where += `${ count > 1 ? ' AND ' : ''} fields.depth = $${count}`
+            result.params.push(query.depth)
+        }
+
         if ( query.page && ! options.ignorePage ) {
             result.page = query.page
+        } else if ( ! options.ignorePage ) {
+            result.page = 1
         }
 
         // We didn't end up adding any parameters.
@@ -67,36 +77,31 @@ module.exports = class FieldController {
         return result 
     }
 
-    async countFields(request, response) {
-        const { where, params, emptyResult } = await this.parseQuery(request.query, { ignoreOrder: true, ignorePage: true })
-
-        if ( emptyResult ) {
-            return response.status(200).json({
-                count: 0,
-                pageSize: 1,
-                numberOfPages: 1
-            })
-        }
-
-        const countResult = await this.fieldDAO.countFields(where, params)
-        return response.status(200).json(countResult)
-    }
-
     /**
      * GET /fields
      *
      * Return a JSON array of all fields in thethis.database.
      */
     async getFields(request, response) {
-
         const { where, params, order, page, emptyResult } = await this.parseQuery(request.query)
 
         if ( emptyResult ) {
-            return response.status(200).json([])
+            return response.status(200).json({
+                meta: {
+                    count: 0,
+                    pageSize: 1,
+                    numberOfPages: 1
+                }, 
+                result: []
+            })
         }
-
+        
+        const meta = await this.fieldDAO.countFields(where, params)
         const fields = await this.fieldDAO.selectFields(where, params, order, page)
-        return response.status(200).json(fields)
+        return response.status(200).json({
+            meta: meta,
+            result: fields
+        })
     }
 
     /**

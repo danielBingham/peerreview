@@ -4,7 +4,7 @@ import debounce from 'lodash.debounce'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getFields, clearList, cleanupRequest } from '/state/fields'
+import { getFields, clearQuery, cleanupRequest } from '/state/fields'
 
 import Field from '/components/fields/Field'
 import FieldBadge from '/components/fields/FieldBadge'
@@ -53,7 +53,13 @@ const FieldsInput = function(props) {
     // ======= Redux State ==========================================
     
     const fields = useSelector(function(state) {
-        return state.fields.list
+        const fields = []
+        for(const id of state.fields.queries['fields'].list) {
+            if ( state.fields.dictionary[id] ) {
+                fields.push(state.fields.dictionary[id])
+            }
+        }
+        fields
     })
 
     // ======= Refs =================================================
@@ -74,7 +80,6 @@ const FieldsInput = function(props) {
     const clearSuggestions = function() {
         setFieldSuggestions([])
         setSuggestionsError(null)
-        dispatch(clearList())
     }
 
     /**
