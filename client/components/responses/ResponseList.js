@@ -29,6 +29,20 @@ const ResponseList = function(props) {
         return state.authentication.currentUser
     })
 
+    const reputationThresholds = useSelector(function(state) {
+        return state.reputation.thresholds
+    })
+
+    const fields = useSelector(function(state) {
+        const fields = []
+        if ( props.paper.fields.length > 0 ) {
+            for (const field of props.paper.fields) {
+                fields.push(state.fields.dictionary[field.id])
+            }
+        }
+        return fields
+    })
+
     const dispatch = useDispatch()
 
     useEffect(function() {
@@ -63,6 +77,15 @@ const ResponseList = function(props) {
         content = ( <div className="error">Request failed: { request.error }</div>)
     }
 
+    let canRespond = false
+    if ( currentUser && fields.length > 0) {
+        for (const field of fields ) {
+            if ( currentUser.fields[field.id] && currentUser.fields[field.id].reputation >= reputationThresholds.respond * field.average_reputation  ) {
+               canRespond = true 
+            }
+        }
+    }
+
     return (
         <div className="paper-response-list">
             <div className="header">
@@ -74,7 +97,7 @@ const ResponseList = function(props) {
                 </div>
             </div>
             { content }
-            { (currentUser && ! userResponse) && <ResponseForm paper={props.paper} currentUser={currentUser} /> }
+            { (currentUser && canRespond && ! userResponse) && <ResponseForm paper={props.paper} currentUser={currentUser} /> }
         </div>
     )
 

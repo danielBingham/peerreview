@@ -52,6 +52,12 @@ module.exports = class ResponseController {
         paperResponse.paperId = request.params.paper_id
         paperResponse.userId = request.session.user.id
 
+        // Ensure they have enough reputation to respond.
+        const canRespond = this.reputationPermissionService.canReferee(paperResponse.userId, paperResponse.paperId)
+        if ( ! canRespond ) {
+            throw new ControllerError(400, 'not-enough-reputation', `User(${paperResponse.userId}) attempted to respond to Paper(${paperResponse.paperId}) with out enough reputation to do so!`)
+        }
+
         // If a response already exists with that name, send a 400 error.
         //
         const responseExistsResults = await this.database.query(

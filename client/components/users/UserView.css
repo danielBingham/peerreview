@@ -55,18 +55,16 @@
 .user-view .controls .control {
     text-align: center;
 }
-.fields {
+.user-view .fields {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr 1fr;
 }
-
-.fields .wrapper {
+.user-view .fields .wrapper {
     padding: 5px;
 }
-.fields {
+.user-view .fields {
     padding: 10px;
 }
-
 .papers {
     padding: 20px;
 }

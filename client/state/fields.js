@@ -53,7 +53,6 @@ export const fieldsSlice = createSlice({
 
     },
     reducers: {
-
         /**
          * Add fields to the dictionary, or update fields already in the
          * dictionary.

@@ -39,6 +39,10 @@ const FieldView = function(props) {
         return state.fields.dictionary[props.id]
     })
 
+    const reputationThresholds = useSelector(function(state) {
+        return state.reputation.thresholds
+    })
+
     // ======= Effect Handling ======================================
     
     const dispatch = useDispatch()
@@ -73,6 +77,12 @@ const FieldView = function(props) {
                 <div className="field-details">
                     <h1>{ field.name }</h1>
                     <section className="description"><ReactMarkdown>{ field.description }</ReactMarkdown></section>
+                    <div className="reputation-thresholds">
+                        <h2>Reputation Requirements</h2>
+                        <div className="publish"><span className="label">Publish</span>: { reputationThresholds.publish * field.averageReputation }</div>
+                        <div className="review"><span className="label">Review</span>: { reputationThresholds.review * field.averageReputation }</div>
+                        <div className="referee"><span className="label">Vote/Respond</span>: { reputationThresholds.referee * field.averageReputation }</div>
+                    </div>
                 </div>
             )
         } else {

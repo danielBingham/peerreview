@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import logger from '/logger'
 
 import { getConfiguration, cleanupRequest as cleanupSystemRequest } from '/state/system'
+import { getThresholds, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 import { getAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '/state/authentication'
 
 import Header from '/components/header/Header'
@@ -63,6 +64,15 @@ const App = function(props) {
             return state.system.requests[configurationRequestId]
         }
     })
+
+    const [reputationThresholdsRequestId, setReputationThresholdsRequestId] = useState(null)
+    const reputationThresholdsRequest = useSelector(function(state) {
+        if ( ! reputationThresholdsRequestId ) {
+            return null
+        } else {
+            return state.system.requests[reputationThresholdsRequestId]
+        }
+    })
     
     
     const [authenticationRequestId, setAuthenticationRequestId] = useState(null)
@@ -84,6 +94,10 @@ const App = function(props) {
         return state.system.configuration
     })
 
+    const reputationThresholds = useSelector(function(state) {
+        return state.reputation.thresholds
+    })
+
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
@@ -96,6 +110,7 @@ const App = function(props) {
         if ( configurationRequest && configurationRequest.state == 'fulfilled') {
             // Logger is a singleton, this will effect all other imports.
             logger.setLevel(configuration.log_level)
+            setReputationThresholdsRequestId(dispatch(getThresholds()))
             setAuthenticationRequestId(dispatch(getAuthentication()))
         } else if ( configurationRequest && configurationRequest.state == 'failed') {
             if ( retries < 5 ) {
@@ -104,6 +119,14 @@ const App = function(props) {
             }
         }
     }, [ configurationRequest ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( reputationThresholdsRequestId ) {
+                dispatch(cleanupSystemRequest({ requestId: reputationThresholdsRequestId }))
+            }
+        }
+    }, [ reputationThresholdsRequestId ])
 
     useEffect(function() {
         return function cleanup() {
@@ -123,12 +146,13 @@ const App = function(props) {
 
     // ======= Render ===============================================
 
-    if ( ! configurationRequestId || ! authenticationRequestId ) {
+    if ( ! configurationRequestId || ! authenticationRequestId || ! reputationThresholdsRequestId) {
         return (
             <Spinner />
         )
     } else if ( (configurationRequest && configurationRequest.state != 'fulfilled')
-        || (authenticationRequest && authenticationRequest.state != 'fulfilled')) 
+        || (authenticationRequest && authenticationRequest.state != 'fulfilled')
+        || (reputationThresholdsRequest && reputationThresholdsRequest.state != 'fulfilled')) 
     {
         if (configurationRequest && configurationRequest.state == 'failed' && retries < 5) {
             return (<div className="error">Attempt to retrieve configuration from the backend failed, retrying...</div>)
@@ -136,6 +160,8 @@ const App = function(props) {
             return (<div className="error">Failed to connect to the backend.  Try refreshing.</div>)
         } else if (authenticationRequest && authenticationRequest.state == 'failed' ) {
             return (<div className="error">Authentication request failed with error: {authenticationRequest.error}.</div>)
+        } else if (reputationThresholdsRequest && reputationThresholdsRequest.state == 'failed' ) {
+            return (<div className="error">Attempt to retrieve reputation thresholds failed with error: {reputationThresholdsRequest.error}.</div>)
         }
 
         return (

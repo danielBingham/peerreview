@@ -8,6 +8,8 @@
 const PaperDAO = require('../daos/paper.js')
 const FieldDAO = require('../daos/field.js')
 
+const ReputationPermissionService = require('../services/ReputationPermissionService')
+
 const ControllerError = require('../errors/ControllerError')
 const DAOError = require('../errors/DAOError')
 
@@ -23,6 +25,7 @@ module.exports = class PaperController {
         this.logger = logger
         this.paperDAO = new PaperDAO(database, config)
         this.fieldDAO = new FieldDAO(database)
+        this.reputationPermissionService = new ReputationPermissionService(database, logger)
     }
 
     /**
@@ -56,7 +59,7 @@ module.exports = class PaperController {
      *  // markers in the where and order clauses.
      *  }
      */
-    async parseQuery(query, options) {
+    async parseQuery(session, query, options) {
         options =  options || {
             ignoreOrder: false,
             ignorePage: false
@@ -73,15 +76,29 @@ module.exports = class PaperController {
         let and = ''
 
 
-        // Add `is_draft` to our query to determine whether we're getting
-        // drafts or published papers.
+        // If we're not intentionally retrieving drafts then we're getting
+        // published papers.
         //
-        // Adds a single boolean check against `papers.is_draft`
-        if ( query.isDraft ) {
+        // If we are intentionally getting drafts, make sure we only return the
+        // drafts that a user has permission to see.
+        if (query.isDraft && query.isDraft.toLowerCase() === 'true' ) {
+            if ( ! session.user ) {
+                result.emptyResult = true
+                return result
+            }
+
             count += 1
             and = ( count > 1 ? ' AND ' : '' )
-            result.where += `${and} papers.is_draft=$${count}`
-            result.params.push(query.isDraft)
+
+            const visibleIds = await this.reputationPermissionService.getVisibleDrafts(session.user.id)
+
+            result.where += `${and} papers.id = ANY($${count}::bigint[])`
+            result.params.push(visibleIds)
+        } else {
+            count += 1
+            and = ( count > 1 ? ' AND ' : '' )
+            result.where += `${and} papers.is_draft = $${count}`
+            result.params.push(false)
         }
 
 
@@ -238,7 +255,7 @@ module.exports = class PaperController {
      * Return an object with counts of papers, pages, and page size.
      */
     async countPapers(request, response) {
-        const { where, params, emptyResult } = await this.parseQuery(request.query, { ignoreOrder: true, ignorePage: true })
+        const { where, params, emptyResult } = await this.parseQuery(request.session, request.query, { ignoreOrder: true, ignorePage: true })
 
         if ( emptyResult ) {
             return response.status(200).json({
@@ -258,7 +275,12 @@ module.exports = class PaperController {
      * Return a JSON array of all papers in the database.
      */
     async getPapers(request, response) {
-        const { where, params, order, emptyResult } = await this.parseQuery(request.query)
+        console.log('Query: ')
+        console.log(request.query)
+
+        const { where, params, order, emptyResult } = await this.parseQuery(request.session, request.query)
+        console.log(`Where clause: ${where}`)
+        console.log(params)
 
         if ( emptyResult ) {
             return response.status(200).json([])

@@ -9,7 +9,7 @@ import './Field.css'
 const colors = {
 
     biology: {
-        background: '#29663d',
+        background: '#5ea560',
         color: 'white'
     },
     chemistry: {
@@ -45,7 +45,7 @@ const colors = {
         color: 'white'
     },
     'environmental-science': {
-        background: '#3d632b', //TODO
+        background: '#3d632b', 
         color: 'white'
     }, 
     history: {

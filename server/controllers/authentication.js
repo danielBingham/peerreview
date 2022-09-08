@@ -35,10 +35,10 @@ module.exports = class AuthenticationController {
         }
 
         request.session.user = users[0]
-        return response.status(200).json({
+        return {
             user: request.session.user,
             settings: settings[0] 
-        })
+        }
     }
 
     async getAuthentication(request, response) {
@@ -90,7 +90,8 @@ module.exports = class AuthenticationController {
             throw new ControllerError(403, 'authentication-failed', `Failed login for email ${credentials.email}.`)
         }
 
-        return await this.loginUser(userMatch.id, request, response)
+        const responseBody = await this.loginUser(userMatch.id, request, response)
+        return response.status(200).json(responseBody)
     }
 
     /**
@@ -183,7 +184,9 @@ module.exports = class AuthenticationController {
             }
             await this.userDAO.updatePartialUser(user)
 
-            return await this.loginUser(request.session.user.id, request, response)
+            // Initialize their reputation.
+            const responseBody = await this.loginUser(request.session.user.id, request, response)
+            return response.status(200).json(responseBody)
         }
 
         const orcidResults = await this.database.query(`
@@ -194,7 +197,8 @@ module.exports = class AuthenticationController {
         // - Find the user by their orcid id.
         // -- Just log them in.
         if ( orcidResults.rows.length == 1 ) {
-            return await this.loginUser(orcidResults.rows[0].id, request, response)    
+            const responseBody = await this.loginUser(orcidResults.rows[0].id, request, response)
+            return response.status(200).json(responseBody)    
         } else if ( orcidResults.rows.length > 1 ) {
             throw new ControllerError(500, 'server-error', `Multiple users(${ orcidResults.rows.map((r) => r.id).join(',') }) with the same Orcid.  How did that happen?!`)
         }
@@ -265,8 +269,10 @@ module.exports = class AuthenticationController {
             await this.userDAO.updatePartialUser(user)
 
             await this.settingsDAO.initializeSettingsForUser(user)
+            // Initialize their reputation
 
-            return await this.loginUser(user.id, request, response)
+            const responseBody = await this.loginUser(user.id, request, response)
+            return response.status(200).json(responseBody)
         }
 
         // We have the user registered with one of the emails
@@ -281,8 +287,10 @@ module.exports = class AuthenticationController {
                 orcidId: orcidId
             }
             await this.userDAO.updatePartialUser(user)
+            // initialize their reputation.
 
-            return await this.loginUser(id, request, response)
+            const responseBody = await this.loginUser(id, request, response)
+            return response.status(200).json(responseBody)
         }
 
         // The user has registered multiple accounts with different emails

@@ -54,12 +54,14 @@ const FieldsInput = function(props) {
     
     const fields = useSelector(function(state) {
         const fields = []
-        for(const id of state.fields.queries['fields'].list) {
-            if ( state.fields.dictionary[id] ) {
-                fields.push(state.fields.dictionary[id])
+        if ( state.fields.queries['suggestions'] ) {
+            for(const id of state.fields.queries['suggestions'].list) {
+                if ( state.fields.dictionary[id] ) {
+                    fields.push(state.fields.dictionary[id])
+                }
             }
         }
-        fields
+        return fields
     })
 
     // ======= Refs =================================================
@@ -145,10 +147,10 @@ const FieldsInput = function(props) {
             if ( fieldName.length > 0) {
                 if ( ! fieldsRequestId ) {
                     clearSuggestions()
-                    setFieldsRequestId(dispatch(getFields({ name: fieldName })))
+                    setFieldsRequestId(dispatch(getFields('suggestions', { name: fieldName })))
                 } else if( fieldsRequest && fieldsRequest.state == 'fulfilled') {
                     clearSuggestions()
-                    setFieldsRequestId(dispatch(getFields({ name: fieldName })))
+                    setFieldsRequestId(dispatch(getFields('suggestions', { name: fieldName })))
                 }
 
                 if ( fields.length > 0 ) {
@@ -204,6 +206,7 @@ const FieldsInput = function(props) {
     useEffect(function() {
         return function cleanup() {
             if ( fieldsRequestId ) {
+                dispatch(clearQuery('suggestions'))
                 dispatch(cleanupRequest({ requestId: fieldsRequestId }))
             }
         }

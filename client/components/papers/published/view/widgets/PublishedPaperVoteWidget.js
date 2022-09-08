@@ -39,6 +39,20 @@ const PublishedPaperVoteWidget = function(props) {
         }
     })
 
+    const reputationThresholds = useSelector(function(state) {
+        return state.reputation.thresholds
+    })
+
+    const fields = useSelector(function(state) {
+        const fields = []
+        if ( props.paper.fields.length > 0 ) {
+            for (const field of props.paper.fields) {
+                fields.push(state.fields.dictionary[field.id])
+            }
+        }
+        return fields
+    })
+
     
     const isAuthor = ( currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
 
@@ -96,12 +110,21 @@ const PublishedPaperVoteWidget = function(props) {
         error = ( <div className="request-failure">{ voteRequest.error }</div> )
     }
 
+    let canRespond = false
+    if ( currentUser && fields.length > 0) {
+        for (const field of fields ) {
+            if ( currentUser.fields[field.id] && currentUser.fields[field.id].reputation >= reputationThresholds.respond * field.average_reputation  ) {
+               canRespond = true 
+            }
+        }
+    }
+
     return (
         <div className="published-paper-vote-widget">
             { error && <div class="error">{ error }</div> }
-            { currentUser && ! isAuthor && <div className={ vote && vote.score == 1 ? 'vote-button vote-up highlight' : 'vote-button vote-up' } onClick={voteUp} ></div> }
+            { currentUser && canRespond && ! isAuthor && <div className={ vote && vote.score == 1 ? 'vote-button vote-up highlight' : 'vote-button vote-up' } onClick={voteUp} ></div> }
             <div className="score">{score}</div>
-            { currentUser && ! isAuthor && <div className={ vote && vote.score == -1 ? 'vote-button vote-down highlight' : 'vote-button vote-down' } onClick={voteDown} ></div> }
+            { currentUser && canRespond && ! isAuthor && <div className={ vote && vote.score == -1 ? 'vote-button vote-down highlight' : 'vote-button vote-down' } onClick={voteDown} ></div> }
         </div>
     )
 }

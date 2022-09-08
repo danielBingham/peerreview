@@ -17,7 +17,7 @@ CREATE TABLE users (
     bio text,
     location varchar(256),
     institution varchar(256),
-    reputation int DEFAULT 100,
+    reputation int DEFAULT 0,
     created_date timestamptz,
     updated_date timestamptz 
 );

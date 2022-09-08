@@ -86,19 +86,31 @@ module.exports = function(database, logger, config) {
         })
     })
 
+    /**************************************************************************
+     *  Reputation Routes 
+     **************************************************************************/
+
+    const ReputationController = require('./controllers/ReputationController')
+    const reputationController = new ReputationController(database, logger)
+
+    router.get('/reputation/thresholds', function(request, response, next) {
+        reputationController.getReputationThresholds(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
     const ReputationService = require('./services/reputation.js')
     const reputationService = new ReputationService(database, logger)
-
-    router.get('/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {
-        reputationService.initializeReputationForUserWithOrcidId(request.params.id, request.params.orcidId).catch(function(error) {
+    router.get('/user/:id/initialize-reputation/orcid/:orcidId', async function(request, response, next) {
+        await reputationService.initializeReputationForUserWithOrcidId(request.params.id, request.params.orcidId).catch(function(error) {
             next(error)
         })
 
         return response.status(200).send()
     })
 
-    router.get('/user/:id/initialize-reputation/openalex/:openAlexId', function(request, response, next) {
-        reputationService.initializeReputationForUserWithOpenAlexId(request.params.id, request.params.openAlexId).catch(function(error) {
+    router.get('/user/:id/initialize-reputation/openalex/:openAlexId', async function(request, response, next) {
+        await reputationService.initializeReputationForUserWithOpenAlexId(request.params.id, request.params.openAlexId).catch(function(error) {
             next(error)
         })
         return response.status(200).send()
@@ -395,23 +407,31 @@ module.exports = function(database, logger, config) {
     const voteController = new VoteController(database, logger)
 
     // Get a list of all votes on a paper.
-    router.get('/paper/:paper_id/votes', function(request, response) {
-        voteController.getVotes(request, response)
+    router.get('/paper/:paper_id/votes', function(request, response, next) {
+        voteController.getVotes(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Create a new vote on a paper 
-    router.post('/paper/:paper_id/votes', function(request, response) {
-        voteController.postVotes(request, response)
+    router.post('/paper/:paper_id/votes', function(request, response, next) {
+        voteController.postVotes(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Get the details of a single vote on a paper 
-    router.get('/paper/:paper_id/user/:user_id/vote', function(request, response) {
-        voteController.getVote(request, response)
+    router.get('/paper/:paper_id/user/:user_id/vote', function(request, response, next) {
+        voteController.getVote(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Replace a vote on a paper.
-    router.put('/paper/:paper_id/user/:user_id/vote', function(request, response) {
-        voteController.putVote(request, response)
+    router.put('/paper/:paper_id/user/:user_id/vote', function(request, response, next) {
+        voteController.putVote(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     // Edit an existing paper with partial data.
@@ -420,8 +440,10 @@ module.exports = function(database, logger, config) {
     })
 
     // Delete an existing paper.
-    router.delete('/paper/:paper_id/user/:user_id/vote', function(request, response) {
-        voteController.deleteVote(request, response)
+    router.delete('/paper/:paper_id/user/:user_id/vote', function(request, response, next) {
+        voteController.deleteVote(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     /**************************************************************************
