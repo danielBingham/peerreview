@@ -35,36 +35,6 @@
 .user-view .details div {
     padding: 12px;
 }
-.user-view .fields-header, .user-view .papers-header {
-    clear: both;
-    display: grid;
-    grid-template-columns: auto 400px;
-    border-bottom: thin solid #bbb;
-    margin-top: 30px;
-}
-.user-view .fields-header h2, .user-view .papers-header h2 {
-    grid-column: 1 / 2;
-    padding: 0;
-    margin: 0;
-}
-.user-view .fields-header .controls, .user-view .papers-header .controls {
-    grid: 2 / 3;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-}
-.user-view .controls .control {
-    text-align: center;
-}
-.user-view .fields {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-}
-.user-view .fields .wrapper {
-    padding: 5px;
-}
-.user-view .fields {
-    padding: 10px;
-}
 .papers {
     padding: 20px;
 }

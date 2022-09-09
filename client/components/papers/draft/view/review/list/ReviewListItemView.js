@@ -26,8 +26,6 @@ import './ReviewListItemView.css'
  * currently viewing.
  * @param {Object} props.review A populated review object.  This is the review
  * this item represents.
- * @param {function} props.scrollToPosition A function allowing the review list scroll pane to be
- * scrolled to a certain y position.  Used by comments to center themselves.
  */
 const ReviewListItemView = function(props) {
 

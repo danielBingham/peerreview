@@ -28,6 +28,19 @@ module.exports = class FieldDAO {
         }
     }
 
+    hydrateField(row) {
+        return  {
+            id: row.field_id,
+            name: row.field_name,
+            type: row.field_type,
+            depth: row.field_depth,
+            averageReputation: row.field_averageReputation,
+            description: row.field_description,
+            createdDate: row.field_createdDate,
+            updatedDate: row.field_updatedDate
+        }
+    }
+
     /**
      * Translate the database rows returned by our join queries into objects.
      *
@@ -40,16 +53,7 @@ module.exports = class FieldDAO {
         const list = []
 
         for(const row of rows) {
-            const field = {
-                id: row.field_id,
-                name: row.field_name,
-                type: row.field_type,
-                depth: row.field_depth,
-                averageReputation: row.field_averageReputation,
-                description: row.field_description,
-                createdDate: row.field_createdDate,
-                updatedDate: row.field_updatedDate
-            }
+            const field = this.hydrateField(row)
 
             if ( ! fields[field.id] ) {
                 fields[field.id] = field

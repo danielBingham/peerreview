@@ -74,14 +74,14 @@ module.exports = function(database, logger, config) {
 
     // Edit an existing user with partial data.
     router.patch('/user/:id', function(request, response, next) {
-        userController.patchUser(request, response).catch(function(error) {
+        return userController.patchUser(request, response).catch(function(error) {
             next(error)
         })
     })
 
     // Delete an existing user.
     router.delete('/user/:id', function(request, response, next) {
-        userController.deleteUser(request, response).catch(function(error) {
+        return userController.deleteUser(request, response).catch(function(error) {
             next(error)
         })
     })
@@ -98,6 +98,38 @@ module.exports = function(database, logger, config) {
             next(error)
         })
     })
+
+    router.get('/user/:id/reputations', function(request, response, next) {
+        return reputationController.getReputations(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/user/:id/reputations', function(request, response) {
+        return response.status(501).send()
+    })
+
+    router.get('/user/:id/reputation/:field_id', function(request, response, next) {
+        return reputationController.getReputation(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.put('/user/:id/reputation/:field_id', function(request, response) {
+        return response.status(501).send()
+    })
+
+    router.patch('/user/:id/reputation/:field_id', function(request, response) {
+        return response.status(501).send()
+    })
+
+    router.delete('/user/:id/reputation/:field_id', function(request, response) {
+        return response.status(501).send()
+    })
+
+    /****************************************************************
+     * Reputation Administration Methods
+     ****************************************************************/
 
     const ReputationService = require('./services/reputation.js')
     const reputationService = new ReputationService(database, logger)
@@ -116,8 +148,8 @@ module.exports = function(database, logger, config) {
         return response.status(200).send()
     })
 
-    router.get('/user/:id/recalculate-reputation', function(request, response, next) {
-        reputationService.recalculateReputationForUser(request.params.id).catch(function(error) {
+    router.get('/user/:id/recalculate-reputation', async function(request, response, next) {
+        await reputationService.recalculateReputationForUser(request.params.id).catch(function(error) {
             next(error)
         })
         return response.status(200).send()

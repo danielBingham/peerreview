@@ -8,7 +8,7 @@ const PublishedPaperAuthorsWidget = function(props) {
 
     const authors = []
     for (const author of props.paper.authors) {
-        authors.push(<UserBadge key={author.user.id} id={author.user.id} fields={props.paper.fields} />)
+        authors.push(<UserBadge key={author.user.id} id={author.user.id} paperId={props.paper.id} />)
     }
 
     return (

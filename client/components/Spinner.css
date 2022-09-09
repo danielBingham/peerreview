@@ -19,6 +19,7 @@
 }
 
 .spinner-wrapper.local {
+    display: inline-block;
     padding: 20px;
     text-align: center;
     margin: auto auto;

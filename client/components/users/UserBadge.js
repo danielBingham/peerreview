@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 
 import { getUser, cleanupRequest } from '/state/users'
+import { getReputations, clearQuery, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 
 import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
@@ -17,10 +18,27 @@ const UserBadge = function(props) {
         return state.users.requests[requestId]
     })
 
+    const [ reputationRequestId, setReputationRequestId ] = useState(null)
+    const reputationRequest = useSelector(function(state) {
+        return state.reputation.requests[reputationRequestId]
+    })
+
     // ======= Redux State ==========================================
     
     const user = useSelector(function(state) {
         return state.users.dictionary[props.id]
+    })
+
+    const paper = useSelector(function(state) {
+        if ( props.paperId ) {
+            return state.papers.dictionary[props.paperId]
+        } else {
+            return null
+        }
+    })
+
+    const reputations = useSelector(function(state) {
+        return state.reputation.query[props.id]
     })
 
     // ======= Effect Handling ======================================
@@ -29,7 +47,12 @@ const UserBadge = function(props) {
 
     useEffect(function() {
         setRequestId(dispatch(getUser(props.id)))
-    }, [ ])
+        if ( ! paper ) {
+            setReputationRequestId(dispatch(getReputations(props.id, { pageSize: 1 })))
+        } else {
+            setReputationRequestId(dispatch(getReputations(props.id, { paperId: props.paperId })))
+        }
+    }, [ props.id, props.paperId ])
 
     // Clean up our request.
     useEffect(function() {
@@ -40,28 +63,22 @@ const UserBadge = function(props) {
         }
     }, [ requestId ])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( reputationRequestId ) {
+                dispatch(clearQuery({ userId: props.id }))
+                dispatch(cleanupReputationRequest({ requestId: reputationRequestId }))
+            }
+        }
+    }, [ reputationRequestId ])
+
     // ======= Render ===============================================
 
-    if ( user && user.fields ) {
+    if ( user ) {
         const fields = [] 
-        if ( user.fields.length > 0) {
-            let sortedFields = [ ...user.fields ]
-            sortedFields.sort((a, b) => { 
-                const repDiff = b.reputation - a.reputation 
-                if ( repDiff !== 0 ) {
-                    return repDiff
-                }
-                return b.field.id - a.field.id
-            })
-            if ( props.fields ) {
-                sortedFields = sortedFields.filter((uf) => props.fields.find((f) => f.id == uf.field.id) !== undefined)
-
-                for (const userField of sortedFields ) {
-                    fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {parseInt(userField.reputation).toLocaleString()}</div>)
-                }
-            } else {
-                const userField = sortedFields[0]
-                fields.push(<div key={userField.field.id} className="field-wrapper"><Field field={userField.field} /> {parseInt(userField.reputation).toLocaleString()}</div>)
+        if ( reputations && reputations.results.length > 0) {
+            for (const reputation of reputations.results) {
+                fields.push(<div key={reputation.field.id} className="field-wrapper"><Field field={reputation.field} /> {parseInt(reputation.reputation).toLocaleString()}</div>)
             }
         }
 

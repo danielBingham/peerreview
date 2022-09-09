@@ -44,23 +44,6 @@ module.exports = class UserDAO {
                 users[user.id] = user
                 list.push(user)
             }
-            const userField = {
-                reputation: row.field_reputation,
-                field: {
-                    id: row.field_id,
-                    name: row.field_name,
-                    description: row.field_description,
-                    type: row.field_type,
-                    createdDate: row.field_createdDate,
-                    updatedDate: row.field_updatedDate,
-                    children: [],
-                    parents: []
-                }
-            }
-            if ( userField.field.id && ! users[row.user_id].fields.find((f) => f.field.id == userField.field.id) ) {
-                users[row.user_id].fields.push(userField)
-            }
-                
         }
 
         return list 
@@ -80,17 +63,10 @@ module.exports = class UserDAO {
                     users.id as user_id, users.orcid_id as "user_orcidId", users.name as user_name, users.email as user_email, 
                     users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
                     users.reputation as user_reputation, 
-                    users.created_date as "user_createdDate", users.updated_date as "user_updatedDate",
-
-                    user_field_reputation.reputation as field_reputation,
-
-                    ${this.fieldDAO.selectionString}
-
+                    users.created_date as "user_createdDate", users.updated_date as "user_updatedDate"
                 FROM users
-                LEFT OUTER JOIN user_field_reputation on users.id = user_field_reputation.user_id
-                LEFT OUTER JOIN fields on fields.id = user_field_reputation.field_id
                 ${where} 
-                ORDER BY users.created_date asc, user_field_reputation.reputation desc, fields.depth asc
+                ORDER BY users.created_date asc
         `
 
         const results = await this.database.query(sql, params)

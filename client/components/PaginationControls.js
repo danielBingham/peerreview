@@ -1,15 +1,22 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 
 import './PaginationControls.css'
 
 const PaginationControls = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
 
+    const navigate = useNavigate()
+    const location = useLocation()
+
     const goToPage = function(page) {
         searchParams.set(`${ ( props.prefix ? `${props.prefix}-` : '' )}page`, page)
         setSearchParams(searchParams)
+
+        if ( props.section ) {
+            props.setSection(props.section)
+        }
     }
 
     const page = searchParams.get(`${ ( props.prefix ? `${props.prefix}-` : '' )}page`) ? parseInt(searchParams.get(`${ ( props.prefix ? `${props.prefix}-` : '' )}page`)) : 1
