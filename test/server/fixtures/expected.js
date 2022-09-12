@@ -27,47 +27,27 @@ const fields = [
 const users = [
     {
         id: 1,
+        orcidId: null,
         name: 'James Watson',
         email: 'jwatson@university.edu',
         bio: 'Credited for discovering the structure of DNA.',
         location: 'Cambridge, UK',
         institution: 'University of Cambridge',
-        initialReputation: 100,
-        reputation: 110,
+        reputation: 10,
         createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP',
-        fields: [
-            {
-                reputation: 10,
-                field: fields[0]
-            }, 
-            {
-                reputation: 10,
-                field: fields[1]
-            }
-        ]
+        updatedDate: 'TIMESTAMP'
     },
     {
         id: 2,
+        orcidId: null,
         name: 'Francis Crick',
         email: 'fcrick@university.edu',
         bio: 'Credited for discovering the structure of DNA.',
         location: 'Cambridge, UK',
         institution: 'University of Cambridge',
-        initialReputation: 100,
-        reputation: 110,
+        reputation: 10,
         createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP',
-        fields: [
-            {
-                reputation: 10,
-                field: fields[0] 
-            }, 
-            {
-                reputation: 10,
-                field: fields[1] 
-            }
-        ]
+        updatedDate: 'TIMESTAMP'
     }
 ]
 

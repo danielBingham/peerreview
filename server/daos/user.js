@@ -37,8 +37,7 @@ module.exports = class UserDAO {
                 institution: row.user_institution,
                 reputation: row.user_reputation,
                 createdDate: row.user_createdDate,
-                updatedDate: row.user_updatedDate,
-                fields: []
+                updatedDate: row.user_updatedDate
             }
             if ( ! users[row.user_id] ) {
                 users[user.id] = user

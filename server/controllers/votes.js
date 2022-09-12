@@ -4,7 +4,7 @@
  * Restful routes for manipulating Votes.
  *
  ******************************************************************************/
-const ReputationService = require('../services/reputation')
+const ReputationGenerationService = require('../services/ReputationGenerationService')
 const ReputationPermissionService = require('../services/ReputationPermissionService')
 
 const ControllerError = require('../errors/ControllerError')
@@ -17,7 +17,7 @@ module.exports = class VoteController {
     constructor(database, logger) {
         this.database = database
         this.logger = logger
-        this.reputationService = new ReputationService(database, logger)
+        this.reputationService = new ReputationGenerationService(database, logger)
         this.reputationPermissionService = new ReputationPermissionService(database, logger)
     }
 

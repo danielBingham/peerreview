@@ -1,9 +1,12 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import { makeRequest as makeTrackedRequest, 
-    failRequest as failTrackedRequest, 
-    completeRequest as completeTrackedRequest, 
+import { 
+    makeTrackedRequest,
+    makeSearchParams,
+    startRequestTracking, 
+    recordRequestFailure, 
+    recordRequestSuccess, 
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -92,9 +95,9 @@ const reputationSlice = createSlice({
 
         // ========== Request Tracking Methods =============
 
-        makeRequest: makeTrackedRequest, 
-        failRequest: failTrackedRequest, 
-        completeRequest: completeTrackedRequest,
+        makeRequest: startRequestTracking, 
+        failRequest: recordRequestFailure, 
+        completeRequest: recordRequestSuccess,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -112,55 +115,21 @@ const reputationSlice = createSlice({
  */
 export const getThresholds = function() {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(reputationSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
         const endpoint = '/reputation/thresholds'
 
-        let payload = {
-            requestId: requestId
-        }
-
-        dispatch(reputationSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(responseBody) {
-            if ( payload.ok ) {
+        return makeTrackedRequest(dispatch, getState, reputationSlice,
+            'GET', endpoint, null,
+            function(responseBody) {
                 dispatch(reputationSlice.actions.setThresholds(responseBody))
-
-                payload.result = responseBody 
-                dispatch(reputationSlice.actions.completeRequest(payload))
-            } else {
-                return Promise.reject(new Error('Attempt to retrieve reputation thresholds failed.  This is a fatal error.'))
             }
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reputationSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
 /**
  * GET /user/:id/reputations
  *
- * Get the configuration from the backend.
+ * Get a list of reputation per field items for a user.
  *
  * Makes the request async and returns an id that can be used to track the
  * request and get the results of a completed request from this state slice.
@@ -169,65 +138,38 @@ export const getThresholds = function() {
  */
 export const getReputations = function(userId, params) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(reputationSlice.actions.garbageCollectRequests())
-
-        const queryString = new URLSearchParams()
-        for ( const key in params ) {
-            if ( Array.isArray(params[key]) ) {
-                for ( const value of params[key] ) {
-                    queryString.append(key+'[]', value)
-                }
-            } else {
-                queryString.append(key, params[key])
-            }
-        }
-
-        const requestId = uuidv4()
+        const queryString = makeSearchParams(params)
         const endpoint = `/user/${userId}/reputations${ params ? `?${queryString.toString()}` : ''}`
 
-        let payload = {
-            requestId: requestId
-        }
-
-        dispatch(reputationSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(responseBody) {
-            if ( payload.ok ) {
+        return makeTrackedRequest(dispatch, getState, reputationSlice,
+            'GET', endpoint, null,
+            function(responseBody) {
                 dispatch(reputationSlice.actions.setQuery({userId: userId, query: responseBody }))
-
-                payload.result = responseBody 
-                dispatch(reputationSlice.actions.completeRequest(payload))
-            } else {
-                logger.error(responseBody)
-                return Promise.reject(new Error('Attempt to retrieve reputation thresholds failed.  This is a fatal error.'))
             }
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reputationSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
+/**
+ * GET /user/:user_id/reputation/initialization
+ *
+ * Initialize a user's reputation.
+ *
+ * Makes the request async and returns an id that can be used to track the
+ * request and get the results of a completed request from this state slice.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const initializeReputation = function(userId) {
+    return function(dispatch, getState) {
+        return makeTrackedRequest(dispatch, getState, reputationSlice,
+            'GET', `/user/${userId}/reputation/initialization`)
+    }
+}
+
+
+
 export const { 
-    setThresholds, setInDictionary, setAllInDictionary, setQuery, clearQuery,
-    makeRequest, failRequest, completeRequest, cleanupRequest, garbageCollectRequests 
+    setThresholds, setInDictionary, setAllInDictionary, setQuery, clearQuery, cleanupRequest 
 } = reputationSlice.actions
 export default reputationSlice.reducer

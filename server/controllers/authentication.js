@@ -186,6 +186,7 @@ module.exports = class AuthenticationController {
 
             // Initialize their reputation.
             const responseBody = await this.loginUser(request.session.user.id, request, response)
+            responseBody.type = "connection"
             return response.status(200).json(responseBody)
         }
 
@@ -198,6 +199,7 @@ module.exports = class AuthenticationController {
         // -- Just log them in.
         if ( orcidResults.rows.length == 1 ) {
             const responseBody = await this.loginUser(orcidResults.rows[0].id, request, response)
+            responseBody.type = "login"
             return response.status(200).json(responseBody)    
         } else if ( orcidResults.rows.length > 1 ) {
             throw new ControllerError(500, 'server-error', `Multiple users(${ orcidResults.rows.map((r) => r.id).join(',') }) with the same Orcid.  How did that happen?!`)
@@ -272,6 +274,7 @@ module.exports = class AuthenticationController {
             // Initialize their reputation
 
             const responseBody = await this.loginUser(user.id, request, response)
+            responseBody.type = "registration"
             return response.status(200).json(responseBody)
         }
 
@@ -290,6 +293,7 @@ module.exports = class AuthenticationController {
             // initialize their reputation.
 
             const responseBody = await this.loginUser(id, request, response)
+            responseBody.type = "connection"
             return response.status(200).json(responseBody)
         }
 

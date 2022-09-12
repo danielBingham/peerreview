@@ -1,5 +1,5 @@
 const ReviewDAO = require('../daos/review')
-const ReputationService = require('../services/reputation')
+const ReputationGenerationService = require('../services/ReputationGenerationService')
 
 /**
  *
@@ -9,7 +9,7 @@ module.exports = class ReviewController {
     constructor(database) {
         this.database = database
         this.reviewDAO = new ReviewDAO(database)
-        this.reputationService = new ReputationService(database)
+        this.reputationService = new ReputationGenerationService(database)
     }
 
     async countReviews(request, response) {

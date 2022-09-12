@@ -3,9 +3,12 @@ import { v4 as uuidv4 } from 'uuid'
 
 import logger from '../logger'
 
-import { makeRequest as makeTrackedRequest, 
-    failRequest as failTrackedRequest, 
-    completeRequest as completeTrackedRequest, 
+import { 
+    makeSearchParams,
+    makeTrackedRequest,
+    startRequestTracking, 
+    recordRequestFailure, 
+    recordRequestSuccess, 
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -119,9 +122,9 @@ export const fieldsSlice = createSlice({
 
         // ========== Request Tracking Methods =============
 
-        makeRequest: makeTrackedRequest, 
-        failRequest: failTrackedRequest, 
-        completeRequest: completeTrackedRequest,
+        makeRequest: startRequestTracking, 
+        failRequest: recordRequestFailure, 
+        completeRequest: recordRequestSuccess,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -141,34 +144,15 @@ export const fieldsSlice = createSlice({
  */
 export const getFields = function(name, params) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
 
-        // Cleanup dead requests before making a new one.
-        dispatch(fieldsSlice.actions.garbageCollectRequests())
-
-        const queryString = new URLSearchParams(params)
-
-        const requestId = uuidv4() 
+        const queryString = makeSearchParams(params)
         const endpoint = '/fields' + ( params ? '?' + queryString.toString() : '')
 
-        let payload = {
-            requestId: requestId
-        }
-        let responseOk = false
-
         dispatch(fieldsSlice.actions.makeQuery({ name: name }))
-        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            responseOk = response.ok
-            return response.json()
-        }).then(function(responseBody) {
-            if ( responseOk ){
+
+        return makeTrackedRequest(dispatch, getState, fieldsSlice,
+            'GET', endpoint, null,
+            function(responseBody) {
                 const resultIds = []
                 if ( responseBody.result.length > 0 ) {
                     for(const field of responseBody.result) {
@@ -181,21 +165,9 @@ export const getFields = function(name, params) {
                     meta: responseBody.meta,
                     result: resultIds 
                 }))
-
-                payload.result = responseBody 
-                dispatch(fieldsSlice.actions.completeRequest(payload))
-            } else {
-                payload.error = responseBody.error
-                dispatch(fieldsSlice.actions.failRequest(payload))
             }
-        }).catch(function(error) {
-            logger.error(error)
+        )
 
-            payload.error = 'frontend-error'
-            dispatch(fieldsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
     }
 }
 
@@ -213,48 +185,14 @@ export const getFields = function(name, params) {
  */
 export const postFields = function(field) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(fieldsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
         const endpoint = '/fields'
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(fieldsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(field)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        const body = field
+        return makeTrackedRequest(dispatch, getState, fieldsSlice,
+            'POST', endpoint, body,
+            function(returnedField) {
+                dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
             }
-        }).then(function(returnedField) {
-            dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
-
-            payload.result = returnedField
-            dispatch(fieldsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(fieldsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -273,47 +211,12 @@ export const postFields = function(field) {
  */
 export const getField = function(id) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(fieldsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/field/' + id
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        return makeTrackedRequest(dispatch, getState, fieldsSlice,
+            'GET', `/field/${id}`, null,
+            function(field) {
+                dispatch(fieldsSlice.actions.setFieldInDictionary(field))
             }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(field) {
-            dispatch(fieldsSlice.actions.setFieldInDictionary(field))
-
-            payload.result = field
-            dispatch(fieldsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(fieldsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -331,50 +234,12 @@ export const getField = function(id) {
  */
 export const putField = function(field) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(fieldsSlice.actions.garbageCollectRequests())
-    
-        const requestId = uuidv4()
-        const endpoint = '/field/' + field.id
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(field)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, fieldsSlice,
+            'PUT', `/field/${field.id}`, field,
+            function(returnedField) {
+                dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
             }
-
-        }).then(function(returnedField) {
-            dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
-
-            payload.result = returnedField
-            dispatch(fieldsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(fieldsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -392,48 +257,12 @@ export const putField = function(field) {
  */
 export const patchField = function(field) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(fieldsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/field/' + field.id
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(field)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, fieldsSlice,
+            'PATCH', `/field/${field.id}`, field,
+            function(returnedField) {
+                dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
             }
-        }).then(function(returnedField) {
-            dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
-
-            payload.result = returnedField
-            dispatch(fieldsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(fieldsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -451,44 +280,12 @@ export const patchField = function(field) {
  */
 export const deleteField = function(field) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(fieldsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/field/' + field.id
-
-        const payload = {
-            requestId: requestId,
-            result: field.id
-        }
-        
-        dispatch(fieldsSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            if( response.ok ) {
+        return makeTrackedRequest(dispatch, getState, fieldsSlice,
+            'DELETE', `/field/${field.id}`, null,
+            function(response) {
                 dispatch(fieldsSlice.actions.removeField(field))
-                dispatch(fieldsSlice.actions.completeRequest(payload))
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(fieldsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 } 
 
@@ -496,6 +293,7 @@ export const deleteField = function(field) {
 export const { 
     setFieldInDictionary, removeField, addFieldsToDictionary,
     makeQuery, clearQuery, setQueryResults,
-    makeRequest, failRequest, completeRequest, cleanupRequest }  = fieldsSlice.actions
+    cleanupRequest 
+}  = fieldsSlice.actions
 
 export default fieldsSlice.reducer

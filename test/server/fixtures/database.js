@@ -107,25 +107,25 @@ const papers = [
 const users = [
     {
         user_id: 1,
+        user_orcidId: null,
         user_name: 'James Watson',
         user_email: 'jwatson@university.edu',
         user_bio: 'Credited for discovering the structure of DNA.',
         user_location: 'Cambridge, UK',
         user_institution: 'University of Cambridge',
-        user_initialReputation: 100,
-        user_reputation: 110,
+        user_reputation: 10,
         user_createdDate: 'TIMESTAMP',
         user_updatedDate: 'TIMESTAMP'
     },
     {
         user_id: 2,
+        user_orcidId: null,
         user_name: 'Francis Crick',
         user_email: 'fcrick@university.edu',
         user_bio: 'Credited for discovering the structure of DNA.',
         user_location: 'Cambridge, UK',
         user_institution: 'University of Cambridge',
-        user_initialReputation: 100,
-        user_reputation: 110,
+        user_reputation: 10,
         user_createdDate: 'TIMESTAMP',
         user_updatedDate: 'TIMESTAMP',
     }

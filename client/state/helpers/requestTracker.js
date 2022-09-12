@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid'
+import logger from '/logger'
 
 const defaultCacheTTL = 60 * 1000 // 1 minute 
 const isStale = function(tracker, overrideCacheTTL) {
@@ -5,30 +7,47 @@ const isStale = function(tracker, overrideCacheTTL) {
     return (Date.now() - tracker.timestamp) > cacheTTL
 }
 
-export const getRequestTracker = function(requestId, method, endpoint) {
-        return {
-            requestId: requestId,
-            method: method,
-            endpoint: endpoint,
-            timestamp: Date.now(),
-            cleaned: false,
-            state: 'none',
-            error: null,
-            status: null,
-            result: null
-        }
+/**
+ * Create a new RequstTracker object.  Will be stored in Redux so needs to be
+ * serializable.
+ */
+const createRequestTracker = function(requestId, method, endpoint) {
+    return {
+        requestId: requestId,
+        method: method,
+        endpoint: endpoint,
+        timestamp: Date.now(),
+        cleaned: false,
+        state: 'pending',
+        error: null,
+        status: null,
+        result: null
+    }
 }
 
+/******************************************************************************
+ *
+ * ============ Redux Request Tracking Reducers ==============================
+ *
+ * These are a set of reducers that may be imported into a Redux State slice
+ * to provide that slice with request tracking.  These reducers must be set
+ * on the slice's `reducers` object in the object passed to `createSlice()` in
+ * order to use `requestEndpoint` defined below.
+ *
+ * ****************************************************************************/
+
+/**
+ * Create a RequestTracker and begin tracking.
+ */
 export const makeRequest = function(state, action) {
-    const requestId = action.payload.requestId
-    const method = action.payload.method
-    const endpoint = action.payload.endpoint
-
-    const tracker = getRequestTracker(requestId, method, endpoint)
-    tracker.state = 'pending'
-    state.requests[requestId] = tracker 
+    const tracker = createRequestTracker(action.payload.requestId, action.payload.method, action.payload.endpoint) 
+    state.requests[action.payload.requestId] = tracker
 }
+export const startRequestTracking = makeRequest
 
+/**
+ * Record a failed request.
+ */
 export const failRequest = function(state, action) {
     const tracker = state.requests[action.payload.requestId]
     
@@ -41,7 +60,11 @@ export const failRequest = function(state, action) {
         tracker.error = 'unknown'
     }
 }
+export const recordRequestFailure = failRequest
 
+/**
+ * Record a successful request.
+ */
 export const completeRequest = function(state, action) {
     const tracker = state.requests[action.payload.requestId]
 
@@ -49,12 +72,11 @@ export const completeRequest = function(state, action) {
     tracker.status = action.payload.status
     tracker.result = action.payload.result
 }
+export const recordRequestSuccess = completeRequest
 
-export const useRequest = function(state, action) {
-    const tracker = state.requests[action.payload.requestId]
-    tracker.cleaned = false
-}
-
+/**
+ * Cleanup a request tracker that we're done with.
+ */
 export const cleanupRequest = function(state, action) {
     const tracker = state.requests[action.payload.requestId]
     const cacheTTL = action.payload.cacheTTL
@@ -71,6 +93,11 @@ export const cleanupRequest = function(state, action) {
     }
 }
 
+/**
+ * Garbage collect cleaned requests.  We don't want to wipe them out
+ * immediately, because we might reuse them in the future.  So we clean them up
+ * whenever a new request is made for that slice.
+ */
 export const garbageCollectRequests = function(state, action) {
     const cacheTTL = action.payload
     for ( const requestId in state.requests ) {
@@ -81,4 +108,114 @@ export const garbageCollectRequests = function(state, action) {
             delete state.requests[requestId]
         }
     }
+}
+
+/******************************************************************************
+ *
+ * Request Helpers
+ *
+ * These are helper methods for making tracked and cached requests to API
+ * endpoints, and for using cached requests.
+ ******************************************************************************/
+
+/**
+ * Reuse a cleanup request.
+ */
+export const useRequest = function(state, action) {
+    const tracker = state.requests[action.payload.requestId]
+    tracker.cleaned = false
+}
+
+/**
+ * Create a URLSearchParams object from an object of parameters.  Translates
+ * things like arrays to the appropriate query string format.
+ */
+export const makeSearchParams = function(params) {
+    const queryString = new URLSearchParams()
+    for ( const key in params ) {
+        if ( Array.isArray(params[key]) ) {
+            for ( const value of params[key] ) {
+                queryString.append(key+'[]', value)
+            }
+        } else {
+            queryString.append(key, params[key])
+        }
+    }
+    return queryString
+}
+
+/**
+ * Make a request to an API endpoint.  Manages tracking the request, reusing
+ * from the cache, and handling any errors.
+ *  
+ * Provides an `onSuccess` method, which will be called when the request
+ * succeeds.  Errors are recorded on the request tracker object, which can be
+ * retrieved from the provided Redux slice's `requests` dictionary using the
+ * returned `requestId`.
+ *
+ * @param {function} dispatch   The Redux `dispatch()` method.
+ * @param {function} getState   The Redux `getState()` method.
+ * @param {Object}  slice       The Redux slice object from `createSlice()`.
+ * @param {string} method       The HTTP verb to use as the request method (eg.
+ * GET, POST, etc)
+ * @param {string} endpoint     The endpoint we want to make a request to.
+ * @param {function} onSuccess  A function to be called with the response's
+ * body, parsed from JSON to a js object.
+ *
+ * @return {uuid}   A requestId that can be used to retrieve the request
+ * tracker from the `slice`.  It will be stored in the `requests` object keyed
+ * by the `requestId`, and can be found at `state.<slice-name>.requests[requestId]`
+ */
+export const makeTrackedRequest = function(dispatch, getState, slice, method, endpoint, body, onSuccess, onFailure) {
+    const configuration = getState().system.configuration
+
+    // Cleanup dead requests before making a new one.
+    dispatch(slice.actions.garbageCollectRequests())
+
+    const requestId = uuidv4()
+    let status = 0
+    let responseOk = false
+
+    const fetchOptions = {
+        method: method,
+        headers: {
+            'Accept': 'application/json'
+        }
+    }
+    if ((method == 'POST' || method == 'PUT' || method == 'PATCH') && body ) {
+        fetchOptions.body = JSON.stringify(body)
+        fetchOptions.headers['Content-Type'] = 'application/json'
+    }
+
+    dispatch(slice.actions.makeRequest({requestId: requestId, method: method, endpoint: endpoint}))
+    fetch(configuration.backend + endpoint, fetchOptions).then(function(response) {
+        status = response.status
+        responseOk = response.ok
+        return response.json()
+    }).then(function(responseBody) {
+        if ( responseOk ) {
+            dispatch(slice.actions.completeRequest({ requestId: requestId, status: status, result: responseBody }))
+            if ( onSuccess ) {
+                try {
+                    onSuccess(responseBody)
+                } catch (error) {
+                    return Promise.reject(error)
+                }
+            }
+        } else {
+            dispatch(slice.actions.failRequest({ requestId: requestId, status: status, error: responseBody.error }))
+            if ( onFailure ) {
+                try {
+                    onFailure(responseBody)
+                } catch (error) {
+                    return Promise.reject(error)
+                }
+            }
+        }
+    }).catch(function(error) {
+        logger.error(error)
+        dispatch(slice.actions.failRequest({ requestId: requestId, status: status, error: 'frontend-request-error' }))
+    })
+
+    return requestId
 }

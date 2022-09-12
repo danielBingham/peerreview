@@ -8,7 +8,9 @@ const FieldDAO = require('../daos/field')
 const userDAO = require('../daos/user')
 const OpenAlexService = require('./OpenAlexService')
 
-module.exports = class ReputationService {
+const ServiceError = require('../errors/ServiceError')
+
+module.exports = class ReputationGenerationService {
 
     constructor(database, logger) {
         this.database = database
@@ -503,7 +505,7 @@ module.exports = class ReputationService {
         const user = await this.userDAO.selectUser('WHERE users.id = $1', [ userId ])
 
         if ( ! user.orcidId ) {
-            return null
+            throw new ServiceError('no-orcid', `Cannot initialize reputation for a user(${userId}) with out a connected ORCID iD.`)
         }
 
         await this.initializeReputationForUserWithOrcidId(user.id, user.orcidId)

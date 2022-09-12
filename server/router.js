@@ -99,7 +99,13 @@ module.exports = function(database, logger, config) {
         })
     })
 
-    router.get('/user/:id/reputations', function(request, response, next) {
+    router.get('/user/:user_id/reputation/initialization', function(request, response, next) {
+        return reputationController.initializeReputation(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/user/:user_id/reputations', function(request, response, next) {
         return reputationController.getReputations(request, response).catch(function(error) {
             next(error)
         })
@@ -109,7 +115,7 @@ module.exports = function(database, logger, config) {
         return response.status(501).send()
     })
 
-    router.get('/user/:id/reputation/:field_id', function(request, response, next) {
+    router.get('/user/:user_id/reputation/:field_id', function(request, response, next) {
         return reputationController.getReputation(request, response).catch(function(error) {
             next(error)
         })
@@ -131,7 +137,7 @@ module.exports = function(database, logger, config) {
      * Reputation Administration Methods
      ****************************************************************/
 
-    const ReputationService = require('./services/reputation.js')
+    const ReputationService = require('./services/ReputationGenerationService')
     const reputationService = new ReputationService(database, logger)
     router.get('/user/:id/initialize-reputation/orcid/:orcidId', async function(request, response, next) {
         await reputationService.initializeReputationForUserWithOrcidId(request.params.id, request.params.orcidId).catch(function(error) {

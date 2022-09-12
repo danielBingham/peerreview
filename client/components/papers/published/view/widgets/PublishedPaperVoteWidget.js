@@ -53,6 +53,14 @@ const PublishedPaperVoteWidget = function(props) {
         return fields
     })
 
+    const reputations = useSelector(function(state) {
+        if ( currentUser) {
+            return state.reputation.dictionary[currentUser.id]    
+        } else {
+            return null 
+        }
+    })
+
     
     const isAuthor = ( currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
 
@@ -89,7 +97,11 @@ const PublishedPaperVoteWidget = function(props) {
     }
 
     // ======= Effect Handling ======================================
-    
+
+    useEffect(function() {
+        setReputationRequestId(dispatch(getReputations(props.id, { paperId: props.paperId })))
+    }, [])
+
     useEffect(function() {
         return function cleanup() {
             if ( voteRequestId ) {
@@ -111,9 +123,9 @@ const PublishedPaperVoteWidget = function(props) {
     }
 
     let canRespond = false
-    if ( currentUser && fields.length > 0) {
+    if ( currentUser && reputations && fields.length > 0) {
         for (const field of fields ) {
-            if ( currentUser.fields[field.id] && currentUser.fields[field.id].reputation >= reputationThresholds.respond * field.average_reputation  ) {
+            if ( reputations[field.id] && reputations[field.id].reputation >= reputationThresholds.respond * field.average_reputation  ) {
                canRespond = true 
             }
         }
