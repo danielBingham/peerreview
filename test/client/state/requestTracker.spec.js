@@ -1,5 +1,4 @@
 import fetchMock from 'fetch-mock'
-import FormData from 'form-data'
 
 import logger from '../../../client/logger'
 
