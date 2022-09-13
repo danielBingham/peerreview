@@ -5,114 +5,32 @@ import logger from '../../../client/logger'
 import store from '../../../client/state/store'
 import { reset, setConfiguration } from '../../../client/state/system'
 import { getUsers, postUsers, getUser, putUser, patchUser, deleteUser } from '../../../client/state/users'
-import RequestTracker from '../../../client/state/helpers/requestTracker'
 
+import { backend } from '../fixtures/api'
+import { users } from '../fixtures/submission'
 
-// ========================== Test Fixtures ===================================
-const postSubmission = {
-    1: {
-        name: 'John Doe',
-        email: 'john.doe@email.com',
-        password: 'password'
-    },
-    2: {
-        name: 'Jane Doe',
-        email: 'jane.doe@email.com',
-        password: 'password'
-    }
-}
-const putSubmission = {
-    1: {
-        id: 1,
-        name: 'John Doe',
-        email: 'john.doe@email.com',
-        password: 'password'
-    },
-    2: {
-        id: 2,
-        name: 'Jane Doe',
-        email: 'jane.doe@email.com',
-        password: 'password'
-    }
-}
-const patchSubmission = {
-    1: {
-        id: 1,
-        name: 'John Doe',
-    },
-    2: {
-        id: 2,
-        name: 'Jane Doe',
-    }
+import { getTracker, waitForState } from '../helpers/helpers'
+
+let configuration = {
+    backend: '/api/0.0.0'
 }
 
-const database = [ 
-    {
-        id: 1,
-        name: 'John Doe',
-        email: 'john.doe@email.com'
-    },
-    {
-        id: 2,
-        name: 'Jane Doe',
-        email: 'jane.doe@email.com'
-    }
-]
-
-const expectedUserState = {
-    oneUser: {
-        1: {
-            id: 1,
-            name: 'John Doe',
-            email: 'john.doe@email.com'
-        }
-    },
-    allUsers: {
-        1: {
-            id: 1,
-            name: 'John Doe',
-            email: 'john.doe@email.com'
-        },
-        2: {
-            id: 2,
-            name: 'Jane Doe',
-            email: 'jane.doe@email.com'
-        }
-
-    }
-}
-
-// ========================== Helper Methods ==================================
-
-/**
- * Return a promise that resolves on an update to store using `subscribe`.
- */
-const stateUpdate = function(store) {
-    return new Promise(function(resolve, reject) {
-        store.subscribe(function() {
-            resolve(store.getState())
-        })
-    })
-}
-
-xdescribe('in client/state/users.js', function() {
-
+describe('in client/state/users.js', function() {
     beforeAll(function() {
         // disable logging
-        logger.level = -1
+        //logger.level = -1
         store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
+        Date.now = jest.fn(() => 'NOW')
     })
 
     describe('getUsers()', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
             store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
         })
 
-
-        it('should return add a pending RequestTracker to the store when called', async function() {
+        it('should store the returned users in the dictionary', async function() {
             let deferred = { resolve: null, reject: null }
             const endpoint = '/users'
 
@@ -120,7 +38,7 @@ xdescribe('in client/state/users.js', function() {
                 {
                     url: configuration.backend + endpoint,
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Accept': 'application/json' }
                 },
                 new Promise(function(resolve, reject) {
                     deferred.resolve = resolve
@@ -129,156 +47,34 @@ xdescribe('in client/state/users.js', function() {
             )
 
             const requestId = store.dispatch(getUsers())
-            let state = store.getState() 
+            deferred.resolve(backend.users.list)
 
-            const expectedRequestTracker = {
-                requestMethod: 'GET',
-                requestEndpoint: endpoint,
-                state: 'pending',
-                result: null,
-                error: null,
-                status: null
-            }
+            // Wait until Redux has processed all the actions that get fired
+            // and the request is returned 'fulfilled'.
+            const state = await waitForState(store, function(state) {
+                return state.users.requests[requestId] && state.users.requests[requestId].state == 'fulfilled'
+            })
 
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
+            expect(state.users.dictionary).toEqual(backend.users.dictionary)
         })
-
-        it('should complete the request when the backend returns', async function() {
-            let deferred = { resolve: null, reject: null }
-            const endpoint = '/users'
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(getUsers())
-            deferred.resolve(database)
-
-            let state = await stateUpdate(store) 
-            if ( state.users.requests[requestId].state == 'pending') {
-                // Wait for the next update.
-                state = await stateUpdate(store)
-            }
-
-            const expectedState = expectedUserState.allUsers
-            const expectedRequestTracker = {
-                requestMethod: 'GET',
-                requestEndpoint: endpoint,
-                state: 'fulfilled',
-                result:  database,
-                error: null,
-                status: 200
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual(expectedState)
-        })
-
-        it('should handle a non-200 status as an error', async function() {
-            let deferred = { resolve: null, reject: null }
-            const endpoint = '/users'
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(getUsers())
-            deferred.resolve({ status: 404 })
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'GET',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'Error: Request failed with status: 404',
-                status: 404,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
-        it('should handle a thrown error', async function() {
-            let deferred = { resolve: null, reject: null }
-            const endpoint = '/users'
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(getUsers())
-            deferred.resolve({ throws: new TypeError('Fetch failed!')})
-
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'GET',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'TypeError: Fetch failed!',
-                status: undefined,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
     })
 
     describe('postUsers()', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
+            store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
         })
 
-
-        it('should return add a pending RequestTracker to the store when called', async function() {
+        it('should update the returned user in the dictionary', async function() {
             let deferred = { resolve: null, reject: null }
             const endpoint = '/users'
 
-            fetchMock.mock(
-                {
+            fetchMock.mock({
                     url: configuration.backend + endpoint,
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: postSubmission[1] 
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: users[1]
                 },
                 new Promise(function(resolve, reject) {
                     deferred.resolve = resolve
@@ -286,160 +82,36 @@ xdescribe('in client/state/users.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(postUsers(postSubmission[1]))
-            let state = store.getState() 
+            const requestId = store.dispatch(postUsers(users[1]))
+            deferred.resolve(backend.users.dictionary[1])
 
-            const expectedRequestTracker = {
-                requestMethod: 'POST',
-                requestEndpoint: endpoint,
-                state: 'pending',
-                error: null,
-                status: null,
-                result: null
-            }
+            // Wait until Redux has processed all the actions that get fired
+            // and the request is returned 'fulfilled'.
+            const state = await waitForState(store, function(state) {
+                return state.users.requests[requestId] && state.users.requests[requestId].state == 'fulfilled'
+            })
 
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
+            expect(state.users.dictionary[1]).toEqual(backend.users.dictionary[1])
         })
-
-        it('should complete the request when the backend returns', async function() {
-            let deferred = { resolve: null, reject: null }
-            const endpoint = '/users'
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: postSubmission[1] 
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(postUsers(postSubmission[1]))
-            deferred.resolve(database[0])
-
-            let state = await stateUpdate(store) 
-            if ( state.users.requests[requestId].state == 'pending') {
-                // Wait for the next update.
-                state = await stateUpdate(store)
-            }
-
-            const expectedState = expectedUserState.oneUser
-            const expectedRequestTracker = {
-                requestMethod: 'POST',
-                requestEndpoint: endpoint,
-                state: 'fulfilled',
-                error: null,
-                status: 200,
-                result: database[0]
-            }
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual(expectedState)
-        })
-
-        it('should handle a non-200 status as an error', async function() {
-            let deferred = { resolve: null, reject: null }
-            const endpoint = '/users'
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: postSubmission[1] 
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(postUsers(postSubmission[1]))
-            deferred.resolve({ status: 404 })
-
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'POST',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error:  'Error: Request failed with status: 404',
-                status: 404,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
-        it('should handle a thrown error', async function() {
-            let deferred = { resolve: null, reject: null }
-            const endpoint = '/users'
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: postSubmission[1] 
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(postUsers(postSubmission[1]))
-            deferred.resolve({ throws: new TypeError('Fetch failed!')})
-
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'POST',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error:  'TypeError: Fetch failed!',
-                status: undefined,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
     })
 
     describe('getUser(id)', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
+            store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
         })
 
-
-        it('should return add a pending RequestTracker to the store when called', async function() {
+        it('should update the dictionary with the returned user', async function() {
             let deferred = { resolve: null, reject: null }
 
-            const endpoint = '/user/' + database[0].id 
+            const endpoint = '/user/' + backend.users.dictionary[1].id 
 
             fetchMock.mock(
                 {
                     url: configuration.backend + endpoint,
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Accept': 'application/json' }
                 },
                 new Promise(function(resolve, reject) {
                     deferred.resolve = resolve
@@ -447,137 +119,16 @@ xdescribe('in client/state/users.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getUser(database[0].id))
-            let state = store.getState() 
+            const requestId = store.dispatch(getUser(backend.users.dictionary[1].id))
+            deferred.resolve(backend.users.dictionary[1])
 
-            const expectedRequestTracker = {
-                requestMethod: 'GET',
-                requestEndpoint: endpoint,
-                state: 'pending',
-                error: null,
-                status: null,
-                result: null
-            }
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-        })
+            // Wait until Redux has processed all the actions that get fired
+            // and the request is returned 'fulfilled'.
+            const state = await waitForState(store, function(state) {
+                return state.users.requests[requestId] && state.users.requests[requestId].state == 'fulfilled'
+            })
 
-        it('should complete the request when the backend returns', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + database[0].id 
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(getUser(database[0].id))
-            deferred.resolve(database[0])
-
-            let state = await stateUpdate(store) 
-            if ( state.users.requests[requestId].state == 'pending') {
-                // Wait for the next update.
-                state = await stateUpdate(store)
-            }
-
-            const expectedState = expectedUserState.oneUser 
-            const expectedRequestTracker = {
-                requestMethod: 'GET',
-                requestEndpoint: endpoint,
-                state: 'fulfilled',
-                error: null,
-                status: 200,
-                result: database[0]
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual(expectedState)
-        })
-
-        it('should handle a non-200 status as an error', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + database[0].id
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' },
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(getUser(database[0].id))
-            deferred.resolve({ status: 404 })
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'GET',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'Error: Request failed with status: 404',
-                status: 404,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
-        it('should handle a thrown error', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + database[0].id
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(getUser(database[0].id))
-            deferred.resolve({ throws: new TypeError('Fetch failed!')})
-
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'GET',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'TypeError: Fetch failed!',
-                status: undefined,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
+            expect(state.users.dictionary[1]).toEqual(backend.users.dictionary[1])
         })
 
     })
@@ -587,20 +138,25 @@ xdescribe('in client/state/users.js', function() {
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
+            store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
         })
 
-
-        it('should return add a pending RequestTracker to the store when called', async function() {
+        it('should update the returned user in the dictionary', async function() {
             let deferred = { resolve: null, reject: null }
 
-            const endpoint = '/user/' + database[0].id 
+            const user = {
+                ...users[1]
+            }
+            user.id = backend.users.dictionary[1].id 
+
+            const endpoint = '/user/' + user.id 
 
             fetchMock.mock(
                 {
                     url: configuration.backend + endpoint,
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: putSubmission[1]
+                    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+                    body: user
                 },
                 new Promise(function(resolve, reject) {
                     deferred.resolve = resolve
@@ -608,144 +164,19 @@ xdescribe('in client/state/users.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(putUser(putSubmission[1]))
-            let state = store.getState() 
+            const requestId = store.dispatch(putUser(user))
+            deferred.resolve(backend.users.dictionary[1])
 
-            const expectedRequestTracker = {
-                requestMethod: 'PUT',
-                requestEndpoint: endpoint,
-                state: 'pending',
-                error: null,
-                status: null,
-                result: null
-            }
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
+            // Wait until Redux has processed all the actions that get fired
+            // and the request is returned 'fulfilled'.
+            const state = await waitForState(store, function(state) {
+                return state.users.requests[requestId] && state.users.requests[requestId].state == 'fulfilled'
+            })
+
+            expect(state.users.dictionary[1]).toEqual(backend.users.dictionary[1])
         })
 
-        it('should complete the request when the backend returns', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + putSubmission[1].id 
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: putSubmission[1]
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(putUser(putSubmission[1]))
-            deferred.resolve(database[0])
-
-            let state = await stateUpdate(store) 
-            if ( state.users.requests[requestId].state == 'pending') {
-                // Wait for the next update.
-                state = await stateUpdate(store)
-            }
-
-            const expectedState = expectedUserState.oneUser 
-            const expectedRequestTracker = {
-                requestMethod: 'PUT',
-                requestEndpoint: endpoint,
-                state: 'fulfilled',
-                error: null,
-                status: 200,
-                result: database[0]
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual(expectedState)
-        })
-
-        it('should handle a non-200 status as an error', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + putSubmission[1].id
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: putSubmission[1]
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(putUser(putSubmission[1]))
-            deferred.resolve({ status: 404 })
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'PUT',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'Error: Request failed with status: 404',
-                status: 404,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
-        it('should handle a thrown error', async function() {
-
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + database[0].id
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: putSubmission[1]
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(putUser(putSubmission[1]))
-            deferred.resolve({ throws: new TypeError('Fetch failed!')})
-
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'PUT',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'TypeError: Fetch failed!',
-                status: undefined,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-
-        })
-
+        xit('should update currentUser when the returned user has the same id as currentUser', function() {})
     })
 
     describe('patchUser(user)', function() {
@@ -753,20 +184,25 @@ xdescribe('in client/state/users.js', function() {
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
+            store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
         })
 
-
-        it('should return add a pending RequestTracker to the store when called', async function() {
+        it('should update the returned user in the dictionary', async function() {
             let deferred = { resolve: null, reject: null }
 
-            const endpoint = '/user/' + database[0].id 
+            const user = {
+                ...users[1]
+            }
+            user.id = backend.users.dictionary[1].id 
+
+            const endpoint = '/user/' + user.id 
 
             fetchMock.mock(
                 {
                     url: configuration.backend + endpoint,
                     method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: patchSubmission[1]
+                    body: user
                 },
                 new Promise(function(resolve, reject) {
                     deferred.resolve = resolve
@@ -774,142 +210,19 @@ xdescribe('in client/state/users.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(patchUser(patchSubmission[1]))
-            let state = store.getState() 
+            const requestId = store.dispatch(patchUser(user))
+            deferred.resolve(backend.users.dictionary[1])
 
-            const expectedRequestTracker = {
-                requestMethod: 'PATCH',
-                requestEndpoint: endpoint,
-                state: 'pending',
-                error: null,
-                status: null,
-                result: null
-            }
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
+            // Wait until Redux has processed all the actions that get fired
+            // and the request is returned 'fulfilled'.
+            const state = await waitForState(store, function(state) {
+                return state.users.requests[requestId] && state.users.requests[requestId].state == 'fulfilled'
+            })
+
+            expect(state.users.dictionary[1]).toEqual(backend.users.dictionary[1])
         })
 
-        it('should complete the request when the backend returns', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + patchSubmission[1].id 
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: patchSubmission[1]
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(patchUser(patchSubmission[1]))
-            deferred.resolve(database[0])
-
-            let state = await stateUpdate(store) 
-            if ( state.users.requests[requestId].state == 'pending') {
-                // Wait for the next update.
-                state = await stateUpdate(store)
-            }
-
-            const expectedState = expectedUserState.oneUser 
-            const expectedRequestTracker = {
-                requestMethod: 'PATCH',
-                requestEndpoint: endpoint,
-                state: 'fulfilled',
-                error: null,
-                status: 200,
-                result: database[0]
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual(expectedState)
-        })
-
-        it('should handle a non-200 status as an error', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + patchSubmission[1].id
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: patchSubmission[1]
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(patchUser(patchSubmission[1]))
-            deferred.resolve({ status: 404 })
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'PATCH',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'Error: Request failed with status: 404',
-                status: 404,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
-        it('should handle a thrown error', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + database[0].id
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: patchSubmission[1]
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(patchUser(patchSubmission[1]))
-            deferred.resolve({ throws: new TypeError('Fetch failed!')})
-
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'PATCH',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'TypeError: Fetch failed!',
-                status: undefined,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
+        xit('should update currentUser when the returned user has the same id as currentUser', function() {})
     })
 
     describe('deleteUser(user)', function() {
@@ -917,43 +230,18 @@ xdescribe('in client/state/users.js', function() {
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
-        })
-
-
-        it('should return add a pending RequestTracker to the store when called', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + database[0].id 
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(deleteUser(database[0]))
-            let state = store.getState() 
-
-            const expectedRequestTracker = {
-                requestMethod: 'DELETE',
-                requestEndpoint: endpoint,
-                state: 'pending',
-                error: null,
-                status: null,
-                result: null
-            }
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
+            store.dispatch(setConfiguration({ backend: '/api/0.0.0' }))
         })
 
         it('should complete the request when the backend returns', async function() {
             let deferred = { resolve: null, reject: null }
-            const endpoint = '/user/' + database[0].id 
+
+            const user = {
+                ...users[1]
+            }
+            user.id = backend.users.dictionary[1].id 
+
+            const endpoint = '/user/' + user.id 
 
             // First we need to setup our initial state so that it has a user
             // in it.  This gives us a user to delete.  We need to make sure
@@ -963,7 +251,7 @@ xdescribe('in client/state/users.js', function() {
                 {
                     url: configuration.backend + endpoint,
                     method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Accept': 'application/json' }
                 },
                 new Promise(function(resolve, reject) {
                     deferred.resolve = resolve
@@ -971,24 +259,21 @@ xdescribe('in client/state/users.js', function() {
                 })
             )
 
-            const initialRequestId = store.dispatch(getUser(database[0].id))
-            deferred.resolve(database[0])
+            const initialRequestId = store.dispatch(getUser(user.id))
+            deferred.resolve(backend.users.dictionary[1])
 
-            let initialState = await stateUpdate(store) 
-            if ( initialState.users.requests[initialRequestId].state == 'pending') {
-                // Wait for the next update.
-                initialState = await stateUpdate(store)
-            }
+            let state = await waitForState(store, function(state) {
+                return state.users.requests[initialRequestId] && state.users.requests[initialRequestId].state == 'fulfilled'
+            })
 
-            const initialExpectedState = expectedUserState.oneUser
-            expect(initialState.users.users).toEqual(initialExpectedState)
+            expect(state.users.dictionary[1]).toEqual(backend.users.dictionary[1])
 
             // Now we can test that delete executes properly.
             fetchMock.mock(
                 {
                     url: configuration.backend + endpoint,
                     method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
+                    headers: { 'Accept': 'application/json' }
                 },
                 new Promise(function(resolve, reject) {
                     deferred.resolve = resolve
@@ -996,105 +281,13 @@ xdescribe('in client/state/users.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(deleteUser(database[0]))
-            deferred.resolve({ status: 200 })
+            const requestId = store.dispatch(deleteUser(user))
+            deferred.resolve({ status: 200, body: {}})
 
-            let state = await stateUpdate(store) 
-            if ( state.users.requests[requestId].state == 'pending') {
-                // Wait for the next update.
-                state = await stateUpdate(store)
-            }
+            state = await waitForState(store, function(state) {
+                return state.users.requests[requestId] && state.users.requests[requestId].state == 'fulfilled'
+            })
 
-            const expectedState = {}
-            const expectedRequestTracker = {
-                requestMethod: 'DELETE',
-                requestEndpoint: endpoint,
-                state: 'fulfilled',
-                error: null,
-                status: 200,
-                result: database[0].id
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual(expectedState)
-        })
-
-        it('should handle a non-200 status as an error', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + database[0].id
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(deleteUser(database[0]))
-            deferred.resolve({ status: 404 })
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'DELETE',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'Error: Request failed with status: 404',
-                status: 404,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
-            expect(state.users.dictionary).toEqual({})
-        })
-
-        it('should handle a thrown error', async function() {
-            let deferred = { resolve: null, reject: null }
-
-            const endpoint = '/user/' + database[0].id
-
-            fetchMock.mock(
-                {
-                    url: configuration.backend + endpoint,
-                    method: 'DELETE',
-                    headers: { 'Content-Type': 'application/json' }
-                },
-                new Promise(function(resolve, reject) {
-                    deferred.resolve = resolve
-                    deferred.reject = reject
-                })
-            )
-
-            const requestId = store.dispatch(deleteUser(database[0]))
-            deferred.resolve({ throws: new TypeError('Fetch failed!')})
-
-
-            let state = await stateUpdate(store)
-            if ( state.users.requests[requestId].state == 'pending') {
-                // wait for the next update
-                state = await stateUpdate(store)
-            }
-
-            const expectedRequestTracker = {
-                requestMethod: 'DELETE',
-                requestEndpoint: endpoint,
-                state: 'failed',
-                error: 'TypeError: Fetch failed!',
-                status: undefined,
-                result: null
-            }
-
-            expect(state.users.requests[requestId]).toEqual(expectedRequestTracker)
             expect(state.users.dictionary).toEqual({})
         })
 

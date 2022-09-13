@@ -5,21 +5,18 @@ const fields = [
         name: 'biology',
         description: 'Study of life.',
         type: 'biology',
+        averageReputation: 50,
         createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP',
-        children: [],
-        parents: []
-
+        updatedDate: 'TIMESTAMP'
     },
     {
         id: 2,
         name: 'genetics',
         description: 'Study of genes and DNA.',
         type: 'biology',
+        averageReputation: 50,
         createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP',
-        children: [],
-        parents: []
+        updatedDate: 'TIMESTAMP'
     }
 
 ]
@@ -57,6 +54,7 @@ const files = [
         userId: 1,
         filepath: '/uploads/papers/1-1-molecular-structure-of-nucleic-acids.pdf',
         type: 'application/pdf',
+        location: 'https://spaces-bucket-url.digitalocean.com',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
     },
@@ -65,6 +63,7 @@ const files = [
         userId: 1,
         filepath: '/uploads/papers/1-2-molecular-structure-of-nucleic-acids.pdf',
         type: 'application/pdf',
+        location: 'https://spaces-bucket-url.digitalocean.com',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
 

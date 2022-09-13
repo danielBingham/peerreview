@@ -29,7 +29,7 @@ CREATE TABLE users (
 CREATE TABLE files (
     id uuid PRIMARY KEY,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
-    location varchar(1024),
+    location varchar(1024), /* This is the S3/Spaces bucket URL. */
     filepath varchar(1024),
     type varchar(256),
     created_date timestamptz,

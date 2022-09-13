@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { postVotes, cleanupRequest } from '/state/papers'
+import { getReputations, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 
 import Spinner from '/components/Spinner'
 
@@ -22,6 +23,15 @@ const PublishedPaperVoteWidget = function(props) {
             return null
         } else {
             return state.papers.requests[voteRequestId]
+        }
+    })
+
+    const [ reputationRequestId, setReputationRequestId] = useState(null)
+    const reputationRequest = useSelector(function(state) {
+        if ( ! reputationRequestId ) {
+            return null
+        } else {
+            return state.papers.requests[reputationRequestId]
         }
     })
 
@@ -99,8 +109,10 @@ const PublishedPaperVoteWidget = function(props) {
     // ======= Effect Handling ======================================
 
     useEffect(function() {
-        setReputationRequestId(dispatch(getReputations(props.id, { paperId: props.paperId })))
-    }, [])
+        if ( currentUser ) {
+            setReputationRequestId(dispatch(getReputations(currentUser.id, { paperId: props.paper.id })))
+        }
+    }, [ currentUser ])
 
     useEffect(function() {
         return function cleanup() {
@@ -109,6 +121,14 @@ const PublishedPaperVoteWidget = function(props) {
             }
         }
     }, [ voteRequestId ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( reputationRequestId ) {
+                dispatch(cleanupReputationRequest({ requestId: reputationRequestId }))
+            }
+        }
+    }, [ reputationRequestId ])
 
     // ======= Render ===============================================
 
@@ -125,7 +145,8 @@ const PublishedPaperVoteWidget = function(props) {
     let canRespond = false
     if ( currentUser && reputations && fields.length > 0) {
         for (const field of fields ) {
-            if ( reputations[field.id] && reputations[field.id].reputation >= reputationThresholds.respond * field.average_reputation  ) {
+            const threshold = reputationThresholds.referee * field.averageReputation
+            if ( reputations[field.id] && reputations[field.id].reputation >= threshold) {
                canRespond = true 
             }
         }

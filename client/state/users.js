@@ -3,9 +3,13 @@ import { v4 as uuidv4 } from 'uuid'
 
 import logger from '/logger'
 
-import { makeRequest as makeTrackedRequest, 
-    failRequest as failTrackedRequest, 
-    completeRequest as completeTrackedRequest, 
+import { 
+    makeSearchParams,
+    makeTrackedRequest,
+    startRequestTracking, 
+    recordRequestFailure, 
+    recordRequestSuccess, 
+    useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -105,9 +109,10 @@ export const usersSlice = createSlice({
 
         // ========== Request Tracking Methods =============
 
-        makeRequest: makeTrackedRequest, 
-        failRequest: failTrackedRequest, 
-        completeRequest: completeTrackedRequest,
+        makeRequest: startRequestTracking, 
+        failRequest: recordRequestFailure, 
+        completeRequest: recordRequestSuccess,
+        useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -126,59 +131,16 @@ export const usersSlice = createSlice({
  */
 export const getUsers = function(params) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(usersSlice.actions.garbageCollectRequests())
-
-        const queryString = new URLSearchParams()
-        for ( const key in params ) {
-            if ( Array.isArray(params[key]) ) {
-                for ( const value of params[key] ) {
-                    queryString.append(key+'[]', value)
-                }
-            } else {
-                queryString.append(key, params[key])
-            }
-        }
-
-        const requestId = uuidv4() 
+        const queryString = makeSearchParams(params)
         const endpoint = '/users' + ( params ? '?' + queryString.toString() : '')
 
-        let payload = {
-            requestId: requestId
-        }
-
-
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        return makeTrackedRequest(dispatch, getState, usersSlice,
+            'GET', endpoint, null,
+            function(users) {
+                dispatch(usersSlice.actions.addUsersToDictionary(users))
+                dispatch(usersSlice.actions.appendUsersToList(users))
             }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(users) {
-            dispatch(usersSlice.actions.addUsersToDictionary(users))
-            dispatch(usersSlice.actions.appendUsersToList(users))
-
-            payload.result = users
-            dispatch(usersSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -196,47 +158,12 @@ export const getUsers = function(params) {
  */
 export const postUsers = function(user) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(usersSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/users'
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(usersSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(user)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, usersSlice,
+            'POST', '/users', user,
+            function(returnedUser) {
+                dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
             }
-        }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
-
-            payload.result = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -254,46 +181,12 @@ export const postUsers = function(user) {
  */
 export const getUser = function(id) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(usersSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/user/' + id
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        return makeTrackedRequest(dispatch, getState, usersSlice,
+            'GET', `/user/${id}`, null,
+            function(user) {
+                dispatch(usersSlice.actions.addUsersToDictionary(user))
             }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(user) {
-            dispatch(usersSlice.actions.addUsersToDictionary(user))
-
-            payload.result = user
-            dispatch(usersSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -311,58 +204,22 @@ export const getUser = function(id) {
  */
 export const putUser = function(user) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(usersSlice.actions.garbageCollectRequests())
-    
-        const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
+        return makeTrackedRequest(dispatch, getState, usersSlice,
+            'PUT', `/user/${user.id}`, user,
+            function(returnedUser) {
+                dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
 
-        const payload = {
-            requestId: requestId
-        }
+                // If the user we just got is the same as the one in the session,
+                // update the session.  The server will have already done this for
+                // the backend, doubling the login on the frontend just saves us a
+                // request.
+                const state = getState()
+                if ( state.authentication.currentUser && state.authentication.currentUser.id == returnedUser.id) {
+                    dispatch(setCurrentUser(returnedUser))
+                }
 
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(user)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-
-        }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
-
-            // If the user we just got is the same as the one in the session,
-            // update the session.  The server will have already done this for
-            // the backend, doubling the login on the frontend just saves us a
-            // request.
-            const state = getState()
-            if ( state.authentication.currentUser && state.authentication.currentUser.id == returnedUser.id) {
-                dispatch(setCurrentUser(returnedUser))
-            }
-
-            payload.result = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -380,56 +237,22 @@ export const putUser = function(user) {
  */
 export const patchUser = function(user) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(usersSlice.actions.garbageCollectRequests())
+        return makeTrackedRequest(dispatch, getState, usersSlice,
+            'PATCH', `/user/${user.id}`, user,
+            function(returnedUser) {
+                dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
 
-        const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
+                // If the user we just got is the same as the one in the session,
+                // update the session.  The server will have already done this for
+                // the backend, doubling the login on the frontend just saves us a
+                // request.
+                const state = getState()
+                if ( state.authentication.currentUser && state.authentication.currentUser.id == returnedUser.id) {
+                    dispatch(setCurrentUser(returnedUser))
+                }
 
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(user)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).then(function(returnedUser) {
-            dispatch(usersSlice.actions.addUsersToDictionary(returnedUser))
-
-            // If the user we just got is the same as the one in the session,
-            // update the session.  The server will have already done this for
-            // the backend, doubling the login on the frontend just saves us a
-            // request.
-            const state = getState()
-            if ( state.authentication.currentUser && state.authentication.currentUser.id == returnedUser.id) {
-                dispatch(setCurrentUser(returnedUser))
-            }
-
-            payload.result = returnedUser
-            dispatch(usersSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -447,46 +270,18 @@ export const patchUser = function(user) {
  */
 export const deleteUser = function(user) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(usersSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/user/' + user.id
-
-        const payload = {
-            requestId: requestId,
-            result: user.id
-        }
-        
-        dispatch(usersSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            if( response.ok ) {
+        return makeTrackedRequest(dispatch, getState, usersSlice,
+            'DELETE', `/user/${user.id}`, null,
+            function(responseBody) {
                 dispatch(usersSlice.actions.removeUser(user))
-                dispatch(usersSlice.actions.completeRequest(payload))
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(usersSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 } 
 
-export const { addUsersToDictionary, appendUsersToList, clearList, removeUser, makeRequest, failRequest, completeRequest, cleanupRequest }  = usersSlice.actions
+export const { 
+    addUsersToDictionary, appendUsersToList, clearList, removeUser, 
+    cleanupRequest 
+}  = usersSlice.actions
 
 export default usersSlice.reducer

@@ -44,7 +44,6 @@ module.exports = class ReputationDAO {
                 ${where}
         `
 
-        console.log(sql)
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length <= 0) {
@@ -94,7 +93,6 @@ module.exports = class ReputationDAO {
                 ${offset}
         `
 
-        console.log(sql)
         const result = await this.database.query(sql, params)
 
         if ( result.rows.length <= 0) {

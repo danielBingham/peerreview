@@ -9,7 +9,6 @@ import './FieldPage.css'
 
 const FieldPage = function(props) {
     const { id } = useParams()
-    console.log(`\n\n ### Rendering FieldPage(${id}).`)
 
     // ======= Render =====================================
 

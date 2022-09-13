@@ -9,6 +9,7 @@ import {
     startRequestTracking, 
     recordRequestFailure, 
     recordRequestSuccess, 
+    useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -125,6 +126,7 @@ export const fieldsSlice = createSlice({
         makeRequest: startRequestTracking, 
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
+        useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }

@@ -3,9 +3,12 @@ import { v4 as uuidv4 } from 'uuid'
 
 import logger from '/logger'
 
-import { makeRequest as makeTrackedRequest, 
-    failRequest as failTrackedRequest, 
-    completeRequest as completeTrackedRequest, 
+import { 
+    makeTrackedRequest,
+    startRequestTracking, 
+    recordRequestFailure, 
+    recordRequestSuccess, 
+    useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -57,9 +60,10 @@ export const filesSlice = createSlice({
 
         // ========== Request Tracking Methods =============
 
-        makeRequest: makeTrackedRequest, 
-        failRequest: failTrackedRequest, 
-        completeRequest: completeTrackedRequest,
+        makeRequest: startRequestTracking, 
+        failRequest: recordRequestFailure, 
+        completeRequest: recordRequestSuccess,
+        useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -79,48 +83,15 @@ export const filesSlice = createSlice({
  */
 export const uploadFile = function(file) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(filesSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/upload'
-
-        const payload = {
-            requestId: requestId,
-        }
-
-        var formData = new FormData()
+        const formData = new FormData()
         formData.append('file', file)
 
-        dispatch(filesSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            body: formData 
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, filesSlice,
+            'POST', `/upload`, formData,
+            function(file) {
+                dispatch(filesSlice.actions.addFilesToDictionary(file))
             }
-        }).then(function(file) {
-            dispatch(filesSlice.actions.addFilesToDictionary(file))
-
-            payload.result = file 
-            dispatch(filesSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(filesSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -138,44 +109,12 @@ export const uploadFile = function(file) {
  */
 export const deleteFile = function(fileId) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(filesSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/file/' + fileId
-
-        const payload = {
-            requestId: requestId,
-        }
-
-        dispatch(filesSlice.actions.makeRequest({requestId:requestId, method: 'DELETE', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'DELETE'
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, filesSlice,
+            'DELETE', `/file/${fileId}`, null,
+            function(file) {
+                dispatch(filesSlice.actions.removeFile(fileId))
             }
-        }).then(function(file) {
-            dispatch(filesSlice.actions.removeFile(fileId))
-
-            payload.result = fileId 
-            dispatch(filesSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(filesSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 

@@ -75,6 +75,14 @@ export const completeRequest = function(state, action) {
 export const recordRequestSuccess = completeRequest
 
 /**
+ * Reuse a cleanup request.
+ */
+export const useRequest = function(state, action) {
+    const tracker = state.requests[action.payload.requestId]
+    tracker.cleaned = false
+}
+
+/**
  * Cleanup a request tracker that we're done with.
  */
 export const cleanupRequest = function(state, action) {
@@ -119,14 +127,6 @@ export const garbageCollectRequests = function(state, action) {
  ******************************************************************************/
 
 /**
- * Reuse a cleanup request.
- */
-export const useRequest = function(state, action) {
-    const tracker = state.requests[action.payload.requestId]
-    tracker.cleaned = false
-}
-
-/**
  * Create a URLSearchParams object from an object of parameters.  Translates
  * things like arrays to the appropriate query string format.
  */
@@ -142,6 +142,24 @@ export const makeSearchParams = function(params) {
         }
     }
     return queryString
+}
+
+const getRequestFromCache = function(slice, method, endpoint) {
+    return function(dispatch, getState) {
+        const state = getState()
+        for ( const id in state[slice.name].requests) {
+            if ( state[slice.name].requests[id].method == method && state[slice.name].requests[id].endpoint == endpoint ) {
+                const request = state[slice.name].requests[id]
+                if ( request && request.state == 'fulfilled' ) {
+                    dispatch(slice.actions.useRequest({ requestId: id }))
+                    return request
+                } else {
+                    return null
+                }
+            }
+        }
+        return null
+    }
 }
 
 /**
@@ -172,6 +190,15 @@ export const makeTrackedRequest = function(dispatch, getState, slice, method, en
     // Cleanup dead requests before making a new one.
     dispatch(slice.actions.garbageCollectRequests())
 
+    if ( method == 'GET' ) {
+        const request = dispatch(getRequestFromCache(slice, 'GET', endpoint))
+        if ( request ) {
+            onSuccess(request.result)
+            return request.requestId
+        }
+    }
+
+
     const requestId = uuidv4()
     let status = 0
     let responseOk = false
@@ -183,8 +210,12 @@ export const makeTrackedRequest = function(dispatch, getState, slice, method, en
         }
     }
     if ((method == 'POST' || method == 'PUT' || method == 'PATCH') && body ) {
-        fetchOptions.body = JSON.stringify(body)
-        fetchOptions.headers['Content-Type'] = 'application/json'
+        if ( body instanceof FormData ) {
+            fetchOptions.body = body
+        } else {
+            fetchOptions.body = JSON.stringify(body)
+            fetchOptions.headers['Content-Type'] = 'application/json'
+        }
     }
 
     dispatch(slice.actions.makeRequest({requestId: requestId, method: method, endpoint: endpoint}))
@@ -194,7 +225,6 @@ export const makeTrackedRequest = function(dispatch, getState, slice, method, en
         return response.json()
     }).then(function(responseBody) {
         if ( responseOk ) {
-            dispatch(slice.actions.completeRequest({ requestId: requestId, status: status, result: responseBody }))
             if ( onSuccess ) {
                 try {
                     onSuccess(responseBody)
@@ -202,6 +232,7 @@ export const makeTrackedRequest = function(dispatch, getState, slice, method, en
                     return Promise.reject(error)
                 }
             }
+            dispatch(slice.actions.completeRequest({ requestId: requestId, status: status, result: responseBody }))
         } else {
             dispatch(slice.actions.failRequest({ requestId: requestId, status: status, error: responseBody.error }))
             if ( onFailure ) {

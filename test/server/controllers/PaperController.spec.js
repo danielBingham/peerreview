@@ -46,6 +46,7 @@ describe('PaperController', function() {
 
     beforeEach(function() {
         connection.query.mockReset()
+        logger.level = -1 
     })
 
     describe('.getPapers()', function() {

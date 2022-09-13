@@ -32,6 +32,7 @@ const filesBefore = [
         file_userId: 1,
         file_filepath: '/uploads/files/WatsonCrick1953.pdf',
         file_type: 'application/pdf',
+        file_location: 'https://spaces-bucket-url.digitalocean.com',
         file_createdDate: 'TIMESTAMP',
         file_updatedDate: 'TIMESTAMP'
     },
@@ -40,6 +41,7 @@ const filesBefore = [
         file_userId: 1,
         file_filepath: '/uploads/files/WatsonCrick-Annotated.pdf',
         file_type: 'application/pdf',
+        file_location: 'https://spaces-bucket-url.digitalocean.com',
         file_createdDate: 'TIMESTAMP',
         file_updatedDate: 'TIMESTAMP'
 
@@ -52,6 +54,7 @@ const files = [
         file_userId: 1,
         file_filepath: '/uploads/papers/1-1-molecular-structure-of-nucleic-acids.pdf',
         file_type: 'application/pdf',
+        file_location: 'https://spaces-bucket-url.digitalocean.com',
         file_createdDate: 'TIMESTAMP',
         file_updatedDate: 'TIMESTAMP'
     },
@@ -60,6 +63,7 @@ const files = [
         file_userId: 1,
         file_filepath: '/uploads/papers/1-2-molecular-structure-of-nucleic-acids.pdf',
         file_type: 'application/pdf',
+        file_location: 'https://spaces-bucket-url.digitalocean.com',
         file_createdDate: 'TIMESTAMP',
         file_updatedDate: 'TIMESTAMP'
 
@@ -81,6 +85,7 @@ const fields = [
         field_name: 'biology',
         field_type: 'biology',
         field_description: 'Study of life.',
+        field_averageReputation: 50,
         field_createdDate: 'TIMESTAMP',
         field_updatedDate: 'TIMESTAMP'
     },
@@ -89,6 +94,7 @@ const fields = [
         field_name: 'genetics',
         field_type: 'biology',
         field_description: 'Study of genes and DNA.',
+        field_averageReputation: 50,
         field_createdDate: 'TIMESTAMP',
         field_updatedDate: 'TIMESTAMP'
     }

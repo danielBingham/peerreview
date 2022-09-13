@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { getResponses, cleanupRequest } from '/state/responses'
+import { getReputations, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 
 import ResponseForm from './ResponseForm'
 import ResponseView from './ResponseView'
@@ -21,6 +22,17 @@ const ResponseList = function(props) {
         }
     })
 
+    const [ reputationRequestId, setReputationRequestId] = useState(null)
+    const reputationRequest = useSelector(function(state) {
+        if ( ! reputationRequestId ) {
+            return null
+        } else {
+            return state.papers.requests[reputationRequestId]
+        }
+    })
+
+    // ======= Redux State ==========================================
+   
     const responses = useSelector(function(state) {
         return state.responses.list[props.paper.id]
     })
@@ -43,11 +55,29 @@ const ResponseList = function(props) {
         return fields
     })
 
+    const reputations = useSelector(function(state) {
+        if ( currentUser) {
+            return state.reputation.dictionary[currentUser.id]    
+        } else {
+            return null 
+        }
+    })
+
+    // ======= Actions and Event Handling ===========================
+    
+    // ======= Effect Handling ======================================
+    
     const dispatch = useDispatch()
 
     useEffect(function() {
         setRequestId(dispatch(getResponses(props.paper.id, true)))
     }, [])
+
+    useEffect(function() {
+        if ( currentUser ) {
+            setReputationRequestId(dispatch(getReputations(currentUser.id, { paperId: props.paper.id })))
+        }
+    }, [ currentUser ])
 
     useEffect(function() {
         return function cleanup() {
@@ -57,6 +87,16 @@ const ResponseList = function(props) {
         }
     }, [ requestId ])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( reputationRequestId ) {
+                dispatch(cleanupReputationRequest({ requestId: reputationRequestId }))
+            }
+        }
+    }, [ reputationRequestId ])
+
+    // ======= Render ===============================================
+    
     let content = ( <Spinner /> )
     let userResponse = null
     if ( request && request.state == 'fulfilled') {
@@ -78,9 +118,10 @@ const ResponseList = function(props) {
     }
 
     let canRespond = false
-    if ( currentUser && fields.length > 0) {
+    if ( currentUser && reputations && fields.length > 0) {
         for (const field of fields ) {
-            if ( currentUser.fields[field.id] && currentUser.fields[field.id].reputation >= reputationThresholds.respond * field.average_reputation  ) {
+            const threshold = reputationThresholds.referee * field.averageReputation
+            if ( reputations[field.id] && reputations[field.id].reputation >= threshold) {
                canRespond = true 
             }
         }

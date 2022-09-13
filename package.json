@@ -15,7 +15,6 @@
   "jest": {
     "verbose": true,
     "moduleNameMapper": {
-      "^/configuration": "<rootDir>/client/configuration",
       "^/logger": "<rootDir>/client/logger",
       "^/state/(.*)": "<rootDir>/client/state/$1",
       "^/errors/(.*)": "<rootDir>/client/errors/$1",
@@ -70,6 +69,7 @@
     "fetch-mock": "^9.11.0",
     "html-webpack-plugin": "^5.5.0",
     "jest": "^28.0.3",
+    "jest-environment-jsdom": "^29.0.3",
     "node-fetch": "^2.6.7",
     "nodemon": "^2.0.16",
     "style-loader": "^3.3.1",

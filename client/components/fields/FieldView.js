@@ -16,9 +16,6 @@ import './FieldView.css'
  * @param {int} props.id    The id of the field we'd like to show details for.
  */
 const FieldView = function(props) {
-
-    console.log(`\n\n Rendering FieldView(${props.id}).`)
-
     // ======= Request Tracking =====================================
 
     const [requestId, setRequestId] = useState(null)
@@ -54,7 +51,6 @@ const FieldView = function(props) {
         if ( ! props.id ) {
             console.error(`Can't render FieldView with out an 'id' number.`)
         } else { 
-            console.log(`ID: ${props.id}`)
             setRequestId(dispatch(getField(props.id)))
         }
     }, [ props.id ])

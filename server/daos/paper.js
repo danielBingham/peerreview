@@ -7,6 +7,7 @@ const DAOError = require('../errors/DAOError')
 
 const UserDAO = require('./user')
 const FileDAO = require('./files')
+const FieldDAO = require('./field')
 const S3FileService = require('../services/S3FileService')
 
 const PAGE_SIZE = 50 
@@ -17,6 +18,7 @@ module.exports = class PaperDAO {
         this.database = database
         this.userDAO = new UserDAO(database)
         this.fileDAO = new FileDAO(database)
+        this.fieldDAO = new FieldDAO(database)
         this.fileService = new S3FileService(config)
     }
 
@@ -74,16 +76,7 @@ module.exports = class PaperDAO {
                 papers[paper.id].versions.push(paper_version)
             }
 
-            const paper_field = {
-                id: row.field_id,
-                name: row.field_name,
-                type: row.field_type,
-                description: row.field_description,
-                parents: [],
-                children: [],
-                createdDate: row.field_createdDate,
-                updatedDate: row.field_updatedDate
-            }
+            const paper_field = this.fieldDAO.hydrateField(row)
 
             if ( ! papers[paper.id].fields.find((f) => f.id == paper_field.id)) {
                 papers[paper.id].fields.push(paper_field)
@@ -150,9 +143,7 @@ module.exports = class PaperDAO {
 
                     ${ this.fileDAO.getFilesSelectionString() },
 
-                    fields.id as field_id, fields.name as field_name, 
-                    fields.description as field_description, fields.type as field_type,
-                    fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate",
+                    ${ this.fieldDAO.selectionString },
 
                     paper_votes.paper_id as "vote_paperId", paper_votes.user_id as "vote_userId", paper_votes.score as vote_score
 

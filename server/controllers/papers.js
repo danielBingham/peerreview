@@ -275,12 +275,7 @@ module.exports = class PaperController {
      * Return a JSON array of all papers in the database.
      */
     async getPapers(request, response) {
-        console.log('Query: ')
-        console.log(request.query)
-
         const { where, params, order, emptyResult } = await this.parseQuery(request.session, request.query)
-        console.log(`Where clause: ${where}`)
-        console.log(params)
 
         if ( emptyResult ) {
             return response.status(200).json([])

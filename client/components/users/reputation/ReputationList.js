@@ -49,7 +49,6 @@ const ReputationList = function(props) {
     useEffect(function() {
         return function cleanup() {
             if ( reputationRequestId ) {
-                dispatch(clearQuery({userId: props.userId }))
                 dispatch(cleanupReputationRequest({ requestId: reputationRequestId }))
             }
         }

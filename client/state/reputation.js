@@ -7,6 +7,7 @@ import {
     startRequestTracking, 
     recordRequestFailure, 
     recordRequestSuccess, 
+    useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -98,6 +99,7 @@ const reputationSlice = createSlice({
         makeRequest: startRequestTracking, 
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
+        useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -145,6 +147,7 @@ export const getReputations = function(userId, params) {
             'GET', endpoint, null,
             function(responseBody) {
                 dispatch(reputationSlice.actions.setQuery({userId: userId, query: responseBody }))
+                dispatch(reputationSlice.actions.setAllInDictionary({ userId: userId, results: responseBody.results  }))
             }
         )
     }

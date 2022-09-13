@@ -20,8 +20,6 @@ module.exports = class OpenAlexService {
         params.mailto = "contact@peer-review.io"
         
         const searchParams = new URLSearchParams(params)
-
-        console.log('Making query: ' + endpoint + "?" + searchParams.toString())
         
         return await fetch(endpoint + "?" + searchParams.toString(), {
             method: "GET"
@@ -92,7 +90,6 @@ module.exports = class OpenAlexService {
      * @return {Object[]} An array of Open Alex Works records: https://docs.openalex.org/about-the-data/work
      */
     async getAuthorsWorksPage(author, page) {
-        console.log('Fetching page: ' + author.works_api_url)
         const response = await fetch(`${author.works_api_url}&page=${page}&per_page=200&mailto=contact@peer-review.io`, {
             method: "GET"
         })
@@ -113,8 +110,6 @@ module.exports = class OpenAlexService {
      * from Open Alex: https://docs.openalex.org/about-the-data/work
      */
     async getAuthorsWorks(author) {
-        console.log('Getting works for author: ')
-        console.log(author)
         const works = []
 
         const firstResponse = await this.getAuthorsWorksPage(author, 1)
