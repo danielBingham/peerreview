@@ -103,6 +103,8 @@ const DraftPaperControlView = function(props) {
     const changeVersion = function(event) {
         const versionNumber = event.target.value
         searchParams.set('version', versionNumber)
+        searchParams.delete('review')
+        searchParams.delete('thread')
         setSearchParams(searchParams)
     }
 

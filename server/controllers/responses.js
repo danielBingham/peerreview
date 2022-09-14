@@ -5,6 +5,7 @@
  *
  ******************************************************************************/
 const ResponseDAO = require('../daos/responses')
+const ReputationPermissionService = require('../services/ReputationPermissionService')
 
 const ControllerError = require('../errors/ControllerError')
 const DAOError = require('../errors/DAOError')
@@ -16,6 +17,7 @@ module.exports = class ResponseController {
         this.database = database
         this.logger = logger
         this.responseDAO = new ResponseDAO(database, logger)
+        this.reputationPermissionService = new ReputationPermissionService(database, logger)
     }
 
     async countResponses(request, response) {
