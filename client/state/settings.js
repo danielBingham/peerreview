@@ -3,9 +3,13 @@ import { v4 as uuidv4 } from 'uuid'
 
 import logger from '/logger'
 
-import { makeRequest as makeTrackedRequest, 
-    failRequest as failTrackedRequest, 
-    completeRequest as completeTrackedRequest, 
+import { 
+    makeTrackedRequest,
+    makeSearchParams,
+    startRequestTracking, 
+    recordRequestFailure, 
+    recordRequestSuccess, 
+    useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -68,9 +72,10 @@ export const settingsSlice = createSlice({
 
         // ========== Request Tracking Methods =============
 
-        makeRequest: makeTrackedRequest, 
-        failRequest: failTrackedRequest, 
-        completeRequest: completeTrackedRequest,
+        makeRequest: startRequestTracking, 
+        failRequest: recordRequestFailure, 
+        completeRequest: recordRequestSuccess,
+        useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -88,47 +93,12 @@ export const settingsSlice = createSlice({
  */
 export const getSettings = function(userId) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(settingsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4() 
-        const endpoint = `/user/${userId}/settings`
-
-        let payload = {
-            requestId: requestId
-        }
-
-
-        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        return makeTrackedRequest(dispatch, getState, settingsSlice,
+            'GET', `/user/${userId}/settings`, null,
+            function(settings) {
+                dispatch(settingsSlice.actions.addSettingsToDictionary(settings))
             }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(settings) {
-            dispatch(settingsSlice.actions.addSettingsToDictionary(settings))
-
-            payload.result = settings
-            dispatch(settingsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(settingsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -146,11 +116,11 @@ export const getSettings = function(userId) {
  */
 export const postSettings = function(setting) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(settingsSlice.actions.garbageCollectRequests())
 
-        const requestId = uuidv4()
+        // TODO this needs a comment. What the hell was I doing here?  I bet it
+        // has to do with the difference in setting settings when we have an
+        // authenticated user and when we're just setting them on the session
+        // with no authenticated user.
         let endpoint = ''
         if ( setting.userId ) {
             endpoint = `/user/${setting.userId}/settings`
@@ -158,45 +128,17 @@ export const postSettings = function(setting) {
             endpoint = '/settings'
         }
 
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(settingsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(setting)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, settingsSlice,
+            'POST', endpoint, setting,
+            function(returnedSetting) {
+                const state = getState()
+                if ( state.authentication.currentUser) {
+                    dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
+                } else {
+                    dispatch(setSettings(returnedSetting))
+                }
             }
-        }).then(function(returnedSetting) {
-            const state = getState()
-            if ( state.authentication.currentUser) {
-                dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
-            } else {
-                dispatch(setSettings(returnedSetting))
-            }
-
-            payload.result = returnedSetting
-            dispatch(settingsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(settingsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -214,46 +156,13 @@ export const postSettings = function(setting) {
  */
 export const getSetting = function(userId, id) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(settingsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
         const endpoint = `/user/${userId}/setting/${id}`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        return makeTrackedRequest(dispatch, getState, settingsSlice,
+            'GET', endpoint, null,
+            function(setting) {
+                dispatch(settingsSlice.actions.addSettingsToDictionary(setting))
             }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(setting) {
-            dispatch(settingsSlice.actions.addSettingsToDictionary(setting))
-
-            payload.result = setting
-            dispatch(settingsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(settingsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -271,50 +180,17 @@ export const getSetting = function(userId, id) {
  */
 export const putSetting = function(setting) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(settingsSlice.actions.garbageCollectRequests())
-    
-        const requestId = uuidv4()
         const endpoint = `/user/${setting.id}/setting/${setting.id}`
+        return makeTrackedRequest(dispatch, getState, settingsSlice,
+            'PUT', endpoint, setting,
+            function(returnedSetting) {
+                dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
 
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(setting)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+                // Only the current user can patch their own settings.  So we
+                // need to update the settings on authentication as well.
+                dispatch(setSettings(returnedSetting))
             }
-
-        }).then(function(returnedSetting) {
-            dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
-            dispatch(setSettings(returnedSetting))
-
-            payload.result = returnedSetting
-            dispatch(settingsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(settingsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -332,48 +208,17 @@ export const putSetting = function(setting) {
  */
 export const patchSetting = function(setting) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(settingsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
         const endpoint = `/user/${setting.userId}/setting/${setting.id}` 
+        return makeTrackedRequest(dispatch, getState, settingsSlice,
+            'PATCH', endpoint, setting,
+            function(returnedSetting) {
+                dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
 
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(setting)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+                // Only the current user can patch their own settings.  So we
+                // need to update the settings on authentication as well.
+                dispatch(setSettings(returnedSetting))
             }
-        }).then(function(returnedSetting) {
-            dispatch(settingsSlice.actions.addSettingsToDictionary(returnedSetting))
-            dispatch(setSettings(returnedSetting))
-
-            payload.result = returnedSetting
-            dispatch(settingsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(settingsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -391,43 +236,13 @@ export const patchSetting = function(setting) {
  */
 export const deleteSetting = function(setting) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(settingsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
         const endpoint = `/user/${setting.userId}/setting/${setting.id}`
-
-        const payload = {
-            requestId: requestId,
-            result: setting.id
-        }
-        
-        dispatch(settingsSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            if( response.ok ) {
+        return makeTrackedRequest(dispatch, getState, settingsSlice,
+            'DELETE', endpoint, null,
+            function(response) {
                 dispatch(settingsSlice.actions.removeSetting(setting))
-                dispatch(settingsSlice.actions.completeRequest(payload))
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(settingsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 } 
 

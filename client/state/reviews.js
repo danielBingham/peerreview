@@ -1,12 +1,15 @@
 import { createSlice } from '@reduxjs/toolkit'
-import { v4 as uuidv4 } from 'uuid'
 
 import logger from '../logger'
 
 import { addUsers } from './users'
-import { makeRequest as makeTrackedRequest, 
-    failRequest as failTrackedRequest, 
-    completeRequest as completeTrackedRequest, 
+import { 
+    makeTrackedRequest,
+    makeSearchParams,
+    startRequestTracking, 
+    recordRequestFailure, 
+    recordRequestSuccess, 
+    useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -161,9 +164,10 @@ export const reviewsSlice = createSlice({
 
         // ========== Request Tracking Methods =============
 
-        makeRequest: makeTrackedRequest, 
-        failRequest: failTrackedRequest, 
-        completeRequest: completeTrackedRequest,
+        makeRequest: startRequestTracking, 
+        failRequest: recordRequestFailure, 
+        completeRequest: recordRequestSuccess, 
+        useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -217,47 +221,12 @@ export const updateReview = function(review) {
  */
 export const countReviews = function() {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4() 
-        const endpoint = `/reviews/count`
-
-        let payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'GET', `/reviews/count`, null,
+            function(counts) {
+                dispatch(reviewsSlice.actions.setCounts(counts))
             }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(counts) {
-            dispatch(reviewsSlice.actions.setCounts(counts))
-
-            payload.result = counts 
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -273,59 +242,25 @@ export const countReviews = function() {
  */
 export const getReviews = function(paperId) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'GET', `/paper/${paperId}/reviews`, null,
+            function(reviews) {
+                if ( reviews && reviews.length > 0) {
+                    dispatch(reviewsSlice.actions.addReviewsToDictionary(reviews))
+                    dispatch(reviewsSlice.actions.appendReviewsToList(reviews))
 
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4() 
-        const endpoint = `/paper/${paperId}/reviews`
-
-        let payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(reviews) {
-            if ( reviews && reviews.length > 0) {
-                dispatch(reviewsSlice.actions.addReviewsToDictionary(reviews))
-                dispatch(reviewsSlice.actions.appendReviewsToList(reviews))
-
-                const state = getState()
-                if ( state.authentication.currentUser ) {
-                    for ( const review of reviews ) {
-                        if ( review.status == 'in-progress' && review.userId == state.authentication.currentUser.id) {
-                            dispatch(reviewsSlice.actions.setInProgress(review))
-                        } 
+                    const state = getState()
+                    if ( state.authentication.currentUser ) {
+                        for ( const review of reviews ) {
+                            if ( review.status == 'in-progress' && review.userId == state.authentication.currentUser.id) {
+                                dispatch(reviewsSlice.actions.setInProgress(review))
+                            } 
+                        }
                     }
                 }
-            }
 
-            payload.result = reviews
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
             }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -343,52 +278,15 @@ export const getReviews = function(paperId) {
  */
 export const postReviews = function(review) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = `/paper/${review.paperId}/reviews`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(review)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'POST', `/paper/${review.paperId}/reviews`, review,
+            function(returnedReview) {
+                dispatch(updateReview(returnedReview))
+                dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
             }
-        }).then(function(returnedReview) {
-            dispatch(updateReview(returnedReview))
-            dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
-
-            payload.result = returnedReview
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
-
-
 
 /**
  * GET /review/:id
@@ -404,54 +302,19 @@ export const postReviews = function(review) {
  */
 export const getReview = function(paperId, id) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'GET', `/paper/${paperId}/review/${id}`, null,
+            function(review) {
+                if ( review ) {
+                    dispatch(updateReview(review))
 
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = `/paper/${paperId}/review/${id}`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(review) {
-            if ( review ) {
-                dispatch(updateReview(review))
-
-                const state = getState()
-                if ( ! state.reviews.list[review.paperId] || ! state.reviews.list[review.paperId].find((r) => r.id == review.id)) {
-                    dispatch(reviewsSlice.actions.appendReviewsToList(review))
+                    const state = getState()
+                    if ( ! state.reviews.list[review.paperId] || ! state.reviews.list[review.paperId].find((r) => r.id == review.id)) {
+                        dispatch(reviewsSlice.actions.appendReviewsToList(review))
+                    }
                 }
             }
-
-            payload.result = review
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -469,50 +332,12 @@ export const getReview = function(paperId, id) {
  */
 export const putReview = function(review) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = `/paper/${review.paperId}/review/${review.id}`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(review)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'PUT', `/paper/${review.paperId}/review/${review.id}`, review,
+            function(returnedReview) {
+                dispatch(updateReview(returnedReview))
             }
-
-        }).then(function(returnedReview) {
-            dispatch(updateReview(returnedReview))
-
-            payload.result = returnedReview
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -530,47 +355,12 @@ export const putReview = function(review) {
  */
 export const patchReview = function(review) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-        
-        const requestId = uuidv4()
-        const endpoint = `/paper/${review.paperId}/review/${review.id}`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(review)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'PATCH', `/paper/${review.paperId}/review/${review.id}`, review,
+            function(returnedReview) {
+                dispatch(updateReview(returnedReview))
             }
-        }).then(function(returnedReview) {
-            dispatch(updateReview(returnedReview))
-
-            payload.result = returnedReview
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -588,43 +378,12 @@ export const patchReview = function(review) {
  */
 export const deleteReview = function(review) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = `/paper/${review.paperId}/review/${review.id}`
-
-        const payload = {
-            requestId: requestId,
-            result: review
-        }
-        
-        dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            if( response.ok ) {
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'DELETE', `/paper/${review.paperId}/review/${review.id}`, null,
+            function(response) {
                 dispatch(reviewsSlice.actions.removeReview(review))
-                dispatch(reviewsSlice.actions.completeRequest(payload))
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
             }
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 } 
 
@@ -644,47 +403,12 @@ export const deleteReview = function(review) {
  */
 export const postReviewThreads = function(paperId, reviewId, threads) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-        
-        const requestId = uuidv4()
-        const endpoint = `/paper/${paperId}/review/${reviewId}/threads`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(threads)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'POST', `/paper/${paperId}/review/${reviewId}/threads`, threads,
+            function(returned) {
+                dispatch(updateReview(returned.review))
             }
-        }).then(function(returned) {
-            dispatch(updateReview(returned.review))
-
-            payload.result = returned 
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -705,47 +429,12 @@ export const postReviewThreads = function(paperId, reviewId, threads) {
  */
 export const postReviewComments = function(paperId, reviewId, threadId, comments) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comments`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(comments)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'POST', `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comments`, comments,
+            function(returnedReview) {
+                dispatch(updateReview(returnedReview))
             }
-        }).then(function(returnedReview) {
-            dispatch(updateReview(returnedReview))
-
-            payload.result = returnedReview
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -784,57 +473,18 @@ const checkForDeleteRequest = function(paperId, reviewId, state) {
  */
 export const patchReviewComment = function(paperId, reviewId, threadId, comment) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
         const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comment/${comment.id}`
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'PATCH', endpoint, comment,
+            function(returnedReview) {
+                // Handle a race condition - see method comment.
+                if ( checkForDeleteRequest(paperId, reviewId, getState()) ) {
+                    throw new Error('Review deleted mid patch.')
+                }
 
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(reviewsSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(comment)
-        }).then(function(response) {
-            // Handle a race condition - see method comment.
-            if ( checkForDeleteRequest(paperId, reviewId, getState()) ) {
-                return Promise.reject(new Error('Review deleted mid patch.'))
+                dispatch(updateReview(returnedReview))
             }
-
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(returnedReview) {
-            // Handle a race condition - see method comment.
-            if ( checkForDeleteRequest(paperId, reviewId, getState()) ) {
-                return Promise.reject(new Error('Review deleted mid patch.'))
-            }
-
-            dispatch(updateReview(returnedReview))
-
-            payload.result = returnedReview
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -852,47 +502,13 @@ export const patchReviewComment = function(paperId, reviewId, threadId, comment)
  */
 export const deleteReviewComment = function(paperId, reviewId, threadId, comment) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        // Cleanup dead requests before making a new one.
-        dispatch(reviewsSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
         const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comment/${comment.id}`
-
-        const payload = {
-            requestId: requestId,
-            result: comment 
-        }
-        
-        dispatch(reviewsSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
+        return makeTrackedRequest(dispatch, getState, reviewsSlice,
+            'DELETE', endpoint, null,
+            function(returnedReview) {
+                dispatch(updateReview(returnedReview))
             }
-        }).then(function(response) {
-            payload.status = response.status
-            if( response.ok ) {
-                return response.json()
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-        }).then(function(returnedReview) {
-            dispatch(updateReview(returnedReview))
-
-            payload.result = returnedReview
-            dispatch(reviewsSlice.actions.completeRequest(payload))
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(reviewsSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 } 
 
@@ -902,7 +518,7 @@ export const {
     replaceReview, 
     appendReviewsToList, clearList, 
     addReviewsToDictionary, 
-    makeRequest, failRequest, completeRequest, cleanupRequest 
+    cleanupRequest 
 }  = reviewsSlice.actions
 
 export default reviewsSlice.reducer

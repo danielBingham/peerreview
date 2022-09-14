@@ -1,9 +1,13 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import { makeRequest as makeTrackedRequest, 
-    failRequest as failTrackedRequest, 
-    completeRequest as completeTrackedRequest, 
+import { 
+    makeTrackedRequest,
+    makeSearchParams,
+    startRequestTracking, 
+    recordRequestFailure, 
+    recordRequestSuccess, 
+    useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -24,9 +28,10 @@ const systemSlice = createSlice({
 
         // ========== Request Tracking Methods =============
 
-        makeRequest: makeTrackedRequest, 
-        failRequest: failTrackedRequest, 
-        completeRequest: completeTrackedRequest,
+        makeRequest: startRequestTracking, 
+        failRequest: recordRequestFailure, 
+        completeRequest: recordRequestSuccess, 
+        useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -44,48 +49,14 @@ const systemSlice = createSlice({
  */
 export const getConfiguration = function() {
     return function(dispatch, getState) {
-        // Cleanup dead requests before making a new one.
-        dispatch(systemSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = '/config'
-
-        let payload = {
-            requestId: requestId
-        }
-
-        dispatch(systemSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(config) {
-            if ( payload.ok ) {
+        return makeTrackedRequest(dispatch, getState, systemSlice,
+            'GET', '/config', null,
+            function(config) {
                 dispatch(systemSlice.actions.setConfiguration(config))
-
-                payload.result = config 
-                dispatch(systemSlice.actions.completeRequest(payload))
-            } else {
-                return Promise.reject(new Error('Attempt to retrieve configuration failed.  This is a fatal error.'))
             }
-        }).catch(function(error) {
-            if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            logger.error(error)
-            dispatch(systemSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
-export const { reset, setConfiguration, makeRequest, failRequest, completeRequest, cleanupRequest, garbageCollectRequests } = systemSlice.actions
+export const { reset, setConfiguration, cleanupRequest } = systemSlice.actions
 export default systemSlice.reducer

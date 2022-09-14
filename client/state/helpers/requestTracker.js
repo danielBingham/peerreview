@@ -50,6 +50,11 @@ export const startRequestTracking = makeRequest
  */
 export const failRequest = function(state, action) {
     const tracker = state.requests[action.payload.requestId]
+    if ( ! tracker ) {
+        logger.warn(`Attempt to fail tracked Request(${action.payload.requestId}) that doesn't exist.`)
+        return
+    }
+
     
     tracker.state = 'failed'
     tracker.status = action.payload.status
@@ -67,6 +72,10 @@ export const recordRequestFailure = failRequest
  */
 export const completeRequest = function(state, action) {
     const tracker = state.requests[action.payload.requestId]
+    if ( ! tracker ) {
+        logger.warn(`Attempt to complete tracked Request(${action.payload.requestId}) that doesn't exist.`)
+        return
+    }
 
     tracker.state = 'fulfilled'
     tracker.status = action.payload.status
@@ -90,7 +99,7 @@ export const cleanupRequest = function(state, action) {
     const cacheTTL = action.payload.cacheTTL
 
     if ( ! tracker ) {
-        console.error('Warning: attempt to cleanup request that does not exit: ' + action.payload.requestId)
+        logger.warn('Warning: attempt to cleanup request that does not exist: ' + action.payload.requestId)
         return
     }
 
@@ -218,8 +227,10 @@ export const makeTrackedRequest = function(dispatch, getState, slice, method, en
         }
     }
 
+    const fullEndpoint = (configuration == null && endpoint == '/config' ? endpoint : configuration.backend + endpoint)
+
     dispatch(slice.actions.makeRequest({requestId: requestId, method: method, endpoint: endpoint}))
-    fetch(configuration.backend + endpoint, fetchOptions).then(function(response) {
+    fetch(fullEndpoint, fetchOptions).then(function(response) {
         status = response.status
         responseOk = response.ok
         return response.json()

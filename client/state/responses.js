@@ -5,9 +5,13 @@ import logger from '/logger'
 
 import RequestError from '/errors/RequestError' 
 
-import { makeRequest as makeTrackedRequest, 
-    failRequest as failTrackedRequest, 
-    completeRequest as completeTrackedRequest, 
+import { 
+    makeTrackedRequest,
+    makeSearchParams,
+    startRequestTracking, 
+    recordRequestFailure, 
+    recordRequestSuccess, 
+    useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -111,9 +115,10 @@ export const responsesSlice = createSlice({
 
         // ========== Request Tracking Methods =============
 
-        makeRequest: makeTrackedRequest, 
-        failRequest: failTrackedRequest, 
-        completeRequest: completeTrackedRequest,
+        makeRequest: startRequestTracking, 
+        failRequest: recordRequestFailure, 
+        completeRequest: recordRequestSuccess,
+        useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -131,52 +136,13 @@ export const responsesSlice = createSlice({
  */
 export const countResponses = function() {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(responsesSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4() 
-        const endpoint = `/responses/count`
-
-        let payload = {
-            requestId: requestId
-        }
-
-        dispatch(responsesSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(json) {
-            if ( payload.ok ) {
+        return makeTrackedRequest(dispatch, getState, responsesSlice,
+            'GET', `/responses/count`, null,
+            function(json) {
                 const counts = json
                 dispatch(responsesSlice.actions.setCounts(counts))
-
-                payload.result = counts
-                dispatch(responsesSlice.actions.completeRequest(payload))
-            } else {
-                const type = json.error
-                throw new RequestError(payload.status, type, 'Something went wrong with the request.')
             }
-        }).catch(function(error) {
-            logger.error(error)
-            if ( error instanceof RequestError ) {
-                payload.error = error.type
-            } else if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            dispatch(responsesSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 /**
@@ -191,30 +157,9 @@ export const countResponses = function() {
  */
 export const getResponses = function(paperId, replaceList) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(responsesSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4() 
-        const endpoint = `/paper/${paperId}/responses`
-
-        let payload = {
-            requestId: requestId
-        }
-
-        dispatch(responsesSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(json) {
-            if ( payload.ok ) {
+        return makeTrackedRequest(dispatch, getState, responsesSlice,
+            'GET', `/paper/${paperId}/responses`, null,
+            function(json) {
                 const responses = json
                 if ( responses && responses.length && responses.length > 0 ) {
                     if ( replaceList ) {
@@ -225,26 +170,8 @@ export const getResponses = function(paperId, replaceList) {
                 } else if ( replaceList ) {
                     dispatch(responsesSlice.actions.clearList(paperId))
                 }
-
-                payload.result = responses
-                dispatch(responsesSlice.actions.completeRequest(payload))
-            } else {
-                const type = json.error
-                throw new RequestError(payload.status, type, 'Something went wrong with the request.')
             }
-        }).catch(function(error) {
-            logger.error(error)
-            if ( error instanceof RequestError ) {
-                payload.error = error.type
-            } else if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            dispatch(responsesSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -262,57 +189,17 @@ export const getResponses = function(paperId, replaceList) {
  */
 export const postResponses = function(response) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(responsesSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
         const endpoint = `/paper/${response.paperId}/responses`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(responsesSlice.actions.makeRequest({requestId:requestId, method: 'POST', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(response)
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(json) {
-            if ( payload.ok ) {
-                const returnedResponse = json
+        return makeTrackedRequest(dispatch, getState, responsesSlice,
+            'POST', `/paper/${response.paperId}/responses`, response,
+            function(returnedResponse) {
                 dispatch(responsesSlice.actions.addResponsesToDictionary(returnedResponse))
                 dispatch(responsesSlice.actions.appendResponsesToList(returnedResponse))
-
-                payload.result = returnedResponse
-                dispatch(responsesSlice.actions.completeRequest(payload))
-            } else {
-                return Promise.reject(new RequestError(payload.status, json.error, 'Something went wrong with the request.'))
             }
-        }).catch(function(error) {
-            logger.error(error)
-            if ( error instanceof RequestError ) {
-                payload.error = error.type
-            } else if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            dispatch(responsesSlice.actions.failRequest(payload))
-        })
+        )
 
-        return requestId
     }
 }
-
-
 
 /**
  * GET /paper/:paper_id/response/:id
@@ -328,30 +215,9 @@ export const postResponses = function(response) {
  */
 export const getResponse = function(paperId, id) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(responsesSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = `/paper/${paperId}/response/${id}`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(responsesSlice.actions.makeRequest({requestId: requestId, method: 'GET', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(json) {
-            if ( payload.ok ) {
+        return makeTrackedRequest(dispatch, getState, responsesSlice,
+            'GET', `/paper/${paperId}/response/${id}`, null,
+            function(json) {
                 const response = json
                 if ( response ) {
                     dispatch(responsesSlice.actions.addResponsesToDictionary(response))
@@ -361,25 +227,8 @@ export const getResponse = function(paperId, id) {
                         dispatch(responsesSlice.actions.appendResponsesToList(response))
                     }
                 }
-
-                payload.result = response
-                dispatch(responsesSlice.actions.completeRequest(payload))
-            } else {
-                throw new RequestError(payload.status, json.error, 'Something went wrong with the request.')
             }
-        }).catch(function(error) {
-            logger.error(error)
-            if ( error instanceof RequestError ) {
-                payload.error = error.type
-            } else if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            dispatch(responsesSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -397,57 +246,12 @@ export const getResponse = function(paperId, id) {
  */
 export const putResponse = function(response) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(responsesSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = `/paper/${response.paperId}/response/${response.id}`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(responsesSlice.actions.makeRequest({requestId: requestId, method: 'PUT', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(response)
-        }).then(function(response) {
-            payload.status = response.status
-            if ( response.ok ) {
-                return response.json()
-
-            } else {
-                return Promise.reject(new Error('Request failed with status: ' + response.status))
-            }
-
-        }).then(function(json) {
-            if ( payload.ok ) {
-                const returnedResponse = json
+        return makeTrackedRequest(dispatch, getState, responsesSlice,
+            'PUT', `/paper/${response.paperId}/response/${response.id}`, response,
+            function(returnedResponse) {
                 dispatch(responsesSlice.actions.replaceResponse(returnedResponse))
-
-                payload.result = returnedResponse
-                dispatch(responsesSlice.actions.completeRequest(payload))
-            } else {
-                throw new RequestError(payload.status, json.error, 'Something went wrong with the request.')
             }
-        }).catch(function(error) {
-            logger.error(error)
-            if ( error instanceof RequestError ) {
-                payload.error = error.type
-            } else if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            dispatch(responsesSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -465,52 +269,12 @@ export const putResponse = function(response) {
  */
 export const patchResponse = function(response) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-
-        // Cleanup dead requests before making a new one.
-        dispatch(responsesSlice.actions.garbageCollectRequests())
-        
-        const requestId = uuidv4()
-        const endpoint = `/paper/${response.paperId}/response/${response.id}`
-
-        const payload = {
-            requestId: requestId
-        }
-
-        dispatch(responsesSlice.actions.makeRequest({requestId: requestId, method: 'PATCH', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(response)
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(json) {
-            if ( payload.ok ) {
-                const returnedResponse = json
+        return makeTrackedRequest(dispatch, getState, responsesSlice,
+            'PATCH', `/paper/${response.paperId}/response/${response.id}`, response,
+            function(returnedResponse) {
                 dispatch(responsesSlice.actions.replaceResponse(returnedResponse))
-
-                payload.result = returnedResponse
-                dispatch(responsesSlice.actions.completeRequest(payload))
-            } else {
-                throw new RequestError(payload.status, json.error, 'Something went wrong with the request.')
             }
-        }).catch(function(error) {
-            logger.error(error)
-            if ( error instanceof RequestError ) {
-                payload.error = error.type
-            } else if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            dispatch(responsesSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 }
 
@@ -528,53 +292,19 @@ export const patchResponse = function(response) {
  */
 export const deleteResponse = function(response) {
     return function(dispatch, getState) {
-        const configuration = getState().system.configuration
-        
-        // Cleanup dead requests before making a new one.
-        dispatch(responsesSlice.actions.garbageCollectRequests())
-
-        const requestId = uuidv4()
-        const endpoint = `/paper/${response.paperId}/response/${response.id}`
-
-        const payload = {
-            requestId: requestId,
-            result: response
-        }
-        
-        dispatch(responsesSlice.actions.makeRequest({requestId: requestId, method: 'DELETE', endpoint: endpoint}))
-        fetch(configuration.backend + endpoint, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        }).then(function(response) {
-            payload.status = response.status
-            payload.ok = response.ok
-            return response.json()
-        }).then(function(json) {
-            if( payload.ok ) {
+        return makeTrackedRequest(dispatch, getState, responsesSlice,
+            'DELETE', `/paper/${response.paperId}/response/${response.id}`, null,
+            function(json) {
                 dispatch(responsesSlice.actions.removeResponse(response))
                 dispatch(responsesSlice.actions.completeRequest(payload))
-            } else {
-                throw new RequestError(payload.status, json.error, 'Something went wrong with the request.')
             }
-        }).catch(function(error) {
-            logger.error(error)
-            if ( error instanceof RequestError ) {
-                payload.error = error.type
-            } else if (error instanceof Error) {
-                payload.error = error.toString()
-            } else {
-                payload.error = 'Unknown error.'
-            }
-            dispatch(responsesSlice.actions.failRequest(payload))
-        })
-
-        return requestId
+        )
     }
 } 
 
 
-export const {  replaceResponse, appendResponsesToList, clearList, addResponsesToDictionary, makeRequest, failRequest, completeRequest, cleanupRequest }  = responsesSlice.actions
+export const {  
+    replaceResponse, appendResponsesToList, clearList, addResponsesToDictionary, cleanupRequest 
+}  = responsesSlice.actions
 
 export default responsesSlice.reducer
