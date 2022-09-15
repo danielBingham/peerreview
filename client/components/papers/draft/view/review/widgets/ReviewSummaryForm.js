@@ -79,13 +79,12 @@ const ReviewSummaryForm = function(props) {
 
         const reviewPatch = {
             id: reviewInProgress.id,
-            paperId: props.paper.id,
             summary: summary,
             recommendation: recommendation,
             status: 'submitted'
         }
 
-        setPatchReviewRequestId(dispatch(patchReview(reviewPatch)))
+        setPatchReviewRequestId(dispatch(patchReview(props.paper.id, reviewPatch)))
     }
 
     const cancel = function(event) {
@@ -97,12 +96,11 @@ const ReviewSummaryForm = function(props) {
     const commitChange = function(event) {
         const reviewPatch = {
             id: reviewInProgress.id,
-            paperId: props.paper.id,
             summary: summary,
             recommendation: recommendation,
             status: reviewInProgress.status
         }
-        setPatchReviewRequestId(dispatch(patchReview(reviewPatch)))
+        setPatchReviewRequestId(dispatch(patchReview(props.paper.id, reviewPatch)))
     }
 
     // ======= Effect Handling ======================================

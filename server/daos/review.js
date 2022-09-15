@@ -160,9 +160,9 @@ module.exports = class ReviewDAO {
         const threadIds = []
         for ( const thread of review.threads) {
 
-            if ( ! thread.reviewId ) {
-                thread.reviewId = review.id
-            }
+            // Override the review ID with the one on `review`.  We don't allow
+            // posting threads to multiple reviews at once.
+            thread.reviewId = review.id
 
             let sql = `INSERT INTO review_comment_threads (review_id, page, pin_x, pin_y) 
                         VALUES ($1, $2, $3, $4) RETURNING id`

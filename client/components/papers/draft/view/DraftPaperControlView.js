@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 
 import {  patchPaper, patchPaperVersion, cleanupRequest as cleanupPaperRequest } from '/state/papers'
-import {  newReview, patchReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
+import {  newReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import './DraftPaperControlView.css'
 

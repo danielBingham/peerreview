@@ -329,8 +329,10 @@ export const getReview = function(paperId, id) {
  * @param {object} review - A populated review object.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
+ *
+ * NOTE: NOT IMPLEMENTED.
  */
-export const putReview = function(review) {
+    /*export const putReview = function(review) {
     return function(dispatch, getState) {
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'PUT', `/paper/${review.paperId}/review/${review.id}`, review,
@@ -339,7 +341,7 @@ export const putReview = function(review) {
             }
         )
     }
-}
+}*/
 
 /**
  * PATCH /review/:id
@@ -353,10 +355,10 @@ export const putReview = function(review) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const patchReview = function(review) {
+export const patchReview = function(paperId, review) {
     return function(dispatch, getState) {
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
-            'PATCH', `/paper/${review.paperId}/review/${review.id}`, review,
+            'PATCH', `/paper/${paperId}/review/${review.id}`, review,
             function(returnedReview) {
                 dispatch(updateReview(returnedReview))
             }

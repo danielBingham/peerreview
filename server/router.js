@@ -408,25 +408,26 @@ module.exports = function(database, logger, config) {
         })
     })
 
-    router.get('/paper/:paper_id/review/:id', function(request, response, next) {
+    router.get('/paper/:paper_id/review/:review_id', function(request, response, next) {
         reviewController.getReview(request, response).catch(function(error) {
             next(error)
         })
     })
 
     router.put('/paper/:paper_id/review/:id', function(request, response, next) {
-        reviewController.putReview(request, response).catch(function(error) {
+        throw new ControllerError(501, 'not-implemented', 'PUT /paper/:paper_id/review/:review_id is intentionally unimplemented.')
+        /*reviewController.putReview(request, response).catch(function(error) {
             next(error)
-        })
+        })*/
     })
 
-    router.patch('/paper/:paper_id/review/:id', function(request, response, next) {
+    router.patch('/paper/:paper_id/review/:review_id', function(request, response, next) {
         reviewController.patchReview(request, response).catch(function(error) {
             next(error)
         })
     })
 
-    router.delete('/paper/:paper_id/review/:id', function(request, response, next) {
+    router.delete('/paper/:paper_id/review/:review_id', function(request, response, next) {
         reviewController.deleteReview(request, response).catch(function(error) {
             next(error)
         })
@@ -450,12 +451,16 @@ module.exports = function(database, logger, config) {
         })
     })
 
-    router.patch('/paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id', function(request, response) {
-        reviewController.patchComment(request, response)
+    router.patch('/paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id', function(request, response, next) {
+        reviewController.patchComment(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     router.delete('/paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id', function(request, response) {
-        reviewController.deleteComment(request, response)
+        reviewController.deleteComment(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     /**************************************************************************

@@ -68,8 +68,6 @@ const ReviewCommentView = function(props) {
 
         const comment = {
             id: props.comment.id,
-            threadId: props.comment.threadId,
-            userId: props.comment.userId,
             status: 'in-progress'
         }
         

@@ -57,9 +57,6 @@ const ReviewCommentForm = function(props) {
 
         const comment = {
             id: props.comment.id,
-            threadId: props.comment.threadId,
-            userId: props.comment.userId,
-            threadOrder: props.comment.threadOrder,
             status: 'in-progress',
             content: content
         }
@@ -70,9 +67,6 @@ const ReviewCommentForm = function(props) {
         event.preventDefault()
         const comment = {
             id: props.comment.id,
-            threadId: props.comment.threadId,
-            userId: props.comment.userId,
-            threadOrder: props.comment.threadOrder, 
             status: 'posted',
             content: content
         }

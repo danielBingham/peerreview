@@ -57,10 +57,9 @@ const ReviewSummaryView = function(props) {
         
         const reviewPatch = {
             id: props.selectedReview.id,
-            paperId: props.paper.id,
             status: 'accepted'
         }
-        setRequestId(dispatch(patchReview(reviewPatch)))
+        setRequestId(dispatch(patchReview(props.paper.id, reviewPatch)))
     }
 
     /**
@@ -73,10 +72,9 @@ const ReviewSummaryView = function(props) {
 
         const reviewPatch = {
             id: props.selectedReview.id,
-            paperId: props.paper.id,
             status: 'rejected'
         }
-        setRequestId(dispatch(patchReview(reviewPatch)))
+        setRequestId(dispatch(patchReview(props.paper.id, reviewPatch)))
     }
 
     // ======= Effect Handling ======================================
