@@ -65,8 +65,21 @@ module.exports = class ReputationPermissionService {
 
         const results = await this.database.query(sql, [userId, paperId])
 
-        return results.rows.length > 0
+        // If they have enough reputation - great!  We're done here.
+        if ( results.rows.length > 0 ) {
+            return true
+        }
+        
+        const authorResults = await this.database.query( `
+                SELECT user_id from paper_authors where paper_id = $1 AND user_id = $2
+            `, [ review.paperId, userId ])
 
+        // They are an author on the paper.  They are allowed.
+        if ( authorResults.rows.length > 0 ) {
+            return true
+        }
+
+        return false
     }
 
     async canReferee(userId, paperId) {

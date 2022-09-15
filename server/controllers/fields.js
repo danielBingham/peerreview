@@ -146,7 +146,7 @@ module.exports = class FieldController {
         const returnFields = await this.fieldDAO.selectFields('WHERE fields.id = $1', [request.params.id])
 
         if ( returnFields.length <= 0 ) {
-            return response.status(404).json({})
+            throw new ControllerError(404, 'no-resource', `Failed to find Field(${request.params.id})`)
         }
 
         return response.status(200).json(returnFields[0])
@@ -168,7 +168,7 @@ module.exports = class FieldController {
         )
 
         if (results.rowCount == 0 && results.rows.length == 0) {
-            return response.status(404).json({error: 'no-resource'})
+            throw new ControllerError(404, 'no-resource', `Failed to find Field(${request.params.id})`)
         }
 
         const returnFields = await this.fieldDAO.selectFields('WHERE fields.id=$1', results.rows[0].id)
@@ -206,7 +206,7 @@ module.exports = class FieldController {
         const results = await this.database.query(sql, params)
 
         if ( results.rowCount == 0 ) {
-            return response.status(404).json({error: 'no-resource'})
+            throw new ControllerError(404, 'no-resource', `Failed to find Field(${request.params.id})`)
         }
 
         const returnFields = await this.fieldDAO.selectFields('WHERE fields.id=$1', [field.id])
@@ -228,7 +228,7 @@ module.exports = class FieldController {
         )
 
         if ( results.rowCount == 0) {
-            return response.status(404).json({error: 'no-resource'})
+            throw new ControllerError(404, 'no-resource', `Failed to find Field(${request.params.id})`)
         }
 
         return response.status(200).json({fieldId: request.params.id})

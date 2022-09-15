@@ -262,7 +262,7 @@ module.exports = function(database, logger, config) {
      ******************************************************************************/
 
     const FieldController = require('./controllers/fields')
-    const fieldController = new FieldController(database)
+    const fieldController = new FieldController(database, logger)
 
     // Get a count of fields for a particular query.
     router.get('/fields/count', function(request, response, next) {
@@ -388,46 +388,66 @@ module.exports = function(database, logger, config) {
      *************************************************************************/
 
     const ReviewController = require('./controllers/reviews')
-    const reviewController = new ReviewController(database)
+    const reviewController = new ReviewController(database, logger)
 
-    router.get('/reviews/count', function(request, response) {
-        reviewController.countReviews(request, response)
+    router.get('/reviews/count', function(request, response, next) {
+        reviewController.countReviews(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.get('/paper/:paper_id/reviews', function(request, response) {
-        reviewController.getReviews(request, response)
+    router.get('/paper/:paper_id/reviews', function(request, response, next) {
+        reviewController.getReviews(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.post('/paper/:paper_id/reviews', function(request, response) {
-        reviewController.postReviews(request, response)
+    router.post('/paper/:paper_id/reviews', function(request, response, next) {
+        reviewController.postReviews(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.get('/paper/:paper_id/review/:id', function(request, response) {
-        reviewController.getReview(request, response)
+    router.get('/paper/:paper_id/review/:id', function(request, response, next) {
+        reviewController.getReview(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.put('/paper/:paper_id/review/:id', function(request, response) {
-        reviewController.putReview(request, response)
+    router.put('/paper/:paper_id/review/:id', function(request, response, next) {
+        reviewController.putReview(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.patch('/paper/:paper_id/review/:id', function(request, response) {
-        reviewController.patchReview(request, response)
+    router.patch('/paper/:paper_id/review/:id', function(request, response, next) {
+        reviewController.patchReview(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.delete('/paper/:paper_id/review/:id', function(request, response) {
-        reviewController.deleteReview(request, response)
+    router.delete('/paper/:paper_id/review/:id', function(request, response, next) {
+        reviewController.deleteReview(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.post('/paper/:paper_id/review/:review_id/threads', function(request, response) {
-        reviewController.postThreads(request, response)
+    router.post('/paper/:paper_id/review/:review_id/threads', function(request, response, next) {
+        reviewController.postThreads(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.delete('/paper/:paper_id/review/:review_id/thread/:thread_id', function(request, response) {
-        reviewController.deleteThread(request,response)
+    router.delete('/paper/:paper_id/review/:review_id/thread/:thread_id', function(request, response, next) {
+        reviewController.deleteThread(request,response).catch(function(error) {
+            next(error)
+        })
     })
 
-    router.post('/paper/:paper_id/review/:review_id/thread/:thread_id/comments', function(request, response) {
-        reviewController.postComments(request, response)
+    router.post('/paper/:paper_id/review/:review_id/thread/:thread_id/comments', function(request, response, next) {
+        reviewController.postComments(request, response).catch(function(error) {
+            next(error)
+        })
     })
 
     router.patch('/paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id', function(request, response) {
@@ -489,7 +509,7 @@ module.exports = function(database, logger, config) {
      *************************************************************************/
 
     const ResponseController = require('./controllers/responses')
-    const responseController = new ResponseController(database)
+    const responseController = new ResponseController(database, logger)
 
     router.get('/responses/count', function(request, response, next) {
         responseController.countResponses(request, response).catch(function(error) {

@@ -412,43 +412,31 @@ module.exports = class PaperController {
     }
 
     async postPaperVersions(request, response) {
-        try {
-            const paperId = request.params.id
-            if ( ! request.session || ! request.session.user ) {
-                throw new ControllerError(403, 'not-authorized', `Un-authorized user attempted to submit a new version of Paper(${paperId}).`)
-            }
-            const version = request.body
+        const paperId = request.params.id
+        if ( ! request.session || ! request.session.user ) {
+            throw new ControllerError(403, 'not-authorized', `Un-authorized user attempted to submit a new version of Paper(${paperId}).`)
+        }
+        const version = request.body
 
-            const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paperId])
-            if ( papers.length <= 0) {
-                throw new ControllerError(404, 'not-found', `Attempt to submit a version, but Paper(${paperId}) not found!`)
-            }
-
-            const paper = papers[0]
-
-            if ( ! paper.authors.find((a) => a.user.id == request.session.user.id)) {
-                throw new ControllerError(403, 'not-authorized', `Un-authorized User(${request.session.user.id}) attempted to submit a new version of Paper(${paper.id}) of which they are not an author.`)
-            }
-
-            await this.paperDAO.insertVersion(paper, version)
-
-            const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paper.id ])
-            if ( returnPapers.length <= 0) {
-                throw new Error(`Paper(${paper.id}) not found after inserting a new version!`)
-            }
-            return response.status(200).json(returnPapers[0])
-        } catch (error) {
-            this.logger.error(error)
-            if ( error instanceof ControllerError) {
-                return response.status(error.status).json({ error: error.type })
-            } else if ( error instanceof DAOError) {
-                return response.status(500).json({error: 'server-error'})
-            } else {
-                return response.status(500).json({error: 'server-error'})
-            }
-
+        const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paperId])
+        if ( papers.length <= 0) {
+            throw new ControllerError(404, 'not-found', `Attempt to submit a version, but Paper(${paperId}) not found!`)
         }
 
+        const paper = papers[0]
+
+        const author = paper.authors.find((a) => a.user.id == request.session.user.id)
+        if ( ! author || ! author.owner ) {
+            throw new ControllerError(403, 'not-authorized', `Un-authorized User(${request.session.user.id}) attempted to submit a new version of Paper(${paper.id}) of which they are not an author or owner.`)
+        }
+
+        await this.paperDAO.insertVersion(paper, version)
+
+        const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paper.id ])
+        if ( returnPapers.length <= 0) {
+            throw new ControllerError(500, 'server-error', `Paper(${paper.id}) not found after inserting a new version!`)
+        }
+        return response.status(200).json(returnPapers[0])
     }
 
     async patchPaperVersion(request, response) {
@@ -458,12 +446,28 @@ module.exports = class PaperController {
         paper_version.paperId = request.params.paper_id
         paper_version.version = request.params.version
 
+        if ( ! request.session || ! request.session.user ) {
+            throw new ControllerError(403, 'not-authorized', `Un-authorized user attempted to submit a new version of Paper(${paperId}).`)
+        }
+
+        // Check to ensure the user in the session has permission to modify this paper version.
+        const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paperId])
+        if ( papers.length <= 0) {
+            throw new ControllerError(404, 'no-resource', `Attempt to submit a version, but Paper(${paperId}) not found!`)
+        }
+
+        const paper = papers[0]
+
+        const author = paper.authors.find((a) => a.user.id == request.session.user.id)
+        if ( ! author || ! author.owner ) {
+            throw new ControllerError(403, 'not-authorized', `Un-authorized User(${request.session.user.id}) attempted to submit a new version of Paper(${paper.id}) of which they are not an author.`)
+        }
+
+
         // We'll ignore these fields when assembling the patch SQL.  These are
         // fields that either need more processing (authors) or that we let the
         // database handle (date fields, id, etc)
         const ignoredFields = [ 'paperId', 'version', 'createdDate', 'updatedDate' ]
-
-        
 
         let sql = 'UPDATE paper_versions SET '
         let params = []
@@ -487,25 +491,17 @@ module.exports = class PaperController {
 
         params.push(paper_version.paperId, paper_version.version )
 
-        try {
-            const results = await this.database.query(sql, params)
+        const results = await this.database.query(sql, params)
 
-            if ( results.rowCount == 0 ) {
-                return response.status(404).json({error: 'no-resource'})
-            }
-
-            const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paper_version.paperId])
-            if ( ! returnPapers ) {
-                this.logger.error('Failed to find paper after patching version!')
-                return response.status(500).json({ error: 'server-error' })
-            } else {
-                return response.status(200).json(returnPapers[0])
-            }
-        } catch (error) {
-            this.logger.error(error)
-            response.status(500).json({error: 'unknown'})
+        if ( results.rowCount == 0 ) {
+            throw new ControllerError(404, 'no-resource', `Paper(${paper.id}) and Version(${paper_version.version}) not found!`)
         }
 
+        const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paper_version.paperId])
+        if ( ! returnPapers ) {
+            throw new ControllerError(500, 'server-error', `Paper(${paper.id}) not found after inserting a new version!`)
+        } 
+        return response.status(200).json(returnPapers[0])
     }
 
 } 

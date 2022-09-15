@@ -1,5 +1,5 @@
 
-const PAGE_SIZE = 100 
+const PAGE_SIZE = 20 
 
 module.exports = class FieldDAO {
 

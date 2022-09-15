@@ -154,7 +154,15 @@ app.use('*', function(request,response) {
 app.use(function(error, request, response, next) {
     try {
         // Log the error.
-        logger.error(error)
+        if ( error instanceof ControllerError ) {
+            if ( error.status < 500 ) {
+                logger.warn(error)
+            } else {
+                logger.error(error)
+            }
+        } else {
+            logger.error(error)
+        }
 
         if ( error instanceof ControllerError) {
             return response.status(error.status).json({ error: error.type })
