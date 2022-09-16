@@ -169,15 +169,22 @@ module.exports = class AuthenticationController {
             // parse it and read those to give better errors back to the user.
             const errors = await authorizationResponse.json()
             console.error(errors)
-            throw new ControllerError(401, 'unauthorized', `Authorization request failed.`)
+            throw new ControllerError(403, 'not-authorized', `Authorization request failed.`)
         }
 
         const orcidAuthorization = await authorizationResponse.json()
         const orcidId = orcidAuthorization.orcid
 
+        const orcidResults = await this.database.query(`
+                SELECT users.id FROM users WHERE users.orcid_id = $1
+            `, [ orcidId])
+
         // If we have a user logged in, then this is a request to connect their
-        // accounts.  Make the connection.
-        if ( request.session.user ) {
+        // accounts. 
+        //
+        //  If we have orcidResults, then that means this ORCID iD is already
+        //  linked to an account - either this one or another one. 
+        if ( request.session.user &&  orcidResults.rows.length <= 0 ) {
             const user = {
                 id: request.session.user.id,
                 orcidId: orcidId
@@ -188,11 +195,11 @@ module.exports = class AuthenticationController {
             const responseBody = await this.loginUser(request.session.user.id, request, response)
             responseBody.type = "connection"
             return response.status(200).json(responseBody)
+        } else if ( request.session.user ) {
+            throw new ControllerError(400, 'already-linked',
+                `User(${request.sesison.user.id}) attempting to link ORCID iD (${orcidId}) already connected to User(${orcidResults.rows[0].id}).`)
         }
 
-        const orcidResults = await this.database.query(`
-                SELECT users.id FROM users WHERE users.orcid_id = $1
-            `, [ orcidId])
 
         // We have the user registered and linked to their orcid account
         // - Find the user by their orcid id.
@@ -262,6 +269,7 @@ module.exports = class AuthenticationController {
             const user = {
                 name: orcidRecord.person.name["given-names"].value + ' ' + orcidRecord.person.name["family-name"].value,
                 email: primary_email,
+                orcidId: orcidId,
                 institution: '',
                 password: null,
                 bio: '',
@@ -301,7 +309,7 @@ module.exports = class AuthenticationController {
         // - We get multiple users, merge them.
         if ( userResults.rows.length > 1 ) {
             console.log('Multiple users.  Merging them.')
-            throw new ControllerError(401, 'multiple-user-merging-unimplemented', `Found multiple user accounts, but we haven't implemented merging yet!`)
+            throw new ControllerError(501, 'multiple-user-merging-unimplemented', `Found multiple user accounts, but we haven't implemented merging yet!`)
         }
     
     }

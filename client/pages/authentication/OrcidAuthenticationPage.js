@@ -3,6 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 
 import { postOrcidAuthentication, cleanupRequest } from '/state/authentication'
+import { initializeReputation, cleanupReputationRequest } from '/state/reputation'
 
 import Spinner from '/components/Spinner'
 
@@ -45,13 +46,15 @@ const OrcidAuthenticationPage = function(props) {
 
     useEffect(function() {
         if ( currentUser && request && request.state == 'fulfilled') {
-            setTimeout(function() {
+            if ( request.result.type == 'connection' || request.result.type == 'registration') {
+                navigate("/reputation/initialization", { replace: false, state: { connect: true } })
+            } else {
                 if ( location.pathname == '/orcid/connect') {
                     navigate("/account/details")
                 } else  {
                     navigate("/")
                 }
-            }, 3000)
+            }
         }
     }, [ request ])
 
@@ -64,6 +67,10 @@ const OrcidAuthenticationPage = function(props) {
         }
     }, [ requestId ])
 
+
+    // ======= Render ===============================================
+
+    // Initialize with the pending content.
     let content = (
         <>
             Authenticating you from your ORCID record...
@@ -71,26 +78,10 @@ const OrcidAuthenticationPage = function(props) {
         </>
     )
 
-
-    let successMessage = ''
-    if ( connect ) {
-        successMessage = `We've successfully connected your ORCID record to your account.`
-    } else {
-        successMessage = `We've successfully authenticated your ORCID iD and logged you in.`
-    }
-
-    if ( request && request.state == 'fulfilled') {
-        if ( currentUser ) {
-            content = (
-                <div className="success">
-                    Welcome, { currentUser.name}!  {successMessage}  <br />
-                    You will be redirected to the { connect ? 'settings page' : 'home page' } momentarily.
-                </div>
-            )
-        } else {
-            throw new Error('Request fulfilled with no currentUser!')
-        }
-    } else if ( request && request.state == 'failed') {
+    // ==============================================================
+    // Error Handling
+    // ==============================================================
+    if ( request && request.state == 'failed') {
         if ( request.error == 'no-visible-email' ) {
             content = ( 
                 <div className="error">
@@ -122,11 +113,46 @@ const OrcidAuthenticationPage = function(props) {
                     message, file a bug report and we'll look into it.
                 </div>
             )
+
+        } else if (request.error == 'already-linked' ) {
+            content = (
+                <div className="error">
+                    You've already linked that ORCID iD to an account.  You
+                    cannot link it to another account.  If you created multiple
+                    accounts in error, please reach out to use at
+                    <a href="mailto:contact@peer-review.io">contact@peer-review.io</a>.
+                </div>
+            )
+        
         } else {
             content = request.error
         }
     }
 
+    // ==============================================================
+    // Success!
+    // ==============================================================
+    if ( request && request.state == 'fulfilled') {
+        if ( currentUser ) {
+                let successMessage = ''
+                if ( connect ) {
+                    successMessage = `We've successfully connected your ORCID record to your account.`
+                } else {
+                    successMessage = `We've successfully authenticated your ORCID iD and logged you in.`
+                }
+
+                content = (
+                    <div className="success">
+                        Welcome, { currentUser.name}!  {successMessage}  <br />
+                        You will be redirected to the { connect ? 'settings page' : 'home page' } momentarily.
+                    </div>
+                )
+        } else {
+            throw new Error('Request fulfilled with no currentUser!')
+        }
+    } 
+
+    // Render the component
     return (
         <div className="orcid-authentication page">
             { content }

@@ -1,4 +1,7 @@
 
+const ServiceError = require('../errors/ServiceError')
+
+
 const AUTHORS = 'https://api.openalex.org/authors'
 const WORKS = 'https://api.openalex.org/works'
 
@@ -65,16 +68,16 @@ module.exports = class OpenAlexService {
         const response = await this.queryOpenAlex(AUTHORS, { filter: `orcid:${orcidId}` }) 
 
         if ( ! response.ok ) {
-            throw new Error(`Failed to retrieve author from OpenAlex for ORCID iD ${orcidId}.`)
+            throw new ServiceError('request-failed', `Failed to retrieve author from OpenAlex for ORCID iD ${orcidId}.`)
         }
 
         const responseBody = await response.json()
 
         if ( responseBody.meta.count !== 1) {
             if ( responseBody.meta.count < 1) {
-                throw new Error(`No Author for ORCID iD: ${orcidId}.`)
+                throw new ServiceError('no-author', `No Author for ORCID iD: ${orcidId}.`)
             } else {
-                throw new Error(`Got multiple authors for ORCID iD: ${orcidId}`)
+                throw new ServiceError('multiple-authors', `Got multiple authors for ORCID iD: ${orcidId}`)
             }
         }
 
@@ -95,7 +98,7 @@ module.exports = class OpenAlexService {
         })
 
         if ( ! response.ok ) {
-            throw new Error(`Failed to retrieve works for author ${author.id}, page ${page}`)
+            throw new ServiceError('request-failed', `Failed to retrieve works for author ${author.id}, page ${page}`)
         }
 
         return await response.json()
@@ -115,7 +118,7 @@ module.exports = class OpenAlexService {
         const firstResponse = await this.getAuthorsWorksPage(author, 1)
 
         if ( ! firstResponse ) {
-            throw new Error('Failed to retrieve works from Open Alex for author ' + author.display_name)
+            throw new ServiceError('empty-page', 'Failed to retrieve works from Open Alex for author ' + author.display_name)
         }
 
         const count = firstResponse.meta.count
@@ -127,7 +130,7 @@ module.exports = class OpenAlexService {
             const worksResponse = await this.getAuthorsWorksPage(author, page)
 
             if ( ! worksResponse ) {
-                throw new Error('Works response failed for page ' + page + ' of ' + numberOfPages)
+                throw new ServiceError('empty-page', 'Works response failed for page ' + page + ' of ' + numberOfPages)
             }
 
             works.push(...worksResponse.results)

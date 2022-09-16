@@ -23,6 +23,7 @@ import RegistrationPage from '/pages/authentication/RegistrationPage'
 import LoginPage from '/pages/authentication/LoginPage'
 import OrcidAuthenticationPage from '/pages/authentication/OrcidAuthenticationPage'
 
+import ReputationInitializationPage from '/pages/users/ReputationInitializationPage'
 import UsersListPage from '/pages/users/UsersListPage'
 import UserProfilePage from '/pages/users/UserProfilePage'
 import UserAccountPage from '/pages/users/UserAccountPage'
@@ -191,6 +192,7 @@ const App = function(props) {
                     <Route path="/orcid/connect" element={<OrcidAuthenticationPage />} />
 
                     { /* ========== Users ================================= */ }
+                    <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 
                     <Route path="/users" element={ <UsersListPage /> } />
                     <Route path="/user/:id" element={ <UserProfilePage /> } />
                     <Route path="/account">

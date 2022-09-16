@@ -52,7 +52,7 @@ module.exports = class ReputationController {
      * @throws {Error} Most other errors will be passed on to the error handler.
      */
     async initializeReputation(request, response) {
-        const userId = require.params.user_id
+        const userId = request.params.user_id
 
         // Make sure we have everything we need.
         if ( ! userId ) {
@@ -61,26 +61,33 @@ module.exports = class ReputationController {
 
         // Only authenticated users may initialize reputation.
         if ( ! request.session.user ) {
-            throw new ControllerError(401, 
-                'not-authorized', 
+            throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted to initialize reputation for User(${userId}).`)
         }
 
         // Users may only initialize their own reputation.  We'll add admins
         // who can initialize other users reputation later.
         if ( request.session.user.id != userId ) {
-            throw new ControllerError(401,
-                'not-authorized',
+            throw new ControllerError(403, 'not-authorized:wrong-user',
                 `User(${request.session.user.id}) attempted to initialize reputation for User(${userId}).`)
         }
 
         try {
-            this.reputationGenerationService.initializeReputationForUser(userId)
+            await this.reputationGenerationService.initializeReputationForUser(userId)
         } catch (error) {
-            if ( error instanceof ServiceError && error.type == 'no-orcid') {
-                throw new ControllerError(400, 
-                    'no-orcid', 
-                    `Cannot initialize reputation for User(${userId}) with out a connected ORCID iD.`)
+            if ( error instanceof ServiceError) {
+                if (error.type == 'no-orcid') {
+                    throw new ControllerError(400, 'no-orcid', 
+                        `Cannot initialize reputation for User(${userId}) with out a connected ORCID iD.`)
+                } else if ( error.type == 'request-failed' ) {
+                    throw new ControllerError(500, 'server-error:api-connection', error.message)
+                } else if ( error.type == 'no-author' ) {
+                    throw new ControllerError(500, 'no-openalex-record', error.message)
+                } else if ( error.type == 'multiple-authors' ) {
+                    throw new ControllerError(500, 'multiple-openalex-record', error.message)
+                } 
+
+                throw error
             } else {
                 throw error
             }

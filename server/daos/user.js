@@ -97,7 +97,7 @@ module.exports = class UserDAO {
         let sql = 'UPDATE users SET '
         let params = []
         let count = 1
-        const ignored = [ 'id', 'blindId', 'initialReputation', 'reputation', 'createdDate', 'updatedDate', 'fields']
+        const ignored = [ 'id', 'blindId', 'reputation', 'createdDate', 'updatedDate', 'fields']
         for(let key in user) {
             if (ignored.includes(key)) {
                 continue

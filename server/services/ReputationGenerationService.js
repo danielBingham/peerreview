@@ -5,7 +5,7 @@
  */
 
 const FieldDAO = require('../daos/field')
-const userDAO = require('../daos/user')
+const UserDAO = require('../daos/user')
 const OpenAlexService = require('./OpenAlexService')
 
 const ServiceError = require('../errors/ServiceError')
@@ -17,6 +17,8 @@ module.exports = class ReputationGenerationService {
         this.logger = logger
 
         this.fieldDAO = new FieldDAO(database, logger)
+        this.userDAO = new UserDAO(database, logger)
+
         this.openAlexService = new OpenAlexService(logger)
     }
 
@@ -502,7 +504,8 @@ module.exports = class ReputationGenerationService {
      * @return {void}
      */
     async initializeReputationForUser(userId) {
-        const user = await this.userDAO.selectUser('WHERE users.id = $1', [ userId ])
+        const users = await this.userDAO.selectUsers('WHERE users.id = $1', [ userId ])
+        const user = users[0]
 
         if ( ! user.orcidId ) {
             throw new ServiceError('no-orcid', `Cannot initialize reputation for a user(${userId}) with out a connected ORCID iD.`)
@@ -524,10 +527,6 @@ module.exports = class ReputationGenerationService {
         const papers = await this.openAlexService.getPapersForOrcidId(orcidId)
 
         for ( const paper of papers ) {
-            if ( paper.citations < 10 ) {
-                continue
-            }
-
             await this.incrementInitialUserReputationForFields(userId, paper.fields, paper.citations*10)
             await this.incrementInitialUserReputationForWork(userId, paper.workId, paper.citations*10)
         } 
