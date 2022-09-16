@@ -30,6 +30,25 @@ module.exports = class ReputationGenerationService {
      * reputation for.
      */
     async recalculateReputation(userId) {
+        // ======== Clear out the existing reputation =========================
+
+        // Reset reputation gained from papers.
+        await this.database.query(`
+            DELETE FROM user_paper_reputation WHERE user_id = $1
+        `, [ userId ])
+
+        // Reset reputation gained from reviews.
+        await this.database.query(`
+            DELETE FROM user_review_reputation WHERE user_id = $1
+        `, [ userId ])
+
+        // Reset reputation calculated in each field.
+        await this.database.query(`
+            DELETE FROM user_field_reputation WHERE user_id = $1
+        `, [ userId ])
+
+
+        // ======== Recalculate their reputation from the database ============
         const paperResults = await this.database.query(`
             SELECT papers.id as paper_id 
                 FROM papers 
@@ -57,16 +76,6 @@ module.exports = class ReputationGenerationService {
      * @param {int} paperId The id of the paper we're calculating reputation gained from.
      */
     async recalculateUserReputationForPaper(userId, paperId) {
-        // Reset the tables first.
-        const fieldResults = await this.database.query(`
-            DELETE FROM user_field_reputation WHERE user_id = $1
-        `, [ userId ])
-
-        const paperResults = await this.database.query(`
-            DELETE FROM user_paper_reputation WHERE user_id = $1
-        `, [ userId ])
-
-
         const scoreResults = await this.database.query(`
             SELECT SUM(score) as "totalScore" from paper_votes where paper_id = $1
         `, [ paperId ])
@@ -112,29 +121,17 @@ module.exports = class ReputationGenerationService {
         const fieldIds = await this.fieldDAO.selectFieldAncestors(rootIds)
         const uniqueFieldIds = [ ...new Set(fieldIds) ]
 
+        // Upsert the reputation into the fields table.
+        for (const fieldId of uniqueFieldIds ) {
+            const upsertResults = await this.database.query(`
+                INSERT INTO user_field_reputation (field_id, user_id, reputation) VALUES($1, $2, $3)
+                    ON CONFLICT (field_id, user_id) DO
+                UPDATE SET reputation = user_field_reputation.reputation + $3
+            `, [ fieldId, userId, reputation ])
 
-        const existingFieldResults = await this.database.query(`
-            SELECT field_id FROM user_field_reputation WHERE user_id = $1
-        `, [ userId ])
-
-        for ( const fieldId of uniqueFieldIds ) {
-            if ( existingFieldResults.rows.length == 0 || ! existingFieldResults.rows.find((r) => r.field_id == fieldId)) {
-                const insertResults = await this.database.query(`
-                    INSERT INTO user_field_reputation (field_id, user_id, reputation) VALUES ($1, $2, $3)
-                `, [ fieldId, userId, 0])
-
-                if ( insertResults.rowCount == 0 ) {
-                    throw new Error(`Something went wrong in an attempt to insert reputation for user: ${userId} and paper: ${paperId}.`)
-                }
+            if ( upsertResults.rowCount == 0 ) {
+                throw new Error(`Something went wrong in an attempt to upsert reputation for user ${userId} and ${fieldId}.`)
             }
-        }
-
-        const updateResults = await this.database.query(`
-            UPDATE user_field_reputation SET reputation = reputation + $1 WHERE user_id = $2 AND field_id = ANY($3::int[])
-        `, [ reputation, userId, uniqueFieldIds ])
-
-        if ( updateResults.rowCount == 0 ) {
-            throw new Error('No reputation rows updated.')
         }
     }
 
@@ -145,12 +142,6 @@ module.exports = class ReputationGenerationService {
      * @param {int} userId  The id of the user for which we'd like to calculate review reputation.
      */
     async recalculateUserReviewReputation(userId) {
-        // Reset the user_review_reputation table first.  That way we don't
-        // have to worry about inserting vs updating.
-        const reviewDeleteResults = await this.database.qeury(`
-            DELETE FROM user_review_reputation WHERE user_id = $1
-        `, [ userId ])
-
         // Now get a list of papers and a count versions that earned
         // reputation.
         const reviewResults = await this.database.query(`
@@ -168,6 +159,9 @@ module.exports = class ReputationGenerationService {
                 if ( updateResults.rowCount == 0 ) {
                     throw new Error(`Failed to insert review reputation for user ${userId} and paper ${row.paperId}!`)
                 }
+
+                // Make sure we include the review reputation in their fields.
+                await this.recalculateUserReputationForPaperFields(userId, row.paperId, row.count*25)
             }
         }
     }
@@ -176,7 +170,6 @@ module.exports = class ReputationGenerationService {
      *
      */
     async recalculateReputationForUser(userId) {
-
         // ======== Get total reputation gained from works. ===================
 
         const worksResults = await this.database.query(`
@@ -492,6 +485,48 @@ module.exports = class ReputationGenerationService {
     }
 
     /**
+     * Take a list of processed works generated by
+     * `getPapersFor{OrcidId|OpenAlexId}` and give the user identified by
+     * `userId` initial reputation.  Idempotent - resets the user's initial
+     * reputation before generating their new inital reputation.
+     *
+     * @param {int} userId  The id of the user we're giving reputation.
+     * @param {Object[]} works  An array of work objects generated by getPapersFor{OrcidId|OpenAlexId}.
+     *
+     * @return {void}
+     */
+    async initializeReputationForUserWithWorks(userId, works) {
+        // Before we initialize them, clear out the initial reputation tables.
+        // This makes this Idempotent.
+        await this.database.query(`
+            DELETE FROM user_initial_field_reputation WHERE user_id = $1
+        `, [ userId ])
+
+        await this.database.query(`
+            DELETE FROM user_initial_works_reputation WHERE user_id = $1
+        `, [ userId ])
+
+        for ( const work of works) {
+            await this.incrementInitialUserReputationForWork(userId, work.workId, work.citations*10)
+        } 
+
+        await this.recalculateReputation(userId)
+
+        // This has no impact on the user's total reputation, so we can do it after we call `recalculateReputation`.
+        //
+        // We need to do it after we call `recalculateReputation` because it
+        // increments the value of `user_field_reputation` for each initial
+        // field.  This is to save us a query down the line.
+        //
+        // So we need to call `recalculateReputation` first so that it can wipe and then regenerate `user_field_reputation`
+        // based on their Peer Review papers and reviews.  Then 
+        for ( const work of works) {
+            await this.incrementInitialUserReputationForFields(userId, work.fields, work.citations*10)
+        } 
+
+    }
+
+    /**
      * Set the initial reputation for a user by querying OpenAlex for their works and giving them 
      * reputation in each field we have that matches the concepts the work is tagged with.  The 
      * reputation given is works.citations * 10.
@@ -518,44 +553,29 @@ module.exports = class ReputationGenerationService {
      * Set the initial reputation for a user using their ORCID iD to match them
      * to their Open Alex record.
      *
-     * @param {Object} user     Their Peer Review `user` object.
+     * @param {int} userId     Their Peer Review user.id.
      * @param {string} orcidId  Their ORCID iD.
      *
      * @return {void}
      */
     async initializeReputationForUserWithOrcidId(userId, orcidId) {
-        const papers = await this.openAlexService.getPapersForOrcidId(orcidId)
+        const works = await this.openAlexService.getPapersForOrcidId(orcidId)
+        await this.initializeReputationForUserWithWorks(userId, works)
 
-        for ( const paper of papers ) {
-            await this.incrementInitialUserReputationForFields(userId, paper.fields, paper.citations*10)
-            await this.incrementInitialUserReputationForWork(userId, paper.workId, paper.citations*10)
-        } 
-
-        await this.recalculateReputationForUser(userId)
     }
 
     /**
      * Set the initial reputation for a user using their Open Alex Id to match
      * them to their Open Alex record.
      *
-     * @param {Object} user     Their Peer Review `user` object.
+     * @param {int} userId     Their Peer Review user.id.
      * @param {string} openAlexId   Their Open Alex Id.
      *
      * @return {void}
      */
     async initializeReputationForUserWithOpenAlexId(userId, openAlexId) {
-        const papers = await this.openAlexService.getPapersForOpenAlexId(openAlexId)
-
-        for ( const paper of papers ) {
-            if ( paper.citations < 10 ) {
-                continue
-            }
-
-            await this.incrementInitialUserReputationForFields(userId, paper.fields, paper.citations*10)
-            await this.incrementInitialUserReputationForWork(userId, paper.workId, paper.citations*10)
-        } 
-
-        await this.recalculateReputationForUser(userId)
+        const works = await this.openAlexService.getPapersForOpenAlexId(openAlexId)
+        await this.initializeReputationForUserWithWorks(userId, works)
     }
 
 }

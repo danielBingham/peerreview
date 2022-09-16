@@ -139,26 +139,28 @@ module.exports = function(database, logger, config) {
 
     const ReputationService = require('./services/ReputationGenerationService')
     const reputationService = new ReputationService(database, logger)
-    router.get('/user/:id/initialize-reputation/orcid/:orcidId', async function(request, response, next) {
-        await reputationService.initializeReputationForUserWithOrcidId(request.params.id, request.params.orcidId).catch(function(error) {
+    router.get('/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {
+        reputationService.initializeReputationForUserWithOrcidId(request.params.id, request.params.orcidId).then(function() {
+            return response.status(200).send()
+        }).catch(function(error) {
             next(error)
         })
-
-        return response.status(200).send()
     })
 
-    router.get('/user/:id/initialize-reputation/openalex/:openAlexId', async function(request, response, next) {
-        await reputationService.initializeReputationForUserWithOpenAlexId(request.params.id, request.params.openAlexId).catch(function(error) {
+    router.get('/user/:id/initialize-reputation/openalex/:openAlexId', function(request, response, next) {
+        reputationService.initializeReputationForUserWithOpenAlexId(request.params.id, request.params.openAlexId).then(function() {
+            return response.status(200).send()
+        }).catch(function(error) {
             next(error)
         })
-        return response.status(200).send()
     })
 
-    router.get('/user/:id/recalculate-reputation', async function(request, response, next) {
-        await reputationService.recalculateReputationForUser(request.params.id).catch(function(error) {
+    router.get('/user/:id/recalculate-reputation', function(request, response, next) {
+        reputationService.recalculateReputationForUser(request.params.id).then(function() {
+            return response.status(200).send()
+        }).catch(function(error) {
             next(error)
         })
-        return response.status(200).send()
     })
 
     /******************************************************************************
