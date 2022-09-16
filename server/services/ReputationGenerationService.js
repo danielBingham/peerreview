@@ -32,6 +32,7 @@ module.exports = class ReputationGenerationService {
     async recalculateReputation(userId) {
         // ======== Clear out the existing reputation =========================
 
+        console.log(`Resetting reputation tables for ${userId}.`)
         // Reset reputation gained from papers.
         await this.database.query(`
             DELETE FROM user_paper_reputation WHERE user_id = $1
@@ -56,16 +57,15 @@ module.exports = class ReputationGenerationService {
             WHERE paper_authors.user_id = $1
         `, [ userId ])
 
-        if ( paperResults.rows.length <= 0 ) {
-            return 
-        }
-
-        for ( const row of paperResults) {
+        console.log(`Calculating reputation for ${paperResults.rows.length} papers.`)
+        for ( const row of paperResults.rows) {
             await this.recalculateUserReputationForPaper(userId, row.paper_id)
         }
 
+        console.log(`Calculating Review Reputation for User(${userId}).`)
         await this.recalculateUserReviewReputation(userId)
 
+        console.log(`Recalculating User's Total reputation.`)
         await this.recalculateReputationForUser(userId)
     }
 
@@ -498,6 +498,7 @@ module.exports = class ReputationGenerationService {
     async initializeReputationForUserWithWorks(userId, works) {
         // Before we initialize them, clear out the initial reputation tables.
         // This makes this Idempotent.
+        console.log('Clearing initial reputation tables.') 
         await this.database.query(`
             DELETE FROM user_initial_field_reputation WHERE user_id = $1
         `, [ userId ])
@@ -506,10 +507,12 @@ module.exports = class ReputationGenerationService {
             DELETE FROM user_initial_works_reputation WHERE user_id = $1
         `, [ userId ])
 
+        console.log(`Processing ${works.length} works.`)
         for ( const work of works) {
             await this.incrementInitialUserReputationForWork(userId, work.workId, work.citations*10)
         } 
 
+        console.log(`Recalculating reputation.`)
         await this.recalculateReputation(userId)
 
         // This has no impact on the user's total reputation, so we can do it after we call `recalculateReputation`.
@@ -520,6 +523,7 @@ module.exports = class ReputationGenerationService {
         //
         // So we need to call `recalculateReputation` first so that it can wipe and then regenerate `user_field_reputation`
         // based on their Peer Review papers and reviews.  Then 
+        console.log(`Calculating field reputation for ${works.length} works.`) 
         for ( const work of works) {
             await this.incrementInitialUserReputationForFields(userId, work.fields, work.citations*10)
         } 
@@ -574,7 +578,9 @@ module.exports = class ReputationGenerationService {
      * @return {void}
      */
     async initializeReputationForUserWithOpenAlexId(userId, openAlexId) {
+        console.log(`Initializing Reputation for User(${userId}) with Open Alex ID(${openAlexId}).`)
         const works = await this.openAlexService.getPapersForOpenAlexId(openAlexId)
+        console.log(`Got ${works.length} works from Open Alex.`)
         await this.initializeReputationForUserWithWorks(userId, works)
     }
 
