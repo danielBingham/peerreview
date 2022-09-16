@@ -97,8 +97,7 @@ const ReviewSummaryForm = function(props) {
         const reviewPatch = {
             id: reviewInProgress.id,
             summary: summary,
-            recommendation: recommendation,
-            status: reviewInProgress.status
+            recommendation: recommendation
         }
         setPatchReviewRequestId(dispatch(patchReview(props.paper.id, reviewPatch)))
     }

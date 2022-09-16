@@ -1,6 +1,7 @@
 const ReviewDAO = require('../daos/review')
 const ReputationGenerationService = require('../services/ReputationGenerationService')
 const ReputationPermissionService = require('../services/ReputationPermissionService')
+const ControllerError = require('../errors/ControllerError')
 
 /**
  *
@@ -375,8 +376,8 @@ module.exports = class ReviewController {
      * nothing with children (comments).
      */
     async patchReview(request, response) {
-        const paperId = request.paper_id
-        const reviewId = request.review_id
+        const paperId = request.params.paper_id
+        const reviewId = request.params.review_id
 
         const review = request.body
 
@@ -426,7 +427,7 @@ module.exports = class ReviewController {
         `, [ reviewId ])
 
         // 3. Review(:review_id) exists.
-        if ( existingResults.rows.length < 0) {
+        if ( existingResults.rows.length <= 0) {
             throw new ControllerError(404, 'no-resource',
                 `Attempt to POST thread to Review(${reviewId}), but it doesn't exist!`)
         }
@@ -1062,11 +1063,11 @@ module.exports = class ReviewController {
                 papers.id as paper_id, papers.is_draft as "paper_isDraft",
                 reviews.id as review_id, reviews.user_id as "review_userId", reviews.status as "review_status",
                 review_comment_threads.id as thread_id,
-                review_comments.user_id as "comment_userId"
+                review_comments.user_id as "comment_userId", review_comments.status as "comment_status"
             FROM reviews
                 JOIN papers on reviews.paper_id = papers.id
                 JOIN review_comment_threads on review_comment_threads.review_id = reviews.id
-                JOIN review_comments on review_comments.thread_id = review_comment_threads.thread_id
+                JOIN review_comments on review_comments.thread_id = review_comment_threads.id
             WHERE review_comments.id = $1
         `, [ commentId ])
 
@@ -1118,7 +1119,7 @@ module.exports = class ReviewController {
         //
         // If the review is in progress and they are not the reviewAuthor, then
         // we know they can't be here.
-        if ( exsting.review_status == 'in-progress' && ! isReviewAuthor ) {
+        if ( existing.review_status == 'in-progress' && ! isReviewAuthor ) {
             throw new ControllerError(403, 'not-authorized:not-review-author', 
                 `Unauthorized User(${userId}) attempting to PATCH Comment(${commentId}).`)
         }
@@ -1136,6 +1137,7 @@ module.exports = class ReviewController {
         //
         // Which means, if neither the Review nor the Comment is in progress, we should leave.
         if (existing.review_status != 'in-progress' && existing.comment_status != 'in-progress' ) {
+            console.log(existing)
             throw new ControllerError(403, 'not-authorized:not-in-progress', 
                 `Unauthorized User(${userId}) attempting to PATCH Comment(${commentId}).`)
         }

@@ -416,7 +416,7 @@ module.exports = function(database, logger, config) {
         })
     })
 
-    router.put('/paper/:paper_id/review/:id', function(request, response, next) {
+    router.put('/paper/:paper_id/review/:review_id', function(request, response, next) {
         throw new ControllerError(501, 'not-implemented', 'PUT /paper/:paper_id/review/:review_id is intentionally unimplemented.')
         /*reviewController.putReview(request, response).catch(function(error) {
             next(error)
