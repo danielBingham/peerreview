@@ -456,7 +456,7 @@ module.exports = class ReviewController {
                     `User(${userId}) attempted to PATCH Review(${reviewId}) that they did not write on a Paper(${paperId}) they are not an owning author on.`)
             }
 
-            paperAuthor = paperAuthorResults.rows.find((a) => a.userId == userId)
+            paperAuthor = paperAuthorsResults.rows.find((a) => a.userId == userId)
             if ( ! paperAuthor || ! paperAuthor.owner ) {
                 throw new ControllerError(403, 'not-authorized:not-owning-author',
                     `User(${userId}) attempted to PATCH Review(${reviewId}) that they did not write on a Paper(${paperId}) they are not an owning author on.`)

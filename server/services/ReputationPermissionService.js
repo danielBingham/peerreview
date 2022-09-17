@@ -72,7 +72,7 @@ module.exports = class ReputationPermissionService {
         
         const authorResults = await this.database.query( `
                 SELECT user_id from paper_authors where paper_id = $1 AND user_id = $2
-            `, [ review.paperId, userId ])
+            `, [ paperId, userId ])
 
         // They are an author on the paper.  They are allowed.
         if ( authorResults.rows.length > 0 ) {
