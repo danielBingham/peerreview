@@ -67,7 +67,7 @@ describe('PaperController', function() {
             await paperController.getPapers(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedPapers)
+            expect(response.json.mock.calls[0][0]).toEqual([ expectedPapers[0] ])
 
         })
 
@@ -354,61 +354,61 @@ describe('PaperController', function() {
 
     describe('patchPaper()', function() {
         it('should construct update SQL and respond with 200 and the patched paper', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
+            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
-                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
-                .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
-
-            const request = {
-                body: {
-                    id: 1,
-                    isDraft: false
-                },
-                params: {
-                    id: 1
-                },
-                session: {
-                    user: {
-                        id: 1
-                    }
-                }
-            }
-            const response = new Response()
-
-            const paperController = new PaperController(connection, logger, config)
-            await paperController.patchPaper(request, response)
-
-            const expectedSQL = 'UPDATE papers SET is_draft = $1, updated_date = now() WHERE id = $2'
-            const expectedParams = [ false, 1 ]
-
-            const databaseCall = connection.query.mock.calls[3]
-            expect(databaseCall[0]).toEqual(expectedSQL)
-            expect(databaseCall[1]).toEqual(expectedParams)
-
-            expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedPapers[0])
-
-        })
-
-        it('should ignore the id in the body and use the id in request.params', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
-                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
-                .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
+                .mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
 
             const request = {
                 body: {
                     id: 2,
+                    isDraft: false 
+                },
+                params: {
+                    id: 2
+                },
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+            const response = new Response()
+
+            const paperController = new PaperController(connection, logger, config)
+            await paperController.patchPaper(request, response)
+
+            const expectedSQL = 'UPDATE papers SET is_draft = $1, updated_date = now() WHERE id = $2'
+            const expectedParams = [ false, 2 ]
+
+            const databaseCall = connection.query.mock.calls[3]
+            expect(databaseCall[0]).toEqual(expectedSQL)
+            expect(databaseCall[1]).toEqual(expectedParams)
+
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+            expect(response.json.mock.calls[0][0]).toEqual(expectedPapers[1])
+
+        })
+
+        it('should ignore the id in the body and use the id in request.params', async function() {
+            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+                .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                .mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+                .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
+
+            const request = {
+                body: {
+                    id: 3,
                     isDraft: false
                 },
                 params: {
-                    id: 1
+                    id: 2
                 },
                 session: {
                     user: {
@@ -422,18 +422,18 @@ describe('PaperController', function() {
             await paperController.patchPaper(request, response)
 
             const expectedSQL = 'UPDATE papers SET is_draft = $1, updated_date = now() WHERE id = $2'
-            const expectedParams = [ false, 1 ]
+            const expectedParams = [ false, 2 ]
 
             const databaseCall = connection.query.mock.calls[3]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(databaseCall[1]).toEqual(expectedParams)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedPapers[0])
+            expect(response.json.mock.calls[0][0]).toEqual(expectedPapers[1])
 
         })
 
-        it('should throw ControllerError(403) if no user is authenticated', async function() {
+        it('should throw ControllerError(401) if no user is authenticated', async function() {
             connection.query.mockReturnValue({ rowCount: 0, rows: [] })
 
             const request = {
@@ -453,8 +453,8 @@ describe('PaperController', function() {
                 await paperController.patchPaper(request, response)
             } catch (error) {
                 expect(error).toBeInstanceOf(ControllerError)
-                expect(error.status).toEqual(403)
-                expect(error.type).toEqual(`not-authorized`)
+                expect(error.status).toEqual(401)
+                expect(error.type).toEqual(`not-authenticated`)
             }
             expect.hasAssertions()
         })
@@ -490,17 +490,17 @@ describe('PaperController', function() {
         })
 
         it('should throw ControllerError(403) if the patching user is not an owner', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
+            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
 
             const request = {
                 body: {
-                    id: 1,
+                    id: 2,
                     isDraft: false
                 },
                 params: {
-                    id: 1
+                    id: 2
                 },
                 session: {
                     user: {
@@ -516,16 +516,15 @@ describe('PaperController', function() {
             } catch (error) {
                 expect(error).toBeInstanceOf(ControllerError)
                 expect(error.status).toEqual(403)
-                expect(error.type).toEqual(`not-owner`)
+                expect(error.type).toEqual(`not-authorized:not-owner`)
             }
             expect.hasAssertions()
         })
 
-        it('should throw DAOError if the update attempt failed', async function() {
+        it('should throw ControllerError(403) if paper being patched is not a draft', async function() {
             connection.query.mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
-                .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
             const request = {
                 body: {
@@ -547,6 +546,39 @@ describe('PaperController', function() {
             try {
                 await paperController.patchPaper(request, response)
             } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(403)
+                expect(error.type).toEqual(`not-authorized:published`)
+            }
+            expect.hasAssertions()
+        })
+
+        it('should throw DAOError if the update attempt failed', async function() {
+            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+                .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+            const request = {
+                body: {
+                    id: 2,
+                    isDraft: false
+                },
+                params: {
+                    id: 2
+                },
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(connection, logger, config)
+            try {
+                await paperController.patchPaper(request, response)
+            } catch (error) {
                 expect(error).toBeInstanceOf(DAOError)
                 expect(error.type).toEqual(`update-failure`)
             }
@@ -554,7 +586,7 @@ describe('PaperController', function() {
         })
 
         it('should throw ControllerError(500) if the patched paper is not found after patching', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
+            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
@@ -562,11 +594,11 @@ describe('PaperController', function() {
 
             const request = {
                 body: {
-                    id: 1,
+                    id: 2,
                     isDraft: false
                 },
                 params: {
-                    id: 1
+                    id: 2
                 },
                 session: {
                     user: {

@@ -100,22 +100,31 @@ module.exports = class ReputationPermissionService {
     }
 
     async canPublish(userId, paper) {
+        const fieldIds = paper.fields.map((f) => f.id)
+        const authorIds = paper.authors.map((a) => a.user.id)
 
-        const fields = paper.fields.map((f) => f.id)
+        // Must be an author to publish a paper.
+        if ( ! authorIds.find((aid) => aid == userid) ) {
+            return false
+        }
 
+        // This should select one row for each field that at least one author
+        // has enough reputation to publish in.  If any of the fields are
+        // missing, that should mean that no authors had enough reputation to
+        // publish in it.
         const sql = `
             SELECT DISTINCT
                     fields.id
                 FROM fields
                     JOIN user_field_reputation on fields.id = user_field_reputation.field_id
-                WHERE user_field_reputation.user_id = $1 
+                WHERE user_field_reputation.user_id = ANY($1::bigint[]) 
                     AND field.id = ANY($2::bigint[])
                     AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.publish}
         `
 
-        const results = await this.database.query(sql, [userId, fields])
+        const results = await this.database.query(sql, [authorIds, fieldIds])
 
-        return results.rows.length > 0
+        return results.rows.length == fieldIds.length 
     }
 
 }

@@ -114,6 +114,44 @@ const papers = [
                 score: 1
             }
         ]
+    },
+    {
+        id: 2,
+        title: 'Molecular Structure of Nucleic Acids',
+        isDraft: true,
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        authors: [
+            {
+                user: users[0],
+                order: 1,
+                owner: true
+            },
+            {
+                user: users[1],
+                order: 2,
+                owner: false 
+            }
+        ],
+        fields: [
+            fields[0],
+            fields[1]
+        ],
+        versions: [
+            {
+                version: 1,
+                file: files[0],
+                createdDate: 'TIMESTAMP',
+                updatedDate: 'TIMESTAMP'
+            },
+            {
+                version: 2,
+                file: files[1],
+                createdDate: 'TIMESTAMP',
+                updatedDate: 'TIMESTAMP'
+            }
+        ],
+        votes: []
     }
 ]
 

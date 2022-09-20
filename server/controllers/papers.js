@@ -255,6 +255,10 @@ module.exports = class PaperController {
      * Return an object with counts of papers, pages, and page size.
      */
     async countPapers(request, response) {
+        /** 
+         * parseQuery() handles the permissions by only selecting papers the
+         * user is allowed to view. 
+         */
         const { where, params, emptyResult } = await this.parseQuery(request.session, request.query, { ignoreOrder: true, ignorePage: true })
 
         if ( emptyResult ) {
@@ -275,6 +279,10 @@ module.exports = class PaperController {
      * Return a JSON array of all papers in the database.
      */
     async getPapers(request, response) {
+        /** 
+         * parseQuery() handles the permissions by only selecting papers the
+         * user is allowed to view. 
+         */
         const { where, params, order, emptyResult } = await this.parseQuery(request.session, request.query)
 
         if ( emptyResult ) {
@@ -291,17 +299,127 @@ module.exports = class PaperController {
      * Create a new paper in the database from the provided JSON.
      */
     async postPapers(request, response) {
+        const paper = request.body
+
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User is logged in.
+         * 2. User is an author and owner of the paper being submitted.
+         * 3. At least one of the authors has enough reputation to publish in
+         *      each of the fields the paper is tagged with.
+         *
+         * Data validation:
+         *
+         * 4. Paper has at least 1 valid author.
+         * 5. Paper has at least 1 valid field.
+         * 6. Paper has at least 1 valid file.
+         * 7. File cannot be associated with any other papers.
+         * 
+         * **********************************************************/
+
+        // 1. User is logged in.
         if ( ! request.session || ! request.session.user ) {
-            throw new ControllerError(403, 'not-authorized', `User must be authenticated to submit a paper!`)
+            throw new ControllerError(401, 'not-authenticated', 
+                `User must be authenticated to submit a paper!`)
         }
 
-        const paper = request.body
         const user = request.session.user
 
+        // 2. User is an author and owner of the paper being submitted.
         if ( ! paper.authors.find((a) => a.user.id == user.id && a.owner) ) {
-            throw new ControllerError(403, 'not-owner', `User(${user.id}) submitted a paper with out being an owner of that paper!`)
+            throw new ControllerError(403, 'not-authorized:not-owner', 
+                `User(${user.id}) submitted a paper with out being an owner of that paper!`)
         }
 
+        // 3. At least one of the authors has enough reputation to publish in
+        // each of the fields the paper is tagged with.
+        const canPublish = await this.reputationPermissionsService.canPublish(user.id, paper) 
+        if ( ! canPublish ) {
+            throw new ControllerError(403, 'not-authorized:reputation',
+                `User(${user.id}) submitted a paper to fields they are not authorized to publish in.`)
+        }
+
+        // 4. Paper has at least 1 valid author.
+        if ( paper.authors.length < 1 ) {
+            throw new ControllerError(400, 'no-authors',
+                `User(${user.id}) submitted a paper with out any authors.`)
+        }
+
+        const authorIds = paper.authors.map((a) => a.user.id)
+        const authorResults = await this.database.query(`
+            SELECT DISTINCT users.id FROM users WHERE users.id = ANY($1::bigint[])
+        `, [ authorIds ])
+
+        if ( authorResults.rows.length != authorIds.length) {
+            for ( const authorId of authorIds ) {
+                if ( ! authorResults.rows.find((id) => id == authorId) ) {
+                    throw new ControllerError(400, `invalid-author::${authorId}`,
+                        `User(${user.id}) submitted a paper with invalid Author(${authorId}).`)
+                }
+            }
+            throw new ControllerError(400, 'invalid-author',
+                `User(${user.id}) submitted a paper with at least one invalid author.`)
+        }
+
+        // 5. Paper has at least 1 valid field.
+        if ( paper.fields.length < 1 ) {
+            throw new ControllerError(400, 'no-fields',
+                `User(${user.id}) submitted a paper with no fields.`)
+        }
+        
+        const fieldIds = paper.fields.map((f) => f.id)
+        const fieldResults = await this.database.query(`
+            SELECT DISTINCT fields.id FROM fields WHERE fields.id = ANY($1::bigint[])
+        `, [ fieldIds ])
+
+        if ( fieldResults.rows.length != fieldIds ) {
+            for ( const fieldId of fieldIds ) {
+                if ( ! fieldResults.rows.find((f) => f.id == fieldId)) {
+                    throw new ControllerError(400, `invalid-field:${fieldId}`,
+                        `User(${user.id}) submitted a paper with invalid Field(${fieldId}).`)
+                }
+            }
+            throw new ControllerError(400, `invalid-field`,
+                `User(${user.id}) submitted a paper with at least one invalid field.`)
+        }
+
+        // 6. Paper has at least 1 valid file.
+        if ( paper.versions.length < 1 ) {
+            throw new ControllerError(400, `no-versions`,
+                `User(${user.id}) submitted a paper with no versions.`)
+        }
+
+        const fileIds = paper.versions.map((v) => v.file.id)
+        const fileResults = await this.database.query(`
+            SELECT DISTINCT files.id FROM files WHERE fields.id = ANY($1::bigint[])
+        `, [ fileIds ])
+
+        if ( fileResults.rows.length != fileIds.length ) {
+            for ( fileId of fileIds ) {
+                if ( ! fileResults.rows.find((f) => f.id == fileId) ) {
+                    throw new ControllerError(400, `invalid-file:${fileId}`,
+                        `User(${user.id}) submitted a paper with an invalid File(${fileId}).`)
+                }
+            }
+            throw new ControllerError(400, `invalid-file`,
+                `User(${user.id}) submitted a paper with at least one invalid file.`)
+        }
+
+        // 7. Files cannot be associated with any other papers.
+        const fileConflictResults = await this.database.query(`
+            SELECT paper_versions.paper_id, paper_versions.file_id FROM paper_versions WHERE paper_versions.file_id = ANY($1::bigint[])
+        `, [ fileId ])
+        if ( fileConflictResults.rows.length > 0 ) {
+            throw new ControllerError(400, `file-in-use`,
+                `Files can only be attached to a single paper.`)
+        }
+
+        /********************************************************
+         * Permission Checks and Validation Complete
+         *       Execute the POST
+         ********************************************************/
+        
         paper.id = await this.paperDAO.insertPaper(paper) 
         await this.paperDAO.insertAuthors(paper) 
         await this.paperDAO.insertFields(paper)
@@ -323,6 +441,14 @@ module.exports = class PaperController {
     async getPaper(request, response) {
         const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [request.params.id])
 
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. If the paper is a draft, user must be logged in and have review
+         * privileges on that draft.
+         * 
+         * **********************************************************/
+
         if ( papers.length <= 0 ) {
             throw new ControllerError(404, 'not-found', `Paper(${request.params.id}) not found.`)
         }
@@ -332,8 +458,21 @@ module.exports = class PaperController {
             if ( ! request.session.user ) {
                 throw new ControllerError(403, 'not-authenticated', `Unauthenticated user attempting to view draft.`)
             }
+
+            // If it's a draft, they have to have canReview permission to even
+            // see it.
+            const canReview = await this.reputationPermissionsService.canReview(request.session.user.id, paper.id) 
+            if ( ! canReview ) {
+                throw new ControllerError(404, 'no-resource',
+                    `User(${user.id}) attempting to view Paper(${paper.id}) they don't have permission to review.`)
+            }
+
         }
 
+        /************************************************************
+         * Permissions Checking Complete
+         *      Return the Paper
+         ************************************************************/
 
         return response.status(200).json(paper)
     }
@@ -360,21 +499,49 @@ module.exports = class PaperController {
         // We want to use the params.id over any id in the body.
         paper.id = request.params.id
 
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User must be logged in.
+         * 2. Paper(:paper_id) must exist.
+         * 3. User must be an owning author on Paper(:paper_id).
+         * 4. Paper(:paper_id) must be a draft.
+         * 5. Only title and isDraft may be patched.
+         * 
+         * **********************************************************/
+
+        // 1. User must be logged in.
         if ( ! request.session.user ) {
-            throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to patch paper(${paper.id}).`)
+            throw new ControllerError(401, 'not-authenticated', `Unauthenticated user attempting to patch paper(${paper.id}).`)
         }
 
         const user = request.session.user
+
         const currentPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [ paper.id ])
 
+        // 2. Paper(:paper_id) must exist.
         if ( currentPapers.length <= 0) {
             throw new ControllerError(404, 'not-found', `Attempt to patch a paper(${paper.id}) that doesn't exist!`)
         }
 
         const currentPaper = currentPapers[0]
+
+        // 3. User must be an owning author on the Paper(:paper_id)
         if ( ! currentPaper.authors.find((a) => a.user.id == user.id && a.owner) ) {
-            throw new ControllerError(403, 'not-owner', `Non-owner user(${user.id}) attempting to PATCH paper(${paper.id}).`)
+            throw new ControllerError(403, 'not-authorized:not-owner', 
+                `Non-owner user(${user.id}) attempting to PATCH paper(${paper.id}).`)
         }
+
+        // 4. Paper(:paper_id) must be a draft.
+        if ( ! currentPaper.isDraft ) {
+            throw new ControllerError(403, `not-authorized:published`,
+                `User(${user.id}) attempting to PATCH a published paper.`)
+        }
+
+        /********************************************************
+         * Permissions Checks and Validation Complete
+         *      PATCH the Paper.
+         ********************************************************/
 
         await this.paperDAO.updatePartialPaper(paper)
 
@@ -392,19 +559,49 @@ module.exports = class PaperController {
      * Delete an existing paper.
      */
     async deletePaper(request, response) {
+        const paperId = request.params.id
+
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User must be logged in.
+         * 2. Paper(:paper_id) must exist.
+         * 3. User must be an owning author on Paper(:paper_id).
+         * 4. Paper(:paper_id) must be a draft.
+         * 
+         * **********************************************************/
+        
+        // 1. User must be logged in.
         if ( ! request.session.user ) {
             throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to delete paper(${request.params.id}).`)
         }
 
         const user = request.session.user
 
-        const ownerResults = await this.database.query(`
-                SELECT user_id, owner FROM paper_authors WHERE user_id = $1 AND owner = true
-            `, [ user.id])
+        const existingResults = await this.database.query(`
+                SELECT paper_authors.user_id, paper_authors.owner, papers.is_draft as "isDraft"
+                FROM papers
+                    JOIN paper_authors on papers.id = paper_authors.paper_id
+                WHERE papers.id = $1 AND paper_authors.user_id = $2 AND owner = true
+            `, [ paperId, user.id])
 
-        if ( ownerResults.rows.length <= 0 ) {
-            throw new ControllerError(403, 'not-owner', `Non-owner user(${user.id}) attempting to delete paper(${request.params.id}).`)
+        // 2. Paper(:paper_id) must exist.
+        // 3. User must be an owning author on Paper(:paper_id)
+        if ( existingResults.rows.length <= 0 ) {
+            throw new ControllerError(403, 'not-owner', 
+                `Non-owner user(${user.id}) attempting to delete paper(${request.params.id}).`)
         }
+
+        // 4. Paper(:paper_id) must be a draft.
+        if ( ! existingResults.rows[0].isDraft ) {
+            throw new ControllerError(403, 'not-authorized:not-draft',
+                `User(${user.id}) attempting to delete published Paper(${paperId}).`)
+        }
+
+        /********************************************************
+         * Permissions Checks and Validation Complete
+         *      DELETE the Paper.
+         ********************************************************/
         
         await this.paperDAO.deletePaper(request.params.id)
 
@@ -413,22 +610,66 @@ module.exports = class PaperController {
 
     async postPaperVersions(request, response) {
         const paperId = request.params.id
-        if ( ! request.session || ! request.session.user ) {
-            throw new ControllerError(403, 'not-authorized', `Un-authorized user attempted to submit a new version of Paper(${paperId}).`)
-        }
         const version = request.body
 
-        const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paperId])
-        if ( papers.length <= 0) {
-            throw new ControllerError(404, 'not-found', `Attempt to submit a version, but Paper(${paperId}) not found!`)
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User must be logged in.
+         * 2. Paper(:paper_id) must exist.
+         * 3. User must be an owning author on Paper(:paper_id).
+         * 4. Paper(:paper_id) must be a draft.
+         * 5. File(version.file.id) must be a valid file.
+         * 6. File(verison.file.id) must not be attached to any other paper.
+         * 
+         * **********************************************************/
+        
+        // 1. User must be logged in.
+        if ( ! request.session.user ) {
+            throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to delete paper(${request.params.id}).`)
         }
 
-        const paper = papers[0]
+        const user = request.session.user
 
-        const author = paper.authors.find((a) => a.user.id == request.session.user.id)
-        if ( ! author || ! author.owner ) {
-            throw new ControllerError(403, 'not-authorized', `Un-authorized User(${request.session.user.id}) attempted to submit a new version of Paper(${paper.id}) of which they are not an author or owner.`)
+        const paper = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
+
+        // 2. Paper(:paper_id) must exist.
+        // 3. User must be an owning author on Paper(:paper_id)
+        if ( ! paper.authors.find((a) => a.user.id == user.id && a.owner)) {
+            throw new ControllerError(403, 'not-owner', 
+                `Non-owner user(${user.id}) attempting to delete paper(${request.params.id}).`)
         }
+
+        // 4. Paper(:paper_id) must be a draft.
+        if ( ! paper.isDraft ) {
+            throw new ControllerError(403, 'not-authorized:not-draft',
+                `User(${user.id}) attempting to delete published Paper(${paperId}).`)
+        }
+
+        const fileResults = await this.database.query(`
+            SELECT files.id, paper_versions.version
+                FROM files
+                    LEFT OUTER JOIN paper_versions on files.id = paper_versions.file_id
+                WHERE files.id = $1
+        `, [ version.file.id ])
+
+        // 5. File(verison.file.id) must be a valid file.
+        if ( fileResults.rows.length <= 0) {
+            throw new ControllerError(400, 'file-not-found',
+                `User(${user.id}) attempted to create a new version for Paper(${paperId}) with invalid File(${version.file.id}).`)
+        }
+
+        // 6. File(version.file.id) must not be attached to any other paper.
+        if ( fileResults.rows[0].version ) {
+            throw new ControllerError(400, 'file-in-use',
+                `User(${user.id}) attempted to attach File(${version.file.id}) to a second paper.`)
+
+        }
+
+        /********************************************************
+         * Permissions Checks and Validation Complete
+         *      POST the new version.
+         ********************************************************/
 
         await this.paperDAO.insertVersion(paper, version)
 
@@ -441,33 +682,65 @@ module.exports = class PaperController {
 
     async patchPaperVersion(request, response) {
         let paper_version = request.body
+        const paperId = request.params.paper_id
 
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User must be logged in.
+         * 2. Paper(:paper_id) must exist.
+         * 3. User must be an owning author on Paper(:paper_id).
+         * 4. Paper(:paper_id) must be a draft.
+         * 5. PaperVersion(:version) must exist.
+         * 6. Only isPublished may be patched.
+         * 
+         * **********************************************************/
+        
         // We want to use the params.id over any id in the body.
+        //
+        // @TODO check these for mismatch and throw an error instead of
+        // overriding.
         paper_version.paperId = request.params.paper_id
         paper_version.version = request.params.version
 
-        if ( ! request.session || ! request.session.user ) {
-            throw new ControllerError(403, 'not-authorized', `Un-authorized user attempted to submit a new version of Paper(${paperId}).`)
+        // 1. User must be logged in.
+        if ( ! request.session.user ) {
+            throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to delete paper(${request.params.id}).`)
         }
 
-        // Check to ensure the user in the session has permission to modify this paper version.
-        const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paperId])
-        if ( papers.length <= 0) {
-            throw new ControllerError(404, 'no-resource', `Attempt to submit a version, but Paper(${paperId}) not found!`)
+        const user = request.session.user
+
+        const paper = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
+
+        // 2. Paper(:paper_id) must exist.
+        // 3. User must be an owning author on Paper(:paper_id)
+        if ( ! paper.authors.find((a) => a.user.id == user.id && a.owner)) {
+            throw new ControllerError(403, 'not-owner', 
+                `Non-owner user(${user.id}) attempting to delete paper(${request.params.id}).`)
         }
 
-        const paper = papers[0]
-
-        const author = paper.authors.find((a) => a.user.id == request.session.user.id)
-        if ( ! author || ! author.owner ) {
-            throw new ControllerError(403, 'not-authorized', `Un-authorized User(${request.session.user.id}) attempted to submit a new version of Paper(${paper.id}) of which they are not an author.`)
+        // 4. Paper(:paper_id) must be a draft.
+        if ( ! paper.isDraft ) {
+            throw new ControllerError(403, 'not-authorized:not-draft',
+                `User(${user.id}) attempting to delete published Paper(${paperId}).`)
         }
 
+        // 5. PaperVersion(:version) must exist.
+        if ( ! paper.versions.find((v) => v.version == paper_version.version) ) {
+            throw new ControllerError(404, 'version-not-found',
+                `User(${user.id}) attempted to patch Version(${paper_version.version}) on Paper(${paperId}), but it didn't exist!`)
+        }
+
+
+        /********************************************************
+         * Permissions Checks and Validation Complete
+         *      PATCH the version.
+         ********************************************************/
 
         // We'll ignore these fields when assembling the patch SQL.  These are
         // fields that either need more processing (authors) or that we let the
         // database handle (date fields, id, etc)
-        const ignoredFields = [ 'paperId', 'version', 'createdDate', 'updatedDate' ]
+        const ignoredFields = [ 'paperId', 'version', 'file', 'createdDate', 'updatedDate' ]
 
         let sql = 'UPDATE paper_versions SET '
         let params = []

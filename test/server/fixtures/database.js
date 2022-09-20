@@ -107,6 +107,13 @@ const papers = [
         paper_isDraft: false,
         paper_createdDate: 'TIMESTAMP',
         paper_updatedDate: 'TIMESTAMP',
+    },
+    { 
+        paper_id: 2,
+        paper_title: 'Molecular Structure of Nucleic Acids',
+        paper_isDraft: true,
+        paper_createdDate: 'TIMESTAMP',
+        paper_updatedDate: 'TIMESTAMP',
     }
 ]
 
@@ -159,7 +166,22 @@ const database = {
 
             { ...papers[0], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[0], ...paper_votes[0] },
             { ...papers[0], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[1], ...paper_votes[0] },
+        ],
+        2: [
+            { ...papers[1], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[0]},
+            { ...papers[1], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[1]},
+
+            { ...papers[1], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[0]},
+            { ...papers[1], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[1]},
+
+             
+            { ...papers[1], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[0]},
+            { ...papers[1], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[1]},
+
+            { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[0]},
+            { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[1]},
         ]
+
     } ,
     users: {
         1: [
