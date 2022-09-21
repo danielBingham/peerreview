@@ -33,7 +33,7 @@ import UserAccountDetailsForm from '/components/users/account/UserAccountDetails
 import FieldsListPage from '/pages/fields/FieldsListPage'
 import FieldPage from '/pages/fields/FieldPage'
 
-import PublishPage from '/pages/papers/PublishPage'
+import SubmitPage from '/pages/papers/SubmitPage'
 import DraftPaperPage from '/pages/papers/DraftPaperPage'
 import UploadPaperVersionPage from '/pages/papers/UploadPaperVersionPage'
 
@@ -205,7 +205,7 @@ const App = function(props) {
                     <Route path="/field/:id" element={ <FieldPage /> } />
 
                     { /* ========= Draft Papers  ============================ */ }
-                    <Route path="/publish" element={ <PublishPage /> } />
+                    <Route path="/submit" element={ <SubmitPage /> }  />
                     <Route path="/review" element={ <ReviewPapersListPage /> } />
                     <Route path="/drafts/" element={ <DraftPapersListPage /> } />
                     <Route path="/draft/:id" element={ <DraftPaperPage /> }  />

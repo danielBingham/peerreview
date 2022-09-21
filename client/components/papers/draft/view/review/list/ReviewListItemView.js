@@ -5,8 +5,8 @@ import { useSearchParams } from 'react-router-dom'
 
 import { setSelected } from '/state/reviews'
 
-import { CheckCircleIcon, AnnotationIcon, XCircleIcon } from '@heroicons/react/outline'
-import  { CheckIcon, XIcon } from '@heroicons/react/solid'
+import { CheckCircleIcon, ChatBubbleBottomCenterTextIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import  { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid'
 
 import ReviewCommentThreadView from '../comments/ReviewCommentThreadView'
 
@@ -81,7 +81,7 @@ const ReviewListItemView = function(props) {
         } else if ( props.review.recommendation == 'approve' ) {
             message = (<div className="approved"><CheckCircleIcon /> Recommends Approval</div>)
         } else if ( props.review.recommendation == 'request-changes' ) {
-            message = (<div className="request-changes"><AnnotationIcon /> Recommends Changes</div>)
+            message = (<div className="request-changes"><ChatBubbleBottomCenterTextIcon /> Recommends Changes</div>)
         } else if ( props.review.recommendation == 'reject' ) {
             message = (<div className="rejected"><XCircleIcon /> Recommends Rejection</div>)
         }
@@ -102,7 +102,7 @@ const ReviewListItemView = function(props) {
         } else if ( props.review.status == 'accepted' ) {
             message = (<div className="accepted"><CheckIcon /> Accepted</div>)
         } else if ( props.review.status == 'rejected') {
-            message = (<div className="rejected"><XIcon /> Rejected</div>)
+            message = (<div className="rejected"><XMarkIcon /> Rejected</div>)
         }
 
         status = (

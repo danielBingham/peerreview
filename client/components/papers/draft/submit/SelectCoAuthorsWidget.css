@@ -1,0 +1,40 @@
+.submission-form {
+    border: thin solid #bbb;
+    margin: 50px auto;
+    padding: 20px;
+    width: 1000px;
+    background-color: white;
+}
+.select-co-authors-widget .selected-author {
+    padding: 10px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.select-co-authors-widget .selected-author .left {
+    grid-column: 1 / 2;
+    text-align: left;
+}
+.select-co-authors-widget .selected-author .left svg {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    margin-bottom: -4px;
+}
+.select-co-authors-widget .selected-author .left .order {
+    margin: 0 10px;
+}
+.select-co-authors-widget .selected-author .right {
+    grid-column: 2 / 3;
+    text-align: right;
+}
+.select-co-authors-widget .selected-author .right svg {
+    width: 20px;
+    height: 20px;
+    margin-left: 20px;
+    margin-bottom: -4px;
+    color: red;
+}
+
+
+
+

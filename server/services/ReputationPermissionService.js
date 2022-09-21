@@ -104,7 +104,7 @@ module.exports = class ReputationPermissionService {
         const authorIds = paper.authors.map((a) => a.user.id)
 
         // Must be an author to publish a paper.
-        if ( ! authorIds.find((aid) => aid == userid) ) {
+        if ( ! authorIds.find((aid) => aid == userId) ) {
             return false
         }
 
@@ -118,7 +118,7 @@ module.exports = class ReputationPermissionService {
                 FROM fields
                     JOIN user_field_reputation on fields.id = user_field_reputation.field_id
                 WHERE user_field_reputation.user_id = ANY($1::bigint[]) 
-                    AND field.id = ANY($2::bigint[])
+                    AND fields.id = ANY($2::bigint[])
                     AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.publish}
         `
 

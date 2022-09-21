@@ -7,7 +7,7 @@ import Spinner from '/components/Spinner'
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
 
-import { DownloadIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon } from '@heroicons/react/outline'
+import { DocumentArrowDownIcon, ChevronDoubleRightIcon, ChevronDoubleLeftIcon } from '@heroicons/react/24/outline'
 
 import './PDFViewer.css'
 
@@ -74,7 +74,7 @@ const PDFViewer = function(props) {
                     <a href="" onClick={prevPage}><ChevronDoubleLeftIcon /> previous</a>
                 </div>
                 <div className="control">
-                    <a href={props.url}><DownloadIcon /></a>
+                    <a href={props.url}><DocumentArrowDownIcon />Download</a>
                     <div className="page-control">
                         <input type="text" value={pageNumber} onChange={changePageNumber} /> / { totalPages }
                     </div>

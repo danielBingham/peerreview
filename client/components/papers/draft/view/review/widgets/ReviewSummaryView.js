@@ -5,8 +5,8 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { patchReview, cleanupRequest } from '/state/reviews'
 
-import { CheckCircleIcon, AnnotationIcon, XCircleIcon } from '@heroicons/react/outline'
-import  { CheckIcon, XIcon } from '@heroicons/react/solid'
+import { CheckCircleIcon, ChatBubbleBottomCenterTextIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import  { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid'
 
 import UserTag from '/components/users/UserTag'
 import DateTag from '/components/DateTag'
@@ -108,7 +108,7 @@ const ReviewSummaryView = function(props) {
             if ( props.selectedReview.status == 'accepted' ) {
                 status = ( <div className="accepted"> <CheckIcon /> Accepted</div> )
             } else if ( props.selectedReview.status == 'rejected' ) {
-                status = ( <div className="rejected"> <XIcon /> Rejected </div> )
+                status = ( <div className="rejected"> <XMarkIcon /> Rejected </div> )
             }
             authorControls = (
                 <div className="author-controls">
@@ -125,7 +125,7 @@ const ReviewSummaryView = function(props) {
             } else if ( props.selectedReview.recommendation == 'approve' ) {
                 message = (<div className="approved"> <CheckCircleIcon /> Recommends Approval</div>)
             } else if ( props.selectedReview.recommendation == 'request-changes' ) {
-                message = (<div className="request-changes"><AnnotationIcon /> Recommends Changes</div>)
+                message = (<div className="request-changes"><ChatBubbleBottomCenterTextIcon /> Recommends Changes</div>)
             } else if ( props.selectedReview.recommendation == 'reject' ) {
                 message = (<div className="rejected"><XCircleIcon /> Recommends Rejection</div>)
             }

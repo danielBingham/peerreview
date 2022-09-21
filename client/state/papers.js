@@ -59,7 +59,13 @@ export const papersSlice = createSlice({
             count: 0,
             pageSize: 1,
             numberOfPages: 1
-        }
+        },
+
+        /**
+         * The draft paper the current user is assembling.  It hasn't been
+         * submitted to the backend yet.
+         */
+        draft: null 
     },
     reducers: {
 
@@ -151,6 +157,10 @@ export const papersSlice = createSlice({
 
         setCounts: function(state, action) {
             state.counts = action.payload
+        },
+
+        setDraft: function(state, action) {
+            state.draft = action.payload   
         },
 
         // ========== Request Tracking Methods =============
@@ -448,6 +458,6 @@ export const postVotes = function(vote) {
 }
 
 
-export const {  addPapersToDictionary, appendPapersToList, removePapers, clearList, cleanupRequest   }  = papersSlice.actions
+export const {  addPapersToDictionary, appendPapersToList, removePapers, clearList, setDraft, cleanupRequest   }  = papersSlice.actions
 
 export default papersSlice.reducer

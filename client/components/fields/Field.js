@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
-import { XIcon } from '@heroicons/react/outline'
+import { XMarkIcon } from '@heroicons/react/24/outline'
 
 import './Field.css'
 
@@ -140,7 +140,7 @@ const Field = function(props) {
             <Link to={ `/field/${props.field.id}` }>
                 {props.field.name}
             </Link>
-            { props.remove &&  <div className="remove" onClick={remove}><XIcon /></div> }
+            { props.remove &&  <div className="remove" onClick={remove}><XMarkIcon /></div> }
         </div>
     )
 }

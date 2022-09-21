@@ -186,12 +186,12 @@ const AuthorsInput = function(props) {
 
     // ======= Render ===============================================
     
-    const authorList = [] 
+        /*const authorList = [] 
     if ( props.authors ) {
         for ( const  author of props.authors) {
             authorList.push(<UserTag key={author.order} id={author.user.id} />)
         }
-    }
+    }*/
 
     const suggestedAuthorList = []
     if ( request && request.state == 'fulfilled') {
@@ -205,8 +205,7 @@ const AuthorsInput = function(props) {
     return (
         <div className="authors-input field-wrapper"> 
             <label htmlFor="authors">Authors</label>
-            <div className="explanation">List the authors of this paper in the order in which they appear on the paper. The order will be preserved.</div>
-            <div className="authors">{authorList}</div>
+            <div className="explanation">Select co-authors to add to this paper.</div>
             <input type="text" 
                 name="authorName" 
                 value={authorName}

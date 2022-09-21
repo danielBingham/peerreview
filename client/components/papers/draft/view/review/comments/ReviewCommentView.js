@@ -10,7 +10,7 @@ import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 import AreYouSure from '/components/AreYouSure'
 
-import { XCircleIcon } from '@heroicons/react/outline'
+import { XCircleIcon } from '@heroicons/react/24/outline'
 
 import './ReviewCommentView.css'
 

@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { postPapers, cleanupRequest as cleanupPapersRequest } from '/state/papers'
+import { postPapers, setDraft, cleanupRequest as cleanupPapersRequest } from '/state/papers'
 
-import AuthorsInput from './AuthorsInput'
+import SelectCoAuthorsWidget from './SelectCoAuthorsWidget'
 import FieldsInput from '/components/fields/FieldsInput'
 import FileUploadInput from '/components/files/FileUploadInput' 
 import Spinner from '/components/Spinner'
@@ -21,9 +21,9 @@ const SubmitDraftForm = function(props) {
 
     // ================ Render State ================================
     const [title, setTitle] = useState('')
-    const [authors, setAuthors] = useState([])
     const [fields, setFields] = useState([])
     const [file, setFile] = useState(null)
+    const [authors, setAuthors] = useState([])
 
     const [errors, setErrors] = useState([])
 
@@ -72,8 +72,8 @@ const SubmitDraftForm = function(props) {
         const paper = {
             title: title,
             isDraft: true,
-            authors: authors,
             fields: fields,
+            authors: authors,
             versions: [
                 {
                     file: file,
@@ -104,7 +104,6 @@ const SubmitDraftForm = function(props) {
         }
     }, [ currentUser ])
 
-
     useEffect(function() {
         if ( postPapersRequest && postPapersRequest.state == 'fulfilled') {
             const path = "/draft/" + postPapersRequest.result.id
@@ -119,7 +118,7 @@ const SubmitDraftForm = function(props) {
                 dispatch(cleanupPapersRequest({ requestId: postPapersRequestId }))
             }
         }
-    }, [ postPapersRequestId])
+    }, [ postPapersRequestId]) 
 
 
     // ====================== Render ==========================================
@@ -155,7 +154,6 @@ const SubmitDraftForm = function(props) {
                     { titleErrorElement }
                 </div>
 
-                <AuthorsInput authors={authors} setAuthors={setAuthors} />
                 <FieldsInput 
                     fields={fields} 
                     setFields={setFields} 
@@ -163,10 +161,12 @@ const SubmitDraftForm = function(props) {
                     explanation={`Enter up to five fields, subfields, or areas you believe your paper is relevant to, eg. "biology", "chemistry", or "microbiology.`}
                 />
 
+                <SelectCoAuthorsWidget fields={fields} authors={authors} setAuthors={setAuthors} />
+
                 <FileUploadInput setFile={setFile} />
 
                 <div className="submit field-wrapper">
-                    <input type="submit" name="submit-draft" value="Submit Draft for Peer Review" />
+                    <input type="submit" name="submit-draft" value="Submit Draft for Pre-publish Review" />
                 </div>
             </form>
         </div>

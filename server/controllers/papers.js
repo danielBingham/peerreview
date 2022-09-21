@@ -334,7 +334,7 @@ module.exports = class PaperController {
 
         // 3. At least one of the authors has enough reputation to publish in
         // each of the fields the paper is tagged with.
-        const canPublish = await this.reputationPermissionsService.canPublish(user.id, paper) 
+        const canPublish = await this.reputationPermissionService.canPublish(user.id, paper) 
         if ( ! canPublish ) {
             throw new ControllerError(403, 'not-authorized:reputation',
                 `User(${user.id}) submitted a paper to fields they are not authorized to publish in.`)
@@ -373,7 +373,12 @@ module.exports = class PaperController {
             SELECT DISTINCT fields.id FROM fields WHERE fields.id = ANY($1::bigint[])
         `, [ fieldIds ])
 
-        if ( fieldResults.rows.length != fieldIds ) {
+        console.log("Field ids: ")
+        console.log(fieldIds)
+        console.log('Results: ')
+        console.log(fieldResults.rows)
+            
+        if ( fieldResults.rows.length != fieldIds.length ) {
             for ( const fieldId of fieldIds ) {
                 if ( ! fieldResults.rows.find((f) => f.id == fieldId)) {
                     throw new ControllerError(400, `invalid-field:${fieldId}`,
@@ -392,7 +397,7 @@ module.exports = class PaperController {
 
         const fileIds = paper.versions.map((v) => v.file.id)
         const fileResults = await this.database.query(`
-            SELECT DISTINCT files.id FROM files WHERE fields.id = ANY($1::bigint[])
+            SELECT DISTINCT files.id FROM files WHERE files.id = ANY($1::uuid[])
         `, [ fileIds ])
 
         if ( fileResults.rows.length != fileIds.length ) {
@@ -408,8 +413,8 @@ module.exports = class PaperController {
 
         // 7. Files cannot be associated with any other papers.
         const fileConflictResults = await this.database.query(`
-            SELECT paper_versions.paper_id, paper_versions.file_id FROM paper_versions WHERE paper_versions.file_id = ANY($1::bigint[])
-        `, [ fileId ])
+            SELECT paper_versions.paper_id, paper_versions.file_id FROM paper_versions WHERE paper_versions.file_id = ANY($1::uuid[])
+        `, [ fileIds ])
         if ( fileConflictResults.rows.length > 0 ) {
             throw new ControllerError(400, `file-in-use`,
                 `Files can only be attached to a single paper.`)
@@ -461,7 +466,7 @@ module.exports = class PaperController {
 
             // If it's a draft, they have to have canReview permission to even
             // see it.
-            const canReview = await this.reputationPermissionsService.canReview(request.session.user.id, paper.id) 
+            const canReview = await this.reputationPermissionService.canReview(request.session.user.id, paper.id) 
             if ( ! canReview ) {
                 throw new ControllerError(404, 'no-resource',
                     `User(${user.id}) attempting to view Paper(${paper.id}) they don't have permission to review.`)
@@ -631,9 +636,16 @@ module.exports = class PaperController {
 
         const user = request.session.user
 
-        const paper = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
+        const papers = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
 
         // 2. Paper(:paper_id) must exist.
+        if ( papers.length <= 0 ) {
+            throw new ControllerError(404, 'not-found',
+                `User(${user.id}) attempted to post a new version of a paper that doesn't exist.`)
+        }
+
+        const paper = papers[0]
+
         // 3. User must be an owning author on Paper(:paper_id)
         if ( ! paper.authors.find((a) => a.user.id == user.id && a.owner)) {
             throw new ControllerError(403, 'not-owner', 
@@ -710,13 +722,20 @@ module.exports = class PaperController {
 
         const user = request.session.user
 
-        const paper = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
+        const papers = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
 
         // 2. Paper(:paper_id) must exist.
+        if ( papers.length <= 0) {
+            throw new ControllerError(404, 'not-found',
+                `User(${user.id}) attempted to patch a version of Paper(${paperId}), but it didn't exist!`)
+        }
+
+        const paper = papers[0]
+
         // 3. User must be an owning author on Paper(:paper_id)
         if ( ! paper.authors.find((a) => a.user.id == user.id && a.owner)) {
             throw new ControllerError(403, 'not-owner', 
-                `Non-owner user(${user.id}) attempting to delete paper(${request.params.id}).`)
+                `Non-owner user(${user.id}) attempting to PATCH Paper(${request.params.id}).`)
         }
 
         // 4. Paper(:paper_id) must be a draft.

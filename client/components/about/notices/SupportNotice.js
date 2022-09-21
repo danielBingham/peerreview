@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { XCircleIcon } from '@heroicons/react/solid'
+import { XCircleIcon } from '@heroicons/react/24/solid'
 
 import { postSettings, patchSetting, cleanupRequest } from '/state/settings'
 

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { DocumentTextIcon } from '@heroicons/react/outline'
-import { XCircleIcon } from '@heroicons/react/solid'
+import { DocumentTextIcon } from '@heroicons/react/24/outline'
+import { XCircleIcon } from '@heroicons/react/24/solid'
 
 import { uploadFile, deleteFile, cleanupRequest } from '/state/files'
 

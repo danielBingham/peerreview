@@ -398,7 +398,8 @@ module.exports = class ReviewController {
          * We need to check that this review may be editted:
          *
          * 5. Paper(:paper_id) is a draft.
-         * 6. Review(:review_id) is in progress.
+         * 6. Review(:review_id) is in progress or User is paper author and
+         *      patch is changing status to 'accepted' or 'rejected'.
          *
          * Finally, we need to validate the review content (PATCH body): 
          *
@@ -470,8 +471,8 @@ module.exports = class ReviewController {
                 `User(${userId}) attempted to PATCH a review on a published Paper(${paperId}).`)
         }
 
-        // 6. Review(:review_id) is in progress.
-        if (existing.review_status != 'in-progress' ) {
+        // 6. Review(:review_id) is in progress or User is paper author and patch is changing status to 'accepted' or 'rejected'.
+        if (existing.review_status != 'in-progress' && ! ( paperAuthor && ( review.status == 'accepted' || review.status == 'rejected')) ) {
             throw new ControllerError(403, 'not-authorized:not-in-progress',
                 `User(${userId}) attempted to PATCH Review(${reviewId}), but it was not in progress.`)
         }
