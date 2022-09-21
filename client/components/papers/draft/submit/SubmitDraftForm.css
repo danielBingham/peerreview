@@ -29,5 +29,9 @@
 .draft-paper-submission-form .submit {
     text-align: center;
 }
+.draft-paper-submission-form .error {
+    color: red;
+    text-align: center;
+}
 
 

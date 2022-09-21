@@ -334,10 +334,12 @@ module.exports = class PaperController {
 
         // 3. At least one of the authors has enough reputation to publish in
         // each of the fields the paper is tagged with.
-        const canPublish = await this.reputationPermissionService.canPublish(user.id, paper) 
+        const { canPublish, missingFields } = await this.reputationPermissionService.canPublish(user.id, paper) 
         if ( ! canPublish ) {
             throw new ControllerError(403, 'not-authorized:reputation',
-                `User(${user.id}) submitted a paper to fields they are not authorized to publish in.`)
+                `User(${user.id}) submitted a paper to fields they are not authorized to publish in.`, {
+                    missingFields: missingFields
+                })
         }
 
         // 4. Paper has at least 1 valid author.
@@ -354,8 +356,10 @@ module.exports = class PaperController {
         if ( authorResults.rows.length != authorIds.length) {
             for ( const authorId of authorIds ) {
                 if ( ! authorResults.rows.find((id) => id == authorId) ) {
-                    throw new ControllerError(400, `invalid-author::${authorId}`,
-                        `User(${user.id}) submitted a paper with invalid Author(${authorId}).`)
+                    throw new ControllerError(400, `invalid-author`,
+                        `User(${user.id}) submitted a paper with invalid Author(${authorId}).`, {
+                            authorId: authorId
+                        })
                 }
             }
             throw new ControllerError(400, 'invalid-author',
@@ -373,10 +377,6 @@ module.exports = class PaperController {
             SELECT DISTINCT fields.id FROM fields WHERE fields.id = ANY($1::bigint[])
         `, [ fieldIds ])
 
-        console.log("Field ids: ")
-        console.log(fieldIds)
-        console.log('Results: ')
-        console.log(fieldResults.rows)
             
         if ( fieldResults.rows.length != fieldIds.length ) {
             for ( const fieldId of fieldIds ) {

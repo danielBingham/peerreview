@@ -20,6 +20,7 @@ const createRequestTracker = function(requestId, method, endpoint) {
         cleaned: false,
         state: 'pending',
         error: null,
+        errorData: {},
         status: null,
         result: null
     }
@@ -63,6 +64,10 @@ export const failRequest = function(state, action) {
         tracker.error = action.payload.error
     } else {
         tracker.error = 'unknown'
+    }
+
+    if ( action.payload.errorData ) {
+        tracker.errorData = action.payload.errorData
     }
 }
 export const recordRequestFailure = failRequest
@@ -245,7 +250,7 @@ export const makeTrackedRequest = function(dispatch, getState, slice, method, en
             }
             dispatch(slice.actions.completeRequest({ requestId: requestId, status: status, result: responseBody }))
         } else {
-            dispatch(slice.actions.failRequest({ requestId: requestId, status: status, error: responseBody.error }))
+            dispatch(slice.actions.failRequest({ requestId: requestId, status: status, error: responseBody.error, errorData: responseBody.data }))
             if ( onFailure ) {
                 try {
                     onFailure(responseBody)

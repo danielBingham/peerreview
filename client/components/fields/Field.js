@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import { useSelector, useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
 
 import { XMarkIcon } from '@heroicons/react/24/outline'
+
+import { getField, cleanupRequest } from '/state/fields'
+
+import Spinner from '/components/Spinner'
 
 import './Field.css'
 
@@ -100,7 +105,30 @@ const colors = {
  */
 const Field = function(props) {
 
+
+    const [ requestId, setRequestId ] = useState(null)
+    const request = useSelector(function(state) {
+        if ( requestId ) {
+            return state.fields.requests[requestId]
+        } else {
+            return null
+        }
+    })
+
+    let field = useSelector(function(state) {
+        if ( props.id ) {
+            return state.fields.dictionary[props.id]
+        } else {
+            return null
+        }
+    })
+
+    if ( props.field ) {
+        field = props.field
+    }
+
     // ======= Actions and Event Handling ===========================
+    const dispatch = useDispatch()
 
     /**
      * The "x" has been clicked, call remove. 
@@ -108,13 +136,33 @@ const Field = function(props) {
     const remove = function(event) {
         event.preventDefault()
         event.stopPropagation()
-        props.remove(props.field)
+        props.remove(field)
     }
+
+    useEffect(function() {
+        if ( ! field && props.id ) {
+            setRequestId(dispatch(getField(props.id)))
+        } else if ( ! field ) {
+            throw new Error ('Need a field to display a field!')
+        }
+    }, [ props.id ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({ requestId: requestId}))
+            }
+        }
+    }, [ requestId ])
 
     // ======= Render ===============================================
 
+    if ( ! field && props.id ) {
+        return (<div className='field'> <Spinner local={true} /></div> )
+    }
+
     // Generate the field tag background colors.
-    const types = props.field.type.split(':')
+    const types = field.type.split(':')
     let background = '#ddd'
     let color = 'black'
     if ( types.length == 1 ) {
@@ -136,9 +184,9 @@ const Field = function(props) {
 
     
     return (
-        <div className={ `field ${props.field.type}` } style={{ color: color, background: background }} >
-            <Link to={ `/field/${props.field.id}` }>
-                {props.field.name}
+        <div className={ `field ${field.type}` } style={{ color: color, background: background }} >
+            <Link to={ `/field/${field.id}` }>
+                {field.name}
             </Link>
             { props.remove &&  <div className="remove" onClick={remove}><XMarkIcon /></div> }
         </div>

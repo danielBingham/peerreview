@@ -147,6 +147,12 @@ module.exports = class ReputationController {
             result.params.push(paperResults.rows.map((r) => r.field_id))
         }
 
+        if ( query.fieldIds ) {
+            count += 1
+            result.where += `${ count > 1 ? ' AND ' : '' } user_field_reputation.field_id = ANY($${count}::bigint[])`
+            result.params.push(query.fieldIds)
+        }
+
         if ( query.page ) {
             result.page = query.page 
         }  else {

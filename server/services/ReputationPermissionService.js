@@ -105,7 +105,10 @@ module.exports = class ReputationPermissionService {
 
         // Must be an author to publish a paper.
         if ( ! authorIds.find((aid) => aid == userId) ) {
-            return false
+            return {
+                canPublish: false,
+                missingFields: [] 
+            }
         }
 
         // This should select one row for each field that at least one author
@@ -124,7 +127,21 @@ module.exports = class ReputationPermissionService {
 
         const results = await this.database.query(sql, [authorIds, fieldIds])
 
-        return results.rows.length == fieldIds.length 
+        let missingFields = []
+        if ( results.rows.length > 0 ) {
+            for(const fieldId of fieldIds ) {
+                if ( ! results.rows.find((f) => f.id == fieldId) ) {
+                    missingFields.push(fieldId)
+                }
+            }
+        } else {
+            missingFields = fieldIds
+        }
+
+        return {
+            canPublish: results.rows.length == fieldIds.length,
+            missingFields: missingFields
+        }
     }
 
 }

@@ -8,6 +8,7 @@ import { postPapers, setDraft, cleanupRequest as cleanupPapersRequest } from '/s
 import SelectCoAuthorsWidget from './SelectCoAuthorsWidget'
 import FieldsInput from '/components/fields/FieldsInput'
 import FileUploadInput from '/components/files/FileUploadInput' 
+import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
 
 import './SubmitDraftForm.css'
@@ -123,9 +124,39 @@ const SubmitDraftForm = function(props) {
 
     // ====================== Render ==========================================
 
-    if ( postPapersRequest ) {
+    if ( postPapersRequest && postPapersRequest.state == 'pending') {
         return (
             <Spinner />
+        )
+    }
+
+    let requestError = null 
+    if ( postPapersRequest && postPapersRequest.state == 'failed') {
+        let errorContent = 'Something went wrong.' 
+        if ( postPapersRequest.error == 'not-authorized:reputation' ) {
+            if ( ! postPapersRequest.errorData.missingFields ) {
+                throw new Error('Missing data for error.')
+            } else {
+
+                const missingFieldViews = []
+                for ( const fieldId of postPapersRequest.errorData.missingFields ) {
+                    missingFieldViews.push(<span key={fieldId} className="missing-field"><Field id={fieldId} /></span>)
+                }
+                errorContent = (
+                    <span className="missing-fields">
+                        <p>No author has enough reputation to publish in the following fields:</p> 
+                        {missingFieldViews}
+                        <p>Please either add an author with enough reputation to publish, or remove the fields in question.</p>
+                        <p>BETA NOTE: During closed beta, publish reputation has been set at 2x average field reputation.  Once we're out of closed beta and into open beta, this will be set at 0 reputation.</p>
+                    </span>
+                )
+            }
+        }
+
+        requestError = (
+            <div className="error">
+                { errorContent }
+            </div>
         )
     }
 
@@ -165,6 +196,7 @@ const SubmitDraftForm = function(props) {
 
                 <FileUploadInput setFile={setFile} />
 
+                { requestError }
                 <div className="submit field-wrapper">
                     <input type="submit" name="submit-draft" value="Submit Draft for Pre-publish Review" />
                 </div>

@@ -165,7 +165,10 @@ app.use(function(error, request, response, next) {
         }
 
         if ( error instanceof ControllerError) {
-            return response.status(error.status).json({ error: error.type })
+            return response.status(error.status).json({ 
+                error: error.type, 
+                data: error.data
+            })
         } else { 
             return response.status(500).json({ error: 'server-error' })
         }

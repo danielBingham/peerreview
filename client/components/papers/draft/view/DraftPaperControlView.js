@@ -80,6 +80,7 @@ const DraftPaperControlView = function(props) {
     const publishPaper = function(event) {
         event.preventDefault()
 
+
         const paperPatch = {
             id: paper.id,
             isDraft: false
@@ -93,6 +94,7 @@ const DraftPaperControlView = function(props) {
             isPublished: true
         }
         setPatchPaperVersionRequestId(dispatch(patchPaperVersion(paper, paperVersionPatch)))
+
     }
 
     const uploadVersion = function(event) {
