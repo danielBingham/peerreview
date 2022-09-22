@@ -15,6 +15,7 @@ import { getThresholds, cleanupRequest as cleanupReputationRequest } from '/stat
 import { getAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '/state/authentication'
 
 import Header from '/components/header/Header'
+import NeedEmailConfirmationNotice from '/components/authentication/NeedEmailConfirmationNotice'
 
 import HomePage from '/pages/HomePage'
 import AboutPage from '/pages/AboutPage'
@@ -22,6 +23,7 @@ import AboutPage from '/pages/AboutPage'
 import RegistrationPage from '/pages/authentication/RegistrationPage'
 import LoginPage from '/pages/authentication/LoginPage'
 import OrcidAuthenticationPage from '/pages/authentication/OrcidAuthenticationPage'
+import EmailConfirmationPage from '/pages/authentication/EmailConfirmationPage'
 
 import ReputationInitializationPage from '/pages/users/ReputationInitializationPage'
 import UsersListPage from '/pages/users/UsersListPage'
@@ -173,12 +175,14 @@ const App = function(props) {
     if ( configuration == null ) {
         return (<Spinner />)
     }
+    console.log(currentUser)
 
     // Once our request have finished successfully, we can render the full
     // site.  We should only reach here when both the configurationRequest and
     // authenticationRequest have been fulfilled.
     return (
         <Router>
+            { currentUser && currentUser.status != 'confirmed' && <NeedEmailConfirmationNotice /> }
             <Header />
             <main>
                 <Routes>
@@ -190,6 +194,7 @@ const App = function(props) {
                     <Route path="/login" element={ <LoginPage /> } />
                     <Route path="/orcid/authentication" element={<OrcidAuthenticationPage />} />
                     <Route path="/orcid/connect" element={<OrcidAuthenticationPage />} />
+                    <Route path="/email-confirmation" element={ <EmailConfirmationPage />} />
 
                     { /* ========== Users ================================= */ }
                     <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 

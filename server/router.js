@@ -42,7 +42,7 @@ module.exports = function(database, logger, config) {
      *          User REST Routes
      ******************************************************************************/
     const UserController = require('./controllers/users')
-    const userController = new UserController(database, logger)
+    const userController = new UserController(database, logger, config)
 
     // Get a list of all users.
     router.get('/users', function(request, response, next) {
@@ -248,6 +248,23 @@ module.exports = function(database, logger, config) {
         authenticationController.deleteAuthentication(request, response)
     })
 
+    /**************************************************************************
+     *      Token Handling REST Routes
+     * ************************************************************************/
+    const TokenController = require('./controllers/TokenController')
+    const tokenController = new TokenController(database, logger, config)
+
+    router.get('/token/:token', function(request, response, next) {
+        tokenController.getToken(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/token/:token', function(request, response, next) {
+        tokenController.postToken(request, response).catch(function(error) {
+            next(error)
+        })
+    })
 
     /******************************************************************************
      *          Authentication REST Routes

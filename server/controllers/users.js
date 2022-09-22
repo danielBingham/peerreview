@@ -6,20 +6,28 @@
  ******************************************************************************/
 
 const AuthenticationService = require('../services/authentication')
+const EmailService = require('../services/EmailService')
+
 const UserDAO = require('../daos/user')
 const SettingsDAO = require('../daos/settings')
+const TokenDAO = require('../daos/TokenDAO')
 
 const ControllerError = require('../errors/ControllerError')
 const DAOError = require('../errors/DAOError')
 
 module.exports = class UserController {
 
-    constructor(database, logger) {
+    constructor(database, logger, config) {
         this.database = database
         this.logger = logger
+        this.config = config
+
         this.auth = new AuthenticationService()
+        this.emailService = new EmailService(logger, config)
+
         this.userDAO = new UserDAO(database)
         this.settingsDAO = new SettingsDAO(database, logger)
+        this.tokenDAO = new TokenDAO(database, logger)
     }
 
     /**
@@ -70,6 +78,12 @@ module.exports = class UserController {
         if ( returnUsers.length <= 0) {
             throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
         }
+
+        const token = this.tokenDAO.createToken('email-confirmation')
+        token.userId = returnUsers[0].id
+        token.id = await this.tokenDAO.insertToken(token)
+
+        this.emailService.sendEmailConfirmation(returnUsers[0], token)
 
         await this.settingsDAO.initializeSettingsForUser(returnUsers[0])
 

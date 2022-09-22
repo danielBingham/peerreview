@@ -206,6 +206,21 @@ export const postOrcidAuthentication = function(code, connect) {
     }
 }
 
+export const confirmEmail = function(token) {
+    return function(dispatch, getState) {
+        const endpoint = `/token/${token}`
+
+        return makeTrackedRequest(dispatch, getState, authenticationSlice,
+            'GET', endpoint, null,
+            function(responseContent) {
+                dispatch(authenticationSlice.actions.setCurrentUser(responseContent.user))
+                dispatch(authenticationSlice.actions.setSettings(responseContent.settings))
+                dispatch(addSettingsToDictionary(responseContent.settings))
+            }
+        )
+    }
+}
+
 export const { setCurrentUser, setSettings, cleanupRequest} = authenticationSlice.actions
 
 export default authenticationSlice.reducer

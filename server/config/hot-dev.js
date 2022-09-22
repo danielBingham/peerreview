@@ -12,6 +12,7 @@
 require('dotenv').config()
 
 module.exports = {
+    host: 'https://localhost:3000/',
     backend: '/api/0.0.0',
     // Database configuration
     database: {
@@ -39,6 +40,9 @@ module.exports = {
         client_secret: process.env.ORCID_CLIENT_SECRET,
         authentication_redirect_uri: 'https://localhost:3000/orcid/authentication',
         connect_redirect_uri: 'https://localhost:3000/orcid/connect'
+    },
+    postmark: {
+        api_token: process.env.POSTMARK_API_TOKEN
     },
     log_level: 'debug'
 

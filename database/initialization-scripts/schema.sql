@@ -7,10 +7,12 @@ CREATE EXTENSION pg_trgm;
  * Users 
  *****************************************************************************/
 
+CREATE TYPE user_status AS ENUM('invited', 'unconfirmed', 'confirmed')
 CREATE TABLE users (
     id bigserial PRIMARY KEY,
     blind_id uuid DEFAULT gen_random_uuid(), 
     orcid_id varchar(256),
+    status user_status DEFAULT 'unconfirmed',
     name varchar(256),
     password varchar(256),
     email varchar(256),
@@ -21,6 +23,22 @@ CREATE TABLE users (
     created_date timestamptz,
     updated_date timestamptz 
 );
+
+/******************************************************************************
+ * Tokens
+ *****************************************************************************/
+
+CREATE TYPE token_type AS ENUM('email-confirmation', 'reset-password', 'invitation');
+CREATE TABLE tokens (
+    id bigserial PRIMARY KEY,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    token varchar(1024),
+    type token_type NOT NULL,
+    created_date timestamptz,
+    updated_date timestamptz
+);
+CREATE INDEX tokens__token ON tokens (token);
+
 
 /******************************************************************************
  * Files 

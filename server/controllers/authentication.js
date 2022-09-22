@@ -18,28 +18,11 @@ module.exports = class AuthenticationController {
         this.logger = logger
         this.config = config
 
-        this.auth = new AuthenticationService()
+        this.auth = new AuthenticationService(database, logger)
         this.userDAO = new UserDAO(database)
         this.settingsDAO = new SettingsDAO(database)
     }
 
-    async loginUser(id, request, response) {
-        const users = await this.userDAO.selectUsers('WHERE users.id=$1', [id])
-        if ( ! users ) {
-            throw new ControllerError(500, 'server-error', 'Failed to get full record for authenticated user!')
-        } 
-
-        const settings = await this.settingsDAO.selectSettings('WHERE user_settings.user_id = $1', [ id ])
-        if ( settings.length == 0 ) {
-            throw new ControllerError(500, 'server-error', 'Failed to retrieve settings for authenticated user.')
-        }
-
-        request.session.user = users[0]
-        return {
-            user: request.session.user,
-            settings: settings[0] 
-        }
-    }
 
     async getAuthentication(request, response) {
         if (request.session.user) {
@@ -90,7 +73,7 @@ module.exports = class AuthenticationController {
             throw new ControllerError(403, 'authentication-failed', `Failed login for email ${credentials.email}.`)
         }
 
-        const responseBody = await this.loginUser(userMatch.id, request, response)
+        const responseBody = await this.auth.loginUser(userMatch.id, request)
         return response.status(200).json(responseBody)
     }
 
@@ -192,7 +175,7 @@ module.exports = class AuthenticationController {
             await this.userDAO.updatePartialUser(user)
 
             // Initialize their reputation.
-            const responseBody = await this.loginUser(request.session.user.id, request, response)
+            const responseBody = await this.auth.loginUser(request.session.user.id, request)
             responseBody.type = "connection"
             return response.status(200).json(responseBody)
         } else if ( request.session.user ) {
@@ -205,7 +188,7 @@ module.exports = class AuthenticationController {
         // - Find the user by their orcid id.
         // -- Just log them in.
         if ( orcidResults.rows.length == 1 ) {
-            const responseBody = await this.loginUser(orcidResults.rows[0].id, request, response)
+            const responseBody = await this.auth.loginUser(orcidResults.rows[0].id, request)
             responseBody.type = "login"
             return response.status(200).json(responseBody)    
         } else if ( orcidResults.rows.length > 1 ) {
@@ -281,7 +264,7 @@ module.exports = class AuthenticationController {
             await this.settingsDAO.initializeSettingsForUser(user)
             // Initialize their reputation
 
-            const responseBody = await this.loginUser(user.id, request, response)
+            const responseBody = await this.auth.loginUser(user.id, request)
             responseBody.type = "registration"
             return response.status(200).json(responseBody)
         }
@@ -300,7 +283,7 @@ module.exports = class AuthenticationController {
             await this.userDAO.updatePartialUser(user)
             // initialize their reputation.
 
-            const responseBody = await this.loginUser(id, request, response)
+            const responseBody = await this.auth.loginUser(id, request)
             responseBody.type = "connection"
             return response.status(200).json(responseBody)
         }
