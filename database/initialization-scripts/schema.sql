@@ -7,7 +7,7 @@ CREATE EXTENSION pg_trgm;
  * Users 
  *****************************************************************************/
 
-CREATE TYPE user_status AS ENUM('invited', 'unconfirmed', 'confirmed')
+CREATE TYPE user_status AS ENUM('invited', 'unconfirmed', 'confirmed');
 CREATE TABLE users (
     id bigserial PRIMARY KEY,
     blind_id uuid DEFAULT gen_random_uuid(), 

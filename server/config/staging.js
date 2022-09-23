@@ -35,5 +35,8 @@ module.exports = {
         authentication_redirect_uri: 'https://staging.peer-review.io/orcid/authentication',
         connect_redirect_uri: 'https://staging.peer-review.io/orcid/connect'
     },
+    postmark: {
+        api_token: process.env.POSTMARK_API_TOKEN
+    },
     log_level: 'debug'
 };

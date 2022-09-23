@@ -83,6 +83,12 @@ spec:
                   name: peer-review-orcid-secrets
                   key: client_secret
                   optional: false
+            - name: POSTMARK_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-postmark-secrets
+                  key: api_token 
+                  optional: false
 
 ---
 apiVersion: v1
