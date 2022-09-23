@@ -21,6 +21,11 @@ describe('UserController', function() {
     const submittedUsers = SubmittedFixtures.users 
     const database = DatabaseFixtures.database 
     const expectedUsers = ExpectedFixtures.users 
+    const config = {
+        postmark: {
+            api_token: 'abde-fghi-jklm-nopq'
+        }
+    }
 
     // ====================== Mocks ===========================================
 
@@ -46,7 +51,7 @@ describe('UserController', function() {
                 rows: [ ...database.users[1], ...database.users[2] ] 
             }) 
 
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
 
             const request = {
                 query: {}
@@ -64,7 +69,7 @@ describe('UserController', function() {
                 throw new Error('Something went wrong!')
             })
 
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
 
             const request = {
                 query: {}
@@ -83,10 +88,11 @@ describe('UserController', function() {
 
    describe('.postUsers()', function() {
        it('should hash the password and return 201 with the modified user', async function() {
-           connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
-               .mockReturnValueOnce({rowCount: 1, rows: [ { id: database.users[1].id } ]})
-               .mockReturnValueOnce({rowCount: database.users[1].length, rows: database.users[1] })
-               .mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 } ]})
+           connection.query.mockReturnValueOnce({rowCount: 0, rows: []}) //userExistsResults
+               .mockReturnValueOnce({rowCount: 1, rows: [ { id: database.users[1].id } ]}) // insertUser
+               .mockReturnValueOnce({rowCount: database.users[1].length, rows: database.users[1] }) // selectUsers
+               .mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 } ]}) // insertToken
+               .mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 } ]}) // initializeSettingsForUser
 
            // Do this so that submittedUsers[0].password doesn't get
            // overwritten and we can use it in future tests.
@@ -97,7 +103,8 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger)
+           const userController = new UserController(connection, logger, config)
+           userController.emailService.sendEmailConfirmation = jest.fn()
            await userController.postUsers(request, response)
 
            const databaseCall = connection.query.mock.calls[1]
@@ -117,7 +124,8 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger)
+           const userController = new UserController(connection, logger, config)
+           userController.emailService.sendEmailConfirmation = jest.fn()
 
            try {
                await userController.postUsers(request, response)
@@ -143,7 +151,8 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger)
+           const userController = new UserController(connection, logger, config)
+           userController.emailService.sendEmailConfirmation = jest.fn()
 
            try {
                await userController.postUsers(request, response)
@@ -169,7 +178,8 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger)
+           const userController = new UserController(connection, logger, config)
+           userController.emailService.sendEmailConfirmation = jest.fn()
 
            try {
                await userController.postUsers(request, response)
@@ -186,6 +196,7 @@ describe('UserController', function() {
            connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
                .mockReturnValueOnce({ rowCount: 1, rows: [ { id: database.users[1].id } ] })
                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+               .mockReturnValueOnce({ rowCount: 1, rows: [ { id: 1 } ] })
                .mockReturnValueOnce({ rowCount: 0, rows: [ ] })
 
            // Do this so that submittedUsers[0].password doesn't get
@@ -197,7 +208,8 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger)
+           const userController = new UserController(connection, logger, config)
+           userController.emailService.sendEmailConfirmation = jest.fn()
 
            try {
                await userController.postUsers(request, response)
@@ -222,7 +234,8 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger)
+           const userController = new UserController(connection, logger, config)
+           userController.emailService.sendEmailConfirmation = jest.fn()
            try {
                await userController.postUsers(request, response)
            } catch (error) {
@@ -247,7 +260,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             await userController.getUser(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
@@ -264,7 +277,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             try {
                 await userController.getUser(request, response)
             } catch (error) {
@@ -288,7 +301,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             try {
                 await userController.getUser(request, response)
             } catch (error) {
@@ -308,7 +321,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             try {
                 await userController.putUser(request, response)
             } catch (error) {
@@ -341,7 +354,7 @@ describe('UserController', function() {
             }
             const response = new Response()
 
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             await userController.patchUser(request, response)
 
             const expectedSQL = 'UPDATE users SET bio = $1, updated_date = now() WHERE id = $2'
@@ -369,7 +382,7 @@ describe('UserController', function() {
                 }
             }
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             await userController.patchUser(request, response)
             
             const expectedSQL = 'UPDATE users SET bio = $1, updated_date = now() WHERE id = $2'
@@ -408,7 +421,7 @@ describe('UserController', function() {
             const auth = new AuthenticationService()
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
 
             await userController.patchUser(request, response)
 
@@ -432,7 +445,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             try {
                 await userController.patchUser(request, response)
             } catch (error) {
@@ -458,7 +471,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             try {
                 await userController.patchUser(request, response)
             } catch (error) {
@@ -487,7 +500,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             try {
                 await userController.patchUser(request, response)
             } catch (error) {
@@ -515,7 +528,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             try {
                 await userController.patchUser(request, response)
             } catch (error) {
@@ -539,7 +552,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(connection, logger, config)
             try {
                 await userController.deleteUser(request, response)
             } catch (error) {

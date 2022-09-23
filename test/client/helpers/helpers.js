@@ -12,6 +12,7 @@ export const getTracker = function(requestId, method, endpoint) {
         state: 'pending',
         result: null,
         error: null,
+        errorData: {},
         status: null
     }
     return expectedRequestTracker
