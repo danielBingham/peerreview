@@ -4,6 +4,12 @@ const AuthenticationService = require('../services/authentication')
 const TokenDAO = require('../daos/TokenDAO')
 const UserDAO = require('../daos/user')
 
+const TOKEN_TTL = {
+    'email-confirmation': 1000*60*60*24, // 1 day
+    'reset-password': 1000*60*30, // 30 minutes
+    'invitation': 1000*60*60*24*30 // 1 month
+}
+
 module.exports = class TokenController {
 
     constructor(database, logger, config) {
@@ -31,6 +37,14 @@ module.exports = class TokenController {
         }
 
         const token = tokens[0] 
+
+        // Token lifespan.
+        const createdDate = new Date(token.createdDate)
+        const createdDateMs = createdDate.getTime()
+        if ( createdDateMs > TOKEN_TTL[token.type]) {
+            throw new ControllerError(400, 'invalid-token',
+                `Attempt to redeem an expired token.`)
+        }
 
         if ( token.type == 'email-confirmation' ) {
             // Log the user in.
