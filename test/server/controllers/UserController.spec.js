@@ -396,29 +396,33 @@ describe('UserController', function() {
         })
 
         it('should hash the password', async function() {
-            connection.query.mockReturnValueOnce({ rowCount:1, rows: [] })
+            const auth = new AuthenticationService(connection, logger)
+            const oldPassword = 'foobar'
+
+            connection.query
+                .mockReturnValueOnce({ rowcount: 1, rows: [ { id: 1, password: auth.hashPassword(oldPassword) } ] })
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+                .mockReturnValueOnce({ rowCount:1, rows: [] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
 
             // Patch user replaces password on the user object with the hash.
             // So we need to store it here if we want to check it after
             // `patchUser()` has run.
-            var password = 'password'             
+            const password = 'password'             
             const request = {
                 body: {
                     id: 1,
-                    password: password 
+                    password: password,
+                    oldPassword: oldPassword
                 },
                 params: {
                     id: 1
                 },
                 session: {
-                    user: {
-                        id: 1
-                    }
+                    user: expectedUsers[0]
                 }
             }
 
-            const auth = new AuthenticationService()
 
             const response = new Response()
             const userController = new UserController(connection, logger, config)
@@ -426,8 +430,7 @@ describe('UserController', function() {
             await userController.patchUser(request, response)
 
             const expectedSQL = 'UPDATE users SET password = $1, updated_date = now() WHERE id = $2'
-
-            const databaseCall = connection.query.mock.calls[0]
+            const databaseCall = connection.query.mock.calls[2]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(await auth.checkPassword(password, databaseCall[1][0])).toEqual(true)
 
