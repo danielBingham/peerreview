@@ -24,6 +24,8 @@ import RegistrationPage from '/pages/authentication/RegistrationPage'
 import LoginPage from '/pages/authentication/LoginPage'
 import OrcidAuthenticationPage from '/pages/authentication/OrcidAuthenticationPage'
 import EmailConfirmationPage from '/pages/authentication/EmailConfirmationPage'
+import ResetPasswordPage from '/pages/authentication/ResetPasswordPage'
+import ResetPasswordRequestPage from '/pages/authentication/ResetPasswordRequestPage'
 
 import ReputationInitializationPage from '/pages/users/ReputationInitializationPage'
 import UsersListPage from '/pages/users/UsersListPage'
@@ -195,6 +197,8 @@ const App = function(props) {
                     <Route path="/orcid/authentication" element={<OrcidAuthenticationPage />} />
                     <Route path="/orcid/connect" element={<OrcidAuthenticationPage />} />
                     <Route path="/email-confirmation" element={ <EmailConfirmationPage />} />
+                    <Route path="/reset-password" element={ <ResetPasswordPage /> } />
+                    <Route path="/reset-password-request" element={ <ResetPasswordRequestPage /> } />
 
                     { /* ========== Users ================================= */ }
                     <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 

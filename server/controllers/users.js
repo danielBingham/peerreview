@@ -14,6 +14,7 @@ const TokenDAO = require('../daos/TokenDAO')
 
 const ControllerError = require('../errors/ControllerError')
 const DAOError = require('../errors/DAOError')
+const ServiceError = require('../errors/ServiceError')
 
 module.exports = class UserController {
 
@@ -22,7 +23,7 @@ module.exports = class UserController {
         this.logger = logger
         this.config = config
 
-        this.auth = new AuthenticationService()
+        this.auth = new AuthenticationService(database, logger)
         this.emailService = new EmailService(logger, config)
 
         this.userDAO = new UserDAO(database)
@@ -157,6 +158,69 @@ module.exports = class UserController {
         }
 
         if( user.password ) {
+            // If we make it through this conditional with out throwing an
+            // error, then the user is authenticated and their attempt to
+            // change their password is valid.  Carry on.
+            if ( user.token ) {
+                let token = null
+                try {
+                    token = await this.tokenDAO.validateToken('reset-password', user.token)
+                } catch (error ) {
+                    if ( error instanceof DAOError ) {
+                        throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
+                    } else {
+                        throw error
+                    }
+                }
+                
+                if ( token.userId != user.id ) {
+                    throw new ControllerError(403, 'not-authorized:authentication-failure',
+                        `User(${user.id}) attempted to change their password with a valid token that wasn't theirs!`)
+                }
+
+                // Token was valid.  Clean it off the user object before we use
+                // it as a patch.
+                delete user.token
+            } else if ( user.oldPassword ) {
+                let existingUser = null
+                try {
+                    existingUser = await this.auth.authenticateUser({ 
+                        email: request.session.user.email, 
+                        password: user.oldPassword
+                    })
+
+                    if ( existingUser.id != user.id) {
+                        throw new ControllerError(403, 'not-authorized:authentication-failure',
+                            `User(${user.id}) gave credentials that matched User(${existingUser.id})!`)
+                    }
+
+                    // OldPassword was valid and the user successfully
+                    // authenticated. Now clean it off the user object before
+                    // we use it as a patch.
+                    delete user.oldPassword
+                } catch (error ) {
+                    if ( error instanceof ServiceError ) {
+                        if ( error.type == 'authentication-failed' || error.type == 'no-user-password' ) {
+                            throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
+                        } else if ( error.type == 'multiple-users' ) {
+                            throw new ControllerError(400, 'multiple-users', error.message)
+                        } else if ( error.type == 'no-credential-password' ) {
+                            throw new ControllerError(400, 'no-password', error.message)
+                        } else {
+                            throw error
+                        }
+                    } else {
+                        throw error
+                    }
+                }
+
+                // User authenticated successfully.
+            } else {
+                throw ControllerError(403, 'authentication-failure',
+                    `User(${user.id}) attempted to change their password with out reauthenticating.`)
+            }
+
+
             user.password  = await this.auth.hashPassword(user.password)
         }
 

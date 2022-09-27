@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 
-import { confirmEmail, cleanupRequest } from '/state/authentication'
+import { validateToken, cleanupRequest } from '/state/authentication'
 
 import Spinner from '/components/Spinner'
 
@@ -30,7 +30,7 @@ const EmailConfirmationPage = function(props) {
             navigate("/")
         }
 
-        setRequestId(dispatch(confirmEmail(token)))
+        setRequestId(dispatch(validateToken(token, 'email-confirmation')))
     }, [ searchParams ])
 
     useEffect(function() {

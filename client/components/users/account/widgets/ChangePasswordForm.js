@@ -64,7 +64,8 @@ const ChangePasswordForm = function(props) {
             if ( authRequest.status == 200 ) {
                 const user = {
                     id: currentUser.id,
-                    password: newPassword
+                    password: newPassword,
+                    oldPassword: oldPassword
                 }
 
                 setRequestId(dispatch(patchUser(user)))
@@ -121,13 +122,13 @@ const ChangePasswordForm = function(props) {
     }
 
     let result = null
-    if ( request && request.state == 'fulfilled' ) {
+    if ( authRequest && authRequest.state == 'fulfilled' && request && request.state == 'fulfilled' ) {
         result = (
             <div className="success">
                 Password successfully updated!
             </div>
         )
-    } else if ( request && request.state == 'failed' ) {
+    } else if ( authRequest && authRequest.state == 'fulfilled' && request && request.state == 'failed' ) {
         result = (
             <div className="request-failure">
                 Something went wrong with the attempt to update your password.  Please try again.<br />

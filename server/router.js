@@ -260,7 +260,7 @@ module.exports = function(database, logger, config) {
         })
     })
 
-    router.post('/token/:token', function(request, response, next) {
+    router.post('/tokens', function(request, response, next) {
         tokenController.postToken(request, response).catch(function(error) {
             next(error)
         })

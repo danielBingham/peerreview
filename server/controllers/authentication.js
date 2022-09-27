@@ -10,6 +10,7 @@ const UserDAO = require('../daos/user')
 const SettingsDAO = require('../daos/settings')
 
 const ControllerError = require('../errors/ControllerError')
+const ServiceError = require('../errors/ServiceError')
 
 module.exports = class AuthenticationController {
 
@@ -84,33 +85,26 @@ module.exports = class AuthenticationController {
     async patchAuthentication(request, response) {
         const credentials = request.body
 
-        const results = await this.database.query(
-            'select id,password from users where email = $1',
-            [ credentials.email ]
-        )
-
-        if (results.rows.length != 1 ) {
-            throw new ControllerError(403, 'authentication-failed', `Multiple users found for email ${credentials.email}.`)
+        try {
+            const user = await this.auth.authenticateUser(credentials)
+            return response.status(200).json(user)
+        } catch (error ) {
+            if ( error instanceof ServiceError ) {
+                if ( error.type == 'multiple-users') {
+                    throw new ControllerError(403, 'authentication-failed', error.message)
+                } else if ( error.type == 'no-user-password' ) {
+                    throw new ControllerError(403, 'authentication-failed', error.message)
+                } else if ( error.type == 'no-credential-password' ) {
+                    throw new ControllerError(400, 'password-required', error.message)
+                } else if ( error.type == 'authentication-failed' ) {
+                    throw new ControllerError(403, 'authentication-failed', error.message)
+                } else {
+                    throw error
+                }
+            } else {
+                throw error 
+            }
         }
-        if ( ! results.rows[0].password || results.rows[0].password.trim().length <= 0) {
-            throw new ControllerError(400, 'no-password', `User(${credentials.email}) doesn't have a password set.`)
-        }
-        if ( ! credentials.password || credentials.password.trim().length <= 0 ) {
-            throw new ControllerError(400, 'password-required', `User(${credentials.email}) attempted to login with no password.`)
-        }
-
-        const userMatch = results.rows[0]
-        const passwords_match = this.auth.checkPassword(credentials.password, userMatch.password)
-        if (! passwords_match) {
-            throw new ControllerError(403, 'authentication-failed', `Failed login for email ${credentials.email}.`)
-        }
-
-        const users = await this.userDAO.selectUsers('WHERE users.id=$1', [userMatch.id])
-        if ( ! users ) {
-            throw new ControllerError(500, 'server-error', `Failed to retrieve full record for authenticated user(${userMatch.id}).`)
-        } 
-
-        return response.status(200).json(users[0])
     }
 
     deleteAuthentication(request, response) {

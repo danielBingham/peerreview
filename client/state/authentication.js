@@ -5,6 +5,7 @@ import logger from '../logger'
 import RequestError from '/errors/RequestError'
 
 import { 
+    makeSearchParams,
     makeTrackedRequest,
     startRequestTracking, 
     recordRequestFailure, 
@@ -206,9 +207,10 @@ export const postOrcidAuthentication = function(code, connect) {
     }
 }
 
-export const confirmEmail = function(token) {
+export const validateToken = function(token, type) {
     return function(dispatch, getState) {
-        const endpoint = `/token/${token}`
+        const queryString = makeSearchParams({type: type}) 
+        const endpoint = `/token/${token}?${ queryString.toString() }`
 
         return makeTrackedRequest(dispatch, getState, authenticationSlice,
             'GET', endpoint, null,
@@ -216,6 +218,18 @@ export const confirmEmail = function(token) {
                 dispatch(authenticationSlice.actions.setCurrentUser(responseContent.user))
                 dispatch(authenticationSlice.actions.setSettings(responseContent.settings))
                 dispatch(addSettingsToDictionary(responseContent.settings))
+            }
+        )
+    }
+}
+
+export const createToken = function(params) {
+    return function(dispatch, getState) {
+        const endpoint = `/tokens`
+        return makeTrackedRequest(dispatch, getState, authenticationSlice,
+            'POST', endpoint, params,
+            function(responseContent) {
+
             }
         )
     }

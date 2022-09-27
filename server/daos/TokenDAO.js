@@ -2,6 +2,12 @@ const crypto = require('node:crypto')
 
 const DAOError = require('../errors/DAOError')
 
+const TOKEN_TTL = {
+    'email-confirmation': 1000*60*60*24, // 1 day
+    'reset-password': 1000*60*30, // 30 minutes
+    'invitation': 1000*60*60*24*30 // 1 month
+}
+
 module.exports = class TokenDAO {
 
     constructor(database, logger) {
@@ -15,6 +21,33 @@ module.exports = class TokenDAO {
             token: buffer.toString('hex'),
             type: type
         }
+        return token
+    }
+
+    async validateToken(type, tokenString) {
+        const tokens = await this.selectTokens('WHERE tokens.token = $1', [ tokenString ])
+
+        if ( tokens.length <= 0 ) {
+            throw new DAOError('not-found',
+                `Attempt to redeem a non-existent token.`)
+        }
+
+        const token = tokens[0] 
+
+        if ( type != token.type ) {
+            throw new DAOError('wrong-type', 
+                `Attempt to redeem ${token.type} token as a ${type} token.`)
+        }
+
+        // Token lifespan.
+        const createdDate = new Date(token.createdDate)
+        const createdDateMs = createdDate.getTime()
+
+        if ( (Date.now() - createdDateMs) > TOKEN_TTL[token.type]) {
+            throw new DAOError('expired',
+                `Attempt to redeem an expired token.`)
+        }
+
         return token
     }
 

@@ -6,3 +6,14 @@
     border: thin solid #bbb;
     background-color: white;
 }
+#login-page .inner-wrapper {
+    margin: 10px auto;
+    width: 430px;
+    text-align: center;
+}
+#login-page .forgot-password {
+    padding: 10px;
+}
+#login-page .register {
+    padding: 10px;
+}

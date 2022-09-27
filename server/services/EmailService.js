@@ -28,6 +28,26 @@ ${confirmationLink}`
         })
     }
 
+    sendPasswordReset(user, token) {
+        const resetLink = this.config.host + `reset-password?token=${token.token}`
+
+        const emailTextBody = `Hello ${user.name},
+
+        Please use the following link to reset your password:
+${resetLink}`
+
+
+        this.postmarkClient.sendEmail({
+            "From": "no-reply@peer-review.io",
+            "To": user.email,
+            "Subject": "Peer Review(io) - Password Reset",
+            "TextBody": emailTextBody,
+            "MessageStream": "password-reset"
+        })
+
+
+    }
+
 }
 
 

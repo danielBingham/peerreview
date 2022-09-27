@@ -48,4 +48,35 @@ module.exports = class AuthenticationService {
         }
     }
 
+    async authenticateUser(credentials) {
+        const results = await this.database.query(
+            'select id, password from users where email = $1',
+            [ credentials.email ]
+        )
+
+        if (results.rows.length != 1 ) {
+            throw new ServiceError('multiple-users', `Multiple users found for email ${credentials.email}.`)
+        }
+        if ( ! results.rows[0].password || results.rows[0].password.trim().length <= 0) {
+            throw new ServiceError('no-user-password', `User(${credentials.email}) doesn't have a password set.`)
+        }
+        if ( ! credentials.password || credentials.password.trim().length <= 0 ) {
+            throw new ServiceError('no-credential-password', `User(${credentials.email}) attempted to login with no password.`)
+        }
+
+        const userMatch = results.rows[0]
+        const passwords_match = this.checkPassword(credentials.password, userMatch.password)
+        if (! passwords_match) {
+            throw new ServiceError('authentication-failed', `Failed login for email ${credentials.email}.`)
+        }
+
+        const users = await this.userDAO.selectUsers('WHERE users.id = $1', [ results.rows[0].id ])
+
+        if ( users.length <= 0 ) {
+            throw new ServiceError('server-error', `Failed to find User(${results.rows[0].id}) after authenticating them!`)
+        }
+        
+        return users[0] 
+    }
+
 }

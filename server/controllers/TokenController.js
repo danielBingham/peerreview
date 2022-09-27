@@ -1,14 +1,12 @@
 
 const AuthenticationService = require('../services/authentication')
+const EmailService = require('../services/EmailService')
 
 const TokenDAO = require('../daos/TokenDAO')
 const UserDAO = require('../daos/user')
 
-const TOKEN_TTL = {
-    'email-confirmation': 1000*60*60*24, // 1 day
-    'reset-password': 1000*60*30, // 30 minutes
-    'invitation': 1000*60*60*24*30 // 1 month
-}
+const ControllerError = require('../errors/ControllerError')
+
 
 module.exports = class TokenController {
 
@@ -18,6 +16,7 @@ module.exports = class TokenController {
         this.config = config
 
         this.authenticationService = new AuthenticationService(database, logger)
+        this.emailService = new EmailService(logger, config)
 
         this.tokenDAO = new TokenDAO(database, logger)
         this.userDAO = new UserDAO(database, logger)
@@ -29,21 +28,20 @@ module.exports = class TokenController {
                 `Attempt to redeem a token with no token!`)
         }
 
-        const tokens = await this.tokenDAO.selectTokens('WHERE tokens.token = $1', [ request.params.token ])
-
-        if ( tokens.length <= 0 ) {
-            throw new ControllerError(400, 'invalid-token',
-                `Attempt to redeem a non-existent token.`)
+        if ( ! request.query.type ) {
+            throw new ControllerError(403, 'not-authorized:invalid-token',
+                `User failed to specify a type when attempting to redeem a token.`)
         }
 
-        const token = tokens[0] 
-
-        // Token lifespan.
-        const createdDate = new Date(token.createdDate)
-        const createdDateMs = createdDate.getTime()
-        if ( createdDateMs > TOKEN_TTL[token.type]) {
-            throw new ControllerError(400, 'invalid-token',
-                `Attempt to redeem an expired token.`)
+        let token = null
+        try {
+            token = await this.tokenDAO.validateToken(request.query.type, request.params.token)
+        } catch (error) {
+            if ( error instanceof DAOError ) {
+                throw new ControllerError(403, 'not-authorized:invalid-token', error.message)
+            } else {
+                throw error
+            }
         }
 
         if ( token.type == 'email-confirmation' ) {
@@ -58,14 +56,37 @@ module.exports = class TokenController {
             // TODO better to hang on to it and mark it as used?
             await this.tokenDAO.deleteToken(token)
 
-            const users = this.userDAO.selectUsers('WHERE users.id = $1', [ token.userId ]) 
             const responseBody = await this.authenticationService.loginUser(token.userId, request)
 
+            return response.status(200).json(responseBody)
+        } else if ( token.type == 'reset-password' ) {
+            const responseBody = await this.authenticationService.loginUser(token.userId, request)
             return response.status(200).json(responseBody)
         }
     }
 
     async postToken(request, response) {
+        const tokenParams  = request.body
+
+        if ( tokenParams.type == 'reset-password' ) {
+            const users = await this.userDAO.selectUsers('WHERE email=$1', [ tokenParams.email ])
+
+            if ( users.length <= 0) {
+                return response.status(200).json(null)
+            }
+            const user = users[0]
+
+            const token = this.tokenDAO.createToken(tokenParams.type)
+            token.userId = user.id
+            token.id = await this.tokenDAO.insertToken(token)
+
+            this.emailService.sendPasswordReset(user, token)
+
+            return response.status(200).json(null)
+        } else {
+            throw new ControllerError(400, 'invalid-token',
+                `Attempt to create an invalid token type.`)
+        }
 
     }
 
