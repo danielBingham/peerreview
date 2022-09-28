@@ -99,7 +99,7 @@ describe('UserController', function() {
            const submittedUser = {...submittedUsers[0] }
            const request = {
                body: submittedUser,
-
+               session: {}
            }
 
            const response = new Response()
@@ -108,7 +108,7 @@ describe('UserController', function() {
            await userController.postUsers(request, response)
 
            const databaseCall = connection.query.mock.calls[1]
-           expect(auth.checkPassword(submittedUsers[0].password, databaseCall[1][3])).toEqual(true)
+           expect(auth.checkPassword(submittedUsers[0].password, databaseCall[1][4])).toEqual(true)
            expect(response.status.mock.calls[0][0]).toEqual(201)
            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
        })
@@ -120,7 +120,7 @@ describe('UserController', function() {
            const submittedUser = {...submittedUsers[0] }
            const request = {
                body: submittedUser,
-
+               session: {}
            }
 
            const response = new Response()
@@ -147,7 +147,7 @@ describe('UserController', function() {
            const submittedUser = {...submittedUsers[0] }
            const request = {
                body: submittedUser,
-
+               session: {}
            }
 
            const response = new Response()
@@ -174,7 +174,7 @@ describe('UserController', function() {
            const submittedUser = {...submittedUsers[0] }
            const request = {
                body: submittedUser,
-
+               session: {}
            }
 
            const response = new Response()
@@ -204,7 +204,7 @@ describe('UserController', function() {
            const submittedUser = {...submittedUsers[0] }
            const request = {
                body: submittedUser,
-
+               session: {}
            }
 
            const response = new Response()
@@ -231,6 +231,7 @@ describe('UserController', function() {
            const submittedUser = {...submittedUsers[0] }
            const request = {
                body: submittedUser,
+               session: {}
            }
 
            const response = new Response()
