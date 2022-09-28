@@ -24,7 +24,7 @@ module.exports = class TokenDAO {
         return token
     }
 
-    async validateToken(type, tokenString) {
+    async validateToken(tokenString, validTypes) {
         const tokens = await this.selectTokens('WHERE tokens.token = $1', [ tokenString ])
 
         if ( tokens.length <= 0 ) {
@@ -34,7 +34,7 @@ module.exports = class TokenDAO {
 
         const token = tokens[0] 
 
-        if ( type != token.type ) {
+        if ( ! validTypes.includes(token.type) ) {
             throw new DAOError('wrong-type', 
                 `Attempt to redeem ${token.type} token as a ${type} token.`)
         }

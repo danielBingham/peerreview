@@ -1,0 +1,21 @@
+.accept-invitation-form { }
+.accept-invitation-form h2 {
+    text-align: center;
+}
+.accept-invitation-form .field-wrapper {
+    padding: 10px;
+}
+.accept-invitation-form label {
+    display: inline-block;
+    width: 150px;
+    padding-right: 10px;
+    text-align: right;
+}
+.accept-invitation-form input[type=text], .accept-invitation-form input[type=password] {
+    display: inline-block;
+    width: 360px;
+    padding: 5px;
+}
+.accept-invitation-form .submit {
+    text-align: center;
+}

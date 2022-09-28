@@ -80,13 +80,25 @@ module.exports = class UserDAO {
     }
 
     async insertUser(user) {
+        if ( ! user.name ) {
+            throw new DAOError('name-missing', `Attempt to create a user with out a name.`)
+        }
+
+        if ( ! user.email ) {
+            throw new DAOError('email-missing', `Attempt to create a user without an email.`)
+        }
+
+        user.status = user.status ? user.status : 'unconfirmed'
+        user.password = user.password ? user.password : null
+        user.institution = user.institution ? user.institution : null
+
         const results = await this.database.query(`
-                    INSERT INTO users (name, email, institution, password, created_date, updated_date) 
-                        VALUES ($1, $2, $3, $4, now(), now()) 
+                    INSERT INTO users (name, email, status, institution, password, created_date, updated_date) 
+                        VALUES ($1, $2, $3, $4, $5, now(), now()) 
                         RETURNING id
 
                 `, 
-            [ user.name, user.email, user.institution, user.password ]
+            [ user.name, user.email, user.status, user.institution, user.password ]
         )
 
         if ( results.rowCount == 0 ) {

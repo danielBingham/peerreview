@@ -97,6 +97,7 @@ const SelectCoAuthorsWidget = function(props) {
                     <UserTag id={author.user.id} /> 
                 </div>
                 <div className="right">
+                    { author.user.status == 'invited' ? <span className="status">Invited</span> : null }
                     <select 
                         onChange={(e) => assignPermissions(author, e.target.value) } 
                         value={ author.owner ? 'owner' : 'commenter' } name="permissions"

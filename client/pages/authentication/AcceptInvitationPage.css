@@ -1,0 +1,8 @@
+#accept-invitation-page {
+    display: block;
+    margin: 50px auto;
+    padding: 20px;
+    width: 600px;
+    border: thin solid #bbb;
+    background-color: white;
+}

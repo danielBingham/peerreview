@@ -44,8 +44,34 @@ ${resetLink}`
             "TextBody": emailTextBody,
             "MessageStream": "password-reset"
         })
+    }
+
+    sendInvitation(inviter, user, token) {
+        const invitationLink = this.config.host + `accept-invitation?token=${token.token}`
+
+        const emailTextBody = `Hello ${user.name},
+
+        You have been invited to join Peer Review by ${inviter.name} (${inviter.email})!  Peer
+        Review is an open source, diamond open access (free to access, free to
+        publish) academic publishing platform.  Our goal is to build an open
+        platform where scholars can get constructive feedback, work together to
+        maintain the integrity of the literature, and share their work with
+        each other and the world.
+
+        If you join, you can use the platform to publish your work, to review
+        the work of your peers, and to help ensure that good work is
+        highlighted, and dishonest work is marked as such.
+
+        To accept the invitation click the following link : ${invitationLink}`
 
 
+        this.postmarkClient.sendEmail({
+            "From": "no-reply@peer-review.io",
+            "To": user.email,
+            "Subject": `${inviter.name} invites you to join Peer Review`,
+            "TextBody": emailTextBody,
+            "MessageStream": "invitation"
+        })
     }
 
 }

@@ -58,6 +58,8 @@ module.exports = class UserController {
     async postUsers(request, response) {
         const user = request.body
 
+        const loggedInUser = request.session.user
+
         // If a user already exists with that email, send a 409 Conflict
         // response.
         //
@@ -70,9 +72,34 @@ module.exports = class UserController {
             throw new ControllerError(409, 'user-exists', `Attempting to create a user(${userExistsResults.rows[0].id}) that already exists!`)
         }
 
-        user.password = this.auth.hashPassword(user.password)
+        // If we're creating a user with a password, then this is just a normal
+        // unconfirmed user creation.  However, if we're creating a user
+        // without a password, then this is a user who is being invited.
+        if ( user.password && ! loggedInUser ) {
+            user.password = this.auth.hashPassword(user.password)
+            user.status = 'unconfirmed'
+        } else if ( loggedInUser ) {
+            user.status = 'invited'
+        } else {
+            throw new ControllerError(400, 'bad-data:no-password',
+                `Users creating accounts must include a password!`)
+        }
 
-        user.id = await this.userDAO.insertUser(user)
+        try {
+            user.id = await this.userDAO.insertUser(user)
+        } catch ( error ) {
+            if ( error instanceof DAOError ) {
+                if ( error.type == 'name-missing' ) {
+                    throw new ControllerError(400, 'bad-data:no-name', error.message)
+                } else if ( error.type == 'email-missing' ) {
+                    throw new ControllerError(400, 'bad-data:no-email', error.message)
+                } else {
+                    throw error
+                }
+            } else {
+                throw error
+            }
+        }
 
         const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
 
@@ -80,11 +107,19 @@ module.exports = class UserController {
             throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
         }
 
-        const token = this.tokenDAO.createToken('email-confirmation')
-        token.userId = returnUsers[0].id
-        token.id = await this.tokenDAO.insertToken(token)
+        if ( loggedInUser ) {
+            const token = this.tokenDAO.createToken('invitation')
+            token.userId = returnUsers[0].id
+            token.id = await this.tokenDAO.insertToken(token)
 
-        this.emailService.sendEmailConfirmation(returnUsers[0], token)
+            this.emailService.sendInvitation(loggedInUser,returnUsers[0], token)
+        } else {
+            const token = this.tokenDAO.createToken('email-confirmation')
+            token.userId = returnUsers[0].id
+            token.id = await this.tokenDAO.insertToken(token)
+
+            this.emailService.sendEmailConfirmation(returnUsers[0], token)
+        }
 
         await this.settingsDAO.initializeSettingsForUser(returnUsers[0])
 
@@ -164,7 +199,7 @@ module.exports = class UserController {
             if ( user.token ) {
                 let token = null
                 try {
-                    token = await this.tokenDAO.validateToken('reset-password', user.token)
+                    token = await this.tokenDAO.validateToken(user.token, [ 'reset-password', 'invitation' ])
                 } catch (error ) {
                     if ( error instanceof DAOError ) {
                         throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
@@ -178,6 +213,12 @@ module.exports = class UserController {
                         `User(${user.id}) attempted to change their password with a valid token that wasn't theirs!`)
                 }
 
+                // If this was an invitation token, then we need to update their status.
+                if ( token.type == 'invitation' ) {
+                    user.status = 'confirmed'
+                }
+
+                await this.tokenDAO.deleteToken(token)
                 // Token was valid.  Clean it off the user object before we use
                 // it as a patch.
                 delete user.token
@@ -216,7 +257,7 @@ module.exports = class UserController {
 
                 // User authenticated successfully.
             } else {
-                throw ControllerError(403, 'authentication-failure',
+                throw new ControllerError(403, 'authentication-failure',
                     `User(${user.id}) attempted to change their password with out reauthenticating.`)
             }
 

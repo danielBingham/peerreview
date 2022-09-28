@@ -1,0 +1,13 @@
+.author-invite {
+    padding: 10px;
+}
+.field-wrapper .author-invite input[type=text], .author-invite input[type=text] {
+    display: inline-block;
+    width: 300px;
+    margin: 0 10px;
+}
+.field-wrapper .author-invite label, .author-invite label {
+    display: inline-block;
+    width: 100px;
+    margin: 0 10px;
+}

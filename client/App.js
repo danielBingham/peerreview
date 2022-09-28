@@ -26,6 +26,7 @@ import OrcidAuthenticationPage from '/pages/authentication/OrcidAuthenticationPa
 import EmailConfirmationPage from '/pages/authentication/EmailConfirmationPage'
 import ResetPasswordPage from '/pages/authentication/ResetPasswordPage'
 import ResetPasswordRequestPage from '/pages/authentication/ResetPasswordRequestPage'
+import AcceptInvitationPage from '/pages/authentication/AcceptInvitationPage'
 
 import ReputationInitializationPage from '/pages/users/ReputationInitializationPage'
 import UsersListPage from '/pages/users/UsersListPage'
@@ -184,7 +185,7 @@ const App = function(props) {
     // authenticationRequest have been fulfilled.
     return (
         <Router>
-            { currentUser && currentUser.status != 'confirmed' && <NeedEmailConfirmationNotice /> }
+            { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
             <Header />
             <main>
                 <Routes>
@@ -199,6 +200,7 @@ const App = function(props) {
                     <Route path="/email-confirmation" element={ <EmailConfirmationPage />} />
                     <Route path="/reset-password" element={ <ResetPasswordPage /> } />
                     <Route path="/reset-password-request" element={ <ResetPasswordRequestPage /> } />
+                    <Route path="/accept-invitation" element={ <AcceptInvitationPage /> } />
 
                     { /* ========== Users ================================= */ }
                     <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 

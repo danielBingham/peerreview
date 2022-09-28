@@ -6,6 +6,7 @@ const TokenDAO = require('../daos/TokenDAO')
 const UserDAO = require('../daos/user')
 
 const ControllerError = require('../errors/ControllerError')
+const DAOError = require('../errors/DAOError')
 
 
 module.exports = class TokenController {
@@ -35,7 +36,7 @@ module.exports = class TokenController {
 
         let token = null
         try {
-            token = await this.tokenDAO.validateToken(request.query.type, request.params.token)
+            token = await this.tokenDAO.validateToken(request.params.token, [ request.query.type ])
         } catch (error) {
             if ( error instanceof DAOError ) {
                 throw new ControllerError(403, 'not-authorized:invalid-token', error.message)
@@ -60,6 +61,9 @@ module.exports = class TokenController {
 
             return response.status(200).json(responseBody)
         } else if ( token.type == 'reset-password' ) {
+            const responseBody = await this.authenticationService.loginUser(token.userId, request)
+            return response.status(200).json(responseBody)
+        } else if ( token.type == 'invitation' ) {
             const responseBody = await this.authenticationService.loginUser(token.userId, request)
             return response.status(200).json(responseBody)
         }

@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { getUsers, clearList, cleanupRequest } from '/state/users'
 
+import AuthorInvite from '/components/papers/draft/submit/AuthorInvite'
 import UserTag from '/components/users/UserTag'
 import Spinner from '/components/Spinner'
 
@@ -33,7 +34,6 @@ const AuthorsInput = function(props) {
     const [authorName, setAuthorName] = useState('')
 
     const [highlightedSuggestion, setHighlightedSuggestion] = useState(0)
-    const [suggestionsError, setSuggestionsError] = useState(null)
 
     // ======= Request Tracking =====================================
     const [requestId, setRequestId] = useState(null)
@@ -66,6 +66,7 @@ const AuthorsInput = function(props) {
     const clearSuggestions = function() {
         dispatch(clearList())
         setHighlightedSuggestion(0)
+        setRequestId(null)
     }
 
     /**
@@ -75,6 +76,12 @@ const AuthorsInput = function(props) {
      * query for.
      */
     const suggestAuthors = function(name) {
+        // We don't want to make a new request until they've stopped typing,
+        // but we don't want to show old data before the request runs.
+        if ( name.length <= 0 ) {
+            clearSuggestions()
+        }
+
         if ( timeoutId.current ) {
             clearTimeout(timeoutId.current)
         }
@@ -91,10 +98,7 @@ const AuthorsInput = function(props) {
                 if ( highlightedSuggestion >= userSuggestions.length ) {
                     setHighlightedSuggestion(0)
                 }
-
-            } else {
-                clearSuggestions()
-            }
+            } 
         }, 250)
     }
 
@@ -193,14 +197,32 @@ const AuthorsInput = function(props) {
         }
     }*/
 
-    const suggestedAuthorList = []
-    if ( request && request.state == 'fulfilled') {
+    let suggestedAuthorList = []
+    let suggestionsError = null
+    let inviteAuthor = null
+    if ( request && request.state != 'failed') {
+        console.log('Request is fulfilled.')
+        console.log('AuthorName: ' + authorName)
+        console.log(userSuggestions)
         for ( const [ index, user ] of userSuggestions.entries()) {
             suggestedAuthorList.push(<div key={user.name} onClick={(event) => { appendAuthor(user) }} className={ index == highlightedSuggestion ? "author-suggestion highlighted" : "author-suggestion" }>{user.name}</div>)
         }
+
+        if ( authorName.length > 0 && suggestedAuthorList.length <= 0 ) {
+            inviteAuthor = (
+                <AuthorInvite name={authorName} append={appendAuthor} />
+            )
+        }
     } else if ( request && request.state == 'failed' ) {
-        setSuggestionsError(<div className="error">The attempt to retrieve user suggestions from the backend failed with error: { request.error }. Please report this as a bug.</div>)
-    }
+        suggestionsError = (
+            <div className="error">
+                The attempt to retrieve user suggestions from the backend
+                failed with error: { request.error }. Please report this as a
+                bug.
+            </div>
+        )
+    } 
+
 
     return (
         <div className="authors-input field-wrapper"> 
@@ -212,6 +234,7 @@ const AuthorsInput = function(props) {
                 onKeyDown={handleKeyDown}
                 onChange={handleChange} 
             />
+            { inviteAuthor }
             <div className="author-suggestions" 
                 style={ ( suggestedAuthorList.length > 0 || suggestionsError ? { display: 'block' } : { display: 'none' } ) }
             >
