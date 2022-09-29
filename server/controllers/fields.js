@@ -89,6 +89,7 @@ module.exports = class FieldController {
             return response.status(200).json({
                 meta: {
                     count: 0,
+                    page: 1,
                     pageSize: 1,
                     numberOfPages: 1
                 }, 
@@ -96,7 +97,7 @@ module.exports = class FieldController {
             })
         }
         
-        const meta = await this.fieldDAO.countFields(where, params)
+        const meta = await this.fieldDAO.countFields(where, params, page)
         const fields = await this.fieldDAO.selectFields(where, params, order, page)
         return response.status(200).json({
             meta: meta,

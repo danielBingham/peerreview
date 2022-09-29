@@ -46,10 +46,12 @@ describe('UserController', function() {
 
     describe('.getUsers()', function() {
         it('should return 200 and the users', async function() {
-            connection.query.mockReturnValueOnce({ 
-                rowCount: database.users[1].length + database.users[2].length, 
-                rows: [ ...database.users[1], ...database.users[2] ] 
-            }) 
+            connection.query
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { count: 2 } ] })
+                .mockReturnValueOnce({ 
+                    rowCount: database.users[1].length + database.users[2].length, 
+                    rows: [ ...database.users[1], ...database.users[2] ] 
+                })
 
             const userController = new UserController(connection, logger, config)
 
@@ -61,7 +63,15 @@ describe('UserController', function() {
             await userController.getUsers(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers)
+            expect(response.json.mock.calls[0][0]).toEqual({
+                meta: {
+                    page: 1,
+                    count: 2,
+                    pageSize: 20,
+                    numberOfPages: 1
+                },
+                result: expectedUsers
+            })
         })
 
         it('should pass any errors on to the error handler', async function() {

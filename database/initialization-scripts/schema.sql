@@ -23,6 +23,8 @@ CREATE TABLE users (
     created_date timestamptz,
     updated_date timestamptz 
 );
+CREATE INDEX users__name ON users (name);
+CREATE INDEX users__name_trgm ON users USING GIN (name gin_trgm_ops);
 
 /******************************************************************************
  * Tokens

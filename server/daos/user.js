@@ -1,12 +1,22 @@
 const DAOError = require('../errors/DAOError')
 const FieldDAO = require('./field')
 
+const PAGE_SIZE = 20
+
 module.exports = class UserDAO {
 
 
-    constructor(database) {
+    constructor(database, logger) {
         this.database = database
-        this.fieldDAO = new FieldDAO(database)
+        this.logger = logger
+
+        this.selectionString = `
+            users.id as user_id, users.orcid_id as "user_orcidId", users.status as user_status,
+            users.name as user_name, users.email as user_email, 
+            users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
+            users.reputation as user_reputation, 
+            users.created_date as "user_createdDate", users.updated_date as "user_updatedDate"
+        `
     }
 
     /**
@@ -49,34 +59,72 @@ module.exports = class UserDAO {
         return list 
     }
 
-    async selectUsers(where, params) {
-        if ( ! where ) {
-            where = ''
-        } 
-        if ( ! params ) {
-            params = []
+    async selectUsers(where, params, order, page) {
+        params = params ? params : []
+        where = where ? where : ''
+        order = order ? order : 'users.created_date asc'
+
+        // We only want to include the paging terms if we actually want paging.
+        // If we're making an internal call for another object, then we
+        // probably don't want to have to deal with pagination.
+        let paging = ''
+        if ( page ) {
+            page = page ? page : 1
+            
+            const offset = (page-1) * PAGE_SIZE
+            let count = params.length 
+
+            paging = `
+                LIMIT $${count+1}
+                OFFSET $${count+2}
+            `
+
+            params.push(PAGE_SIZE)
+            params.push(offset)
         }
 
         const sql = `
                 SELECT 
-
-                    users.id as user_id, users.orcid_id as "user_orcidId", users.status as user_status,
-                    users.name as user_name, users.email as user_email, 
-                    users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
-                    users.reputation as user_reputation, 
-                    users.created_date as "user_createdDate", users.updated_date as "user_updatedDate"
+                    ${this.selectionString}
                 FROM users
                 ${where} 
-                ORDER BY users.created_date asc
+                ORDER BY ${order} 
+                ${paging}
+        `
+
+        const results = await this.database.query(sql, params)
+        return this.hydrateUsers(results.rows)
+    }
+
+    async countUsers(where, params, page) {
+        params = params ? params : []
+        where = where ? where : ''
+
+        const sql = `
+               SELECT 
+                 COUNT(users.id) as count
+                FROM users 
+                ${where} 
         `
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rows.length <= 0 ) {
-            return [] 
-        } 
+        if ( results.rows.length <= 0) {
+            return {
+                count: 0,
+                page: page ? page : 1,
+                pageSize: PAGE_SIZE,
+                numberOfPages: 1
+            }
+        }
 
-        return this.hydrateUsers(results.rows)
+        const count = results.rows[0].count
+        return {
+            count: count,
+            page: page ? page : 1,
+            pageSize: PAGE_SIZE,
+            numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
+        }
     }
 
     async insertUser(user) {

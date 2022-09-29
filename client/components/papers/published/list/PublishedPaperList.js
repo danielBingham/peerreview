@@ -72,7 +72,6 @@ const PublishedPaperList = function(props) {
         setSearchParams(searchParams)
     }
 
-
     const queryForPapers = function({searchString, sortBy, page}) {
         let query = {}
         if ( props.query ) {

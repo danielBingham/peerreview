@@ -31,23 +31,78 @@ module.exports = class UserController {
         this.tokenDAO = new TokenDAO(database, logger)
     }
 
+    async parseQuery(query, options) {
+        options = options || {
+            ignorePage: false
+        }
+
+        if ( ! query) {
+            return
+        }
+
+        let count = 0
+
+        const result = {
+            where: 'WHERE',
+            params: [],
+            page: 1,
+            order: '',
+            emptyResult: false
+        }
+
+        if ( query.name && query.name.length > 0) {
+            count += 1
+            const and = count > 1 ? ' AND ' : ''
+            result.where += `${and} SIMILARITY(users.name, $${count}) > 0`
+            result.params.push(query.name)
+            result.order = `SIMILARITY(users.name, $${count}) desc`
+        }
+
+        if ( query.page && ! options.ignorePage ) {
+            result.page = query.page
+        } else if ( ! options.ignorePage ) {
+            result.page = 1
+        }
+
+        if ( query.sort == 'reputation' ) {
+            result.order = 'users.reputation desc'
+        }
+
+
+        // If we haven't added anything to the where clause, then clear it.
+        if ( result.where == 'WHERE') {
+            result.where = ''
+        }
+
+        return result
+
+    }
+
     /**
      * GET /users
      *
      * Return a JSON array of all users in thethis.database.
      */
     async getUsers(request, response) {
-        let where = 'WHERE'
-        let params = []
-        if ( request.query.name && request.query.name.length > 0) {
-            where += ` users.name ILIKE $1`
-            params.push(request.query.name+"%")
+        const { where, params, order, page, emptyResult } = await this.parseQuery(request.query)
+
+        if ( emptyResult ) {
+            return response.status(200).json({
+                meta: {
+                    count: 0,
+                    page: 1,
+                    pageSize: 1,
+                    numberOfPages: 1
+                }, 
+                result: []
+            })
         }
-        if ( where == 'WHERE') {
-            where = ''
-        }
-        const users = await this.userDAO.selectUsers(where, params)
-        return response.status(200).json(users)
+        const meta = await this.userDAO.countUsers(where, params, page)
+        const users = await this.userDAO.selectUsers(where, params, order, page)
+        return response.status(200).json({
+            meta: meta,
+            result: users
+        })
     }
 
     /**

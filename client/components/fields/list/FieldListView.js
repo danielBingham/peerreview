@@ -34,7 +34,7 @@ const FieldListView = function(props) {
     })
 
     // ======= Redux State ==========================================
-    const title = props.title ? props.title : title
+    const title = props.title ? props.title : 'FieldListView' 
 
     const fields = useSelector(function(state) {
         if ( ! state.fields.queries[title] ) {

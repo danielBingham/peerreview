@@ -116,7 +116,9 @@ export const fieldsSlice = createSlice({
         clearQuery: function(state, action) {
             const name = action.payload.name
 
-            delete state.queries[name]
+            if ( state.queries[name] ) {
+                delete state.queries[name]
+            }
         },
 
 

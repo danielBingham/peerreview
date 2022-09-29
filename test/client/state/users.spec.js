@@ -46,8 +46,16 @@ describe('in client/state/users.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getUsers())
-            deferred.resolve(backend.users.list)
+            const requestId = store.dispatch(getUsers('test'))
+            deferred.resolve({
+                meta: {
+                    page: 1,
+                    pageSize: 20,
+                    count: 2,
+                    numberOfPages: 1
+                },
+                result: backend.users.list
+            })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.

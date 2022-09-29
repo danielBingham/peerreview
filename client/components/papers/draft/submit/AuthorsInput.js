@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getUsers, clearList, cleanupRequest } from '/state/users'
+import { getUsers, clearQuery, cleanupRequest } from '/state/users'
 
 import AuthorInvite from '/components/papers/draft/submit/AuthorInvite'
 import UserTag from '/components/users/UserTag'
@@ -53,7 +53,15 @@ const AuthorsInput = function(props) {
     // ======= Redux State ==========================================
 
     const userSuggestions = useSelector(function(state) {
-        return state.users.list
+        if ( ! state.users.queries['AuthorsInput'] ) {
+            return []
+        }
+        
+        const users = []
+        for( const id of state.users.queries['AuthorsInput'].result ) {
+            users.push(state.users.dictionary[id])
+        }
+        return users
     })
 
     // ======= Actions and Event Handling ===========================
@@ -64,7 +72,7 @@ const AuthorsInput = function(props) {
      * Clear the suggestions list.
      */
     const clearSuggestions = function() {
-        dispatch(clearList())
+        dispatch(clearQuery({ name: 'AuthorsInput'}))
         setHighlightedSuggestion(0)
         setRequestId(null)
     }
@@ -88,11 +96,11 @@ const AuthorsInput = function(props) {
         timeoutId.current = setTimeout(function() {
             if ( name.length > 0) {
                 if ( ! requestId ) {
-                    dispatch(clearList())
-                    setRequestId(dispatch(getUsers({name: name})))
+                    dispatch(clearQuery({ name: 'AuthorsInput' }))
+                    setRequestId(dispatch(getUsers('AuthorsInput', {name: name})))
                 } else if( request && request.state == 'fulfilled') {
                     clearSuggestions()
-                    setRequestId(dispatch(getUsers({ name: name})))
+                    setRequestId(dispatch(getUsers('AuthorsInput', { name: name})))
                 }
 
                 if ( highlightedSuggestion >= userSuggestions.length ) {
@@ -168,13 +176,13 @@ const AuthorsInput = function(props) {
 
     // Clear the user list on mount.  
     useLayoutEffect(function() {
-        dispatch(clearList())
+        dispatch(clearQuery({ name: 'AuthorsInput' }))
     }, [])
 
     // Make sure the highlightedSuggestion is never outside the bounds of the
     // userSuggestions list.
     useLayoutEffect(function() {
-        if ( highlightedSuggestion >= userSuggestions.length) {
+        if ( highlightedSuggestion >= userSuggestions.length && highlightedSuggestion != 0) {
             setHighlightedSuggestion(0)
         }
     }, [ highlightedSuggestion, userSuggestions ])

@@ -41,7 +41,29 @@ export const usersSlice = createSlice({
          * one query at a time, subsequent queries will be assumed to build on
          * it. If you need to start a new query, call the `newQuery` action.
          */
-        list: []
+        list: [],
+
+        /**
+         *
+         * An object containing queries made to query supporting endpoints.
+         *
+         * In this case: GET /users 
+         *
+         * Structure:
+         * {
+         *  queryName: {
+         *      meta: {
+         *          page: <int>,
+         *          count: <int>,
+         *          pageSize: <int>,
+         *          numberOfPages: <int>
+         *      },
+         *      list: [] 
+         *  },
+         *  ...
+         * }
+         */
+        queries: {}
     },
     reducers: {
 
@@ -94,6 +116,37 @@ export const usersSlice = createSlice({
             state.list = []
         },
 
+        makeQuery: function(state, action) {
+            const name = action.payload.name
+
+            state.queries[name] = {
+                meta: {
+                    page: 1,
+                    count: 0,
+                    pageSize: 1,
+                    numberOfPages: 1
+                },
+                result: [] 
+            }
+        },
+
+        setQueryResults: function(state, action) {
+            const name = action.payload.name
+            const meta = action.payload.meta
+            const result = action.payload.result
+
+            state.queries[name].meta = meta
+            state.queries[name].result = result
+        },
+
+        clearQuery: function(state, action) {
+            const name = action.payload.name
+
+            if ( state.queries[name] ) {
+                delete state.queries[name]
+            }
+        },
+
         /**
          * Remove a user from both the dictionary and the list.
          *
@@ -129,16 +182,28 @@ export const usersSlice = createSlice({
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getUsers = function(params) {
+export const getUsers = function(name, params) {
     return function(dispatch, getState) {
         const queryString = makeSearchParams(params)
         const endpoint = '/users' + ( params ? '?' + queryString.toString() : '')
 
+        dispatch(usersSlice.actions.makeQuery({ name: name }))
+
         return makeTrackedRequest(dispatch, getState, usersSlice,
             'GET', endpoint, null,
-            function(users) {
-                dispatch(usersSlice.actions.addUsersToDictionary(users))
-                dispatch(usersSlice.actions.appendUsersToList(users))
+            function(responseBody) {
+                const resultIds = []
+                if ( responseBody.result.length > 0) {
+                    for(const user of responseBody.result ) {
+                        resultIds.push(user.id)
+                        dispatch(usersSlice.actions.addUsersToDictionary(user))
+                    }
+                }
+                dispatch(usersSlice.actions.setQueryResults({
+                    name: name,
+                    meta: responseBody.meta,
+                    result: resultIds
+                }))
             }
         )
     }
@@ -281,7 +346,7 @@ export const deleteUser = function(user) {
 
 export const { 
     addUsersToDictionary, appendUsersToList, clearList, removeUser, 
-    cleanupRequest 
+    clearQuery, cleanupRequest 
 }  = usersSlice.actions
 
 export default usersSlice.reducer
