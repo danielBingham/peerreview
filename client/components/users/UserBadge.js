@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom'
 import { getUser, cleanupRequest } from '/state/users'
 import { getReputations, clearQuery, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 
+import UserProfileImage from '/components/users/UserProfileImage'
 import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
 import './UserBadge.css'
@@ -84,10 +85,15 @@ const UserBadge = function(props) {
 
         return (
             <div className="user-badge">
-                <div className="user-tag" ><div className="user-profile-picture"></div><Link to={ `/user/${user.id}` }>{user.name}</Link> ({parseInt(user.reputation).toLocaleString()})</div> 
-                <div className="institution">{user.institution}</div>
-                <div className="badge-fields">
-                    {fields}
+                <div className="badge-grid">
+                    <UserProfileImage file={user.file} />
+                    <div className="info-wrapper">
+                        <div className="user-tag" ><Link to={ `/user/${user.id}` }>{user.name}</Link> ({parseInt(user.reputation).toLocaleString()})</div> 
+                        <div className="institution">{user.institution}</div>
+                    </div>
+                    <div className="badge-fields">
+                        {fields}
+                    </div>
                 </div>
             </div>
         )

@@ -15,6 +15,7 @@ CREATE TABLE users (
     status user_status DEFAULT 'unconfirmed',
     name varchar(256),
     password varchar(256),
+    file_id uuid REFERENCES files(id),
     email varchar(256),
     bio text,
     location varchar(256),
@@ -23,6 +24,9 @@ CREATE TABLE users (
     created_date timestamptz,
     updated_date timestamptz 
 );
+CREATE INDEX users__file_id ON users (file_id);
+CREATE INDEX users__orcid_id ON users (orcid_id);
+CREATE INDEX users__blind_id ON users (blind_id);
 CREATE INDEX users__name ON users (name);
 CREATE INDEX users__name_trgm ON users USING GIN (name gin_trgm_ops);
 

@@ -3,6 +3,8 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { patchUser, cleanupRequest } from '/state/users'
 
+import UserProfileImage from '/components/users/UserProfileImage'
+import FileUploadInput from '/components/files/FileUploadInput'
 import Spinner from '/components/Spinner'
 
 import './UserProfileEditForm.css'
@@ -10,7 +12,8 @@ import './UserProfileEditForm.css'
 const UserProfileEditForm = function(props) {
 
     // ======= Render State =========================================
-    
+
+    const [ file, setFile ] = useState(null)
     const [name, setName] = useState('')
     const [institution, setInstitution] = useState('')
     const [location, setLocation] = useState('')
@@ -41,6 +44,7 @@ const UserProfileEditForm = function(props) {
         event.preventDefault()
 
         const user = { ...currentUser }
+        user.file = file
         user.name = name
         user.institution = institution
         user.location = location
@@ -52,6 +56,12 @@ const UserProfileEditForm = function(props) {
     // ======= Effect Handling ======================================
 
     useLayoutEffect(function() {
+        if ( ! currentUser.file ) {
+            setFile(null)
+        } else {
+            setFile(currentUser.file) 
+        }
+
         if ( ! currentUser.name ) {
             setName('')
         } else {
@@ -107,9 +117,12 @@ const UserProfileEditForm = function(props) {
         submit = ( <Spinner /> )
     }
 
+
     return (
         <div className='user-profile-edit-form'>
             <form onSubmit={onSubmit}>
+                <UserProfileImage file={file} />                
+                <FileUploadInput setFile={setFile} />
                 <div className="form-field name">
                     <label htmlFor="name">Name</label><input type="text"
                         name="name"

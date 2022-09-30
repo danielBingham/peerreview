@@ -3,20 +3,30 @@
     width: 250px;
     padding: 10px;
 }
-.user-badge .user-profile-picture {
-    background-color: #ddd;
-    width: 30px;
-    height: 30px;
+.user-badge .badge-grid {
+    display: grid;
+    grid-template-columns: 50px auto;
+    grid-template-rows: 50px auto;
+} 
+.user-badge .profile-image {
+    grid-column: 1 / 2;
+    grid-row: 1 / 2;
+    width: 50px;
+    height: 50px;
     margin-right: 5px;
     margin-bottom: 5px;
-    float: left;
+}
+.user-badge .info-wrapper {
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    padding: 0 5px;
 }
 .user-badge .user-tag {
     display: inline-block;
 }
 .user-badge .badge-fields {
-    clear:both;
-    margin-left: -5px;
+    grid-column: 1 / 3;
+    grid-row: 2 / 3;
 }
 .user-badge .badge-fields .field-wrapper {
     display: inline-block;

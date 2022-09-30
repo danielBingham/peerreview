@@ -320,6 +320,12 @@ module.exports = class UserController {
             user.password  = await this.auth.hashPassword(user.password)
         }
 
+        // We only need the Id.
+        if ( user.file ) {
+            user.fileId = user.file.id
+            delete user.file
+        }
+
         await this.userDAO.updatePartialUser(user)
 
         const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])

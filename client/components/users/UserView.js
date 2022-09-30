@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown'
 import { getUser, cleanupRequest } from '/state/users'
 
 import ORCIDTag from '/components/authentication/ORCIDTag'
+import UserProfileImage from '/components/users/UserProfileImage'
 
 import Spinner from '/components/Spinner'
 
@@ -87,7 +88,7 @@ const UserView = function(props) {
                 <h1>{ user.name }</h1>
                 { shouldRenderControls && <div className="controls"><Link to="/account">edit</Link></div> }
             </div>
-            <div className="profile-picture"></div>
+            <UserProfileImage file={user.file} /> 
             <div className="details">
                 <div><span className="label">Name</span> { user.name }</div>
                 <div><span className="label">Email</span> { user.email }</div>

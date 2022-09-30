@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { getUser, cleanupRequest } from '/state/users'
 
+import UserProfileImage from '/components/users/UserProfileImage'
 import Spinner from '/components/Spinner'
 import './UserTag.css'
 

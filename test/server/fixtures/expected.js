@@ -5,6 +5,7 @@ const fields = [
         name: 'biology',
         description: 'Study of life.',
         type: 'biology',
+        depth: 1,
         averageReputation: 50,
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
@@ -14,6 +15,7 @@ const fields = [
         name: 'genetics',
         description: 'Study of genes and DNA.',
         type: 'biology',
+        depth: 2,
         averageReputation: 50,
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
@@ -27,6 +29,8 @@ const users = [
         orcidId: null,
         name: 'James Watson',
         email: 'jwatson@university.edu',
+        status: 'confirmed',
+        file: null,
         bio: 'Credited for discovering the structure of DNA.',
         location: 'Cambridge, UK',
         institution: 'University of Cambridge',
@@ -39,6 +43,8 @@ const users = [
         orcidId: null,
         name: 'Francis Crick',
         email: 'fcrick@university.edu',
+        status: 'confirmed',
+        file: null,
         bio: 'Credited for discovering the structure of DNA.',
         location: 'Cambridge, UK',
         institution: 'University of Cambridge',

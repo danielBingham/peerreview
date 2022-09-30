@@ -116,7 +116,6 @@ const ReviewCommentView = function(props) {
                         <span onClick={(e) => setAreYouSure(true)} className="delete"><XCircleIcon /></span>
                     </span>
                 ) }
-                <div className="profile-picture"></div>
                 <UserTag id={props.comment.userId} />
                 <div className="datetime">posted <a onClick={goToComment} href={`?review=${props.review.id}&thread=${props.thread.id}`}><DateTag timestamp={props.comment.updatedDate} /></a> in <a onClick={goToReview} href={`?review=${props.review.id}&thread=${props.thread.id}`}>review #{props.review.id}</a></div>
                 <div className="comment-inner" style={{ padding: '5px' }} >
