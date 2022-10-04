@@ -320,9 +320,12 @@ module.exports = class UserController {
             user.password  = await this.auth.hashPassword(user.password)
         }
 
+        console.log(user)
         // We only need the Id.
         if ( user.file ) {
             user.fileId = user.file.id
+            delete user.file
+        } else if ( user.file !== undefined ) {
             delete user.file
         }
 

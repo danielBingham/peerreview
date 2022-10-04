@@ -15,7 +15,7 @@ CREATE TABLE users (
     status user_status DEFAULT 'unconfirmed',
     name varchar(256),
     password varchar(256),
-    file_id uuid REFERENCES files(id),
+/*    file_id uuid REFERENCES files(id), Added below with an alter statement. */
     email varchar(256),
     bio text,
     location varchar(256),
@@ -24,7 +24,6 @@ CREATE TABLE users (
     created_date timestamptz,
     updated_date timestamptz 
 );
-CREATE INDEX users__file_id ON users (file_id);
 CREATE INDEX users__orcid_id ON users (orcid_id);
 CREATE INDEX users__blind_id ON users (blind_id);
 CREATE INDEX users__name ON users (name);
@@ -60,6 +59,11 @@ CREATE TABLE files (
     updated_date timestamptz
 );
 CREATE INDEX files__user_id ON files (user_id);
+
+/*  Now that we've created the files table, we can add the link to the users table. */
+/* This is for the user's profile picture. */
+ALTER TABLE users ADD COLUMN file_id uuid REFERENCES files(id);
+CREATE INDEX users__file_id ON users (file_id);
 
 /******************************************************************************
  * Fields 
@@ -114,6 +118,7 @@ CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
     title   varchar(1024),
     is_draft   boolean,
+    score   int NOT NULL DEFAULT 0,
     created_date    timestamptz,
     updated_date    timestamptz
 );
@@ -144,15 +149,6 @@ CREATE TABLE paper_fields (
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
     field_id    bigint REFERENCES fields(id) ON DELETE CASCADE,
     PRIMARY KEY (paper_id, field_id)
-);
-
-CREATE TABLE paper_votes (
-    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
-    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
-    score int,
-    created_date timestamptz,
-    updated_date timestamptz,
-    PRIMARY KEY (paper_id, user_id)
 );
 
 /******************************************************************************
@@ -249,15 +245,16 @@ CREATE TABLE responses (
     id  bigserial PRIMARY KEY,
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
     user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
+    vote int DEFAULT 0,
     status  response_status,
     created_date    timestamptz,
     updated_date    timestamptz
 );
 
-/* Tech debt: stage database doesn't have this table up to date right now. */
 CREATE TABLE response_versions (
     response_id bigint REFERENCES responses(id) ON DELETE CASCADE,
     version int NOT NULL,
+    vote int DEFAULT 0,
     content text,
     created_date    timestamptz,
     updated_date    timestamptz,

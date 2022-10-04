@@ -26,8 +26,6 @@
     margin: 0 20px 20px 0;
     width: 150px;
     height: 150px;
-    border: thin solid #bbb;
-    background-color: #eee;
 }
 .user-view .details {
     min-height: 150px;

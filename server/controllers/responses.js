@@ -5,6 +5,9 @@
  *
  ******************************************************************************/
 const ResponseDAO = require('../daos/responses')
+const PaperDAO = require('../daos/paper')
+
+const ReputationGenerationService = require('../services/ReputationGenerationService')
 const ReputationPermissionService = require('../services/ReputationPermissionService')
 
 const ControllerError = require('../errors/ControllerError')
@@ -13,10 +16,14 @@ const DAOError = require('../errors/DAOError')
 
 module.exports = class ResponseController {
 
-    constructor(database, logger) {
+    constructor(database, logger, config) {
         this.database = database
         this.logger = logger
+
         this.responseDAO = new ResponseDAO(database, logger)
+        this.paperDAO = new PaperDAO(database, config)
+
+        this.reputationGenerationService = new ReputationGenerationService(database, logger)
         this.reputationPermissionService = new ReputationPermissionService(database, logger)
     }
 
@@ -54,6 +61,19 @@ module.exports = class ResponseController {
         paperResponse.paperId = request.params.paper_id
         paperResponse.userId = request.session.user.id
 
+        if ( ! paperResponse.versions || paperResponse.versions.length < 1 ) {
+            throw new ControllerError(400, 'no-version',
+                `User(${request.session.user.id}) attempted to submit a response with no versions.`)
+        }
+
+
+        // TODO make sure the vote is valid.
+        
+
+        if ( paperResponse.userId != request.session.user.id ) {
+            throw new ControllerError(403, 'not-authorized:user-mismatch', `User(${request.session.user.id}) attempted to post a response for different User(${vote.userId}).`)
+        }
+
         // Ensure they have enough reputation to respond.
         const canRespond = this.reputationPermissionService.canReferee(paperResponse.userId, paperResponse.paperId)
         if ( ! canRespond ) {
@@ -71,12 +91,26 @@ module.exports = class ResponseController {
             throw new ControllerError(400, 'response-exists', `User[${request.session.user.id}] attempted to post a second response to paper[${paperResponse.paperId}].`)
         }
 
+        // Insert the response.
+        //
         paperResponse.id = await this.responseDAO.insertResponse(paperResponse)
         for ( const version of paperResponse.versions ) {
             await this.responseDAO.insertResponseVersion(paperResponse, version)
         }
 
-        const returnResponse = await this.responseDAO.selectResponses('WHERE responses.id=$1', [paperResponse.id])
+        const returnResponses = await this.responseDAO.selectResponses('WHERE responses.id=$1', [paperResponse.id])
+
+        if ( returnResponses.length <= 0 ) {
+            throw new ControllerError(500, 'server-error',
+                `Failed to find Response(${paperResponse.id}) after insertion.`)
+        }
+
+        const returnResponse = returnResponses[0]
+
+        await this.reputationGenerationService.incrementReputationForPaper(returnResponse.paperId, returnResponse.vote)
+
+        await this.paperDAO.refreshPaperScore(returnResponse.paperId)
+
         return response.status(201).json(returnResponse)
     }
 

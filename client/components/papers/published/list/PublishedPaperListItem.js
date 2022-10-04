@@ -25,14 +25,10 @@ const PublishedPaperListItem = function(props) {
     for (const field of paper.fields) {
         fields.push(<Field key={field.id} field={field} />)
     }
-    let score = 0
-    for (const vote of paper.votes) {
-        score += vote.score
-    }
 
     return (
         <div id={paper.id} className="published-paper-list-item">
-            <div className="score">{score}<br /> <span className="label">score</span></div> 
+            <div className="score">{paper.score}<br /> <span className="label">score</span></div> 
             <div className="responses">{responseCount} <br /><span className="label">responses</span></div>
             <div className="wrapper">
                 <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title} </Link></div> 

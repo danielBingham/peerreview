@@ -483,57 +483,11 @@ module.exports = function(database, logger, config) {
     })
 
     /**************************************************************************
-     *  Vote REST Routes
-     */
-    const VoteController = require('./controllers/votes.js')
-    const voteController = new VoteController(database, logger)
-
-    // Get a list of all votes on a paper.
-    router.get('/paper/:paper_id/votes', function(request, response, next) {
-        voteController.getVotes(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Create a new vote on a paper 
-    router.post('/paper/:paper_id/votes', function(request, response, next) {
-        voteController.postVotes(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Get the details of a single vote on a paper 
-    router.get('/paper/:paper_id/user/:user_id/vote', function(request, response, next) {
-        voteController.getVote(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Replace a vote on a paper.
-    router.put('/paper/:paper_id/user/:user_id/vote', function(request, response, next) {
-        voteController.putVote(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Edit an existing paper with partial data.
-    router.patch('/paper/:paper_id/user/:user_id/vote', function(request, response) {
-        return response.status(501).json({ error: 'not-implemented' })
-    })
-
-    // Delete an existing paper.
-    router.delete('/paper/:paper_id/user/:user_id/vote', function(request, response, next) {
-        voteController.deleteVote(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    /**************************************************************************
      *      Paper Response REST Routes
      *************************************************************************/
 
     const ResponseController = require('./controllers/responses')
-    const responseController = new ResponseController(database, logger)
+    const responseController = new ResponseController(database, logger, config)
 
     router.get('/responses/count', function(request, response, next) {
         responseController.countResponses(request, response).catch(function(error) {

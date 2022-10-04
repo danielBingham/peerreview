@@ -7,10 +7,29 @@ import './ResponseView.css'
 
 const ResponseView = function(props) {
 
+    let vote = null
+    if ( props.response.vote == 1 ) {
+        vote = (
+            <div className='vote-button vote-up highlight'>
+            </div> 
+        )
+    } else if ( props.response.vote == -1 ) {
+        vote = (
+            <div className='vote-button vote-down highlight'>
+            </div> 
+        )
+
+    }
+
     return (
         <div className="paper-response-view">
-            <div className="response-author">
-                <UserBadge id={props.response.userId} fields={props.paper.fields} /> 
+            <div className="sidebar">
+                <div className="response-author">
+                    <UserBadge id={props.response.userId} paperId={props.paper.id} /> 
+                </div>
+                <div className="vote-widget">
+                    { vote }
+                </div>
             </div>
             <div className="response-content">
                 <ReactMarkdown>

@@ -154,6 +154,28 @@ export const getReputations = function(userId, params) {
 }
 
 /**
+ * GET /user/:user_id/reputation/:field_id
+ *
+ * Get the reputation for a particular user in a particular field.
+ *
+ * Makes the request async and returns an id that can be used to track the
+ * request and get the results of a completed request from this state slice.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const getReputation = function(userId, fieldId) {
+    return function(dispatch, getState) {
+        const endpoint = `/user/${userId}/reputation/${fieldId}`
+        return makeTrackedRequest(dispatch, getState, reputationSlice,
+            'GET', endpoint, null,
+            function(responseBody) {
+                dispatch(reputationSlice.actions.setInDictionary({ userId: userId, fieldId: fieldId, reputation: responseBody }))
+            }
+        )
+    }
+}
+
+/**
  * GET /user/:user_id/reputation/initialization
  *
  * Initialize a user's reputation.

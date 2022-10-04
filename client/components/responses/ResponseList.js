@@ -127,18 +127,15 @@ const ResponseList = function(props) {
         }
     }
 
+    let isAuthor = props.paper.authors.find((a) => a.user.id == currentUser?.id)
+
     return (
         <div className="paper-response-list">
             <div className="header">
                 <h2>Responses</h2>
-                <div className="controls">
-                    <div className="control">Newest</div>
-                    <div className="control">Oldest</div>
-                    <div className="control">Highest Scoring</div>
-                </div>
             </div>
             { content }
-            { (currentUser && canRespond && ! userResponse) && <ResponseForm paper={props.paper} currentUser={currentUser} /> }
+            { (currentUser && ! isAuthor && canRespond && ! userResponse) && <ResponseForm paper={props.paper} currentUser={currentUser} /> }
         </div>
     )
 

@@ -19,6 +19,7 @@ module.exports = class ResponseDAO {
                 id: row.response_id,
                 paperId: row.response_paperId,
                 userId: row.response_userId,
+                vote: row.response_vote,
                 createdDate: row.response_createdDate,
                 updatedDate: row.response_updatedDate,
                 versions: []
@@ -32,6 +33,7 @@ module.exports = class ResponseDAO {
             const version = {
                 version: row.version_version,
                 content: row.version_content,
+                vote: row.version_vote,
                 createdDate: row.version_createdDate,
                 updatedDate: row.version_updatedDate
             }
@@ -50,8 +52,10 @@ module.exports = class ResponseDAO {
         const sql = `
             SELECT
                 responses.id as response_id, responses.paper_id as "response_paperId", responses.user_id as "response_userId",
+                responses.vote as response_vote,
                 responses.created_date as "response_createdDate", responses.updated_date as "response_updatedDate",
                 response_versions.version as version_version, response_versions.content as version_content,
+                response_versions.vote as version_vote,
                 response_versions.created_date as "version_createdDate", response_versions.updated_date as "version_updatedDate"
             FROM responses 
                 LEFT OUTER JOIN response_versions on responses.id = response_versions.response_id
@@ -90,11 +94,11 @@ module.exports = class ResponseDAO {
 
     async insertResponse(response) {
         const results = await this.database.query(`
-                    INSERT INTO responses (paper_id, user_id, created_date, updated_date) 
-                        VALUES ($1, $2, now(), now()) 
+                    INSERT INTO responses (paper_id, user_id, vote, created_date, updated_date) 
+                        VALUES ($1, $2, $3, now(), now()) 
                         RETURNING id
                 `, 
-            [ response.paperId, response.userId]
+            [ response.paperId, response.userId, response.vote]
         )
 
         if ( results.rowCount <= 0 || results.rows.length <= 0) {
@@ -116,10 +120,10 @@ module.exports = class ResponseDAO {
         }
 
         const results = await this.database.query(`
-                    INSERT INTO response_versions (response_id, version, content, created_date, updated_date) 
-                        VALUES ($1, $2, $3, now(), now()) 
+                    INSERT INTO response_versions (response_id, version, vote, content, created_date, updated_date) 
+                        VALUES ($1, $2, $3, $4, now(), now()) 
                 `, 
-            [ response.id, versionNumber, version.content]
+            [ response.id, versionNumber, version.vote, version.content]
         )
 
         if ( response.rowCount == 0) {

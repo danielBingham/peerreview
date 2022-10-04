@@ -42,12 +42,12 @@ module.exports = class PaperDAO {
                 id: row.paper_id,
                 title: row.paper_title,
                 isDraft: row.paper_isDraft,
+                score: row.paper_score,
                 createdDate: row.paper_createdDate,
                 updatedDate: row.paper_updatedDate,
                 authors: [],
                 fields: [],
-                versions: [],
-                votes: []
+                versions: []
             }
 
             if ( ! papers[paper.id] ) {
@@ -82,17 +82,6 @@ module.exports = class PaperDAO {
                 papers[paper.id].fields.push(paper_field)
             }
 
-
-
-            const paper_vote = {
-                paperId: row.vote_paperId,
-                userId: row.vote_userId,
-                score: row.vote_score
-            }
-
-            if ( paper_vote.paperId && ! papers[paper.id].votes.find((v) => v.paperId == paper_vote.paperId && v.userId == paper_vote.userId) ) {
-                papers[paper.id].votes.push(paper_vote)
-            }
         }
 
         return list 
@@ -117,7 +106,7 @@ module.exports = class PaperDAO {
             activeOrderJoins = `
                 LEFT OUTER JOIN responses ON responses.paper_id = papers.id
             `
-            order = 'greatest(paper_votes.updated_date, responses.updated_date, papers.updated_date) DESC NULLS LAST, '
+            order = 'greatest(responses.updated_date, papers.updated_date) DESC NULLS LAST, '
         } else if ( order == 'draft-active' ) {
             activeOrderJoins = `
                 LEFT OUTER JOIN reviews ON reviews.paper_id = papers.id AND reviews.status != 'in-progress'
@@ -133,6 +122,7 @@ module.exports = class PaperDAO {
                SELECT 
 
                     papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft",
+                    papers.score as paper_score,
                     papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
 
                     paper_authors.user_id as author_id, paper_authors.author_order as author_order,
@@ -143,9 +133,7 @@ module.exports = class PaperDAO {
 
                     ${ this.fileDAO.getFilesSelectionString() },
 
-                    ${ this.fieldDAO.selectionString },
-
-                    paper_votes.paper_id as "vote_paperId", paper_votes.user_id as "vote_userId", paper_votes.score as vote_score
+                    ${ this.fieldDAO.selectionString }
 
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
@@ -153,7 +141,6 @@ module.exports = class PaperDAO {
                     LEFT OUTER JOIN files on paper_versions.file_id = files.id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
                     LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
-                    LEFT OUTER JOIN paper_votes ON paper_votes.paper_id = papers.id
                     ${activeOrderJoins}
                 ${where} 
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
@@ -190,7 +177,7 @@ module.exports = class PaperDAO {
             activeOrderJoins = `
                 LEFT OUTER JOIN responses ON responses.paper_id = papers.id
             `
-            activeOrderFields = ', greatest(max(paper_votes.updated_date), max(responses.updated_date), max(papers.updated_date)) as activity_date' 
+            activeOrderFields = ', greatest(max(responses.updated_date), max(papers.updated_date)) as activity_date' 
             order = 'activity_date DESC NULLS LAST'
         } else if ( order == 'draft-active' ) {
             activeOrderJoins = `
@@ -215,7 +202,6 @@ module.exports = class PaperDAO {
                     LEFT OUTER JOIN files on paper_versions.file_id = files.id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
                     LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
-                    LEFT OUTER JOIN paper_votes ON paper_votes.paper_id = papers.id
                     ${activeOrderJoins}
                 ${where} 
                 GROUP BY papers.id
@@ -451,6 +437,18 @@ module.exports = class PaperDAO {
 
         if ( results.rowCount == 0) {
             throw new DAOError('deletion-failed', `Attempt to delete paper(${id}) returned no rows modified.`)
+        }
+
+    }
+
+    async refreshPaperScore(id) {
+        const results = await this.database.query(`
+            UPDATE papers SET ( score ) = ( SELECT COALESCE(SUM(vote), 0) as score FROM responses WHERE paper_id = $1 )
+                WHERE papers.id = $1
+        `, [ id ] )
+
+        if ( results.rowCount <= 0 ) {
+            throw new DAOError('update-failed', `Attempt to refresh score for Paper(${id}) failed.`)
         }
 
     }

@@ -112,13 +112,6 @@ const papers = [
                 createdDate: 'TIMESTAMP',
                 updatedDate: 'TIMESTAMP'
             }
-        ],
-        votes: [
-            {
-                paperId: 1,
-                userId: 3,
-                score: 1
-            }
         ]
     },
     {
@@ -156,8 +149,7 @@ const papers = [
                 createdDate: 'TIMESTAMP',
                 updatedDate: 'TIMESTAMP'
             }
-        ],
-        votes: []
+        ]
     }
 ]
 

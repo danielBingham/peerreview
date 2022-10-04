@@ -70,14 +70,6 @@ const files = [
     }
 ]
 
-const paper_votes = [
-    {
-        vote_paperId: 1,
-        vote_userId: 3,
-        vote_score: 1
-    }
-]
-
 
 const fields = [
     {
@@ -158,18 +150,18 @@ const user_field_reputation = [
 const database = { 
     papers: {
         1: [
-            { ...papers[0], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[0], ...paper_votes[0] },
-            { ...papers[0], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[1], ...paper_votes[0] },
+            { ...papers[0], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[0]  },
+            { ...papers[0], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[1]  },
 
-            { ...papers[0], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[0], ...paper_votes[0] },
-            { ...papers[0], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[1], ...paper_votes[0] },
+            { ...papers[0], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[0]  },
+            { ...papers[0], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[1]  },
 
              
-            { ...papers[0], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[0], ...paper_votes[0] },
-            { ...papers[0], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[1], ...paper_votes[0] },
+            { ...papers[0], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[0]  },
+            { ...papers[0], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[1]  },
 
-            { ...papers[0], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[0], ...paper_votes[0] },
-            { ...papers[0], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[1], ...paper_votes[0] },
+            { ...papers[0], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[0]  },
+            { ...papers[0], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[1]  },
         ],
         2: [
             { ...papers[1], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[0]},

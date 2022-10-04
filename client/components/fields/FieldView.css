@@ -2,3 +2,8 @@
     font-size: 2em;
     text-align: center;
 }
+.field-view .header {
+    border-bottom: thin solid #bbb;
+    margin: 20px 0;
+}
+

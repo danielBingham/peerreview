@@ -11,7 +11,6 @@ import Spinner from '/components/Spinner'
 
 import PublishedPaperAuthorsWidget from './widgets/PublishedPaperAuthorsWidget'
 import PublishedPaperFieldsWidget from './widgets/PublishedPaperFieldsWidget'
-import PublishedPaperVoteWidget from './widgets/PublishedPaperVoteWidget'
 
 import PublishedPaperPDFView from './pdf/PublishedPaperPDFView'
 
@@ -81,7 +80,9 @@ const PublishedPaperView = function({ id }) {
                         <PublishedPaperFieldsWidget paper={paper} />
                     </section>
                     <aside className="sidebar">
-                        <PublishedPaperVoteWidget paper={paper} />
+                        <div className="published-paper-vote-widget">
+                            <div className="score">{paper.score}</div>
+                        </div>
                         <div className="published-date">published <DateTag timestamp={paper.updatedDate} /></div>
                         <PublishedPaperAuthorsWidget paper={paper} />
                     </aside>

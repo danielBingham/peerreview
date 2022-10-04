@@ -9,7 +9,7 @@ const THRESHOLDS = {
      *
      * Multiple of field.average_reputation
      */
-    referee: 0,
+    referee: 10,
 
     /**
      * Can publish.  Multiple of field.average_reputation

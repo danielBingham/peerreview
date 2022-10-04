@@ -77,7 +77,7 @@ module.exports = class ReputationGenerationService {
      */
     async recalculateUserReputationForPaper(userId, paperId) {
         const scoreResults = await this.database.query(`
-            SELECT SUM(score) as "totalScore" from paper_votes where paper_id = $1
+            SELECT SUM(vote) as "totalScore" from responses where paper_id = $1
         `, [ paperId ])
 
         if ( scoreResults.rows.length == 0) {

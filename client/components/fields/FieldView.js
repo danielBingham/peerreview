@@ -5,6 +5,8 @@ import ReactMarkdown from 'react-markdown'
 
 import { getField, cleanupRequest } from '/state/fields'
 
+import ReputationThresholds from '/components/fields/widgets/ReputationThresholds'
+import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
 
 import './FieldView.css'
@@ -36,9 +38,7 @@ const FieldView = function(props) {
         return state.fields.dictionary[props.id]
     })
 
-    const reputationThresholds = useSelector(function(state) {
-        return state.reputation.thresholds
-    })
+
 
     // ======= Effect Handling ======================================
     
@@ -71,14 +71,9 @@ const FieldView = function(props) {
         if ( field ) {
             content = ( 
                 <div className="field-details">
-                    <h1>{ field.name }</h1>
+                    <h1>{ field.name }<Field field={field} /></h1>
                     <section className="description"><ReactMarkdown>{ field.description }</ReactMarkdown></section>
-                    <div className="reputation-thresholds">
-                        <h2>Reputation Requirements</h2>
-                        <div className="publish"><span className="label">Publish</span>: { reputationThresholds.publish * field.averageReputation }</div>
-                        <div className="review"><span className="label">Review</span>: { reputationThresholds.review * field.averageReputation }</div>
-                        <div className="referee"><span className="label">Vote/Respond</span>: { reputationThresholds.referee * field.averageReputation }</div>
-                    </div>
+                    <ReputationThresholds fieldId={field.id} />
                 </div>
             )
         } else {

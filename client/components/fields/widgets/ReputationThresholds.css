@@ -1,0 +1,33 @@
+.header h2 {
+    padding: 0;
+    margin: 0;
+}
+.reputation-thresholds .current-reputation {
+    text-align: center;
+}
+.reputation-thresholds .explanation {
+    padding: 10px 50px;
+}
+.reputation-requirements-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    margin-top: 30px;
+}
+.reputation-requirements-wrapper .reputation-requirement {
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+.reputation-requirements-wrapper .reputation-requirement .label {
+    font-size: 14px;
+    font-weight: normal;
+}
+.reputation-requirements-wrapper .publish {
+    grid-column: 1 / 2;
+}
+.reputation-requirements-wrapper .review {
+    grid-column: 2 / 3;
+}
+.reputation-requirements-wrapper .referee {
+    grid-column: 3 / 4;
+}
