@@ -47,6 +47,8 @@ module.exports = class AuthenticationController {
     async postAuthentication(request, response) {
         const credentials = request.body
 
+        credentials.email = credentials.email.toLowerCase()
+
         const results = await this.database.query(
             'select id,password from users where email = $1',
             [ credentials.email ]
@@ -84,6 +86,8 @@ module.exports = class AuthenticationController {
      */
     async patchAuthentication(request, response) {
         const credentials = request.body
+
+        credentials.email = credentials.email.toLowerCase()
 
         try {
             const user = await this.auth.authenticateUser(credentials)

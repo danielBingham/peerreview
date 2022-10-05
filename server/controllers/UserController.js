@@ -115,6 +115,8 @@ module.exports = class UserController {
 
         const loggedInUser = request.session.user
 
+        user.email = user.email.toLowerCase()
+
         // If a user already exists with that email, send a 409 Conflict
         // response.
         //
