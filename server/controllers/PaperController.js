@@ -181,12 +181,21 @@ module.exports = class PaperController {
         // Generates an array of paperIds and compares `papers.id` against the
         // array.
         if ( query.searchString && query.searchString.length > 0) {
-            const results = await this.database.query(`select paper_id from paper_versions WHERE searchable_content @@ websearch_to_tsquery('english', $1) AND is_published=true`, [ query.searchString ])
+            const results = await this.database.query(`
+                SELECT 
+                   id 
+                FROM papers
+                    LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
+                WHERE is_published=true AND 
+                    ( paper_versions.searchable_content @@ websearch_to_tsquery('english', $1) OR
+                        papers.searchable_title @@ websearch_to_tsquery('english', $1) )
+            `, [ query.searchString ])
+
             if ( results.rows.length > 0 ) {
                 count += 1
                 and = ( count > 1 ? ' AND ' : '' )
 
-                const paperIds = results.rows.map((r) => r.paper_id)
+                const paperIds = results.rows.map((r) => r.id)
                 result.where += `${and} papers.id = ANY($${count}::int[])`
                 result.order += `array_position($${count}::bigint[], papers.id)`
                 result.params.push(paperIds)

@@ -116,12 +116,14 @@ CREATE TABLE user_field_settings (
 
 CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
-    title   varchar(1024),
+    title   varchar(1024) NOT NULL,
+    searchable_title tsvector GENERATED ALWAYS AS (to_tsvector('english', title)) STORED,
     is_draft   boolean,
     score   int NOT NULL DEFAULT 0,
     created_date    timestamptz,
     updated_date    timestamptz
 );
+CREATE INDEX papers__title_search_index ON papers USING GIN (searchable_title);
 
 CREATE TABLE paper_versions (
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
