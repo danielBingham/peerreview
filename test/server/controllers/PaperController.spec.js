@@ -1,4 +1,4 @@
-const PaperController = require('../../../server/controllers/papers')
+const PaperController = require('../../../server/controllers/PaperController')
 
 const Logger = require('../../../server/logger')
 const ControllerError = require('../../../server/errors/ControllerError')

@@ -38,6 +38,14 @@ module.exports = class ResponseController {
      * Return a JSON array of all responses in thethis.database.
      */
     async getResponses(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Responses are fully public to read, so there are no restrictions on
+         * calling this endpoint.
+         *
+         * ***********************************************************/
+
         const responses = await this.responseDAO.selectResponses('WHERE responses.paper_id=$1', [ request.params.paper_id ])
 
         if ( ! responses ) {
@@ -53,46 +61,106 @@ module.exports = class ResponseController {
      * Create a new response in the this.database from the provided JSON.
      */
     async postResponses(request, response) {
+        const paperResponse = request.body
+        const paperId = request.params.paper_id
+        const userId = request.session.user.id
+
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * To POST a response a user must be:
+         *
+         * 1. Logged in.
+         * 2. Have 'referee' reputation on Paper(:paper_id).
+         * 3. Not be an author of the Paper(:paper_id).
+         * 4. Not have previously posted a response to Paper(:paper_id).
+         *
+         * Futher the response must:
+         *
+         * 5. repsonse.userId must match the session User.id
+         * 6. response.paperId must match :paper_id
+         * 7. Must include a single verison.
+         * 8. version.content must be at least 1 word.
+         * 9. version.content must be at least 125 words to include a vote.
+         * 10. Included vote must be 1, 0, or -1.
+         *
+         * ***********************************************************/
+        
+        // 1. Logged in.
         if ( ! request.session || ! request.session.user ) {
             throw new ControllerError(403, 'not-authorized', 'User must be logged in to post a response!')
         }
 
-        const paperResponse = request.body
-        paperResponse.paperId = request.params.paper_id
-        paperResponse.userId = request.session.user.id
+        // 5. repsonse.userId must match the session User.id
+        if ( userId != paperResponse.userId ) {
+            throw new ControllerError(403, 'not-authorized:user-mismatch',
+                `User(${userId}) submitted a response for User(${paperResponse.userId}).`)
+        }
 
-        if ( ! paperResponse.versions || paperResponse.versions.length < 1 ) {
+        // 6. response.paperId must match :paper_id
+        if ( paperId != paperResponse.paperId ) {
+            throw new ControllerError(400, 'id-mismatch:paper',
+                `Response submitted for Paper(${paperResponse.paperId}) on route for Paper(${paperId}).`)
+        }
+
+        // 7. Must include a single verison.
+        if ( ! paperResponse.versions || paperResponse.versions.length != 1 ) {
             throw new ControllerError(400, 'no-version',
                 `User(${request.session.user.id}) attempted to submit a response with no versions.`)
         }
 
+        // 8. version.content must be at least 1 character.
+        if ( paperResponse.versions[0].content.length < 1 ) {
+            throw new ControllError(400, 'no-content',
+                `User(${userId}) submitted a response on Paper(${paperId}) with no content.`)
+        }
 
-        // TODO make sure the vote is valid.
+        // 9. version.content must be at least 125 words to include a vote.
+        if ( paperResponse.vote != 0 && paperResponse.versions[0].content.split(/\s/).length < 125 ) {
+            throw new ControllerError(400, 'too-short-to-vote',
+                `User(${userId}) submitted a response on Paper(${paperId}) with a vote and not enough content.`)
+        }
+
+        // 10. Included vote must be 1, 0, or -1.
+        if ( paperResponse.vote > 1 || paperResponse.vote < -1 ) {
+            throw new ControllerError(400, 'invalid-vote',
+                `User(${userId}) submitted an invalid vote on Paper(${paperId}).`)
+        }
         
 
-        if ( paperResponse.userId != request.session.user.id ) {
-            throw new ControllerError(403, 'not-authorized:user-mismatch', `User(${request.session.user.id}) attempted to post a response for different User(${vote.userId}).`)
-        }
-
-        // Ensure they have enough reputation to respond.
+        // 2. Have 'referee' reputation on Paper(:paper_id).
         const canRespond = this.reputationPermissionService.canReferee(paperResponse.userId, paperResponse.paperId)
         if ( ! canRespond ) {
-            throw new ControllerError(400, 'not-enough-reputation', `User(${paperResponse.userId}) attempted to respond to Paper(${paperResponse.paperId}) with out enough reputation to do so!`)
+            throw new ControllerError(400, 'not-enough-reputation', 
+                `User(${paperResponse.userId}) attempted to respond to Paper(${paperResponse.paperId}) with out enough reputation to do so!`)
         }
 
-        // If a response already exists with that name, send a 400 error.
-        //
+        // 3. Not be an author of the Paper(:paper_id).
+        const authorResults = await this.database.query(`
+            SELECT user_id FROM paper_authors WHERE paper_id = $1
+        `, [ paperId ])
+
+        if ( authorResults.rows.find((r) => r.user_id == userId) ) {
+            throw new ControllerError(403, 'not-authorized:author',
+                `User(${userId}) attempted to submit a response to their own Paper(${paperId}).`)
+        }
+
+        // 4. Not have previously posted a response to Paper(:paper_id).
         const responseExistsResults = await this.database.query(
             'SELECT id FROM responses WHERE user_id=$1 AND paper_id=$2',
             [ paperResponse.userId, paperResponse.paperId ]
         )
 
         if (responseExistsResults.rowCount > 0) {
-            throw new ControllerError(400, 'response-exists', `User[${request.session.user.id}] attempted to post a second response to paper[${paperResponse.paperId}].`)
+            throw new ControllerError(400, 'response-exists', 
+                `User[${request.session.user.id}] attempted to post a second response to paper[${paperResponse.paperId}].`)
         }
 
-        // Insert the response.
-        //
+        /********************************************************
+         * Input Validation Complete 
+         *      Create the new Response 
+         ********************************************************/
+
         paperResponse.id = await this.responseDAO.insertResponse(paperResponse)
         for ( const version of paperResponse.versions ) {
             await this.responseDAO.insertResponseVersion(paperResponse, version)
@@ -120,6 +188,13 @@ module.exports = class ResponseController {
      * Get details for a single response in thethis.database.
      */
     async getResponse(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Responses are fully public to read, so there are no restrictions on
+         * calling this endpoint.
+         *
+         * ***********************************************************/
         const paperId = request.params.paper_id
         const id = request.params.id
 

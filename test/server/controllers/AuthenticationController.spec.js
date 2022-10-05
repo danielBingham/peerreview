@@ -1,5 +1,5 @@
 
-const AuthenticationController = require('../../../server/controllers/authentication')
+const AuthenticationController = require('../../../server/controllers/AuthenticationController')
 const AuthenticationService = require('../../../server/services/authentication')
 const Logger = require('../../../server/logger')
 

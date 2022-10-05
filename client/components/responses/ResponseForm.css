@@ -19,6 +19,10 @@
     width: 820px;
     text-align: right;
 }
+.paper-response-form .response-wrapper .word-count {
+    padding: 10px 0;
+    text-align: center;
+}
 
 .paper-response-form .vote-widget {
     margin: 10px auto;

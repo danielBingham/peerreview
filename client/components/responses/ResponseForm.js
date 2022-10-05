@@ -6,13 +6,27 @@ import { postResponses, cleanupRequest } from '/state/responses'
 import './ResponseForm.css'
 
 const ResponseForm = function(props) {
+    
+    // ======= Render State ==========================================
+   
     const [content, setContent] = useState('')
     const [ vote, setVote ] = useState(0)
 
     const [ lengthError, setLengthError] = useState(false)
 
+    // ======= Redux State ==========================================
+    
     const [requestId, setRequestId] = useState(null)
+    const request = useSelector(function(state) {
+        if ( requestId ) {
+            return state.responses.requests[requestId]
+        } else {
+            return null
+        }
+    })
 
+    // ======= Actions and Event Handling ===========================
+    
     const dispatch = useDispatch()
 
     const onSubmit = function(event) {
@@ -38,6 +52,8 @@ const ResponseForm = function(props) {
         setRequestId(dispatch(postResponses(response)))
     }
 
+    // ======= Effect Handling ======================================
+
     useEffect(function() {
         return function cleanup() {
             if ( requestId ) {
@@ -46,6 +62,8 @@ const ResponseForm = function(props) {
         }
     }, [ requestId ])
 
+    // ======= Rendering ======================================
+   
     let error = null
     if ( lengthError ) {
         error = (
@@ -57,7 +75,6 @@ const ResponseForm = function(props) {
     let wordsLeft = (
         <span className="words-left">You have entered { length } of 125 words required to submit a vote with this response.</span>
     )
-
 
     return (
         <div className="paper-response-form">
@@ -88,11 +105,11 @@ const ResponseForm = function(props) {
                         >
                         </textarea>
                     </div>
-                    <div className="submit">
-                        <input type="submit" name="submit" value="Submit Response" />
-                    </div>
                     <div className="word-count">
                         { wordsLeft }
+                    </div>
+                    <div className="submit">
+                        <input type="submit" name="submit" value="Submit Response" />
                     </div>
                 </form>
             </div>

@@ -20,7 +20,7 @@ module.exports = function(database, logger, config) {
     /******************************************************************************
      *          File REST Routes
      ******************************************************************************/
-    const FileController = require('./controllers/files')
+    const FileController = require('./controllers/FileController')
     const fileController = new FileController(database, logger, config)
 
     const upload = new multer({ dest: 'public/uploads/tmp' })
@@ -41,7 +41,7 @@ module.exports = function(database, logger, config) {
     /******************************************************************************
      *          User REST Routes
      ******************************************************************************/
-    const UserController = require('./controllers/users')
+    const UserController = require('./controllers/UserController')
     const userController = new UserController(database, logger, config)
 
     // Get a list of all users.
@@ -166,7 +166,7 @@ module.exports = function(database, logger, config) {
     /******************************************************************************
      *          User Settings REST Routes
      ******************************************************************************/
-    const SettingsController = require('./controllers/settings')
+    const SettingsController = require('./controllers/SettingsController')
     const settingsController = new SettingsController(database, logger)
 
     // Get a list of all settings.
@@ -222,7 +222,7 @@ module.exports = function(database, logger, config) {
     /******************************************************************************
      *          Authentication REST Routes
      ******************************************************************************/
-    const AuthenticationController = require('./controllers/authentication')
+    const AuthenticationController = require('./controllers/AuthenticationController')
     const authenticationController = new AuthenticationController(database, logger, config)
 
     router.post('/authentication', function(request, response, next) {
@@ -280,7 +280,7 @@ module.exports = function(database, logger, config) {
      *          Field REST Routes
      ******************************************************************************/
 
-    const FieldController = require('./controllers/fields')
+    const FieldController = require('./controllers/FieldController')
     const fieldController = new FieldController(database, logger)
 
     // Get a count of fields for a particular query.
@@ -334,7 +334,7 @@ module.exports = function(database, logger, config) {
      *          Paper REST Routes
      ******************************************************************************/
 
-    const PaperController = require('./controllers/papers')
+    const PaperController = require('./controllers/PaperController')
     const paperController = new PaperController(database, logger, config)
     
     router.get('/papers/count', function(request, response, next) {
@@ -406,7 +406,7 @@ module.exports = function(database, logger, config) {
      *      Paper Review REST Routes
      *************************************************************************/
 
-    const ReviewController = require('./controllers/reviews')
+    const ReviewController = require('./controllers/ReviewController')
     const reviewController = new ReviewController(database, logger)
 
     router.get('/reviews/count', function(request, response, next) {
@@ -486,7 +486,7 @@ module.exports = function(database, logger, config) {
      *      Paper Response REST Routes
      *************************************************************************/
 
-    const ResponseController = require('./controllers/responses')
+    const ResponseController = require('./controllers/ResponseController')
     const responseController = new ResponseController(database, logger, config)
 
     router.get('/responses/count', function(request, response, next) {
@@ -514,21 +514,24 @@ module.exports = function(database, logger, config) {
     })
 
     router.put('/paper/:paper_id/response/:id', function(request, response, next) {
-        responseController.putResponse(request, response).catch(function(error) {
+        throw new ControllerError(501, 'not-implemented', `PUT Response is not implemented.`)
+        /*responseController.putResponse(request, response).catch(function(error) {
             next(error)
-        })
+        })*/
     })
 
     router.patch('/paper/:paper_id/response/:id', function(request, response, next) {
-        responseController.patchResponse(request, response).catch(function(error) {
+        throw new ControllerError(501, 'not-implemented', `PATCH Response is not implemented.`)
+        /*responseController.patchResponse(request, response).catch(function(error) {
             next(error)
-        })
+        })*/
     })
 
     router.delete('/paper/:paper_id/response/:id', function(request, response, next) {
-        responseController.deleteResponse(request, response).catch(function(error) {
+        throw new ControllerError(501, 'not-implemented', `DELETE Response is not implemented.`)
+        /*responseController.deleteResponse(request, response).catch(function(error) {
             next(error)
-        })
+        })*/
     })
 
     /**************************************************************************
