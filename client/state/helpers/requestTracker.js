@@ -18,6 +18,7 @@ const createRequestTracker = function(requestId, method, endpoint) {
         endpoint: endpoint,
         timestamp: Date.now(),
         cleaned: false,
+        cacheBusted: false,
         state: 'pending',
         error: null,
         errorData: {},
@@ -108,7 +109,7 @@ export const cleanupRequest = function(state, action) {
         return
     }
 
-    if ( isStale(tracker, cacheTTL) ) {
+    if ( isStale(tracker, cacheTTL) || tracker.cacheBusted ) {
         delete state.requests[action.payload.requestId]
     } else {
         tracker.cleaned = true
@@ -126,9 +127,15 @@ export const garbageCollectRequests = function(state, action) {
         // Only garbage collect requests that are both stale and have been
         // cleaned.  This prevents us from collecting a request that's still in
         // use because it's component hasn't unmounted yet.
-        if ( state.requests[requestId].cleaned && isStale(state.requests[requestId], cacheTTL)) {
+        if ( state.requests[requestId].cleaned && (isStale(state.requests[requestId], cacheTTL) || state.requests[requestId].cacheBusted)) {
             delete state.requests[requestId]
         }
+    }
+}
+
+export const bustRequestCache = function(state, action) {
+    for ( const requestId in state.requests ) {
+        state.requests[requestId].cacheBusted = true
     }
 }
 
@@ -162,6 +169,13 @@ const getRequestFromCache = function(slice, method, endpoint) {
     return function(dispatch, getState) {
         const state = getState()
         for ( const id in state[slice.name].requests) {
+            // It may not have been cleaned yet, because it's still in use, but
+            // we still don't want to reuse it, because some other request
+            // invalidated the data it contained.
+            if ( state[slice.name].requests[id].cacheBusted) {
+                continue
+            }
+            
             if ( state[slice.name].requests[id].method == method && state[slice.name].requests[id].endpoint == endpoint ) {
                 const request = state[slice.name].requests[id]
                 if ( request && request.state == 'fulfilled' ) {

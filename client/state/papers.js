@@ -11,6 +11,7 @@ import {
     startRequestTracking, 
     recordRequestFailure, 
     recordRequestSuccess, 
+    bustRequestCache,
     useRequest as useTrackedRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
@@ -169,6 +170,7 @@ export const papersSlice = createSlice({
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
         useRequest: useTrackedRequest,
+        bustRequestCache: bustRequestCache,
         cleanupRequest: function(state, action) {
             action.payload.cacheTTL = cacheTTL
             cleanupTrackedRequest(state, action)
@@ -257,6 +259,7 @@ export const getPapers = function(params, replaceList) {
  */
 export const postPapers = function(paper) {
     return function(dispatch, getState) {
+        dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'POST', '/papers', paper,
             function(returnedPaper) {
@@ -311,6 +314,7 @@ export const getPaper = function(id) {
  */
 export const putPaper = function(paper) {
     return function(dispatch, getState) {
+        dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'PUT', `/paper/${paper.id}`, paper,
             function(returnedPaper) {
@@ -338,6 +342,7 @@ export const putPaper = function(paper) {
  */
 export const patchPaper = function(paper) {
     return function(dispatch, getState) {
+        dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'PATCH', `/paper/${paper.id}`, paper,
             function(returnedPaper) {
@@ -367,6 +372,7 @@ export const deletePaper = function(paper) {
     return function(dispatch, getState) {
         const endpoint = '/paper/' + paper.id
 
+        dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'DELETE', `/paper/${paper.id}`, null,
             function(response) {
@@ -392,6 +398,7 @@ export const deletePaper = function(paper) {
  */
 export const postPaperVersions = function(paper, version) {
     return function(dispatch, getState) {
+        dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'POST', `/paper/${paper.id}/versions`, version,
             function(returnedPaper) {
@@ -420,6 +427,7 @@ export const postPaperVersions = function(paper, version) {
  */
 export const patchPaperVersion = function(paper, version) {
     return function(dispatch, getState) {
+        dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'PATCH', `/paper/${paper.id}/version/${version.version}`, version,
             function(returnedPaper) {
@@ -433,29 +441,6 @@ export const patchPaperVersion = function(paper, version) {
     }
 }
 
-
-/**
- * POST /paper/:id/votes
- *
- * Add a vote to a paper.
- *  
- * Makes the request asynchronously and returns a id that can be used to track
- * the request and retreive the results from the state slice.
- *
- * @param {object} vote - A populated vote object.
- *
- * @returns {string} A uuid requestId that can be used to track this request.
- */
-export const postVotes = function(vote) {
-    return function(dispatch, getState) {
-        return makeTrackedRequest(dispatch, getState, papersSlice,
-            'POST', `/paper/${vote.paperId}/votes`, vote,
-            function(returnedVote) {
-                dispatch(papersSlice.actions.addVoteToPaper(returnedVote))
-            }
-        )
-    }
-}
 
 
 export const {  addPapersToDictionary, appendPapersToList, removePapers, clearList, setDraft, cleanupRequest   }  = papersSlice.actions

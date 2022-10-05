@@ -10,6 +10,7 @@ import {
     recordRequestFailure, 
     recordRequestSuccess, 
     useRequest,
+    bustRequestCache,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -129,6 +130,7 @@ export const fieldsSlice = createSlice({
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
         useRequest: useRequest,
+        bustRequestCache: bustRequestCache,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -191,6 +193,7 @@ export const postFields = function(field) {
     return function(dispatch, getState) {
         const endpoint = '/fields'
         const body = field
+        dispatch(fieldsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'POST', endpoint, body,
             function(returnedField) {
@@ -238,6 +241,7 @@ export const getField = function(id) {
  */
 export const putField = function(field) {
     return function(dispatch, getState) {
+        dispatch(fieldsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'PUT', `/field/${field.id}`, field,
             function(returnedField) {
@@ -261,6 +265,7 @@ export const putField = function(field) {
  */
 export const patchField = function(field) {
     return function(dispatch, getState) {
+        dispatch(fieldsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'PATCH', `/field/${field.id}`, field,
             function(returnedField) {
@@ -284,6 +289,7 @@ export const patchField = function(field) {
  */
 export const deleteField = function(field) {
     return function(dispatch, getState) {
+        dispatch(fieldsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'DELETE', `/field/${field.id}`, null,
             function(response) {

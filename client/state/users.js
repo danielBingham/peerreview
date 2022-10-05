@@ -10,6 +10,7 @@ import {
     recordRequestFailure, 
     recordRequestSuccess, 
     useRequest,
+    bustRequestCache,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -166,6 +167,7 @@ export const usersSlice = createSlice({
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
         useRequest: useRequest,
+        bustRequestCache: bustRequestCache,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -223,6 +225,7 @@ export const getUsers = function(name, params) {
  */
 export const postUsers = function(user) {
     return function(dispatch, getState) {
+        dispatch(usersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, usersSlice,
             'POST', '/users', user,
             function(returnedUser) {
@@ -269,6 +272,7 @@ export const getUser = function(id) {
  */
 export const putUser = function(user) {
     return function(dispatch, getState) {
+        dispatch(usersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, usersSlice,
             'PUT', `/user/${user.id}`, user,
             function(returnedUser) {
@@ -302,6 +306,7 @@ export const putUser = function(user) {
  */
 export const patchUser = function(user) {
     return function(dispatch, getState) {
+        dispatch(usersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, usersSlice,
             'PATCH', `/user/${user.id}`, user,
             function(returnedUser) {
@@ -335,6 +340,7 @@ export const patchUser = function(user) {
  */
 export const deleteUser = function(user) {
     return function(dispatch, getState) {
+        dispatch(usersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, usersSlice,
             'DELETE', `/user/${user.id}`, null,
             function(responseBody) {

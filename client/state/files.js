@@ -8,6 +8,7 @@ import {
     startRequestTracking, 
     recordRequestFailure, 
     recordRequestSuccess, 
+    bustRequestCache,
     useRequest,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
@@ -63,6 +64,7 @@ export const filesSlice = createSlice({
         makeRequest: startRequestTracking, 
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
+        bustRequestCache: bustRequestCache,
         useRequest: useRequest,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
@@ -86,6 +88,7 @@ export const uploadFile = function(file) {
         const formData = new FormData()
         formData.append('file', file)
 
+        dispatch(filesSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, filesSlice,
             'POST', `/upload`, formData,
             function(file) {
@@ -109,6 +112,7 @@ export const uploadFile = function(file) {
  */
 export const deleteFile = function(fileId) {
     return function(dispatch, getState) {
+        dispatch(filesSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, filesSlice,
             'DELETE', `/file/${fileId}`, null,
             function(file) {

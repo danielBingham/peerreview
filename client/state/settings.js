@@ -10,6 +10,7 @@ import {
     recordRequestFailure, 
     recordRequestSuccess, 
     useRequest,
+    bustRequestCache,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -76,6 +77,7 @@ export const settingsSlice = createSlice({
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
         useRequest: useRequest,
+        bustRequestCache: bustRequestCache,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -128,6 +130,7 @@ export const postSettings = function(setting) {
             endpoint = '/settings'
         }
 
+        dispatch(settingsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, settingsSlice,
             'POST', endpoint, setting,
             function(returnedSetting) {
@@ -181,6 +184,7 @@ export const getSetting = function(userId, id) {
 export const putSetting = function(setting) {
     return function(dispatch, getState) {
         const endpoint = `/user/${setting.id}/setting/${setting.id}`
+        dispatch(settingsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, settingsSlice,
             'PUT', endpoint, setting,
             function(returnedSetting) {
@@ -209,6 +213,7 @@ export const putSetting = function(setting) {
 export const patchSetting = function(setting) {
     return function(dispatch, getState) {
         const endpoint = `/user/${setting.userId}/setting/${setting.id}` 
+        dispatch(settingsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, settingsSlice,
             'PATCH', endpoint, setting,
             function(returnedSetting) {
@@ -237,6 +242,7 @@ export const patchSetting = function(setting) {
 export const deleteSetting = function(setting) {
     return function(dispatch, getState) {
         const endpoint = `/user/${setting.userId}/setting/${setting.id}`
+        dispatch(settingsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, settingsSlice,
             'DELETE', endpoint, null,
             function(response) {

@@ -10,6 +10,7 @@ import {
     recordRequestFailure, 
     recordRequestSuccess, 
     useRequest,
+    bustRequestCache,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
 
@@ -168,6 +169,7 @@ export const reviewsSlice = createSlice({
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess, 
         useRequest: useRequest,
+        bustRequestCache: bustRequestCache,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -278,6 +280,8 @@ export const getReviews = function(paperId) {
  */
 export const postReviews = function(review) {
     return function(dispatch, getState) {
+
+        dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'POST', `/paper/${review.paperId}/reviews`, review,
             function(returnedReview) {
@@ -357,6 +361,7 @@ export const getReview = function(paperId, id) {
  */
 export const patchReview = function(paperId, review) {
     return function(dispatch, getState) {
+        dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'PATCH', `/paper/${paperId}/review/${review.id}`, review,
             function(returnedReview) {
@@ -380,6 +385,7 @@ export const patchReview = function(paperId, review) {
  */
 export const deleteReview = function(review) {
     return function(dispatch, getState) {
+        dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'DELETE', `/paper/${review.paperId}/review/${review.id}`, null,
             function(response) {
@@ -405,6 +411,7 @@ export const deleteReview = function(review) {
  */
 export const postReviewThreads = function(paperId, reviewId, threads) {
     return function(dispatch, getState) {
+        dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'POST', `/paper/${paperId}/review/${reviewId}/threads`, threads,
             function(returned) {
@@ -431,6 +438,7 @@ export const postReviewThreads = function(paperId, reviewId, threads) {
  */
 export const postReviewComments = function(paperId, reviewId, threadId, comments) {
     return function(dispatch, getState) {
+        dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'POST', `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comments`, comments,
             function(returnedReview) {
@@ -476,6 +484,7 @@ const checkForDeleteRequest = function(paperId, reviewId, state) {
 export const patchReviewComment = function(paperId, reviewId, threadId, comment) {
     return function(dispatch, getState) {
         const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comment/${comment.id}`
+        dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'PATCH', endpoint, comment,
             function(returnedReview) {
@@ -505,6 +514,7 @@ export const patchReviewComment = function(paperId, reviewId, threadId, comment)
 export const deleteReviewComment = function(paperId, reviewId, threadId, comment) {
     return function(dispatch, getState) {
         const endpoint = `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comment/${comment.id}`
+        dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'DELETE', endpoint, null,
             function(returnedReview) {

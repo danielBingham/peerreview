@@ -11,8 +11,9 @@ import {
     recordRequestFailure, 
     recordRequestSuccess, 
     useRequest,
+    bustRequestCache,
     cleanupRequest as cleanupTrackedRequest, 
-    garbageCollectRequests as garbageCollectTrackedRequests } from './helpers/requestTracker'
+    garbageCollectRequests } from './helpers/requestTracker'
 
 import { addSettingsToDictionary } from '/state/settings'
 import { reset } from '/state/system'
@@ -53,8 +54,17 @@ export const authenticationSlice = createSlice({
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
         useRequest: useRequest,
-        cleanupRequest: cleanupTrackedRequest, 
-        garbageCollectRequests: garbageCollectTrackedRequests
+        bustRequestCache: bustRequestCache,
+        cleanupRequest: function(state, action) {
+            // Don't cache authentication requests.
+            action.payload.cacheTTL = 0  
+            cleanupTrackedRequest(state, action)
+        }, 
+        garbageCollectRequests: function(state, action) {
+            // Don't cache authentication requests.
+            action.payload = 0  
+            garbageCollectRequests(state, action)
+        }
     }
 
 })
@@ -73,6 +83,8 @@ export const getAuthentication = function() {
     return function(dispatch, getState) {
         const endpoint = '/authentication'
 
+        // TODO techdebt May need a way to just turn off using cached requests in certain
+        // cases.
         return makeTrackedRequest(dispatch, getState, authenticationSlice,
             'GET', endpoint, null,
             function(responseBody ) {
@@ -110,6 +122,7 @@ export const postAuthentication = function(email, password) {
             email: email,
             password: password
         }
+        dispatch(authenticationsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, authenticationSlice,
             'POST', endpoint, body,
             function(responseBody) {
@@ -162,6 +175,7 @@ export const deleteAuthentication = function() {
     return function(dispatch, getState) {
         const endpoint = '/authentication'
 
+        dispatch(authenticationsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, authenticationSlice,
             'DELETE', endpoint, null,
             function(responseBody) {
