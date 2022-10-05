@@ -38,6 +38,7 @@ const FieldsInput = function(props) {
     const [currentField, setCurrentField] = useState('')
     const [fieldSuggestions, setFieldSuggestions] = useState([])
     const [suggestionsError, setSuggestionsError] = useState(null)
+    const [fieldSelectedError, setFieldSelectedError] = useState(false)
 
     // ======= Request Tracking =====================================
 
@@ -80,8 +81,27 @@ const FieldsInput = function(props) {
      * Clear the suggestions list and all its associated state.
      */
     const clearSuggestions = function() {
+        setFieldSelectedError(false)
         setFieldSuggestions([])
         setSuggestionsError(null)
+    }
+
+    /**
+     * Append the given field to the selected fields list.
+     *
+     * @param {object} field    The `field` object for the field we'd like to
+     * append.  See `/server/daos/field.js::hydrateField` for the object's
+     * structure.
+     */
+    const appendField = function(field) {
+        if ( props.fields.find((f) => f.id == field.id) ) {
+            setFieldSelectedError(true)
+            return false
+        }
+
+        props.setFields([ ...props.fields, field])
+        setCurrentField('')
+        clearSuggestions()
     }
 
     /**
@@ -101,25 +121,11 @@ const FieldsInput = function(props) {
             event.preventDefault()
 
             if (fieldSuggestions.length > 0) {
-                props.setFields([ ...props.fields,fieldSuggestions[0]])
-                setCurrentField('')
-                clearSuggestions()
+                appendField(fieldSuggestions[0])
             }
         }
     }
 
-    /**
-     * Append the given field to the selected fields list.
-     *
-     * @param {object} field    The `field` object for the field we'd like to
-     * append.  See `/server/daos/field.js::hydrateField` for the object's
-     * structure.
-     */
-    const appendField = function(field) {
-        props.setFields([ ...props.fields, field])
-        setCurrentField('')
-        clearSuggestions()
-    }
 
     /**
      * Remove a field from the selected fields list.
@@ -235,6 +241,7 @@ const FieldsInput = function(props) {
             <label htmlFor="fields">{ props.title }</label>
             <div className="explanation">{ props.explanation }</div>
             <div className="selected-fields">{fieldList}</div>
+            { fieldSelectedError && <div className="error">You've already added that field.</div> }
             <input type="text" 
                 name="fields" 
                 value={currentField}

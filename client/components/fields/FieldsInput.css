@@ -31,3 +31,6 @@
     padding: 5px;
     border: thin solid #bbb;
 }
+.fields-input .error {
+    padding: 10px;
+}
