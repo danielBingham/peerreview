@@ -122,7 +122,7 @@ export const postAuthentication = function(email, password) {
             email: email,
             password: password
         }
-        dispatch(authenticationsSlice.actions.bustRequestCache())
+        dispatch(authenticationSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, authenticationSlice,
             'POST', endpoint, body,
             function(responseBody) {

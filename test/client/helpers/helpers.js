@@ -9,6 +9,7 @@ export const getTracker = function(requestId, method, endpoint) {
         endpoint: endpoint,
         timestamp: 'NOW',
         cleaned: false,
+        cacheBusted: false,
         state: 'pending',
         result: null,
         error: null,
