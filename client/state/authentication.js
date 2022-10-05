@@ -175,7 +175,7 @@ export const deleteAuthentication = function() {
     return function(dispatch, getState) {
         const endpoint = '/authentication'
 
-        dispatch(authenticationsSlice.actions.bustRequestCache())
+        dispatch(authenticationSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, authenticationSlice,
             'DELETE', endpoint, null,
             function(responseBody) {
