@@ -3,16 +3,42 @@
 /* Allows us to do fuzzy finding. */
 CREATE EXTENSION pg_trgm;
 
+/*****************************************************************************
+ * Feature Flags
+ *****************************************************************************/
+
+CREATE TYPE feature_status AS ENUM(
+    'created', /* the feature's row has been inserted into the databse table */
+    'initialized', /* the feature has been initialized */
+    'migrating', /* the feature's data migration is being run */
+    'migrated', /* the feature's data has been successfully migrated */
+    'enabled',
+    'disabled',
+    'rolling-back', 
+    'rolled-back', 
+    'deinitialized'
+);
+CREATE TABLE features (
+    id bigserial PRIMARY KEY
+    name varchar(256),
+    status feature_status DEFAULT 'created',
+    created_date timestamptz,
+    updated_date timestamptz
+);
+CREATE INDEX features__name ON features (name);
+
 /******************************************************************************
  * Users 
  *****************************************************************************/
 
 CREATE TYPE user_status AS ENUM('invited', 'unconfirmed', 'confirmed');
+CREATE TYPE user_permissions AS ENUM('user', 'moderator', 'admin', 'superadmin');
 CREATE TABLE users (
     id bigserial PRIMARY KEY,
     blind_id uuid DEFAULT gen_random_uuid(), 
     orcid_id varchar(256),
     status user_status DEFAULT 'unconfirmed',
+    permissions user_permissions DEFAULT 'user',
     name varchar(256),
     password varchar(256),
 /*    file_id uuid REFERENCES files(id), Added below with an alter statement. */
