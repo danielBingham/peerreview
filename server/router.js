@@ -2,8 +2,6 @@
  *         API Router v0 
  *
  * This is the RESTful API router.  It contains all of our backend API routes.
- * For now, all of the routes and their implementations are defined in this
- * file.  
  *
  * NOTE: This file is versioned and loaded on ``/api/0.0.0/``.  So ``/users`` is
  * really ``/api/0.0.0/users``.  This is so that we can load multiple versions
@@ -13,9 +11,39 @@ module.exports = function(database, logger, config) {
     const express = require('express')
     const multer = require('multer')
 
-
     const ControllerError = require('./errors/ControllerError')
+
     const router = express.Router()
+
+    /******************************************************************************
+     * Feature Flag Management and Migration Rest Routes
+     *****************************************************************************/
+    const FeatureController = require('./controllers/FeatureController')
+    const featureController = new FeatureController(database, logger, config)
+
+    router.get('/features', function(request, response, next) {
+        featureController.getFeatures(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/features', function(request, response, next) {
+        featureController.postFeatures(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/feature/:name', function(request, response, next) {
+        featureController.getFeature(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/feature/:name', function(request, response, next) {
+        featureController.patchFeature(request, response).catch(function(error) {
+            next(error)
+        })
+    })
 
     /******************************************************************************
      *          File REST Routes
@@ -137,6 +165,10 @@ module.exports = function(database, logger, config) {
      * Reputation Administration Methods
      ****************************************************************/
 
+    // NOTE: These are here for testing and development purposes only.
+    // TODO Remove before we go to production.  (Or formalize into a
+    // admin/development interface only loaded on development and staging
+    // environments.)
     const ReputationService = require('./services/ReputationGenerationService')
     const reputationService = new ReputationService(database, logger)
     router.get('/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {

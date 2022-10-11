@@ -13,6 +13,11 @@ import logger from '/logger'
 import { getConfiguration, cleanupRequest as cleanupSystemRequest } from '/state/system'
 import { getThresholds, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 import { getAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '/state/authentication'
+import { getFeatures, cleanupRequest as cleanupFeaturesRequest } from '/state/features'
+
+// Admin page for managing features.  Must be logged in and an admin to load it
+// here.
+import AdminPage from '/pages/AdminPage'
 
 import Header from '/components/header/Header'
 import NeedEmailConfirmationNotice from '/components/authentication/NeedEmailConfirmationNotice'
@@ -80,13 +85,21 @@ const App = function(props) {
         }
     })
     
-    
     const [authenticationRequestId, setAuthenticationRequestId] = useState(null)
     const authenticationRequest = useSelector(function(state) {
         if ( ! authenticationRequestId ) {
             return null
         } else {
             return state.authentication.requests[authenticationRequestId]
+        }
+    })
+
+    const [ featuresRequestId, setFeaturesRequestId] = useState(null)
+    const featuresRequest = useSelector(function(state) {
+        if ( featuresRequestId ) {
+            return state.features.requests[featuresRequestId]
+        } else {
+            return null
         }
     })
 
@@ -117,6 +130,7 @@ const App = function(props) {
             // Logger is a singleton, this will effect all other imports.
             logger.setLevel(configuration.log_level)
             setReputationThresholdsRequestId(dispatch(getThresholds()))
+            setFeaturesRequestId(dispatch(getFeatures()))
             setAuthenticationRequestId(dispatch(getAuthentication()))
         } else if ( configurationRequest && configurationRequest.state == 'failed') {
             if ( retries < 5 ) {
@@ -150,16 +164,25 @@ const App = function(props) {
         }
     }, [ authenticationRequestId ])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( featuresRequestId ) {
+                dispatch(cleanupFeaturesRequest({ requestId: featuresRequestId }))
+            }
+        }
+    }, [ featuresRequestId ])
+
     // ======= Render ===============================================
 
-    if ( ! configurationRequestId || ! authenticationRequestId || ! reputationThresholdsRequestId) {
+    if ( ! configurationRequestId || ! authenticationRequestId || ! reputationThresholdsRequestId || ! featuresRequestId) {
         return (
             <Spinner />
         )
     } else if ( (configurationRequest && configurationRequest.state != 'fulfilled')
         || (authenticationRequest && authenticationRequest.state != 'fulfilled')
-        || (reputationThresholdsRequest && reputationThresholdsRequest.state != 'fulfilled')) 
-    {
+        || (reputationThresholdsRequest && reputationThresholdsRequest.state != 'fulfilled')
+        || (featuresRequest && featuresRequest.state != 'fulfilled')
+    ) {
         if (configurationRequest && configurationRequest.state == 'failed' && retries < 5) {
             return (<div className="error">Attempt to retrieve configuration from the backend failed, retrying...</div>)
         } else if (configurationRequest && configurationRequest.state == 'failed' && retries >= 5 ) {
@@ -168,6 +191,8 @@ const App = function(props) {
             return (<div className="error">Authentication request failed with error: {authenticationRequest.error}.</div>)
         } else if (reputationThresholdsRequest && reputationThresholdsRequest.state == 'failed' ) {
             return (<div className="error">Attempt to retrieve reputation thresholds failed with error: {reputationThresholdsRequest.error}.</div>)
+        } else if ( featuresRequest & featuresRequest.state == 'failed' ) {
+            return (<div className="error">Attempt to retrieve feature list failed with error: { featuresRequest.error}</div> )
         }
 
         return (
@@ -191,6 +216,7 @@ const App = function(props) {
                 <Routes>
                     <Route path="/" element={ <HomePage /> } />
                     <Route path="/about" element={ <AboutPage />} />
+                    <Route path="/admin" element={ <AdminPage />} />
 
                     { /* ========== Authentication Controls =============== */ }
                     <Route path="/register" element={ <RegistrationPage /> } />

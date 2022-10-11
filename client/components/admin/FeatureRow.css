@@ -1,0 +1,27 @@
+.feature-row {
+    display: grid;
+    grid-template-columns: 200px 200px auto;
+}
+.feature-row .name{
+    grid-column: 1 / 2;
+    padding: 10px;
+    font-weight: bold;
+    text-align: center;
+}
+.feature-row .status {
+    grid-column: 2 / 3;
+    padding: 10px;
+    text-align: center;
+}
+.feature-row .controls {
+    grid-column: 3 / 4;
+    padding: 10px;
+    text-align: center;
+}
+.feature-row .controls button {
+    margin: 0 10px;
+    padding: 5px;
+    text-align: center;
+}
+
+

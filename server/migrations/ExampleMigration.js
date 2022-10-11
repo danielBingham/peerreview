@@ -39,7 +39,7 @@ module.exports = class ExampleMigration {
     /**
      * Rollback the setup phase.
      */
-    uninitialize() {
+    async uninitialize() {
         const sql = `
             DROP TABLE example 
         `
@@ -53,10 +53,21 @@ module.exports = class ExampleMigration {
      *
      * Migrations always need to be non-destructive and rollbackable.  
      */
-    up(targets) {}
+    async up(targets) {
+        const sql = `
+            ALTER TABLE example ADD COLUMN name varchar(256)
+        `
+
+        await this.database.query(sql, [])
+    }
 
     /**
      * Rollback the migration.  Again, needs to be non-destructive.
      */
-    down(targets) {}
+    async down(targets) {
+        const sql = `
+            ALTER TABLE example DROP COLUMN name
+        `
+        await this.database.query(sql, [])
+    }
 }

@@ -60,9 +60,13 @@ app.use(cors({
 // Use a development http logger.
 app.use(morgan('dev'))
 
+
+// Make sure the request limit is large so that we don't run into it.
 app.use(express.json({ limit: "50mb" }))
 app.use(express.urlencoded({ limit: "50mb", extended: false }))
 
+// Set up our session storage.  We're going to use database backed sessions to
+// maintain a stateless app.
 const sessionStore = new pgSession({
     pool: connection,
     createTableIfMissing: true

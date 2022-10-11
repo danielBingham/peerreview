@@ -9,6 +9,7 @@ CREATE EXTENSION pg_trgm;
 
 CREATE TYPE feature_status AS ENUM(
     'created', /* the feature's row has been inserted into the databse table */
+    'initializing',
     'initialized', /* the feature has been initialized */
     'migrating', /* the feature's data migration is being run */
     'migrated', /* the feature's data has been successfully migrated */
@@ -16,16 +17,15 @@ CREATE TYPE feature_status AS ENUM(
     'disabled',
     'rolling-back', 
     'rolled-back', 
-    'deinitialized'
+    'uninitializing',
+    'uninitialized'
 );
 CREATE TABLE features (
-    id bigserial PRIMARY KEY
-    name varchar(256),
+    name varchar(256) PRIMARY KEY,
     status feature_status DEFAULT 'created',
     created_date timestamptz,
     updated_date timestamptz
 );
-CREATE INDEX features__name ON features (name);
 
 /******************************************************************************
  * Users 

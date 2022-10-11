@@ -33,53 +33,22 @@ module.exports = class FeatureService {
          */
         this.features = {
             'example':  {
-                name: 'example',
-                githubIssue: '',
-                migration: new ExampleMigration(database, logger, config),
-                entity: null
+                migration: new ExampleMigration(database, logger, config)
             }
         }
     }
 
-    async getFeature(id) {
-        const entities = await this.featureDAO.selectFeatures(`WHERE features.id = $1`, [ id ])
-
-        if ( entities.length <= 0 ) {
-            return null
-        }
-
-        const entity = entities[0]
-
-        if ( ! this.features[entity.name] ) {
-            throw new ServiceError('feature-not-defined', 
-                `Found Feature(${id}) in the database, by not the dictionary.`)
-        }
-
-        this.features[entity.name].entity = entity
-
-        return this.features[entity.name]
-
-
+    async updateFeatureStatus(name, status) {
+        await this.featureDAO.updatePartialFeature({ name: name, status: status })
     }
 
-    async getAll() {
-        const entities = await this.featureDAO.selectFeatures()
-
-        for(const entity of entities) {
-            if ( ! this.features[entity.name] ) {
-                throw new ServiceError('missing-feature'
-                    `Found Feature(${entity.id}) named ${entity.name} in the database, but not in the features dictionary.`)
-            }
-
-            this.features[entity.name].entity = entity
+    async insert(name) {
+        if ( ! this.features[name] ) {
+            return new ServiceError('missing-feature',
+                `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
-        return this.features
-    }
-
-    async getEnabledFeatures() {
-        const entities = await this.featureDAO.selectFeatures(`WHERE features.status = $1`, [ 'enabled' ])
-        return entities
+        await this.featureDAO.insertFeature({ name: name })
     }
 
     async initialize(name) {
@@ -88,19 +57,69 @@ module.exports = class FeatureService {
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
-        const id = await this.featureDAO.insertFeature(this.features[name])
+        await this.updateFeatureStatus(name, 'initializing')
 
         await this.features[name].migration.initialize()
 
-        await this.featureDAO.updatePartialFeature({ id: id, status: 'initialized' })
-
-        const entity = await this.featureDAO.selectFeatures('WHERE id = $1', [ id ])
-
-        this.features[name].entity = entity
-
-        return this.features[name]
+        await this.updateFeatureStatus(name, 'initialized')
     }
 
+    async migrate(name) {
+        if ( ! this.features[name] ) {
+            return new ServiceError('missing-feature',
+                `Attempt to initialize Feature(${name}) which doesn't exist.`)
+        }
+
+        await this.updateFeatureStatus(name, 'migrating')
+
+        await this.features[name].migration.up()
+
+        await this.updateFeatureStatus(name, 'migrated')
+    }
+
+    async enable(name) {
+        if ( ! this.features[name] ) {
+            return new ServiceError('missing-feature',
+                `Attempt to initialize Feature(${name}) which doesn't exist.`)
+        }
+
+        await this.updateFeatureStatus(name, 'enabled')
+    }
+
+    async disable(name) {
+        if ( ! this.features[name] ) {
+            return new ServiceError('missing-feature',
+                `Attempt to initialize Feature(${name}) which doesn't exist.`)
+        }
+
+        await this.updateFeatureStatus(name, 'disabled')
+    }
+
+    async rollback(name) {
+        if ( ! this.features[name] ) {
+            return new ServiceError('missing-feature',
+                `Attempt to initialize Feature(${name}) which doesn't exist.`)
+        }
+
+        await this.updateFeatureStatus(name, 'rolling-back')
+
+        await this.features[name].migration.down()
+
+        await this.updateFeatureStatus(name, 'rolled-back')
+    }
+
+    async uninitialize(name) {
+        if ( ! this.features[name] ) {
+            return new ServiceError('missing-feature',
+                `Attempt to initialize Feature(${name}) which doesn't exist.`)
+        }
+
+        await this.updateFeatureStatus(name, 'uninitializing')
+
+        await this.features[name].migration.uninitialize()
+
+        await this.updateFeatureStatus(name, 'uninitialized')
+    }
 
 
 }
