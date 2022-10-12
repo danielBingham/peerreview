@@ -279,6 +279,12 @@ module.exports = function(database, logger, config) {
         // Delete isn't async
         authenticationController.deleteAuthentication(request, response)
     })
+    
+    router.post('/orcid/authentication', function(request, response, next) {
+        authenticationController.postOrcidAuthentication(request, response).catch(function(error) {
+            next(error)
+        })
+    })
 
     /**************************************************************************
      *      Token Handling REST Routes
@@ -298,15 +304,6 @@ module.exports = function(database, logger, config) {
         })
     })
 
-    /******************************************************************************
-     *          Authentication REST Routes
-     ******************************************************************************/
-    
-    router.post('/orcid/authentication', function(request, response, next) {
-        authenticationController.postOrcidAuthentication(request, response).catch(function(error) {
-            next(error)
-        })
-    })
 
     /******************************************************************************
      *          Field REST Routes

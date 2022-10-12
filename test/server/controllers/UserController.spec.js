@@ -412,7 +412,6 @@ describe('UserController', function() {
 
             connection.query
                 .mockReturnValueOnce({ rowcount: 1, rows: [ { id: 1, password: auth.hashPassword(oldPassword) } ] })
-                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount:1, rows: [] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
 
@@ -441,7 +440,7 @@ describe('UserController', function() {
             await userController.patchUser(request, response)
 
             const expectedSQL = 'UPDATE users SET password = $1, updated_date = now() WHERE id = $2'
-            const databaseCall = connection.query.mock.calls[2]
+            const databaseCall = connection.query.mock.calls[1]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(await auth.checkPassword(password, databaseCall[1][0])).toEqual(true)
 

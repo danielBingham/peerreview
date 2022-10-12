@@ -12,6 +12,12 @@ const SettingsDAO = require('../daos/settings')
 const ControllerError = require('../errors/ControllerError')
 const ServiceError = require('../errors/ServiceError')
 
+/**
+ * Controller for the authentication resource.
+ *
+ * The authentication resource represents the user's authentication state,
+ * whether they are logged in or not.
+ */
 module.exports = class AuthenticationController {
 
     constructor(database, logger, config) {
@@ -25,7 +31,24 @@ module.exports = class AuthenticationController {
     }
 
 
+    /**
+     * GET /authentication
+     *
+     * Check the session and get the user (or null) and their settings.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async getAuthentication(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Any user may call this endpoint.  It simply checks the session and
+         * returns what it finds.
+         * 
+         * **********************************************************/
         if (request.session.user) {
             const settings = await this.settingsDAO.selectSettings('WHERE user_settings.user_id = $1', [ request.session.user.id ])
             if ( settings.length == 0 ) {
@@ -44,57 +67,41 @@ module.exports = class AuthenticationController {
         }
     }
 
+    /**
+     * POST /authentication
+     *
+     * Used to authenticate a user using the credentials provided in the
+     * request body, and logs them into the application, storing their user
+     * object in the session.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} request.body The user's authentication credentials.
+     * @param {string} request.body.email   The user's email.
+     * @param {string} request.body.password    The user's password.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async postAuthentication(request, response) {
         const credentials = request.body
-
         credentials.email = credentials.email.toLowerCase()
 
-        const results = await this.database.query(
-            'select id,password from users where email = $1',
-            [ credentials.email ]
-        )
-
-        if ( results.rows.length <= 0) {
-            throw new ControllerError(403, 'authentication-failed', `No users exist with email ${credentials.email}.`)
-        }
-
-        if (results.rows.length > 1 ) {
-            throw new ControllerError(403, 'authentication-failed', `Multiple users found for email ${credentials.email}.`)
-        }
-
-        if ( ! results.rows[0].password || results.rows[0].password.trim().length <= 0) {
-            throw new ControllerError(400, 'no-password', `User(${credentials.email}) doesn't have a password set.`)
-        }
-
-        if ( ! credentials.password || credentials.password.trim().length <= 0 ) {
-            throw new ControllerError(400, 'password-required', `User(${credentials.email}) attempted to login with no password.`)
-        }
-
-        const userMatch = results.rows[0]
-        const passwords_match = this.auth.checkPassword(credentials.password, userMatch.password)
-        if (! passwords_match) {
-            throw new ControllerError(403, 'authentication-failed', `Failed login for email ${credentials.email}.`)
-        }
-
-        const responseBody = await this.auth.loginUser(userMatch.id, request)
-        return response.status(200).json(responseBody)
-    }
-
-    /**
-     * Can be used to check a user's authentication with out modifying the
-     * session.
-     */
-    async patchAuthentication(request, response) {
-        const credentials = request.body
-
-        credentials.email = credentials.email.toLowerCase()
-
+        /************************************************************
+         *  This is the authentication endpoint, so anyone may call it.
+         *  Authentication checks happen in
+         *  AuthenticationService::authenticateUser()
+         ************************************************************/
         try {
-            const user = await this.auth.authenticateUser(credentials)
-            return response.status(200).json(user)
+            const userId = await this.auth.authenticateUser(credentials)
+
+            const responseBody = await this.auth.loginUser(userId, request)
+
+            return response.status(200).json(responseBody)
         } catch (error ) {
             if ( error instanceof ServiceError ) {
-                if ( error.type == 'multiple-users') {
+                if ( error.type == 'no-user' ) {
+                    throw new ControllerError(403, 'authentication-failed', error.message)
+                } else if ( error.type == 'multiple-users') {
                     throw new ControllerError(403, 'authentication-failed', error.message)
                 } else if ( error.type == 'no-user-password' ) {
                     throw new ControllerError(403, 'authentication-failed', error.message)
@@ -111,7 +118,77 @@ module.exports = class AuthenticationController {
         }
     }
 
+    /**
+     * PATCH /authentication
+     *
+     * Can be used to check a user's authentication with out modifying the
+     * session.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} request.body Should contain the authentication credentials.
+     * @param {string} request.body.email   The user's email.
+     * @param {string} request.body.password    The user's password.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
+    async patchAuthentication(request, response) {
+        const credentials = request.body
+        credentials.email = credentials.email.toLowerCase()
+
+        /************************************************************
+         *  This is the endpoint for validating an existing authentication, so
+         *  anyone may call it.  Authentication checks happen in
+         *  AuthenticationService::authenticateUser()
+         ************************************************************/
+
+        try {
+            const userId = await this.auth.authenticateUser(credentials)
+
+            const users = await this.userDAO.selectUsers('WHERE users.id = $1', [ userId ])
+
+            if ( users.length <= 0 ) {
+                throw new ControllerError(500, 'server-error', `Failed to find User(${userId}) after authenticating them!`)
+            }
+
+            return response.status(200).json(users[0])
+        } catch (error ) {
+            if ( error instanceof ServiceError ) {
+                if ( error.type == 'no-user' ) {
+                    throw new ControllerError(403, 'authentication-failed', error.message)
+                } else if ( error.type == 'multiple-users') {
+                    throw new ControllerError(403, 'authentication-failed', error.message)
+                } else if ( error.type == 'no-user-password' ) {
+                    throw new ControllerError(403, 'authentication-failed', error.message)
+                } else if ( error.type == 'no-credential-password' ) {
+                    throw new ControllerError(400, 'password-required', error.message)
+                } else if ( error.type == 'authentication-failed' ) {
+                    throw new ControllerError(403, 'authentication-failed', error.message)
+                } else {
+                    throw error
+                }
+            } else {
+                throw error 
+            }
+        }
+    }
+
+    /**
+     * DELETE /authentication
+     *
+     * Destroy the session and logout the user.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {void} 
+     */
     deleteAuthentication(request, response) {
+        /**********************************************************************
+         * This endpoint simply destroys the session, logging out the user.
+         * Anyone may call it.
+         **********************************************************************/
+
         request.session.destroy(function(error) {
             if (error) {
                 console.error(error)
@@ -122,7 +199,43 @@ module.exports = class AuthenticationController {
         })
     }
 
+    /**
+     * POST /orcid/authentication
+     * 
+     * Authenticate a user through ORCID iD, using their ORCID iD.  This is an
+     * OAuth SSO.
+     *
+     * This endpoint can be called in a couple of different circumstances and
+     * needs to handle each one:
+     *
+     * - It can be called during registration, to create the user account using
+     *   their ORCID account.
+     * - It can be called by a logged in user to connect their ORCID iD to
+     *   their Peer Review account, allowing them to login with ORCID in the
+     *   future and intializing their reputation.
+     * - It can be called to login a user who previously registered with ORCID
+     *   or connected their ORCID to their account.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {string} request.body.code    An ORCID authorization code
+     * obtained from the frontend ORCID authentication flow.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async postOrcidAuthentication(request, response) {
+
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * This being the ORCID iD authentication endpoint, we only need to
+         * validate that they have sent an ORCID authorization code in the
+         * request body.
+         *
+         * 1. The request body contains an ORCID authorization code.
+         * **********************************************************/
+
+        // 1. The request body contains an ORCID authorization code.
         if ( ! request.body.code ) {
             throw new ControllerError(400, 'no-authorization-code', `User attempted orcid authentication with no authorization code!`)
         }

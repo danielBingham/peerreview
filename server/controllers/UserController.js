@@ -280,16 +280,15 @@ module.exports = class UserController {
                 // it as a patch.
                 delete user.token
             } else if ( user.oldPassword ) {
-                let existingUser = null
                 try {
-                    existingUser = await this.auth.authenticateUser({ 
+                    const existingUserId = await this.auth.authenticateUser({ 
                         email: request.session.user.email, 
                         password: user.oldPassword
                     })
 
-                    if ( existingUser.id != user.id) {
+                    if ( existingUserId != user.id) {
                         throw new ControllerError(403, 'not-authorized:authentication-failure',
-                            `User(${user.id}) gave credentials that matched User(${existingUser.id})!`)
+                            `User(${user.id}) gave credentials that matched User(${existingUserId})!`)
                     }
 
                     // OldPassword was valid and the user successfully
@@ -298,7 +297,7 @@ module.exports = class UserController {
                     delete user.oldPassword
                 } catch (error ) {
                     if ( error instanceof ServiceError ) {
-                        if ( error.type == 'authentication-failed' || error.type == 'no-user-password' ) {
+                        if ( error.type == 'authentication-failed' || error.type == 'no-user' || error.type == 'no-user-password' ) {
                             throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
                         } else if ( error.type == 'multiple-users' ) {
                             throw new ControllerError(400, 'multiple-users', error.message)
@@ -322,7 +321,6 @@ module.exports = class UserController {
             user.password  = await this.auth.hashPassword(user.password)
         }
 
-        console.log(user)
         // We only need the Id.
         if ( user.file ) {
             user.fileId = user.file.id
