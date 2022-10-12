@@ -53,6 +53,7 @@ import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
 import PublishedPaperPage from '/pages/papers/PublishedPaperPage'
 import PaperSearchPage from '/pages/papers/PaperSearchPage'
 
+import ErrorBoundary from '/errors/ErrorBoundary'
 import Spinner from '/components/Spinner'
 
 import './app.css';
@@ -203,59 +204,60 @@ const App = function(props) {
     if ( configuration == null ) {
         return (<Spinner />)
     }
-    console.log(currentUser)
 
     // Once our request have finished successfully, we can render the full
     // site.  We should only reach here when both the configurationRequest and
     // authenticationRequest have been fulfilled.
     return (
-        <Router>
-            { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
-            <Header />
-            <main>
-                <Routes>
-                    <Route path="/" element={ <HomePage /> } />
-                    <Route path="/about" element={ <AboutPage />} />
-                    <Route path="/admin" element={ <AdminPage />} />
+        <ErrorBoundary>
+            <Router>
+                { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
+                <Header />
+                <main>
+                    <Routes>
+                        <Route path="/" element={ <HomePage /> } />
+                        <Route path="/about" element={ <AboutPage />} />
+                        <Route path="/admin" element={ <AdminPage />} />
 
-                    { /* ========== Authentication Controls =============== */ }
-                    <Route path="/register" element={ <RegistrationPage /> } />
-                    <Route path="/login" element={ <LoginPage /> } />
-                    <Route path="/orcid/authentication" element={<OrcidAuthenticationPage />} />
-                    <Route path="/orcid/connect" element={<OrcidAuthenticationPage />} />
-                    <Route path="/email-confirmation" element={ <EmailConfirmationPage />} />
-                    <Route path="/reset-password" element={ <ResetPasswordPage /> } />
-                    <Route path="/reset-password-request" element={ <ResetPasswordRequestPage /> } />
-                    <Route path="/accept-invitation" element={ <AcceptInvitationPage /> } />
+                        { /* ========== Authentication Controls =============== */ }
+                        <Route path="/register" element={ <RegistrationPage /> } />
+                        <Route path="/login" element={ <LoginPage /> } />
+                        <Route path="/orcid/authentication" element={<OrcidAuthenticationPage />} />
+                        <Route path="/orcid/connect" element={<OrcidAuthenticationPage />} />
+                        <Route path="/email-confirmation" element={ <EmailConfirmationPage />} />
+                        <Route path="/reset-password" element={ <ResetPasswordPage /> } />
+                        <Route path="/reset-password-request" element={ <ResetPasswordRequestPage /> } />
+                        <Route path="/accept-invitation" element={ <AcceptInvitationPage /> } />
 
-                    { /* ========== Users ================================= */ }
-                    <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 
-                    <Route path="/users" element={ <UsersListPage /> } />
-                    <Route path="/user/:id" element={ <UserProfilePage /> } />
-                    <Route path="/account">
-                        <Route path=":pane" element={ <UserAccountPage /> } />
-                        <Route index element={ <UserAccountPage /> } />
-                    </Route>
+                        { /* ========== Users ================================= */ }
+                        <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 
+                        <Route path="/users" element={ <UsersListPage /> } />
+                        <Route path="/user/:id" element={ <UserProfilePage /> } />
+                        <Route path="/account">
+                            <Route path=":pane" element={ <UserAccountPage /> } />
+                            <Route index element={ <UserAccountPage /> } />
+                        </Route>
 
-                    { /* ========== fields ================================= */ }
-                    <Route path="/fields" element={ <FieldsListPage /> } />
-                    <Route path="/field/:id" element={ <FieldPage /> } />
+                        { /* ========== fields ================================= */ }
+                        <Route path="/fields" element={ <FieldsListPage /> } />
+                        <Route path="/field/:id" element={ <FieldPage /> } />
 
-                    { /* ========= Draft Papers  ============================ */ }
-                    <Route path="/submit" element={ <SubmitPage /> }  />
-                    <Route path="/review" element={ <ReviewPapersListPage /> } />
-                    <Route path="/drafts/" element={ <DraftPapersListPage /> } />
-                    <Route path="/draft/:id" element={ <DraftPaperPage /> }  />
-                    <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
-                    <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage /> } />
+                        { /* ========= Draft Papers  ============================ */ }
+                        <Route path="/submit" element={ <SubmitPage /> }  />
+                        <Route path="/review" element={ <ReviewPapersListPage /> } />
+                        <Route path="/drafts/" element={ <DraftPapersListPage /> } />
+                        <Route path="/draft/:id" element={ <DraftPaperPage /> }  />
+                        <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
+                        <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage /> } />
 
-                    { /* ========= Published Papers ===================== */ }
-                    <Route path="/search" element={ <PaperSearchPage /> } />
-                    <Route path="/paper/:id" element={ <PublishedPaperPage /> } />
-                    <Route path="/spinner" element={ <Spinner local={true} /> } />
-                </Routes>
-            </main>
-        </Router>
+                        { /* ========= Published Papers ===================== */ }
+                        <Route path="/search" element={ <PaperSearchPage /> } />
+                        <Route path="/paper/:id" element={ <PublishedPaperPage /> } />
+                        <Route path="/spinner" element={ <Spinner local={true} /> } />
+                    </Routes>
+                </main>
+            </Router>
+        </ErrorBoundary>
     )
 }
 

@@ -1,0 +1,8 @@
+#error-boundary { }
+#error-boundary h1 {
+    text-align: center;
+}
+#error-boundary .error-message { }
+#error-boundary .error-message .label {
+    font-weight: bold;
+}
