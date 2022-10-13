@@ -27,7 +27,7 @@ module.exports = class ReputationController {
      * @param {Object} request  Standard express Request object.
      * @param {Object} response Standard express Resposne object.
      *
-     * @return {voice}
+     * @return {Promise} Resolves to void.
      *
      * @throws {Error} Any errors are passed on to the error handler.
      */
@@ -46,25 +46,40 @@ module.exports = class ReputationController {
      * wish to initialize reputation for.
      * @param {Object} response Standard express Response object.
      * 
-     * @return {void}
+     * @return {Promise} Resolves to void.
      *
      * @throws {ControllerError}  Any user error will be wrapped in a ControllerError.
      * @throws {Error} Most other errors will be passed on to the error handler.
      */
     async initializeReputation(request, response) {
+        /**********************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Permissions:
+         *
+         * 1. User must be logged in.
+         * 2. User must be initializing their own reputation.
+         *
+         * Validation:
+         *
+         * 1. :user_id must be set.
+         * 2. User must have an ORCID iD attached to their record.
+         * 
+         * ********************************************************************/
         const userId = request.params.user_id
 
-        // Make sure we have everything we need.
+        // Validation: 1. :user_id must be set.
         if ( ! userId ) {
             throw new ControllerError(400, 'userId-is-required', `User attempted to initialize reputation with out a user_id.`)
         }
 
-        // Only authenticated users may initialize reputation.
+        // Permissions: 1. User must be logged in.
         if ( ! request.session.user ) {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted to initialize reputation for User(${userId}).`)
         }
 
+        // Permissions: 2. User must be initializing their own reputation.
         // Users may only initialize their own reputation.  We'll add admins
         // who can initialize other users reputation later.
         if ( request.session.user.id != userId ) {
@@ -76,6 +91,8 @@ module.exports = class ReputationController {
             await this.reputationGenerationService.initializeReputationForUser(userId)
         } catch (error) {
             if ( error instanceof ServiceError) {
+                // Validation: 2. User must have an ORCID iD attached to their record.
+                // We checked this in ReputationGenerationService::initializeReputationForUser()
                 if (error.type == 'no-orcid') {
                     throw new ControllerError(400, 'no-orcid', 
                         `Cannot initialize reputation for User(${userId}) with out a connected ORCID iD.`)
@@ -96,6 +113,8 @@ module.exports = class ReputationController {
     }
 
     /**
+     * Helper method.
+     *
      * Local method to process the query string and construct SQL to be passed
      * on to the ReputationDAO's selectReputation and countReputation methods.
      *
@@ -166,7 +185,27 @@ module.exports = class ReputationController {
         return result
     }
 
+
+    /**
+     * GET /user/:user_id/reputations
+     *
+     * Get the list of reputation by field for a user.  Responds with the
+     * meta/results format.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.user_id  The database id of the user who
+     * reputation we wish to get.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async getReputations(request, response) {
+        /**********************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Any user may call this endpoint.  
+         * 
+         * ********************************************************************/
         let { where, params, page, pageSize } = await this.buildQuery(request.query) 
 
         const userId = request.params.user_id
@@ -182,7 +221,28 @@ module.exports = class ReputationController {
         })
     }
 
+    /**
+     * GET /user/:user_id/reputation/:field_id
+     *
+     * Responds with JSON reputation resource for the requested user_id and
+     * field_id, or 404.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.user_id  The database id of the user who's
+     * reputation we wish to load.
+     * @param {int} request.params.field_id The database id of the field that
+     * we wish to get User(:user_id)'s reputation in.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async getReputation(request, response) {
+        /**********************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Any user may call this endpoint.  
+         * 
+         * ********************************************************************/
         const userId = request.params.user_id
         const fieldId = request.params.field_id
 
