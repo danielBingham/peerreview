@@ -28,6 +28,13 @@ module.exports = class ReviewController {
      * GET /paper/:paper_id/reviews
      *
      * Return a JSON array of all reviews in the database.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The database id of the paper we
+     * want to retrieve reviews for.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async getReviews(request, response) {
         const paperId = request.params.paper_id
@@ -107,6 +114,15 @@ module.exports = class ReviewController {
      * POST /paper/:paper_id/reviews
      *
      * Create a new review in the database from the provided JSON.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The database id of the paper we're
+     * adding a review to.
+     * @param {Object} request.body A `review` object to add to
+     * Paper(:paper_id)
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async postReviews(request, response) {
         const paperId = request.params.paper_id
@@ -235,6 +251,15 @@ module.exports = class ReviewController {
      * GET /paper/:paper_id/review/:review_id
      *
      * Get details for a single review in the database.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The database id of the paper we
+     * want to get a review for.
+     * @param {int} request.params.id   The database id of the review we want
+     * to get.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async getReview(request, response) {
         const paperId = request.params.paper_id
@@ -353,8 +378,12 @@ module.exports = class ReviewController {
      * PUT /paper/:paper_id/review/:id
      *
      * Replace an existing review wholesale with the provided JSON.
+     *
+     * NOT IMPLEMENTED
      */
     async putReview(request, response) {
+        throw new ControllerError(501, 'not-implemented',
+            `Attempt to call unimplemented PUT /paper/:paper_id/review/:id.`)
 
         //  ===================================================================
         //  ##############  Intentionally Left Unimplemented ##################
@@ -374,6 +403,17 @@ module.exports = class ReviewController {
      *
      * Only changes the top level resource (reviews, in this case).  Does
      * nothing with children (comments).
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The id of the paper we want to edit
+     * a review on.
+     * @param {int} request.params.review_id    The id of the review we wish to
+     * edit.
+     * @param {Object} request.body The review patch that will be used to edit
+     * Review(:review_id) by overwriting the included fields.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async patchReview(request, response) {
         const paperId = request.params.paper_id
@@ -555,6 +595,15 @@ module.exports = class ReviewController {
      * DELETE /paper/:paper_id/review/:review_id
      *
      * Delete an existing review.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The id of the paper the review we
+     * wish to delete is attached to.
+     * @param {int} request.params.review_id    The id of the review we wish to
+     * delete.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async deleteReview(request, response) {
         const paperId = request.params.paper_id
@@ -649,6 +698,16 @@ module.exports = class ReviewController {
      * /paper/:paper_id/review/:review_id/threads
      *
      * Start a new comment thread on a paper.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The id of the paper the review we
+     * want to add a thread to is on.
+     * @param {int} request.params.reivew_id The id of the review we want to
+     * add a thread to.
+     * @param {Object} request.body The `review_thread` we're creating.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async postThreads(request, response) {
         const paperId = request.params.paper_id
@@ -763,6 +822,17 @@ module.exports = class ReviewController {
      * DELETE /paper/:paper_id/review/:review_id/thread/:thread_id
      *
      * Delete a comment thread.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The id of the paper this review and
+     * thread are attached to.
+     * @param {int} request.params.review_id The id of the review this thread
+     * is attached to.
+     * @param {int} request.params.thread_id The id of the thread we wish to
+     * delete.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async deleteThread(request, response) {
         const paperId = request.params.paper_id
@@ -872,6 +942,18 @@ module.exports = class ReviewController {
      * POST /paper/:paper_id/review/:review_id/thread/:thread_id/comments
      *
      * Add a comment to an existing thread.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The id of the paper we want to add
+     * review comments to.
+     * @param {int} request.params.review_id The id of the review we want to
+     * add a comment to.
+     * @param {int} request.params.thread_id The id of the thread we want to
+     * add a comment to.
+     * @param {Object} request.body The comment object we want to create.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async postComments(request, response) {
         const paperId = request.params.paper_id
@@ -1012,6 +1094,18 @@ module.exports = class ReviewController {
      * PATCH /paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id
      *
      * Edit a review comment.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The id of the paper.
+     * @param {int} request.params.review_id The id of the review.
+     * @param {int} request.params.thread_id The id of the thread.
+     * @param {int} request.params.comment_id The id of the comment we want to
+     * patch.
+     * @param {int} request.body The patch for Comment(:comment_id).  Contains
+     * partial data, with the included fields overwriting the database.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async patchComment(request, response) {
         const paperId = request.params.paper_id
@@ -1205,6 +1299,16 @@ module.exports = class ReviewController {
      * DELETE /paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id
      *
      * Delete a comment.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The id of the paper.
+     * @param {int} request.params.review_id The id of the review.
+     * @param {int} request.params.thread_id The id of the thread.
+     * @param {int} request.params.comment_id The id of the comment we wish to
+     * delete.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async deleteComment(request, response) {
         const paperId = request.params.paper_id
