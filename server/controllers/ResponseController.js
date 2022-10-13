@@ -27,6 +27,8 @@ module.exports = class ResponseController {
         this.reputationPermissionService = new ReputationPermissionService(database, logger)
     }
 
+    // TODO Techdebt Need to merge this with getResponses and use the
+    // meta/results format.
     async countResponses(request, response) {
         const counts = await this.responseDAO.countResponses()
         return response.status(200).json(counts)
@@ -36,6 +38,13 @@ module.exports = class ResponseController {
      * GET /paper/:paper_id/responses
      *
      * Return a JSON array of all responses in thethis.database.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The database id of the paper we
+     * want to get responses for.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async getResponses(request, response) {
         /*************************************************************
