@@ -1,36 +1,28 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import ReactMarkdown from 'react-markdown'
 
 const IntroductionSection = function(props) {
 
     return (
         <section id="introduction">
-            <p>
-                Welcome to Peer Review!  Peer Review is an open source, diamond
-                open access (free to access, free to publish) scientific
-                publishing repository.  You can submit your papers here to be
-                peer reviewed and published.
-            </p>  
+            <ReactMarkdown>
+                {` 
+Welcome to Peer Review!  Peer Review is an open source, diamond open access -
+meaning free to access, free to publish - scientific and academic publishing
+platform.  The platform enables crowdsourced peer review and public
+dissemination of academic papers.
 
-            <p>
-                The peer review process is self selected, using a
-                reputation system to ensure that only knolwedgeable peers
-                are offering reviews. Review is split into two pieces:
-                pre-publish editorial review and post publish refereeing.
-                The first is visible only to peers in your field, the
-                second is public. To learn more, please read <Link
-                to="/about#how-it-works">how it works</Link>.
-            </p>
+The peer review process is self selected, using a reputation system to ensure
+that only knowledgeable peers are offering reviews. To learn more,
+please read [how it works](/about#how-it-works).
 
-            <p>
-                Our goal is to replace the scientific journal system with
-                something open, scholar lead, and community managed.  We hope
-                to solve any number of problems plauging scientific publishing
-                in the process, but we're starting with the file drawer
-                problem. To learn more about our reasoning and the
-                problems we hope to solve, read <Link to="/about#rationale">our
-                rationale</Link>.
-            </p>
+Our goal is to replace the scientific journal system with something open to its core,
+democratic, and community managed.  We hope to solve any number of problems
+plaguing scientific publishing in the process, but we're starting with the file
+drawer problem. To learn more about our reasoning and the problems we hope to
+solve, read [our rationale](/about#rationale).
+                `}
+            </ReactMarkdown>
         </section>
 
     )
