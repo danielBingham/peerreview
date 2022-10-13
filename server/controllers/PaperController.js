@@ -29,6 +29,8 @@ module.exports = class PaperController {
     }
 
     /**
+     * Helper method.
+     *
      * Takes a query object generated from the query string and creates an SQL
      * `WHERE` clause, `ORDER` clause, and parameters array.  Also handle
      * pagination.
@@ -262,6 +264,9 @@ module.exports = class PaperController {
      * GET /papers/count
      *
      * Return an object with counts of papers, pages, and page size.
+     *
+     * TODO This is techdebt.  Merge it with getPapers() and use the
+     * meta/result response format.
      */
     async countPapers(request, response) {
         /** 
@@ -285,9 +290,38 @@ module.exports = class PaperController {
     /**
      * GET /papers
      *
-     * Return a JSON array of all papers in the database.
+     * Responds with a JSON array of papers match request.query.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} request.query    The query object we get from the query string.
+     * @param {boolean} request.query.isDraft   (Optional) A boolean indicating whether
+     * we're selecting drafts or published papers.
+     * @param {integer} request.query.authorId  (Optional) The id of an author who's papers
+     * we wish to query for.
+     * @param {integer[]} request.query.fields  (Optional) An array of fields we want to
+     * restrict the paper query to.
+     * @param {integer[]} request.query.excludeFields   (Optional) An array of fields we
+     * want to exclude from the query.
+     * @param {string}  request.query.searchString  (Optional) A string of text we want to
+     * search in paper bodies and titles for.
+     * @param {string}  request.query.sort  (Optional) The sort we want to apply to our query.
+     * @param {integer} request.query.page  (Optional) The page we wish to return.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async getPapers(request, response) {
+        /**********************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User logged in => May get published papers and drafts user has
+         * `review` permissions for.
+         * 2. User not logged in => May only get published papers.
+         *
+         * These constraints are enforced in `PaperController::buildQuery()`.
+         * 
+         * ********************************************************************/
+
         /** 
          * parseQuery() handles the permissions by only selecting papers the
          * user is allowed to view. 
@@ -306,6 +340,12 @@ module.exports = class PaperController {
      * POST /papers
      *
      * Create a new paper in the database from the provided JSON.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} request.body Must be a valid `paper` object.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async postPapers(request, response) {
         const paper = request.body
@@ -451,6 +491,13 @@ module.exports = class PaperController {
      * GET /paper/:id
      *
      * Get details for a single paper in the database.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.id   The database id of the paper we wish to
+     * retrieve.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async getPaper(request, response) {
         const papers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [request.params.id])
@@ -507,6 +554,16 @@ module.exports = class PaperController {
      * PATCH /paper/:id
      *
      * Update an existing paper given a partial set of fields in JSON.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.id   The database id of the paper we wish to
+     * patch.
+     * @param {Object} request.body The paper patch - a paper object with only
+     * partial data that will be used to update only those parts of the paper
+     * in the database.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async patchPaper(request, response) {
         const paper = request.body
@@ -571,6 +628,13 @@ module.exports = class PaperController {
      * DELETE /paper/:id
      *
      * Delete an existing paper.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.id   The database id of the paper we wish to
+     * delete.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async deletePaper(request, response) {
         const paperId = request.params.id
@@ -622,8 +686,22 @@ module.exports = class PaperController {
         return response.status(200).json({paperId: request.params.id})
     }
 
+    /**
+     * POST /papers/:paper_id/versions
+     *
+     * Add a new version to an existing paper.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The database id of the paper we
+     * wish to add a version to.
+     * @param {Object} request.body The paper_version we're adding to
+     * Paper(:paper_id).
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async postPaperVersions(request, response) {
-        const paperId = request.params.id
+        const paperId = request.params.paper_id
         const version = request.body
 
         /*************************************************************
@@ -701,6 +779,19 @@ module.exports = class PaperController {
         return response.status(200).json(returnPapers[0])
     }
 
+    /**
+     * PATCH /papers/:paper_id/version/:version
+     *
+     * Update an existing version on a paper.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.paper_id The id of the paper in question.
+     * @param {int} request.params.version The version of that paper we want to patch.
+     * @param {Object} request.body The partial paper_version object that will be used to update the paper_verison.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async patchPaperVersion(request, response) {
         let paper_version = request.body
         const paperId = request.params.paper_id

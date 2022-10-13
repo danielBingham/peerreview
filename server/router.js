@@ -414,7 +414,7 @@ module.exports = function(database, logger, config) {
      *          Version REST Routes
      ******************************************************************************/
 
-    router.post('/paper/:id/versions', function(request, response, next) {
+    router.post('/paper/:paper_id/versions', function(request, response, next) {
         paperController.postPaperVersions(request, response).catch(function(error) {
             next(error)
         })
