@@ -86,14 +86,6 @@ const App = function(props) {
         }
     })
     
-    const [authenticationRequestId, setAuthenticationRequestId] = useState(null)
-    const authenticationRequest = useSelector(function(state) {
-        if ( ! authenticationRequestId ) {
-            return null
-        } else {
-            return state.authentication.requests[authenticationRequestId]
-        }
-    })
 
     const [ featuresRequestId, setFeaturesRequestId] = useState(null)
     const featuresRequest = useSelector(function(state) {
@@ -101,6 +93,15 @@ const App = function(props) {
             return state.features.requests[featuresRequestId]
         } else {
             return null
+        }
+    })
+
+    const [authenticationRequestId, setAuthenticationRequestId] = useState(null)
+    const authenticationRequest = useSelector(function(state) {
+        if ( ! authenticationRequestId ) {
+            return null
+        } else {
+            return state.authentication.requests[authenticationRequestId]
         }
     })
 
@@ -205,9 +206,9 @@ const App = function(props) {
         return (<Spinner />)
     }
 
-    // Once our request have finished successfully, we can render the full
-    // site.  We should only reach here when both the configurationRequest and
-    // authenticationRequest have been fulfilled.
+    // Once our requests have finished successfully, we can render the full
+    // site.  We should only reach here when all of the requests have been
+    // fulfilled.
     return (
         <ErrorBoundary>
             <Router>

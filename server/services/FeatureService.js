@@ -38,6 +38,21 @@ module.exports = class FeatureService {
         }
     }
 
+    async getFeature(name) {
+        const { dictionary } = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
+
+        let feature = dictionary[name]
+
+        if ( ! feature && this.features[name] ) {
+            feature = {
+                name: name,
+                status: 'uncreated'
+            }
+        }
+
+        return feature
+    }
+
     async updateFeatureStatus(name, status) {
         await this.featureDAO.updatePartialFeature({ name: name, status: status })
     }

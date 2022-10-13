@@ -7,6 +7,10 @@ CREATE EXTENSION pg_trgm;
  * Feature Flags
  *****************************************************************************/
 
+/** 
+ * NOTE: When adding a new status, make sure to update it in
+ * FeatureController::patchFeature() 
+ */
 CREATE TYPE feature_status AS ENUM(
     'created', /* the feature's row has been inserted into the databse table */
     'initializing',
@@ -88,7 +92,7 @@ CREATE INDEX files__user_id ON files (user_id);
 
 /*  Now that we've created the files table, we can add the link to the users table. */
 /* This is for the user's profile picture. */
-ALTER TABLE users ADD COLUMN file_id uuid REFERENCES files(id);
+ALTER TABLE users ADD COLUMN file_id uuid REFERENCES files(id) ON DELETE SET NULL;
 CREATE INDEX users__file_id ON users (file_id);
 
 /******************************************************************************
@@ -144,7 +148,7 @@ CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
     title   varchar(1024) NOT NULL,
     searchable_title tsvector GENERATED ALWAYS AS (to_tsvector('english', title)) STORED,
-    is_draft   boolean,
+    is_draft   boolean DEFAULT true,
     score   int NOT NULL DEFAULT 0,
     created_date    timestamptz,
     updated_date    timestamptz
