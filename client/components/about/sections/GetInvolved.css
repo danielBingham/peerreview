@@ -1,0 +1,15 @@
+#get-involved .description { text-align: center; }
+#get-involved .ways-to-get-involved {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    text-align: center;
+    margin-bottom: 50px;
+    font-size: 14px;
+}
+#get-involved .ways-to-get-involved .involve-method { padding: 20px; }
+#get-involved #github { grid-column: 1/2; }
+#get-involved #sponsor { grid-column: 2/3; }
+#get-involved #sponsor .sponsors-badge { padding: 20px }
+#get-involved #slack { grid-column: 3/4; }
+#get-involved #slack img { height: 64px; }
+

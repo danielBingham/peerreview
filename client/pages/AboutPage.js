@@ -1,5 +1,6 @@
 import React from 'react'
 
+import GetInvolved from '/components/about/sections/GetInvolved'
 import IntroductionSection from '/components/about/sections/IntroductionSection'
 import HowItWorksSection from '/components/about/sections/HowItWorksSection'
 import RationaleSection from '/components/about/sections/RationaleSection'
@@ -11,10 +12,10 @@ const AboutPage = function(props) {
 
     return (
         <article id="about-page" className="page">
+            <GetInvolved />
             <h1>About Peer Review</h1>
             <IntroductionSection />
             <HowItWorksSection />
-            <RationaleSection />
             <FAQSection />
         </article>
     )

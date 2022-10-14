@@ -6,7 +6,7 @@
 .user-badge .badge-grid {
     display: grid;
     grid-template-columns: 50px auto;
-    grid-template-rows: 50px auto;
+    grid-template-rows: auto auto;
 } 
 .user-badge .profile-image {
     grid-column: 1 / 2;

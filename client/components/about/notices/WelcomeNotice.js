@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { XCircleIcon } from '@heroicons/react/24/solid'
+import { InformationCircleIcon } from '@heroicons/react/24/solid'
+import ReactMarkdown from 'react-markdown'
 
 import { postSettings, patchSetting, cleanupRequest }  from '/state/settings'
 
@@ -94,32 +96,27 @@ const WelcomeNotice = function(props) {
         return (
             <div className="welcome-notice">
                 <div className="close" onClick={close}><XCircleIcon /></div>
-                <p>
-                    Welcome to Peer Review!  Peer Review is an open source, diamond
-                    open access (free to access, free to publish) scientific
-                    publishing repository.  You can submit your papers here to be
-                    peer reviewed and published.
-                </p>  
-
-                <p>
-                    The peer review process is self selected, using a
-                    reputation system to ensure that only knowledgeable peers
-                    are offering reviews. Review is split into two pieces:
-                    pre-publish editorial review and post publish refereeing.
-                    The first is visible only to peers in your field, the
-                    second is public. To learn more, please read <a
-                    href="/about#how-it-works">how it works</a>.
-                </p>
-
-                <p>
-                    Our goal is to replace the scientific journal system with
-                    something open, scholar lead, and community managed.  We hope
-                    to solve any number of problems plauging scientific publishing
-                    in the process, but we're starting with the file drawer
-                    problem. To learn more about our reasoning and the
-                    problems we hope to solve, read <Link to="/about#rationale">our
-                    rationale</Link>.
-                </p>
+                <h2>Welcome to Peer Review!</h2>
+                <ReactMarkdown>
+                    {`
+Peer Review is an [open source](https://github.com/danielbingham/peerreview), diamond open access (free to access, free to
+publish), non-profit scholarly publishing platform. It enables crowdsourced peer review
+and public dissemination of scientific and academic papers. 
+                    
+Review is separated into pre-publish editorial review, focused on helping
+authors improve their work, and post-publish refereeing, focused on maintaining
+the integrity of the literature.  A reputation system is used to ensure that
+review and refereeing is done by qualified peers. To learn more, please read
+[how it works](/about#how-it-works).
+                    
+Our goal is to replace the scientific journal system with a web platform that
+is democratically managed by scholars for scholars and open to its core.  We
+hope to solve any number of problems plaguing scientific publishing in the
+process, but we're starting with the file drawer problem. To learn more about
+our reasoning and the problems we hope to solve, read [our
+rationale](/about#rationale).
+`}
+                </ReactMarkdown>
             </div>
         )
     } else {

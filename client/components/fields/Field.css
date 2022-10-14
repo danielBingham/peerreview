@@ -3,7 +3,9 @@
     margin: 5px;
     background-color: #ddd;
     box-shadow: 1px 1px 1px #999;
-    font-size: 12px;
+    font-size: 12px !important;
+    padding: 0 !important;
+    line-height: 1em !important;
 }
 .field:hover {
     filter: saturate(300%);
@@ -12,7 +14,7 @@
 .field a:link, .field a:active, .field a:visited, .field a:hover {
     display: inline-block;
     color: inherit;
-    padding: 5px;
+    padding: 7px;
 }
 .field .remove {
     display: inline-block;

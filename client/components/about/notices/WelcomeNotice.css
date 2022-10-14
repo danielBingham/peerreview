@@ -6,6 +6,9 @@
     margin: 20px auto;
     width: 800px;
 }
+.welcome-notice h2 {
+    text-align: center;
+}
 .welcome-notice p {
     width: 650px;
     font-size: 14px;

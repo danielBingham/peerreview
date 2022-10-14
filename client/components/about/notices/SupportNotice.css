@@ -6,6 +6,9 @@
     margin: 20px auto;
     width: 800px;
 }
+.support-notice h2 {
+    text-align: center;
+}
 .support-notice p {
     width: 650px;
     font-size: 14px;
