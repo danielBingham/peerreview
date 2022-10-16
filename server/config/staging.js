@@ -6,7 +6,7 @@
  **************************************************************************************************/
 
 module.exports = {
-    host: 'https://staging.peer-review.io',
+    host: 'https://staging.peer-review.io/',
     backend: '/api/0.0.0',
     // Database configuration
     database: {
