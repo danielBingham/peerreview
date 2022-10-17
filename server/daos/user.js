@@ -72,7 +72,7 @@ module.exports = class UserDAO {
     async selectUsers(where, params, order, page) {
         params = params ? params : []
         where = where ? where : ''
-        order = order ? order : 'users.created_date asc'
+        order = order ? order : 'users.created_date desc'
 
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we

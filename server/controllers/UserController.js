@@ -31,6 +31,37 @@ module.exports = class UserController {
         this.tokenDAO = new TokenDAO(database, logger)
     }
 
+    /**
+     * Parse a query string from the `GET /users` endpoint for use with both
+     * `UsersDAO::selectUsers()` and `UsersDAO::countUsers()`.
+     *
+     * @param {Object} query    The query string (from `request.query`) that we
+     * wish to parse.
+     * @param {string} query.name   (Optional) A string to compare to user's names for
+     * matches.  Compared using trigram matching.
+     * @param {int} quer.page    (Optional) A page number indicating which page of
+     * results we want.  
+     * @param {string} query.sort (Optional) A sort parameter describing how we want
+     * to sort users.
+     * @param {Object} options  A dictionary of options that adjust how we
+     * parse it.
+     * @param {boolean} options.ignorePage  Skip the page parameter.  It will
+     * still be in the result object and will default to `1`.
+     *
+     * @return {Object} A result object with the results in a form
+     * understandable to `selectUsers()` and `countUsers()`.  Of the following
+     * format:
+     * ```
+     * { 
+     *  where: 'WHERE ...', // An SQL where statement.
+     *  params: [], // An array of paramters matching the $1,$2, parameterization of `where`
+     *  page: 1, // A page parameter, to select which page of results we want.
+     *  order: '', // An SQL order statement.
+     *  emptyResult: false // When `true` we can skip the selectUsers() call,
+     *  // because we know we have no results to return.
+     * }
+     * ```
+     */
     async parseQuery(query, options) {
         options = options || {
             ignorePage: false
@@ -81,9 +112,28 @@ module.exports = class UserController {
     /**
      * GET /users
      *
-     * Return a JSON array of all users in thethis.database.
+     * Respond with a list of `users` matching the query in the meta/result
+     * format.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {string} request.query.name   (Optional) A string to compare to
+     * user's names for matches.  Compared using trigram matching.
+     * @param {int} request.query.page    (Optional) A page number indicating
+     * which page of results we want.  
+     * @param {string} request.query.sort (Optional) A sort parameter
+     * describing how we want to sort users.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async getUsers(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Anyone may call this endpoint.
+         * 
+         * **********************************************************/
+
         const { where, params, order, page, emptyResult } = await this.parseQuery(request.query)
 
         if ( emptyResult ) {
@@ -108,10 +158,44 @@ module.exports = class UserController {
     /**
      * POST /users
      *
-     * Create a new user in the this.database from the provided JSON.
+     * Create a new `user`.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} request.body The user definition.
+     * @param {string} request.body.email   The user's email.
+     * @param {string} request.body.name    The users's name.
+     * @param {string} request.body.password    (Optional) The user's password.  Required if no user is logged in.
+     * @param {string} request.body.institution (Optional) The user's institution.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async postUsers(request, response) {
         const user = request.body
+
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * There are two possible flows this endpoint can take, depending on
+         * whether or not we have a logged in user already:
+         *
+         * 1. If no user is logged in, then we assume they are creating their
+         * own user.  We'll send an email confirmation.
+         * 2. If a user is logged in, then we assume they are inviting the user
+         * they are creating.  We send an invitation email.
+         *
+         * Permissions: 
+         * Anyone can call this endpoint.
+         *
+         * Validation:
+         * 1. request.body.email must not already be attached to a user in the
+         * database.
+         * 2. Invitation => no password needed
+         * 3. Registration => must include password
+         * 4. request.body.name is required.
+         * 5. request.body.email is required. 
+         *
+         * **********************************************************/
 
         const loggedInUser = request.session.user
 
@@ -125,6 +209,8 @@ module.exports = class UserController {
             [ user.email ]
         )
 
+        // 1. request.body.email must not already be attached to a user in the
+        // database.
         if (userExistsResults.rowCount > 0) {
             throw new ControllerError(409, 'user-exists', `Attempting to create a user(${userExistsResults.rows[0].id}) that already exists!`)
         }
@@ -132,6 +218,10 @@ module.exports = class UserController {
         // If we're creating a user with a password, then this is just a normal
         // unconfirmed user creation.  However, if we're creating a user
         // without a password, then this is a user who is being invited.
+        //
+        // Corresponds to:
+        // Validation: 2. Invitation => no password needed
+        // Validation: 3. Registration => must include password
         if ( user.password && ! loggedInUser ) {
             user.password = this.auth.hashPassword(user.password)
             user.status = 'unconfirmed'
@@ -146,6 +236,9 @@ module.exports = class UserController {
             user.id = await this.userDAO.insertUser(user)
         } catch ( error ) {
             if ( error instanceof DAOError ) {
+                // `insertUser()` check both of the following:
+                // 4. request.body.name is required.
+                // 5. request.body.email is required. 
                 if ( error.type == 'name-missing' ) {
                     throw new ControllerError(400, 'bad-data:no-name', error.message)
                 } else if ( error.type == 'email-missing' ) {
@@ -187,8 +280,20 @@ module.exports = class UserController {
      * GET /user/:id
      *
      * Get details for a single user in thethis.database.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.id   The id of the user we wish to retrieve.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async getUser(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Anyone may call this endpoint.
+         * 
+         * **********************************************************/
         const returnUsers = await this.userDAO.selectUsers('WHERE users.id = $1', [request.params.id])
 
         if ( returnUsers.length == 0 ) {
@@ -202,6 +307,8 @@ module.exports = class UserController {
      * PUT /user/:id
      *
      * Replace an existing user wholesale with the provided JSON.
+     *
+     * NOT IMPLEMENTED.
      */
     async putUser(request, response) {
         // We're not using this right now and can't think of a situation where
@@ -237,18 +344,75 @@ module.exports = class UserController {
     /**
      * PATCH /user/:id
      *
-     * Update an existing user given a partial set of fields in JSON.
+     * Update an existing user from a patch.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {int} request.params.id   The id of the user we wish to update.
+     * @param {Object} request.body The patch we wish to user to update the
+     * user.  May include any fields from the `user` object.  Some fields come
+     * with additional requirements, noted below.
+     * @param {string} request.body.password    (Optional) If this field is
+     * included then the body must also include either an `oldPassword` field
+     * or a `token` corresponding to either a valid 'reset-password' token or a
+     * valid 'invitation' token.
+     * @param {string} request.body.token Required if `request.body.password`
+     * is included and `request.body.oldPassword` is not.
+     * @param {string} request.body.oldPassword Required if
+     * `request.body.password` is included and `request.body.token` is not.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
      */
     async patchUser(request, response) {
         const user = request.body
-        user.id = request.params.id
+        const id = request.params.id
 
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Permissions:
+         * 1. User must be logged in.
+         * 2. User being patched must be the same as the logged in user.
+         * 2a. :id must equal request.session.user.id
+         * 2b. :id must equal request.body.id
+         * 3. User(:id) must exist.
+         * 4. If a password is included, then oldPassword or a valid token are
+         * required.
+         * 
+         * **********************************************************/
+
+        // 1. User must be logged in.
         if ( ! request.session.user ) {
-            throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to update user(${user.id}).`)
-        } else if ( request.session.user.id != user.id) {
-            throw new ControllerError(403, 'not-authorized', `User(${request.session.user.id}) attempted to update another user(${user.id}).`)
+            throw new ControllerError(403, 'not-authorized', 
+                `Unauthenticated user attempting to update user(${user.id}).`)
+        } 
+
+        // 2. User being patched must be the same as the logged in user.
+        // 2a. :id must equal request.session.user.id
+        if ( request.session.user.id != id) {
+            throw new ControllerError(403, 'not-authorized', 
+                `User(${request.session.user.id}) attempted to update another user(${id}).`)
         }
 
+        // 2. User being patched must be the same as the logged in user.
+        // 2b. :id must equal request.body.id
+        if ( id != user.id ) {
+            throw new ControllerError(403, 'not-authorized:id-mismatch',
+                `User(${id}) attempted to update another User(${user.id}).`)
+        }
+        const existingUsers = await this.userDAO.selectUsers(`WHERE users.id = $1`, [ id ] )
+
+        // 3. User(:id) must exist.
+        // If they don't exist, something is really, really wrong -- since they
+        // are logged in and in the session!
+        if ( existingUsers.length <= 0 ) {
+            throw new ControllerError(500, 'server-error',
+                `User(${id}) attempted to update themselves, but we couldn't find their database record!`)
+        }
+
+
+        // 4. If a password is included, then oldPassword or a valid token are
+        // required.
         if( user.password ) {
             // If we make it through this conditional with out throwing an
             // error, then the user is authenticated and their attempt to
@@ -353,6 +517,12 @@ module.exports = class UserController {
      * TODO TECHDEBT This probably needs to check to see if the user we're
      * deleting is also the session user and then delete the session if they
      * are.
+     *
+     * NOT IMPLEMENTED.
+     *
+     * TODO Eventually we'll need to implement this for GDPR compliance, but we
+     * need to figure out how to handle it first, since we don't want to let
+     * users delete their papers once published.
      */
     async deleteUser(request, response) {
         // Currently leaving this unimplemented.  We will someday want to allow

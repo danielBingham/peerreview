@@ -348,7 +348,9 @@ describe('UserController', function() {
 
     describe('patchUser()', function() {
         it('should construct update SQL and respond with status 200 and the updated user', async function() {
-            connection.query.mockReturnValueOnce({ rowCount:1, rows: [] })
+            connection.query
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+                .mockReturnValueOnce({ rowCount:1, rows: [] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
 
 
@@ -371,38 +373,10 @@ describe('UserController', function() {
             const expectedSQL = 'UPDATE users SET bio = $1, updated_date = now() WHERE id = $2'
             const expectedParams = [ request.body.bio, 1 ]
 
-            const databaseCall = connection.query.mock.calls[0]
+            const databaseCall = connection.query.mock.calls[1]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(databaseCall[1]).toEqual(expectedParams)
 
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
-        })
-
-        it('should ignore the id in the body and use the id in request.params', async function() {
-            connection.query.mockReturnValueOnce({ rowCount:1, rows: [] })
-                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
-            const request = {
-                body: { id: 2, bio: 'I am credited with discovering the structure of DNA.' },
-                params: {
-                    id: 1
-                },
-                session: {
-                    user: {
-                        id: 1,
-                    }
-                }
-            }
-            const response = new Response()
-            const userController = new UserController(connection, logger, config)
-            await userController.patchUser(request, response)
-            
-            const expectedSQL = 'UPDATE users SET bio = $1, updated_date = now() WHERE id = $2'
-            const expectedParams = [ request.body.bio, 1 ]
-            
-            const databaseCall = connection.query.mock.calls[0]
-            expect(databaseCall[0]).toEqual(expectedSQL)
-            expect(databaseCall[1]).toEqual(expectedParams)
-            
             expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
         })
 
@@ -411,6 +385,7 @@ describe('UserController', function() {
             const oldPassword = 'foobar'
 
             connection.query
+                .mockReturnValueOnce({ rowcount: 1, rows: [ { id: 1, password: auth.hashPassword(oldPassword) } ] })
                 .mockReturnValueOnce({ rowcount: 1, rows: [ { id: 1, password: auth.hashPassword(oldPassword) } ] })
                 .mockReturnValueOnce({ rowCount:1, rows: [] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
@@ -440,7 +415,7 @@ describe('UserController', function() {
             await userController.patchUser(request, response)
 
             const expectedSQL = 'UPDATE users SET password = $1, updated_date = now() WHERE id = $2'
-            const databaseCall = connection.query.mock.calls[1]
+            const databaseCall = connection.query.mock.calls[2]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(await auth.checkPassword(password, databaseCall[1][0])).toEqual(true)
 
@@ -497,7 +472,9 @@ describe('UserController', function() {
         })
 
         it('should throw DAOEerror if the update attempt fails to modify any rows', async function() {
-            connection.query.mockReturnValueOnce({ rowCount:0, rows: [] })
+            connection.query
+                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
+                .mockReturnValueOnce({ rowCount:0, rows: [] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
 
             const request = {
