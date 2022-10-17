@@ -19,3 +19,8 @@
 .registration-form .submit {
     text-align: center;
 }
+.registration-form .error {
+    color: red;
+    padding: 10px 20px;
+    text-align: center;
+}

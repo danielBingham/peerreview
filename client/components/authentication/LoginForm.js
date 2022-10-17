@@ -62,7 +62,7 @@ const LoginForm = function(props) {
             setError('no-email')
             return
         }
-
+        
         if ( ! password || password.length == 0 ) {
             setError('no-password')
             return

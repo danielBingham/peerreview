@@ -43,10 +43,10 @@ CREATE TABLE users (
     orcid_id varchar(256),
     status user_status DEFAULT 'unconfirmed',
     permissions user_permissions DEFAULT 'user',
-    name varchar(256),
+    name varchar(512),
     password varchar(256),
 /*    file_id uuid REFERENCES files(id), Added below with an alter statement. */
-    email varchar(256),
+    email varchar(512),
     bio text,
     location varchar(256),
     institution varchar(256),

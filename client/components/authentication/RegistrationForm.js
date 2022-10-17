@@ -26,7 +26,10 @@ const RegistrationForm = function(props) {
     const [password, setPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
 
-    const [passwordConfirmationError, setPasswordConfirmationError] = useState(false)
+    const [nameError, setNameError] = useState(null)
+    const [emailError, setEmailError] = useState(null)
+    const [passwordError, setPasswordError] = useState(null)
+    const [passwordConfirmationError, setPasswordConfirmationError] = useState(null)
 
     // ======= Request Tracking =====================================
 
@@ -60,6 +63,73 @@ const RegistrationForm = function(props) {
     const navigate = useNavigate()
 
     /**
+     * Perform validation on our state and return a boolean indicating whether
+     * our current state is valid.
+     *
+     * @param {string} field    (Optional) When included, we'll only validate
+     * the named field.  If excluded, we'll validate all fields.
+     *
+     * @return {boolean}    True if our state (or the named field) is valid,
+     * false otherwise.
+     */
+    const isValid = function(field) {
+        let error = false 
+
+        if ( ! field || field == 'name' ) {
+            if ( ! name || name.length == 0 ) {
+                setNameError('no-name')
+                error = true
+            } else if ( name.length > 512 ) {
+                setNameError('name-too-long')
+                error = true
+            } else if ( nameError ) {
+                setNameError(null)
+            }
+        }
+
+        if ( ! field || field == 'email' ) {
+            if ( ! email || email.length == 0 ) {
+                setEmailError('no-email')
+                error = true
+            } else if ( email.length > 512 ) {
+                setEmailError('email-too-long')
+                error = true
+            } else if ( ! email.includes('@') ) {
+                setEmailError('invalid-email')
+                error = true
+            } else if ( emailError ) {
+                setEmailError(null)
+            }
+        }
+
+        if ( ! field || field == 'password' ) {
+            if ( ! password || password.length == 0 ) {
+                setPasswordError('no-password')
+                error = true
+            } else if ( password.length < 16 ) {
+                setPasswordError('password-too-short')
+                error = true
+            } else if ( password.length > 256 ) {
+                setPasswordError('password-too-long')
+                error = true
+            } else if ( passwordError ) {
+                setPasswordError(null)
+            }
+        }
+
+        if ( ! field || field =='confirmPassword' ) {
+            if (password != confirmPassword) {
+                setPasswordConfirmationError('password-mismatch')
+                error = true 
+            } else if ( passwordConfirmationError ) {
+                setPasswordConfirmationError(null)
+            }
+        }
+
+        return ! error
+    }
+
+    /**
      * Handle a form submission event.
      *
      * @param {object} event - The standard javascript event object.
@@ -67,8 +137,8 @@ const RegistrationForm = function(props) {
     const onSubmit = function(event) {
         event.preventDefault();
 
-        if (password != confirmPassword) {
-            setPasswordConfirmationError(true)
+
+        if ( ! isValid() ) {
             return
         }
 
@@ -141,34 +211,63 @@ const RegistrationForm = function(props) {
         )
     }
 
-    let overallError = null
-    let emailError = null
+    // Error views, we'll populate these as we check the various error states.
+    let overallErrorView = null
+    let nameErrorView = null
+    let emailErrorView = null
+    let passwordErrorView = null
+    let passwordConfirmationErrorView = null
+
     if ( postUsersRequest && postUsersRequest.state == 'failed') {
         if (postUsersRequest.status == 409 ) {
-            emailError = ( <div className="email-conflict-error">A user with that email already exists.  Please login instead.</div> )
+            emailErrorView = ( 
+                <div className="email-conflict-error">A user with that email already exists.  Please login instead.</div> 
+            )
         } else { 
-            overallError = (<div className="unknown-error">{ postUsersRequest.error }</div> )
+            overallErrorView = (<div className="unknown-error">{ postUsersRequest.error }</div> )
         }
     }
 
-    let passwordConfirmationErrorElement = null
-    if ( passwordConfirmationError ) {
-        passwordConfirmationErrorElement = ( <div className="unmatched-passwords-error">Your passwords don't match!</div> )
+    if ( nameError && nameError == 'no-name' ) {
+        nameErrorView = ( <>Name is required!</> )
+    } else if ( nameError && nameError == 'name-too-long' ) {
+        nameErrorView = ( <>Name is too long. Limit is 512 characters.</> )
+    }
+
+    if ( emailError && emailError == 'no-email' ) {
+        emailErrorView = ( <>Email is required!</> )
+    } else if ( emailError && emailError == 'email-too-long' ) {
+        emailErrorView = ( <>Email is too long.  Limit is 512 characters.</> )
+    } else if ( emailError && emailError == 'invalid-email' ) {
+        emailErrorView = (<>Please enter a valid email.</> )
+    }
+
+    if ( passwordError && passwordError == 'no-password') {
+        passwordErrorView = ( <>Password is required!</> )
+    } else if ( passwordError && passwordError == 'password-too-short') {
+        passwordErrorView = (<>Your password is too short.  Please choose a password at least 16 characters in length.  We recommend the XKCD method of passphrase selection: <a href="https://xkcd.com/936/">XKCD #936: Password Strength</a>.</> )
+    } else if ( passwordError && passwordError == 'password-too-long') {
+        passwordErrorView = (<>Your password is too long. Limit is 256 characters.</>)
+    }
+
+    if ( passwordConfirmationError && passwordConfirmationError == 'password-mismatch' ) {
+        passwordConfirmationErrorView = ( <>Your passwords don't match!</> )
     }
 
     return (
         <div className="registration-form">
             <h2>Register</h2>
             <form onSubmit={onSubmit}>
-                <div className="error"> {overallError} </div>
+                <div className="error"> {overallErrorView} </div>
 
                 <div className="name field-wrapper">
                     <label htmlFor="name">Name:</label>
                     <input type="text" 
                         name="name" 
                         value={name} 
+                        onBlur={ (event) => isValid('name') }
                         onChange={ (event) => setName(event.target.value) } />
-                    <div className="error"></div>
+                    <div className="error">{ nameErrorView }</div>
                 </div>
 
                 <div className="email field-wrapper">
@@ -176,8 +275,9 @@ const RegistrationForm = function(props) {
                     <input type="text" 
                         name="email" 
                         value={email}
+                        onBlur={ (event) => isValid('email') }
                         onChange={ (event) => setEmail(event.target.value) } />
-                    <div className="error">{emailError}</div>
+                    <div className="error">{emailErrorView}</div>
                 </div>
 
                 <div className="institution field-wrapper">
@@ -185,7 +285,9 @@ const RegistrationForm = function(props) {
                     <input type="text" 
                         name="institution" 
                         value={institution}
+                        onBlur={ (event) => isValid('institution') }
                         onChange={ (event) => setInstitution(event.target.value) } />
+                    <div className="error"></div>
                 </div>
 
                 <div className="password field-wrapper">
@@ -193,8 +295,9 @@ const RegistrationForm = function(props) {
                     <input type="password" 
                         name="password" 
                         value={password}
+                        onBlur={ (event) => isValid('password') }
                         onChange={ (event) => setPassword(event.target.value) } />
-                    <div className="error"></div>
+                    <div className="error">{ passwordErrorView }</div>
                 </div>
 
                 <div className="confirm-password field-wrapper">
@@ -202,8 +305,9 @@ const RegistrationForm = function(props) {
                     <input type="password" 
                         name="confirmPassword"
                         value={confirmPassword}
+                        onBlur={ (event) => isValid('confirmPassword') }
                         onChange={ (event) => setConfirmPassword(event.target.value) } />
-                    <div className="error">{passwordConfirmationErrorElement}</div>
+                    <div className="error">{ passwordConfirmationErrorView }</div>
                 </div>
                 <div className="submit field-wrapper">
                     <input type="submit" name="register" value="Register" />
