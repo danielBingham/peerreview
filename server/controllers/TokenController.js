@@ -23,12 +23,43 @@ module.exports = class TokenController {
         this.userDAO = new UserDAO(database, logger)
     }
 
+    /**
+     * GET /token/:token
+     *
+     * Validate a token sent to a user.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {string} request.params.token The token we want to validate.
+     * @param {string} request.query.type   The type of token we are trying to
+     * validate.  Must match what's in the database for :token.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async getToken(request, response) {
+
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Permissions:
+         * No permissions for this endpoint.  Anyone can hit it, the
+         * permissions come from the token and its validation.
+         *
+         * Validation:
+         * 1. :token must be included.
+         * 2. request.query.type must be included
+         * 3. Token(:token) must be exist
+         * 4. Token(:token) must have type equal to request.query.type 
+         * 
+         * **********************************************************/
+
+        // 1. :token must be included.
         if ( ! request.params.token) {
             throw new ControllerError(400, 'no-token',
                 `Attempt to redeem a token with no token!`)
         }
 
+        // 2. request.query.type must be included
         if ( ! request.query.type ) {
             throw new ControllerError(403, 'not-authorized:invalid-token',
                 `User failed to specify a type when attempting to redeem a token.`)
@@ -36,6 +67,9 @@ module.exports = class TokenController {
 
         let token = null
         try {
+            // TokenDAO::validateToken() checks both of the following:
+            // 3. Token(:token) must be exist
+            // 4. Token(:token) must have type equal to request.query.type 
             token = await this.tokenDAO.validateToken(request.params.token, [ request.query.type ])
         } catch (error) {
             if ( error instanceof DAOError ) {
@@ -69,10 +103,45 @@ module.exports = class TokenController {
         }
     }
 
+    /**
+     * POST /tokens
+     *
+     * Create a new token.  Currently `reset-password` tokens are the only type
+     * supported by this endpoint, since invitation and email-confirmation
+     * tokens are created on the backend.
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} request.body The parameters used to create the
+     * token.
+     * @param {string} request.body.type    The type of token we wish to
+     * create.  Currently only 'reset-password' is supported.
+     * @param {string} request.body.email   The email for which we are creating
+     * a password reset token.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
+     */
     async postToken(request, response) {
         const tokenParams  = request.body
 
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Permissions:
+         * Anyone may hit this endpoint to create a reset password token.
+         *
+         * Validation:
+         * 1. A User with request.body.email must exist.
+         * 2. request.body.type must be 'reset-password'
+         *
+         * TODO Rate limit (only x requests per Y period)
+         * 
+         * **********************************************************/
+
+        // Validation: 2. request.body.type must be 'reset-password'
         if ( tokenParams.type == 'reset-password' ) {
+            // Validation: 1. A User with request.body.email must exist.
             const users = await this.userDAO.selectUsers('WHERE email=$1', [ tokenParams.email ])
 
             if ( users.length <= 0) {
