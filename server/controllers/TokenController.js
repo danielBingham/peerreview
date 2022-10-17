@@ -121,7 +121,6 @@ module.exports = class TokenController {
      *
      * @returns {Promise}   Resolves to void.
      */
-     */
     async postToken(request, response) {
         const tokenParams  = request.body
 
