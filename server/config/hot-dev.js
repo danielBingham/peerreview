@@ -18,8 +18,8 @@ module.exports = {
     database: {
         host: 'localhost',
         port: 5432,
-        user: 'app',
-        password: 'local-development',
+        user: 'postgres',
+        password: 'password',
         name: 'peer_review' 
     },
     session: {

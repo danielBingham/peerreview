@@ -12,6 +12,8 @@ module.exports = class SettingsDAO {
         const setting = {
             userId: user.id,
             welcomeDismissed: false,
+            fundingDismissed: false,
+            wipDismissed: false,
             fields: []
         }
         await this.insertSetting(setting)
@@ -26,6 +28,7 @@ module.exports = class SettingsDAO {
                 userId: row.setting_userId,
                 welcomeDismissed: row.setting_welcomeDismissed,
                 fundingDismissed: row.setting_fundingDismissed,
+                wipDismissed: row.setting_wipDismissed,
                 createdDate: row.setting_createdDate,
                 updatedDate: row.setting_updatedDate,
                 fields: []
@@ -63,6 +66,7 @@ module.exports = class SettingsDAO {
                 user_settings.id as setting_id, user_settings.user_id as "setting_userId", 
                 user_settings.welcome_dismissed as "setting_welcomeDismissed", 
                 user_settings.funding_dismissed as "setting_fundingDismissed", 
+                user_settings.wip_dismissed as "setting_wipDismissed",
                 user_settings.created_date as "setting_createdDate", user_settings.updated_date as "setting_updatedDate",
                 user_field_settings.field_id as "field_id", user_field_settings.setting as "field_setting"
             FROM user_settings
@@ -100,10 +104,10 @@ module.exports = class SettingsDAO {
 
     async insertSetting(setting) {
         const results = await this.database.query(`
-            INSERT INTO user_settings (user_id, welcome_dismissed, funding_dismissed, created_date, updated_date)
-                VALUES ($1, $2, $3, now(), now())
+            INSERT INTO user_settings (user_id, welcome_dismissed, funding_dismissed, wip_dismissed, created_date, updated_date)
+                VALUES ($1, $2, $3, $4, now(), now())
                 RETURNING id
-        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed ])
+        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed, setting.wipDismissed ])
 
         if ( results.rowCount == 0 ) {
             throw new DAOError('insertion-failure', `Something went wrong while inserting setting ${setting.id}.`)
@@ -130,9 +134,10 @@ module.exports = class SettingsDAO {
                 user_id = $1,
                 welcome_dismissed = $2,
                 funding_dismissed = $3,
+                wip_dismissed = $4
                 updated_date = now()
-            WHERE id = $4
-        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed, setting.id ])
+            WHERE id = $5
+        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed, setting.wipDismissed, setting.id ])
 
         if ( results.rowCount == 0) {
             throw new Error(`Failed to update setting ${setting.id}.  May not exist.`)
@@ -176,10 +181,11 @@ module.exports = class SettingsDAO {
                 sql += `welcome_dismissed = $${count}, `
             } else if ( key == 'fundingDismissed' ) {
                 sql += `funding_dismissed = $${count}, `
+            } else if ( key == 'wipDismissed' ) {
+                sql += `wip_dismissed = $${count}, `
             } else {
                 sql += `${key} = $${count}, `
             }
-
 
             params.push(setting[key])
             count = count + 1

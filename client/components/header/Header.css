@@ -20,6 +20,9 @@ header #site-title img {
     height: 30px;
     margin-bottom: -6px;
 }
+header #site-title .wip {
+    font-size: 10px;
+}
 
 header #navigation {
     display: inline-block; 

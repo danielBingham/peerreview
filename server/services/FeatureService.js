@@ -2,6 +2,7 @@
 const FeatureDAO = require('../daos/FeatureDAO')
 
 const ExampleMigration = require('../migrations/ExampleMigration')
+const WIPNoticeMigration = require('../migrations/WIPNoticeMigration')
 
 const ServiceError = require('../errors/ServiceError')
 
@@ -34,6 +35,9 @@ module.exports = class FeatureService {
         this.features = {
             'example':  {
                 migration: new ExampleMigration(database, logger, config)
+            },
+            'wip-notice': {
+                migration: new WIPNoticeMigration(database, logger, config)
             }
         }
     }

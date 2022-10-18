@@ -5,6 +5,7 @@ import PublishedPaperList from '/components/papers/published/list/PublishedPaper
 import PaperSearchView from '/components/papers/search/PaperSearchView'
 import WelcomeNotice from '/components/about/notices/WelcomeNotice'
 import SupportNotice from '/components/about/notices/SupportNotice'
+import WIPNotice from '/components/about/notices/WIPNotice'
 
 import './HomePage.css'
 
@@ -43,6 +44,7 @@ const HomePage = function(props) {
 
     return (
         <div id="home-page" className="page">
+            <WIPNotice />
             <WelcomeNotice />
             <SupportNotice />
             <PaperSearchView />

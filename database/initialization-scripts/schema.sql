@@ -126,6 +126,7 @@ CREATE TABLE user_settings (
     id bigserial PRIMARY KEY,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     welcome_dismissed boolean,
+    wip_dismissed boolean DEFAULT false,
     funding_dismissed boolean,
     created_date timestamptz,
     updated_date timestamptz

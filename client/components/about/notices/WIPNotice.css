@@ -1,0 +1,27 @@
+.wip-notice {
+    position: relative;
+    border: thin solid #996561;
+    background-color: #d6b4b1;
+    padding: 15px;
+    margin: 20px auto;
+    width: 800px;
+}
+.wip-notice h2 {
+    text-align: center;
+}
+.wip-notice p {
+    width: 650px;
+    font-size: 14px;
+    line-height: 1.7em;
+    margin: 2em auto;
+}
+.wip-notice .close {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+}
+.wip-notice .close svg {
+    color: #996561;
+    width: 24px;
+    height: 24px;
+}
