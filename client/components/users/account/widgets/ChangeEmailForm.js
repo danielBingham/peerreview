@@ -13,6 +13,9 @@ const ChangeEmailForm = function(props) {
     const [ email, setEmail ] = useState('')
     const [ password, setPassword ] = useState('')
 
+    const [emailError, setEmailError] = useState(null)
+    const [passwordError, setPasswordError] = useState(null)
+
     // ======= Request Tracking =====================================
 
     const [ authRequestId, setAuthRequestId] = useState(null)
@@ -43,8 +46,51 @@ const ChangeEmailForm = function(props) {
 
     const dispatch = useDispatch()
 
+    /**
+     * Perform validation on our state and return a boolean indicating whether
+     * our current state is valid.
+     *
+     * @param {string} field    (Optional) When included, we'll only validate
+     * the named field.  If excluded, we'll validate all fields.
+     *
+     * @return {boolean}    True if our state (or the named field) is valid,
+     * false otherwise.
+     */
+    const isValid = function(field) {
+        let error = false 
+
+        if ( ! field || field == 'email' ) {
+            if ( ! email || email.length == 0 ) {
+                setEmailError('no-email')
+                error = true
+            } else if ( email.length > 512 ) {
+                setEmailError('email-too-long')
+                error = true
+            } else if ( ! email.includes('@') ) {
+                setEmailError('invalid-email')
+                error = true
+            } else if ( emailError ) {
+                setEmailError(null)
+            }
+        }
+
+        if ( ! field || field == 'password' ) {
+            if ( ! password || password.length <= 0 ) {
+                setPasswordError('no-password')
+            } else {
+                setPasswordError(null)
+            }
+        }
+
+        return ! error
+    }
+
     const onSubmit = function(event) {
         event.preventDefault()
+
+        if ( ! isValid() ) {
+            return
+        }
         
         setAuthRequestId(dispatch(patchAuthentication(currentUser.email, password)))
     }
@@ -118,6 +164,20 @@ const ChangeEmailForm = function(props) {
         result = ( <div className="success">Email successfully updated!</div>)
     }
 
+    let emailErrorView = null
+    if ( emailError && emailError == 'no-email' ) {
+        emailErrorView = (<div className="error">Email required.</div> )
+    } else if ( emailError && emailError == 'email-too-long' ) {
+        emailErrorView = (<div className="error">Your email is too long.  Limit is 512 characters.</div>)
+    } else if ( emailError && emailError == 'invalid-email' ) {
+        emailErrorView = (<div className="error">Please enter a valid email.</div>)
+    }
+
+    let passwordErrorView = null
+    if ( passwordError && passwordError == 'no-password' ){
+        passwordErrorView = (<div className="error">Your password is required to change your email.</div>)
+    }
+
     return (
         <div className="change-email-form">
             <form onSubmit={onSubmit}>
@@ -127,16 +187,20 @@ const ChangeEmailForm = function(props) {
                     <input type="text"
                         name="email"
                         value={email}
+                        onBlur={(event) => isValid('email')}
                         onChange={(event) => setEmail(event.target.value)}
                     />
+                    { emailErrorView }
                 </div>
                 <div className="form-field password">
                     <label htmlFor="password">Password</label>
                     <input type="password"
                         name="password"
                         value={password}
+                        onBlur={(event) => isValid('password')}
                         onChange={(event) => setPassword(event.target.value)}
                     />
+                    { passwordErrorView }
                 </div>
                 <div className="error"> { errors } </div>
                 <div className="result"> { result } </div>

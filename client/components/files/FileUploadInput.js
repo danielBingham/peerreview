@@ -22,6 +22,8 @@ const FileUploadInput = function(props) {
     const [file, setFile] = useState(null)
     const [fileData, setFileData] = useState(null)
 
+    const [ typeError, setTypeError ] = useState(null)
+
     // ============ Request Tracking ================================
    
     const [uploadRequestId, setUploadRequestId] = useState(null)
@@ -49,8 +51,14 @@ const FileUploadInput = function(props) {
     
     const onChange = function(event) {
         if ( ! fileData && ! file ) {
-            setFileData(event.target.files[0])
-            setUploadRequestId(dispatch(uploadFile(event.target.files[0])))
+            const file = event.target.files[0]
+            if ( ! props.types.includes(file.type) ) {
+                setTypeError('invalid-type')
+                return
+            }
+
+            setFileData(file)
+            setUploadRequestId(dispatch(uploadFile(file)))
         } else {
             // We shouldn't be able to get here, because we should always show
             // a spinner when we have fileData but no file, and we don't show
@@ -61,6 +69,7 @@ const FileUploadInput = function(props) {
     }
 
     const removeFile = function(event) {
+        setTypeError(null)
         setDeleteRequestId(dispatch(deleteFile(file.id)))
     }
 
@@ -70,6 +79,7 @@ const FileUploadInput = function(props) {
         if ( deleteRequest && deleteRequest.state == 'fulfilled') {
             setFileData(null)
             setFile(null)
+            props.setFile(null)
 
             if ( uploadRequestId && uploadRequest )  {
                 setUploadRequestId(null)
@@ -117,7 +127,12 @@ const FileUploadInput = function(props) {
 
     // Request failure - report an error.
     } else if (  deleteRequest && deleteRequest.state == 'failed') {
-        content = (<div className="error"> { deleteRequest.error }</div>)
+        content = (
+            <div className="error">
+                <p>The attempt to delete your file failed with the following error: { deleteRequest.error }</p>
+                <p>Please report this as a bug and refresh the page to try again.</p>
+            </div>
+            )
     } else if ( uploadRequest && uploadRequest.state == 'failed' ) {
         content = (<div className="error"> { uploadRequest.error }</div>)
     } else { 
@@ -136,13 +151,19 @@ const FileUploadInput = function(props) {
         } else if (( fileData && ! file) ) {
             content = ( <Spinner local={true} /> )
         } else {
+            let typeErrorView = null
+            if ( typeError ) {
+                typeErrorView = ( <div className="error">Invalid-type selected.  Supported types are: { props.types.join(',') }.</div> )
+            }
             content = (
                 <div className="upload-input">
                     <label htmlFor="upload">Select a file to upload</label>
                     <input type="file"
                         name="file"
+                        accept={props.types.join(',')}
                         onChange={onChange} 
                     />
+                    { typeErrorView }
                 </div>
             )
         }

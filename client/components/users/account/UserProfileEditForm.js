@@ -19,6 +19,10 @@ const UserProfileEditForm = function(props) {
     const [location, setLocation] = useState('')
     const [bio, setBio] = useState('')
 
+    const [nameError, setNameError] = useState(null)
+    const [institutionError, setInstitutionError] = useState(null)
+    const [locationError, setLocationError] = useState(null)
+    
     // ======= Request Tracking =====================================
 
     const [requestId, setRequestId] = useState(null)
@@ -40,8 +44,44 @@ const UserProfileEditForm = function(props) {
 
     const dispatch = useDispatch()
 
+    const isValid = function(field) {
+        let error = false
+
+        if ( ! field || field == 'name' ) {
+            if ( name.length <= 0 ) {
+                setNameError('no-name')
+            } else if ( name.length > 512 ) {
+                setNameError('too-long')
+            } else {
+                setNameError(null)
+            }
+        }
+
+        if ( ! field || field == 'institution' ) {
+            if ( institution.length > 256 ) {
+                setInstitutionError('too-long')
+            } else {
+                setInstitutionError(null)
+            }
+        }
+
+        if ( ! field || field == 'location' ) {
+            if ( location.length > 256 ) {
+                setLocationError('too-long')
+            } else {
+                setLocationError(null)
+            }
+        }
+
+        return ! error
+    }
+
     const onSubmit = function(event) {
         event.preventDefault()
+
+        if ( ! isValid() ) {
+            return
+        }
 
         const user = { ...currentUser }
         user.file = file
@@ -86,6 +126,12 @@ const UserProfileEditForm = function(props) {
         }
     }, [])
 
+    useEffect(function() {
+        if ( ! file && currentUser.file ) {
+            setFile(currentUser.file)
+        }
+    }, [ file ] )
+
     // Clean up request.
     useEffect(function() {
         return function cleanup() {
@@ -117,32 +163,63 @@ const UserProfileEditForm = function(props) {
         submit = ( <Spinner /> )
     }
 
+    let nameErrorView = null
+    let institutionErrorView = null
+    let locationErrorView = null
+
+    if ( nameError && nameError == 'no-name' ) {
+        nameErrorView = ( <div className="error">Name is required!</div>)
+    } else if ( nameError && nameError == 'too-long' ) {
+        nameErrorView = ( <div className="error">Name is too long. Limit is 512 characters.</div> )
+    }
+
+    if ( institutionError && institutionError == 'too-long' ) {
+        institutionErrorView = ( <div className="error">Institution name is too long.  Limit is 256 characters.</div> )
+    }
+
+    if ( locationError && locationError == 'too-long' ) {
+        locationErrorView = ( <div className="error">Location is too long. Limit is 256 characters.</div> )
+    }
 
     return (
         <div className='user-profile-edit-form'>
             <form onSubmit={onSubmit}>
-                <UserProfileImage file={file} />                
-                <FileUploadInput setFile={setFile} />
+                <div className="profile-picture">
+                    <div className="profile-wrapper">
+                        <UserProfileImage file={file} />                
+                    </div>
+                    <div className="input-wrapper">
+                        <FileUploadInput setFile={setFile} types={[ 'image/jpeg', 'image/png' ]} />
+                    </div>
+                </div>
                 <div className="form-field name">
                     <label htmlFor="name">Name</label><input type="text"
                         name="name"
                         value={name}
+                        onBlur={(event) => isValid('name')}
                         onChange={(event) => setName(event.target.value)}
                     />
+                    { nameErrorView }
                 </div>
                 <div className="form-field institution">
-                    <label htmlFor="institution">Institution</label><input type="text"
-                        institution="institution"
+                    <label htmlFor="institution">Institution</label><input 
+                        type="text"
+                        name="institution"
                         value={institution}
+                        onBlur={(event) => isValid('institution')}
                         onChange={(event) => setInstitution(event.target.value)}
                     />
+                    { institutionErrorView }
                 </div>
                 <div className="form-field location">
-                    <label htmlFor="location">Location</label><input type="text"
-                        location="location"
+                    <label htmlFor="location">Location</label><input 
+                        type="text"
+                        name="location"
                         value={location}
+                        onBlur={(event) => isValid('location')}
                         onChange={(event) => setLocation(event.target.value)}
                     />
+                    { locationErrorView }
                 </div>
                 <div className="form-text bio">
                     <label htmlFor="bio">Biography</label>

@@ -5,6 +5,8 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { postPapers, setDraft, cleanupRequest as cleanupPapersRequest } from '/state/papers'
 
+import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
+
 import SelectCoAuthorsWidget from './SelectCoAuthorsWidget'
 import FieldsInput from '/components/fields/FieldsInput'
 import FileUploadInput from '/components/files/FileUploadInput' 
@@ -26,7 +28,10 @@ const SubmitDraftForm = function(props) {
     const [file, setFile] = useState(null)
     const [authors, setAuthors] = useState([])
 
-    const [errors, setErrors] = useState([])
+    const [titleError, setTitleError] = useState(null)
+    const [fieldsError, setFieldsError] = useState(null)
+    const [fileError, setFileError] = useState(null)
+    const [authorsError, setAuthorsError] = useState(null)
 
     // ================== Request Tracking ====================================
     
@@ -52,6 +57,51 @@ const SubmitDraftForm = function(props) {
     const navigate = useNavigate()
 
     /**
+     *
+     */
+    const isValid = function(name) {
+        let error = false
+
+        if ( ! name || name == 'title' ) {
+            if (title.length <= 0) {
+                setTitleError('no-title')
+                error = true
+            } else if ( titleError ) {
+                setTitleError(null)
+            }
+        }
+
+        if ( ! name || name == 'fields' ) {
+            if ( fields.length <= 0 ) {
+                setFieldsError('no-fields')
+                error = true
+            } else if ( fieldsError ) {
+                setFieldsError(null)
+            }
+        }
+
+        if ( ! name || name == 'file' ) {
+            if ( ! file ) {
+                setFileError('no-file')
+                error = true
+            } else if ( fileError ) {
+                setFileError(null)
+            }
+        }
+
+        if ( ! name || name == 'authors' ) {
+            if ( authors.length <= 0 ) {
+                setAuthorsError('no-authors')
+                error = true
+            } else if ( authorsError ) {
+                setAuthorsError(null)
+            }
+        }
+
+        return ! error
+    }
+
+    /**
      * Handle the form's submission by attempting to post the paper.  Store the
      * postPapersRequestId so that we can track the request and respond to
      * errors.
@@ -61,12 +111,7 @@ const SubmitDraftForm = function(props) {
     const onSubmit = function(event) {
         event.preventDefault();
 
-        const foundErrors = []
-        if ( ! title ) {
-           foundErrors.push('missing-title') 
-        }
-        if (foundErrors.length > 0) {
-            setErrors(foundErrors)
+        if ( ! isValid() ) {
             return false
         }
 
@@ -143,31 +188,46 @@ const SubmitDraftForm = function(props) {
                     missingFieldViews.push(<span key={fieldId} className="missing-field"><Field id={fieldId} /></span>)
                 }
                 errorContent = (
-                    <span className="missing-fields">
+                    <>
+                        <ExclamationTriangleIcon />
                         <p>No author has enough reputation to publish in the following fields:</p> 
                         {missingFieldViews}
                         <p>Please either add an author with enough reputation to publish, or remove the fields in question.</p>
-                        <p>BETA NOTE: During closed beta, publish reputation has been set at 2x average field reputation.  Once we're out of closed beta and into open beta, this will be set at 0 reputation.</p>
-                    </span>
+                        <p><strong>NOTE:</strong> During closed beta, publish reputation has been set at 2x average field reputation.  Once we're out of closed beta and into open beta, this will be set at 0 reputation.</p>
+                    </>
                 )
             }
         }
 
         requestError = (
-            <div className="error">
+            <div className="overall-error">
                 { errorContent }
             </div>
         )
     }
 
-    let titleErrorElement = null
-    if ( errors ) {
-        for ( const error of errors ) {
-            if ( error == 'missing-title' ) {
-                titleErrorElement = ( <div className="error">Title is required!</div> )
-            }
-        }
+
+    let titleErrorView = null
+    let fieldsErrorView = null
+    let authorsErrorView = null
+    let fileErrorView = null
+
+    if ( titleError && titleError == 'no-title' ) {
+        titleErrorView = ( <div className="error">Must include a title.</div> )
     }
+
+    if ( fieldsError && fieldsError == 'no-fields' ) {
+        fieldsErrorView = ( <div className="error">Must select at least one field.</div> )
+    }
+
+    if ( fileError && fileError == 'no-file' ) {
+        fileErrorView = ( <div className="error">Must select a valid file.</div> )
+    }
+
+    if ( authorsError && authorsError == 'no-authors' ) {
+        authorsErrorView = ( <div className="error">Must select at least one author.</div> )
+    }
+
 
     return (
         <div className="draft-paper-submission-form">
@@ -180,21 +240,31 @@ const SubmitDraftForm = function(props) {
                     <input type="text" 
                         name="title" 
                         value={title}
+                        onBlur={ (event) => isValid('title') }
                         onChange={ (event) => setTitle(event.target.value) } 
                     />
-                    { titleErrorElement }
+                    { titleErrorView }
                 </div>
 
                 <FieldsInput 
+                    onBlur={ (event) => isValid('fields') }
                     fields={fields} 
                     setFields={setFields} 
                     title="Fields"
                     explanation={`Enter up to five fields, subfields, or areas you believe your paper is relevant to, eg. "biology", "chemistry", or "microbiology.`}
                 />
+                { fieldsErrorView }
 
-                <SelectCoAuthorsWidget fields={fields} authors={authors} setAuthors={setAuthors} />
+                <SelectCoAuthorsWidget 
+                    onBlur={ (event) => isValid('authors') }
+                    fields={fields} 
+                    authors={authors} 
+                    setAuthors={setAuthors} 
+                />
+                { authorsErrorView }
 
-                <FileUploadInput setFile={setFile} />
+                <FileUploadInput setFile={setFile} types={[ 'application/pdf' ]}/>
+                { fileErrorView }
 
                 { requestError }
                 <div className="submit field-wrapper">

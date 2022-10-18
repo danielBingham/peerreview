@@ -150,7 +150,7 @@ module.exports = class FileController {
                 papers.id, papers.is_draft
             FROM papers
                 LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
-            WHERE paper_versions.file_id = $1 AND papers.id_draft = false
+            WHERE paper_versions.file_id = $1 AND papers.is_draft = false
         `, [ request.params.id ])
 
         // 3. File must not be in use by a published paper.

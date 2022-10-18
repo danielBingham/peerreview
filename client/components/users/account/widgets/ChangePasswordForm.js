@@ -16,6 +16,9 @@ const ChangePasswordForm = function(props) {
     const [confirmNewPassword, setConfirmNewPassword] = useState('')
     const [oldPassword, setOldPassword] = useState('')
 
+    const [newPasswordError, setNewPasswordError] = useState(null)
+    const [newPasswordConfirmationError, setNewPasswordConfirmationError] = useState(null)
+
     // ======= Request Tracking =====================================
 
     const [requestId, setRequestId] = useState(null)
@@ -46,13 +49,53 @@ const ChangePasswordForm = function(props) {
 
     const dispatch = useDispatch()
 
+    /**
+     * Perform validation on our state and return a boolean indicating whether
+     * our current state is valid.
+     *
+     * @param {string} field    (Optional) When included, we'll only validate
+     * the named field.  If excluded, we'll validate all fields.
+     *
+     * @return {boolean}    True if our state (or the named field) is valid,
+     * false otherwise.
+     */
+    const isValid = function(field) {
+        let error = false 
+
+        if ( ! field || field == 'newPassword' ) {
+            if ( ! newPassword || newPassword.length == 0 ) {
+                setNewPasswordError('no-password')
+                error = true
+            } else if ( newPassword.length < 16 ) {
+                setNewPasswordError('password-too-short')
+                error = true
+            } else if ( newPassword.length > 256 ) {
+                setNewPasswordError('password-too-long')
+                error = true
+            } else {
+                setNewPasswordError(null)
+            }
+        }
+
+        if ( ! field || field =='confirmNewPassword' ) {
+            if (newPassword != confirmNewPassword) {
+                setNewPasswordConfirmationError('password-mismatch')
+                error = true 
+            } else {
+                setNewPasswordConfirmationError(null)
+            }
+        }
+
+        return ! error
+    }
+
     const onSubmit = function(event) {
         event.preventDefault()
 
-        // Passwords must match.
-        if (newPassword != confirmNewPassword ) {
+        if ( ! isValid() ) {
             return
         }
+
         setAuthRequestId(dispatch(patchAuthentication(currentUser.email, oldPassword)))
 
     }
@@ -101,9 +144,18 @@ const ChangePasswordForm = function(props) {
         submit = ( <input type="submit" name="submit" value="Change Password" /> )
     }
 
-    let confirmPasswordError = null
-    if ( newPassword !== confirmNewPassword) {
-        confirmPasswordError = (<div className="password-mismatch-error">Your passwords must match!</div>)
+    let newPasswordErrorView = null
+    if ( newPasswordError == 'no-password' ) {
+        newPasswordErrorView = (<div className="error">New password required to change your password.</div> )
+    } else if ( newPasswordError == 'pasword-too-short' ) {
+        newPasswordErrorView = (<div className="error">Your new password must be at least 16 characters long.</div>)
+    } else if ( newPasswordError == 'password-too-long' ) {
+        newPasswordErrorView = (<div className="error">Your new password is too long. Limit is 256 characters.</div>)
+    }
+
+    let confirmPasswordErrorView = null
+    if ( newPasswordConfirmationError && newPasswordConfirmationError == 'password-mismatch' ) {
+        confirmPasswordErrorView = (<div className="error">Your passwords must match!</div>)
     }
 
     let oldPasswordError = null
@@ -146,17 +198,20 @@ const ChangePasswordForm = function(props) {
                     <input type="password"
                         name="new-password"
                         value={newPassword}
+                        onBlur={(event) => isValid('newPassword') }
                         onChange={(event) => setNewPassword(event.target.value)}
                     />
+                    { newPasswordErrorView }
                 </div>
                 <div className="form-field confirm-new-password">
                     <label htmlFor="confirm-new-password">Confirm New Password</label>
                     <input type="password"
                         name="confirm-new-password"
                         value={confirmNewPassword}
+                        onBlur={(event) => isValid('confirmNewPassword')}
                         onChange={(event) => setConfirmNewPassword(event.target.value)}
                     />
-                    <div className="error">{ confirmPasswordError } </div>
+                    { confirmPasswordErrorView }
                 </div>
                 <div className="form-field old-password">
                     <label htmlFor="old password">Old Password</label>

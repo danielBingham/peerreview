@@ -33,5 +33,20 @@
     color: red;
     text-align: center;
 }
+.draft-paper-submission-form .overall-error {
+    position:relative;
+    border: thin solid red;
+    margin: 30px auto;
+    padding: 50px;
+    width: 800px;
+}
+.draft-paper-submission-form .overall-error svg {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 24px;
+    height: 24px;
+    color: red;
+}
 
 

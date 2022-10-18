@@ -113,7 +113,7 @@ const SelectCoAuthorsWidget = function(props) {
 
     return (
         <div id="select-co-authors-widget" className="select-co-authors-widget">
-            <AuthorsInput authors={props.authors} setAuthors={props.setAuthors} />
+            <AuthorsInput onBlur={props.onBlur} authors={props.authors} setAuthors={props.setAuthors} />
             <div className="selected-authors">
                 {selectedAuthorViews}
             </div>

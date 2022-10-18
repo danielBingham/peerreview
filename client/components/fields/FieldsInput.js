@@ -246,6 +246,7 @@ const FieldsInput = function(props) {
                 name="fields" 
                 value={currentField}
                 onKeyPress={handleCurrentFieldKeyPress} 
+                onBlur={ (event) => props.onBlur ? props.onBlur(event) : null }
                 onChange={(event) => {
                     suggestFields(event.target.value)
                     setCurrentField(event.target.value)

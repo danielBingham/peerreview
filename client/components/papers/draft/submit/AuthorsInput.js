@@ -240,6 +240,7 @@ const AuthorsInput = function(props) {
                 name="authorName" 
                 value={authorName}
                 onKeyDown={handleKeyDown}
+                onBlur={ (event) => props.onBlur ? props.onBlur(event) : null }
                 onChange={handleChange} 
             />
             { inviteAuthor }

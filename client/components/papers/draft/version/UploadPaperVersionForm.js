@@ -63,7 +63,7 @@ const UploadPaperVersionForm = function(props) {
 
             setRequestId(dispatch(postPaperVersions(props.paper, version)))
         } else {
-            setError(<div className="no-file-error">You must select a file to upload.</div>)
+            setError('no-file')
         }
 
         return false
@@ -76,8 +76,6 @@ const UploadPaperVersionForm = function(props) {
      *
      * Paper must be a draft.  If it's not, log an error and take us out of
      * here.
-     *
-     * Cleanup hanging request on dismount.
      *
      */
     useEffect(function() {
@@ -110,13 +108,19 @@ const UploadPaperVersionForm = function(props) {
 
     // ======= Render ===============================================
 
+
     if ( props.paper.isDraft ) {
+        let errorView = null
+        if ( error == 'no-file' ) {
+            errorView = (<div className="no-file-error">You must select a file to upload.</div>)
+}
+
         return (
             <div  className="upload-paper-version-form">
                 <h1>Submit a New Version of {props.paper.title}</h1>
                 <form onSubmit={onSubmit}>
-                    <FileUploadInput setFile={setFile} />
-                    <div className="error">{ error }</div>
+                    <FileUploadInput setFile={setFile} types={[ 'application/pdf' ]} />
+                    <div className="error">{ errorView }</div>
                     <div className="submit">
                         <input type="submit" name="submit" value="Submit New Version" />
                     </div>
