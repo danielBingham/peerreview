@@ -297,7 +297,7 @@ module.exports = class SettingsController {
      */
     async patchSetting(request, response) {
         const id = request.params.id
-        const userId = request.params.userId
+        const userId = request.params.user_id
 
         const setting = request.body
 
@@ -381,7 +381,7 @@ module.exports = class SettingsController {
      */
     async deleteSetting(request, response) {
         const id = request.params.id
-        const userId = request.params.userId
+        const userId = request.params.user_id
 
         throw new ControllerError(501, 'not-implemented',
             `User(${request.session.user?.id}) attempted to delete Setting(${id}) owned by User(${userId}).`)

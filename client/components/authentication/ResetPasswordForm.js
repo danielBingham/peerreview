@@ -17,6 +17,9 @@ const ResetPasswordForm = function(props) {
     const [newPassword, setNewPassword] = useState('')
     const [confirmNewPassword, setConfirmNewPassword] = useState('')
 
+    const [passwordError, setPasswordError] = useState(null)
+    const [passwordConfirmationError, setPasswordConfirmationError] = useState(null)
+
     // ======= Request Tracking =====================================
 
     const [requestId, setRequestId] = useState(null)
@@ -38,8 +41,52 @@ const ResetPasswordForm = function(props) {
 
     const dispatch = useDispatch()
 
+    /**
+     * Perform validation on our state and return a boolean indicating whether
+     * our current state is valid.
+     *
+     * @param {string} field    (Optional) When included, we'll only validate
+     * the named field.  If excluded, we'll validate all fields.
+     *
+     * @return {boolean}    True if our state (or the named field) is valid,
+     * false otherwise.
+     */
+    const isValid = function(field) {
+        let error = false 
+
+        if ( ! field || field == 'newPassword' ) {
+            if ( ! newPassword || newPassword.length == 0 ) {
+                setPasswordError('no-password')
+                error = true
+            } else if ( newPassword.length < 16 ) {
+                setPasswordError('password-too-short')
+                error = true
+            } else if ( newPassword.length > 256 ) {
+                setPasswordError('password-too-long')
+                error = true
+            } else if ( passwordError ) {
+                setPasswordError(null)
+            }
+        }
+
+        if ( ! field || field =='confirmNewPassword' ) {
+            if (newPassword != confirmNewPassword) {
+                setPasswordConfirmationError('password-mismatch')
+                error = true 
+            } else if ( passwordConfirmationError ) {
+                setPasswordConfirmationError(null)
+            }
+        }
+
+        return ! error
+    }
+
     const onSubmit = function(event) {
         event.preventDefault()
+
+        if ( ! isValid() ) {
+            return
+        }
 
         // ResetPasswordPage will check to ensure we have a token.  By the time
         // we're here, we should have one.
@@ -68,9 +115,19 @@ const ResetPasswordForm = function(props) {
 
     // ======= Render ===============================================
 
-    let confirmPasswordError = null
-    if ( newPassword !== confirmNewPassword) {
-        confirmPasswordError = (<div className="password-mismatch-error">Your passwords must match!</div>)
+    let passwordErrorView = null
+    let passwordConfirmationErrorView = null
+
+    if ( passwordError && passwordError == 'no-password') {
+        passwordErrorView = ( <>Password is required!</> )
+    } else if ( passwordError && passwordError == 'password-too-short') {
+        passwordErrorView = (<>Your password is too short.  Please choose a password at least 16 characters in length.  We recommend the XKCD method of passphrase selection: <a href="https://xkcd.com/936/">XKCD #936: Password Strength</a>.</> )
+    } else if ( passwordError && passwordError == 'password-too-long') {
+        passwordErrorView = (<>Your password is too long. Limit is 256 characters.</>)
+    }
+
+    if ( passwordConfirmationError && passwordConfirmationError == 'password-mismatch' ) {
+        passwordConfirmationErrorView = ( <>Your passwords don't match!</> )
     }
 
     let content = (
@@ -81,17 +138,20 @@ const ResetPasswordForm = function(props) {
                 <input type="password"
                     name="new-password"
                     value={newPassword}
+                    onBlur={ (event) => isValid('newPassword') }
                     onChange={(event) => setNewPassword(event.target.value)}
                 />
+                <div className="error">{ passwordErrorView }</div>
             </div>
             <div className="form-field confirm-new-password">
                 <label htmlFor="confirm-new-password">Confirm New Password</label>
                 <input type="password"
                     name="confirm-new-password"
                     value={confirmNewPassword}
+                    onBlur={ (event) => isValid('confirmNewPassword') }
                     onChange={(event) => setConfirmNewPassword(event.target.value)}
                 />
-                <div className="error">{ confirmPasswordError } </div>
+                <div className="error">{ passwordConfirmationErrorView} </div>
             </div>
             <div className="submit">
                 <input type="submit" name="submit" value="Reset Password" />                    

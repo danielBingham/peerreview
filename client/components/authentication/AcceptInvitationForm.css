@@ -19,3 +19,8 @@
 .accept-invitation-form .submit {
     text-align: center;
 }
+.accept-invitation-form .error {
+    color: red;
+    text-align: center;
+    line-height: 2em;
+}
