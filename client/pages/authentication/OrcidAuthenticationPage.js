@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { useSearchParams, useNavigate, useLocation } from 'react-router-dom'
+import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 
 import { postOrcidAuthentication, cleanupRequest } from '/state/authentication'
 import { initializeReputation, cleanupReputationRequest } from '/state/reputation'
