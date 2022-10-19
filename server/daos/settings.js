@@ -30,7 +30,7 @@ module.exports = class SettingsDAO {
         await this.insertSetting(setting)
     }
 
-    hydrateSettings(rows) {
+    async hydrateSettings(rows) {
         const settings = {}
         const list = []
         for(const row of rows) {
@@ -94,7 +94,7 @@ module.exports = class SettingsDAO {
         if ( results.rows.length == 0) {
             return [] 
         }
-        return this.hydrateSettings(results.rows)
+        return await this.hydrateSettings(results.rows)
     }
 
     /**
