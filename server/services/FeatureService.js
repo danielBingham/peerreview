@@ -42,6 +42,12 @@ module.exports = class FeatureService {
         }
     }
 
+    async hasFeature(name) {
+        const feature = await this.getFeature(name)
+
+        return feature && feature.status == 'enabled'
+    }
+
     async getFeature(name) {
         const { dictionary } = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
 

@@ -5,10 +5,10 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class SettingsController {
 
-    constructor(database, logger) {
+    constructor(database, logger, config) {
         this.database = database
         this.logger = logger
-        this.settingsDAO = new SettingsDAO(database, logger)
+        this.settingsDAO = new SettingsDAO(database, logger, config)
     }
 
     /**

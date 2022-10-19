@@ -20,6 +20,11 @@ const HomePage = function(props) {
         }
     })
 
+    // Feature Flag: wip-notice
+    const wipNoticeFeature = useSelector(function(state) {
+        return state.features.dictionary['wip-notice']
+    })
+
     useLayoutEffect(function() {
         if (fieldSettings && fieldSettings.length > 0) {
             let newQuery = { ...query } 
@@ -44,7 +49,7 @@ const HomePage = function(props) {
 
     return (
         <div id="home-page" className="page">
-            <WIPNotice />
+            { wipNoticeFeature && wipNoticeFeature.status == 'enabled' && <WIPNotice /> }
             <WelcomeNotice />
             <SupportNotice />
             <PaperSearchView />

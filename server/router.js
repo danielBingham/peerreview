@@ -199,7 +199,7 @@ module.exports = function(database, logger, config) {
      *          User Settings REST Routes
      ******************************************************************************/
     const SettingsController = require('./controllers/SettingsController')
-    const settingsController = new SettingsController(database, logger)
+    const settingsController = new SettingsController(database, logger, config)
 
     // Get a list of all settings.
     router.get('/user/:user_id/settings', function(request, response, next) {

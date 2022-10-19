@@ -1,11 +1,22 @@
+const FeatureService = require('../services/FeatureService')
 
 const DAOError = require('../errors/DAOError')
 
 module.exports = class SettingsDAO {
 
-    constructor(database, logger) {
+    constructor(database, logger, config) {
         this.database = database
         this.logger = logger
+
+        this.featureService = new FeatureService(database, logger, config)
+
+        this.selectionString = `
+            user_settings.id as setting_id, user_settings.user_id as "setting_userId", 
+            user_settings.welcome_dismissed as "setting_welcomeDismissed", 
+            user_settings.funding_dismissed as "setting_fundingDismissed", 
+            user_settings.created_date as "setting_createdDate", user_settings.updated_date as "setting_updatedDate",
+            user_field_settings.field_id as "field_id", user_field_settings.setting as "field_setting"
+        `
     }
 
     async initializeSettingsForUser(user) {
@@ -28,10 +39,14 @@ module.exports = class SettingsDAO {
                 userId: row.setting_userId,
                 welcomeDismissed: row.setting_welcomeDismissed,
                 fundingDismissed: row.setting_fundingDismissed,
-                wipDismissed: row.setting_wipDismissed,
                 createdDate: row.setting_createdDate,
                 updatedDate: row.setting_updatedDate,
                 fields: []
+            }
+
+            // Feature Flag: wip-notice
+            if ( this.haveWIPNotice ) {
+                setting.wipDismissed = row.setting_wipDismissed
             }
 
             if ( ! settings[row.setting_id] ) {
@@ -61,14 +76,13 @@ module.exports = class SettingsDAO {
             params = []
         }
 
+        // Feature Flag: wip-notice
+        this.haveWIPNotice = await this.featureService.hasFeature('wip-notice')
+        const wipString = this.haveWIP ? `, user_settings.wip_dismissed as "setting_wipDismissed"` : ''
+
         const sql = `
             SELECT 
-                user_settings.id as setting_id, user_settings.user_id as "setting_userId", 
-                user_settings.welcome_dismissed as "setting_welcomeDismissed", 
-                user_settings.funding_dismissed as "setting_fundingDismissed", 
-                user_settings.wip_dismissed as "setting_wipDismissed",
-                user_settings.created_date as "setting_createdDate", user_settings.updated_date as "setting_updatedDate",
-                user_field_settings.field_id as "field_id", user_field_settings.setting as "field_setting"
+                ${this.selectionString} ${wipString}
             FROM user_settings
                 LEFT OUTER JOIN user_field_settings ON user_settings.id = user_field_settings.setting_id
             ${where}
@@ -104,16 +118,28 @@ module.exports = class SettingsDAO {
 
     async insertSetting(setting) {
         const results = await this.database.query(`
-            INSERT INTO user_settings (user_id, welcome_dismissed, funding_dismissed, wip_dismissed, created_date, updated_date)
-                VALUES ($1, $2, $3, $4, now(), now())
+            INSERT INTO user_settings (user_id, welcome_dismissed, funding_dismissed, created_date, updated_date)
+                VALUES ($1, $2, $3, now(), now())
                 RETURNING id
-        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed, setting.wipDismissed ])
+        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed ])
 
         if ( results.rowCount == 0 ) {
             throw new DAOError('insertion-failure', `Something went wrong while inserting setting ${setting.id}.`)
         }
 
         setting.id = results.rows[0].id
+
+        // Feature Flag: wip-notice
+        if ( this.haveWIPNotice ) {
+            const updateResults = await this.database.query(`
+                UPDATE user_settings SET wip_dismissed = $1 WHERE id = $2
+            `, [ setting.wipDismissed, setting.id ])
+
+            if ( updateResults.rowCount <= 0 ) {
+                throw new DAOError(`wip-update-failure`, 
+                    `Something went wrong with the attempt to update wip-notice for Setting(${setting.id}).`)
+            }
+        }
 
         if ( setting.fields ) {
             for ( const fieldSetting of setting.fields ) {
@@ -134,13 +160,24 @@ module.exports = class SettingsDAO {
                 user_id = $1,
                 welcome_dismissed = $2,
                 funding_dismissed = $3,
-                wip_dismissed = $4
                 updated_date = now()
-            WHERE id = $5
-        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed, setting.wipDismissed, setting.id ])
+            WHERE id = $4
+        `, [ setting.userId, setting.welcomeDismissed, setting.fundingDismissed, setting.id ])
 
         if ( results.rowCount == 0) {
             throw new Error(`Failed to update setting ${setting.id}.  May not exist.`)
+        }
+
+        // Feature Flag: wip-notice
+        if ( this.haveWIPNotice ) {
+            const updateResults = await this.database.query(`
+                UPDATE user_settings SET wip_dismissed = $1 WHERE id = $2
+            `, [ setting.wipDismissed, setting.id ])
+
+            if ( updateResults.rowCount <= 0 ) {
+                throw new DAOError(`wip-update-failure`, 
+                    `Something went wrong with the attempt to update wip-notice for Setting(${setting.id}).`)
+            }
         }
 
         const deleteResults = await this.database.query(`
@@ -174,6 +211,10 @@ module.exports = class SettingsDAO {
         const ignored = [ 'id', 'userId', 'createdDate', 'updatedDate' ] 
         for(let key in setting) {
             if (ignored.includes(key)) {
+                continue
+            }
+            // Feature Flag: wip-notice
+            if ( ! this.haveWIPNotice && key == 'wipDismissed' ) {
                 continue
             }
 
