@@ -45,7 +45,8 @@ module.exports = class SettingsDAO {
             }
 
             // Feature Flag: wip-notice
-            if ( this.haveWIPNotice ) {
+            const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
+            if ( haveWIPNotice ) {
                 setting.wipDismissed = row.setting_wipDismissed
             }
 
@@ -77,8 +78,8 @@ module.exports = class SettingsDAO {
         }
 
         // Feature Flag: wip-notice
-        this.haveWIPNotice = await this.featureService.hasFeature('wip-notice')
-        const wipString = this.haveWIP ? `, user_settings.wip_dismissed as "setting_wipDismissed"` : ''
+        const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
+        const wipString = haveWIPNotice ? `, user_settings.wip_dismissed as "setting_wipDismissed"` : ''
 
         const sql = `
             SELECT 
@@ -130,7 +131,8 @@ module.exports = class SettingsDAO {
         setting.id = results.rows[0].id
 
         // Feature Flag: wip-notice
-        if ( this.haveWIPNotice ) {
+        const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
+        if ( haveWIPNotice ) {
             const updateResults = await this.database.query(`
                 UPDATE user_settings SET wip_dismissed = $1 WHERE id = $2
             `, [ setting.wipDismissed, setting.id ])
@@ -169,7 +171,8 @@ module.exports = class SettingsDAO {
         }
 
         // Feature Flag: wip-notice
-        if ( this.haveWIPNotice ) {
+        const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
+        if ( haveWIPNotice ) {
             const updateResults = await this.database.query(`
                 UPDATE user_settings SET wip_dismissed = $1 WHERE id = $2
             `, [ setting.wipDismissed, setting.id ])
@@ -205,6 +208,8 @@ module.exports = class SettingsDAO {
             throw new Error(`Can't update a setting with out an Id.`)
         }
 
+        const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
+
         let sql = 'UPDATE user_settings SET '
         let params = []
         let count = 1
@@ -214,7 +219,7 @@ module.exports = class SettingsDAO {
                 continue
             }
             // Feature Flag: wip-notice
-            if ( ! this.haveWIPNotice && key == 'wipDismissed' ) {
+            if ( ! haveWIPNotice && key == 'wipDismissed' ) {
                 continue
             }
 
