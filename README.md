@@ -1,5 +1,16 @@
 # Peer Review
 
+Join the community and follow along!
+
+- [Slack](https://join.slack.com/t/peer-review-io/shared_invite/zt-1hocmaafn-7dr~wuqnasfFMRXygD_HxA)
+- [Twitter](https://twitter.com/PeerReviewIo)
+
+If you have ideas, questions, or just want to talk open access and open science
+feel free to join us in the slack, avail yourself of Github Discussions on
+this repository, or tweet at us!
+
+## Description
+
 Peer Review is an open access, reputation based scientific publishing system
 that has the potential to replace the journal system with a single, community
 run website.  It is free to publish, free to access, and the plan is to support
@@ -23,84 +34,41 @@ this point, peers with sufficient reputation in the tagged fields can vote the
 paper up or down, based only on its quality.  They can post public responses
 with feedback, criticism, suggestions, or plaudits.  Each up vote grants
 reputation to the authors in the fields the paper is tagged with, each down
-vote removes it.  It costs a small amount of reputation to downvote a paper, to
-discourage frivolous downvotes or brigading.
-
-To learn more about why we think the journal system need replacing, what
-problems we hope Peer Review will solve, and how - read [the
-Rationale](./rationale.md).
+vote removes it.
 
 ## Contributing
 
 The tech stack is Nodejs and Express on the backend, React and Redux on the
 frontend, and Postgres as a database. 
 
-There is a [Github Project](
-https://github.com/users/danielBingham/projects/6/views/1) setup with issues
-and Milestones, however, these are a bit out of date.  There are planning
-documents partially written in [Planning](./documentation/planning/), however,
-these are only partially completed.
+Right now, it's a one developer show and in the push to get to an open beta
+before we run out of runway, we've taken on some tech debt.  Some of which has
+put the local environment out of comission for anyone who doesn't have access
+to our Digital Ocean account. 
 
-Right now, it's a one developer show and it will probably remain that way until
-we reach an alpha prototype of the MVP.  Then we'll take stock, do more
-detailed planning and break out tasks that will be easier for contributors to
-pick up.
+If you're interested in contributing code - the first project is getting the local
+working again!
 
-### Documentation
+### Alpha Testing
+
+If you can't code (or don't want to contribute code) but still want to
+contribute, then you can help out by spending some time testing the alpha!  You
+can find the alpha up on the staging server here: 
+
+- [Peer Review - Staging](https://staging.peer-review.io)
+
+Spend some time putting it through its paces and report any bugs you find.
+There are three primary ways to report bugs:
+
+- Send an email to [contact@peer-review.io](mailto:contact@peer-review.io)
+- Open a bug issue here: [Bug Issue Template](https://github.com/danielBingham/peerreview/issues/new?assignees=&labels=&template=bug_report.md)
+- Join the [Slack](https://join.slack.com/t/peer-review-io/shared_invite/zt-1hocmaafn-7dr~wuqnasfFMRXygD_HxA) and post in #bugs.
+
+## Documentation
 
 Documentation is partial and incomplete, but will be fleshed out over time.
 
+- [Running Locally](./documentation/running-locally.md)
 - [API](./documentation/api/)
 - [Planning](./documentation/planning)
 
-### Running Locally
-
-After pulling the github repo, you can run the development server by first running the PostgreSQL docker
-container. To run peerreview, you can either use nodemon and the react dev server or build a Docker
-container.
-
-From the root project directory, build the postgres docker container:
-
-```
-$ cd database
-$ docker build -t peer-sql .
-```
-
-Navigate back to the root directory and run the Postgres docker container:
-
-```
-$ cd ..
-$ docker network create peer-network
-$ docker run -d -p 5432:5432 --name peer-review-database-service --net peer-network peer-sql
-```
-
-Run ``npm install`` to install project dependencies:
-
-```
-$ npm install
-```
-
-Run the development server for react and node to allow hot reloading while you develop:
-
-```
-$ npm run dev
-```
-
-When you're ready to test your project in a more production like context, kill the development
-server and build the app docker container.
-
-From the root project directory:
-
-```
-$ docker build -t peer .
-$ docker run -d -p 8080:8080 --name peer --net peer-network peer 
-```
-
-When you're done, make sure to clean up the two docker containers:
-
-```
-$ docker stop peer
-$ docker stop peer-sql
-$ docker rm peer
-$ docker rm peer-sql
-```

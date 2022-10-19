@@ -110,11 +110,7 @@ review and refereeing is done by qualified peers. To learn more, please read
 [how it works](/about#how-it-works).
                     
 Our goal is to replace the scientific journal system with a web platform that
-is democratically managed by scholars for scholars and open to its core.  We
-hope to solve any number of problems plaguing scientific publishing in the
-process, but we're starting with the file drawer problem. To learn more about
-our reasoning and the problems we hope to solve, read [our
-rationale](/about#rationale).
+is democratically managed by scholars for scholars and open to its core.  
 `}
                 </ReactMarkdown>
             </div>
