@@ -29,8 +29,8 @@ module.exports = {
         bucket: 'peer-review-staging-files'
     },
     orcid: {
-        authorization_host: 'https://sandbox.orcid.org',
-        api_host: 'https://pub.sandbox.orcid.org',
+        authorization_host: 'https://orcid.org',
+        api_host: 'https://pub.orcid.org',
         client_id: process.env.ORCID_CLIENT_ID,
         client_secret: process.env.ORCID_CLIENT_SECRET,
         authentication_redirect_uri: 'https://staging.peer-review.io/orcid/authentication',
