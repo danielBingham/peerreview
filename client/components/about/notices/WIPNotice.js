@@ -98,7 +98,15 @@ const WIPNotice = function(props) {
                 <h2>Alpha Software</h2>
                 <ReactMarkdown>
                     {`
-Warning!  Peer Review is alpha software.  That means it is provided only for testing purposes.  All data you enter will be deleted before we begin the closed beta period.   
+Warning!  Peer Review is alpha software.  That means it is provided only for
+testing purposes.  All data you enter will be deleted before we begin the
+closed beta period.   
+
+During the alpha and initial beta period, all actions (publishing, reviewing,
+and refereeing) will require reputation.  We will attempt to generate initial
+reputation for users who connect their ORCID iDs to their account by looking up
+their record on [OpenAlex](https://openalex.org).  After the initial beta
+period, publishing will require zero reputation.
                     `}
                 </ReactMarkdown>
             </div>

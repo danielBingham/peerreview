@@ -257,6 +257,9 @@ const RegistrationForm = function(props) {
     return (
         <div className="registration-form">
             <h2>Register</h2>
+            <div className="explanation">
+                Create an account using your email and password.
+            </div>
             <form onSubmit={onSubmit}>
                 <div className="error"> {overallErrorView} </div>
 

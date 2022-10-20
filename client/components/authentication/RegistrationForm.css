@@ -2,6 +2,10 @@
 .registration-form h2 {
     text-align: center;
 }
+.registration-form .explanation {
+    padding: 20px;
+    text-align: center;
+}
 .registration-form .field-wrapper {
     padding: 10px;
 }

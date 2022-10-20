@@ -7,6 +7,8 @@ import { initializeReputation, cleanupReputationRequest } from '/state/reputatio
 
 import Spinner from '/components/Spinner'
 
+import './OrcidAuthenticationPage.css'
+
 const OrcidAuthenticationPage = function(props) {
     const [searchParams, setSearchParams ] = useSearchParams()
 
@@ -85,42 +87,57 @@ const OrcidAuthenticationPage = function(props) {
         if ( request.error == 'no-visible-email' ) {
             content = ( 
                 <div className="error">
-                    <p>There was no email on your ORCID record that we have
-                        permission to see through the public API.  This can
-                        happen if you haven't added an email to your ORCID
-                        record or if you restrict the visibility on your ORCID
-                        record to either "only me" (the default for emails) or
-                        "trusted accounts" (which requires us to pay a
-                        membership fee to access).  </p>
-            
-                <p>If you'd still like to register and connect your ORCID
-                    record to your account so that you can login with ORCID in
-                    the future, then fill out and submit our <Link
-                    to="/register">registration form</Link>.  After you've
-                    regsitered, edit your profile and go to your "Account
-                    Details" page.  From there you'll be able to connect your
-                    ORCID record to your account with out making your emails
-                    visible on your ORCID record.</p>
+                    <h2>Unable to Register using ORCID: No Visible Email</h2>
+                    <p>
+There was no email on your ORCID record that we have permission to see through
+the public API.  This can happen if you restrict the visibility on your ORCID
+record to either "only me" (the default for emails) or "trusted accounts"
+(which requires us to pay a membership fee to access).  
+                    </p>
+                    <p>
+If you'd still like to register and connect your ORCID record to your account
+so that you can login with ORCID in the future, then fill out and submit 
+our <Link to="/register">registration form</Link>.  
+</p>
+<p>
+After you've regsitered, edit your profile and go to your "Account Details"
+page.  From there you'll be able to connect your ORCID record to your
+account with out making your emails visible on your ORCID record.
+                </p>
+                <p className="return-home">
+                    Return to the <Link to="/">home page</Link>.
+                </p>
             </div> 
             )
         } else if ( request.error == 'unauthorized' ) {
             content = (
                 <div className="error">
-                    We failed to retreive an authorization token from ORCID.
-                    This can happen for a number of reasons, it probably isn't
-                    fatal.  We recommend going back to where you started,
-                    refreshing, and trying again.  If you still get this
-                    message, file a bug report and we'll look into it.
+                    <h2>Failed to Authorize</h2>
+                    <p>
+We failed to retreive an authorization token from ORCID.  This can happen for a
+number of reasons, it probably isn't fatal.  We recommend going back to where
+you started, refreshing, and trying again.  If you still get this message, file
+a bug report and we'll look into it.
+</p>
+                <p className="return-home">
+                    Return to the <Link to="/">home page</Link>.
+                </p>
                 </div>
             )
 
         } else if (request.error == 'already-linked' ) {
             content = (
                 <div className="error">
-                    You've already linked that ORCID iD to an account.  You
-                    cannot link it to another account.  If you created multiple
-                    accounts in error, please reach out to use at
-                    <a href="mailto:contact@peer-review.io">contact@peer-review.io</a>.
+                    <h2>ORCID iD Already Linked</h2>
+                    <p>
+You've already linked that ORCID iD to an account.  You cannot link it to
+another account.  If you created multiple accounts in error, please reach out
+to use at
+<a href="mailto:contact@peer-review.io">contact@peer-review.io</a>.
+</p>
+                <p className="return-home">
+                    Return to the <Link to="/">home page</Link>.
+                </p>
                 </div>
             )
         
@@ -143,6 +160,7 @@ const OrcidAuthenticationPage = function(props) {
 
                 content = (
                     <div className="success">
+                        <h2>Sucessfully { connect ? 'Connected' : 'Registered' }</h2>
                         Welcome, { currentUser.name}!  {successMessage}  <br />
                         You will be redirected to the { connect ? 'settings page' : 'home page' } momentarily.
                     </div>
@@ -154,7 +172,7 @@ const OrcidAuthenticationPage = function(props) {
 
     // Render the component
     return (
-        <div className="orcid-authentication page">
+        <div id="orcid-authentication" className="page">
             { content }
         </div>
     )

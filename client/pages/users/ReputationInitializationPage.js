@@ -1,6 +1,6 @@
 import React, { useEffect, useState} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 
 import { initializeReputation, cleanupRequest} from '/state/reputation'
 
@@ -137,6 +137,7 @@ const ReputationInitializationPage = function(props) {
         else if ( request.error == 'no-openalex-record' ) {
             content = (
                 <div className="error">
+                    <h2>No OpenAlex Author Record</h2>
                     <p>
                         We were unable to find an OpenAlex author record for
                         your ORCID iD.  This could happen for any number of
@@ -153,6 +154,9 @@ const ReputationInitializationPage = function(props) {
                         reputation.  In the meantime, you can use the site with
                         out initial reputation.
                     </p>
+                    <p className="return-home">
+                        Return to the <Link to="/">home page</Link>.
+                    </p>
                 </div>
             )
         }
@@ -165,6 +169,9 @@ const ReputationInitializationPage = function(props) {
                         your ORCID iD.  Please work with OpenAlex to
                         consolidate your author records down to a single
                         record.
+                    </p>
+                    <p className="return-home">
+                        Return to the <Link to="/">home page</Link>.
                     </p>
                 </div>
             )
@@ -191,7 +198,7 @@ const ReputationInitializationPage = function(props) {
 
     // Render the component
     return (
-        <div className="orcid-authentication page">
+        <div id="reputation-initialization" className="page">
             { content }
         </div>
     )
