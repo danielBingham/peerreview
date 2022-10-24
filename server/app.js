@@ -131,7 +131,7 @@ app.get('/config', function(request, response) {
 })
 
 // Javascript files go to dist.
-app.get(/.*\.(css|js)$/, function(request, response) {
+app.get(/.*\.(css|js|js.map)$/, function(request, response) {
     debug('request.originalUrl: ' + request.originalUrl)
     const filepath = path.join(process.cwd(), 'public/dist', request.originalUrl)
     debug('Generated path: ' + filepath)
