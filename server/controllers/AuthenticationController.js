@@ -363,6 +363,7 @@ module.exports = class AuthenticationController {
             const user = {
                 name: orcidRecord.person.name["given-names"].value + ' ' + orcidRecord.person.name["family-name"].value,
                 email: primary_email,
+                status: 'confirmed',
                 orcidId: orcidId,
                 institution: '',
                 password: null,
@@ -389,7 +390,8 @@ module.exports = class AuthenticationController {
 
             const user = {
                 id: id,
-                orcidId: orcidId
+                orcidId: orcidId,
+                status: 'confirmed'
             }
             await this.userDAO.updatePartialUser(user)
             // initialize their reputation.
