@@ -1,0 +1,116 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: peer-review-app-deployment
+  labels: 
+    application: peer-review
+    function: frontend-api 
+    environment: production 
+spec:
+  selector:
+    matchLabels:
+      application: peer-review
+      function: frontend-api 
+      environment: production 
+  replicas: 4
+  template: 
+    metadata:
+      name: peer-review-app-pod-template
+      labels:
+        application: peer-review
+        function: frontend-api 
+        environment: production 
+        container: peerreview
+    spec:
+      volumes:
+        - name: certificates
+          secret:
+            secretName: peer-review-database-certificate
+            optional: false
+      containers:
+        - name: peer-review-app-container
+          image: ghcr.io/danielbingham/peerreview:latest
+          ports:
+            - containerPort: 8080
+          volumeMounts:
+            - name: certificates
+              mountPath: "/etc/certificates"
+              readOnly: true
+          env:
+            - name: DEBUG
+              value: "peer-review:*"
+            - name: NODE_ENV
+              value: production 
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-database-credentials
+                  key: username
+                  optional: false
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-database-credentials
+                  key: password
+                  optional: false
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-session-secret
+                  key: session_secret
+                  optional: false
+            - name: SPACES_ACCESS_ID
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-spaces-credentials
+                  key: access_id
+                  optional: false
+            - name: SPACES_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-spaces-credentials
+                  key: access_key
+                  optional: false
+            - name: ORCID_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-orcid-secrets
+                  key: client_id
+                  optional: false
+            - name: ORCID_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-orcid-secrets
+                  key: client_secret
+                  optional: false
+            - name: POSTMARK_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-postmark-secrets
+                  key: api_token 
+                  optional: false
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: peer-review-app-service
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-protocol: "http"
+spec:
+  type: LoadBalancer
+  selector:
+    application: peer-review
+    function: frontend-api
+    environment: production 
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80 
+      targetPort: 8080
+    - name: https
+      protocol: TCP
+      port: 443 
+      targetPort: 8080
+
+
