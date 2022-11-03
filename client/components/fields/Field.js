@@ -182,12 +182,19 @@ const Field = function(props) {
         color = 'white'
     }
 
+    let content = (
+        <Link to={ `/field/${field.id}` }>
+            {field.name}
+        </Link>
+
+    )
+    if ( props.noLink ) {
+        content =  ( <span>{ field.name }</span> )
+    }
     
     return (
         <div className={ `field ${field.type}` } style={{ color: color, background: background }} >
-            <Link to={ `/field/${field.id}` }>
-                {field.name}
-            </Link>
+            { content }
             { props.remove &&  <div className="remove" onClick={remove}><XMarkIcon /></div> }
         </div>
     )

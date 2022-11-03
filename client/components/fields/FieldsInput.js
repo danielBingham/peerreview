@@ -223,7 +223,7 @@ const FieldsInput = function(props) {
     let fieldList = [] 
     if ( props.fields.length > 0) {
         for(const field of props.fields) {
-            fieldList.push(<Field key={field.id} field={field} remove={removeField} />)
+            fieldList.push(<Field key={field.id} field={field} noLink={true} remove={removeField} />)
         }
     }
 
@@ -231,7 +231,11 @@ const FieldsInput = function(props) {
     if ( ! suggestionsError) {
         if ( fieldSuggestions.length > 0) {
             for (const field of fieldSuggestions) {
-                suggestedFieldList.push(<div className='badge-wrapper' key={field.id} onClick={(event) => { appendField(field) }}><FieldBadge id={field.id} /></div>)
+                suggestedFieldList.push(
+                    <div className='badge-wrapper' key={field.id} onClick={(event) => { appendField(field) }}>
+                        <FieldBadge id={field.id} noLink={true} />
+                    </div>
+                )
             }
         }
     }

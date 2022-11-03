@@ -61,7 +61,7 @@ const FieldBadge = function(props) {
     
     return (
         <div className='field-badge'>
-            <div className="wrapper"><Field field={field} /></div>
+            <div className="wrapper"><Field field={field} noLink={props.noLink} /></div>
             <div className="description">{ field.description }</div>
         </div>
     )

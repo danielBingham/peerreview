@@ -135,8 +135,10 @@ const AuthorsInput = function(props) {
             setAuthorName('')
             clearSuggestions()
             return
-        }
+        } 
 
+        setAuthorName('')
+        clearSuggestions()
 
         const author = {
             user: user,
