@@ -168,12 +168,6 @@ const SubmitDraftForm = function(props) {
 
     // ====================== Render ==========================================
 
-    if ( postPapersRequest && postPapersRequest.state == 'pending') {
-        return (
-            <Spinner />
-        )
-    }
-
     let requestError = null 
     if ( postPapersRequest && postPapersRequest.state == 'failed') {
         let errorContent = 'Something went wrong.' 
@@ -228,6 +222,11 @@ const SubmitDraftForm = function(props) {
     }
 
 
+    let spinning = null
+    if ( postPapersRequest && postPapersRequest.state == 'pending') {
+        spinning = ( <Spinner local={true} /> )
+    }
+
     return (
         <div className="draft-paper-submission-form">
             <h2>Submit a Paper</h2>
@@ -262,12 +261,13 @@ const SubmitDraftForm = function(props) {
                 />
                 { authorsErrorView }
 
-                <FileUploadInput setFile={setFile} types={[ 'application/pdf' ]}/>
+                <FileUploadInput file={file} setFile={setFile} types={[ 'application/pdf' ]}/>
                 { fileErrorView }
 
                 { requestError }
                 <div className="submit field-wrapper">
-                    <input type="submit" name="submit-draft" value="Submit Draft for Pre-publish Review" />
+                    { spinning && spinning }
+                    { ! spinning && <input type="submit" name="submit-draft" value="Submit Draft for Pre-publish Review" /> }
                 </div>
             </form>
         </div>

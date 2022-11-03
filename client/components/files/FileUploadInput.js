@@ -27,8 +27,6 @@ const FileUploadInput = function(props) {
     // ============ Request Tracking ================================
    
     const [uploadRequestId, setUploadRequestId] = useState(null)
-    const [deleteRequestId, setDeleteRequestId] = useState(null)
-   
     const uploadRequest = useSelector(function(state) {
         if ( uploadRequestId) {
             return state.files.requests[uploadRequestId]
@@ -37,6 +35,7 @@ const FileUploadInput = function(props) {
         }
     })
 
+    const [deleteRequestId, setDeleteRequestId] = useState(null)
     const deleteRequest = useSelector(function(state) {
         if ( deleteRequestId ) {
             return state.files.requests[deleteRequestId]
@@ -74,12 +73,29 @@ const FileUploadInput = function(props) {
     }
 
     // ============ Effect Handling ==================================
-    
+
+    useLayoutEffect(function() {
+        if ( props.file ) {
+            setFile(props.file)
+        }
+    }, [])
+
     useLayoutEffect(function() {
         if ( deleteRequest && deleteRequest.state == 'fulfilled') {
             setFileData(null)
             setFile(null)
             props.setFile(null)
+
+            // ISSUE #133 - With out the line below, this effect will fire a
+            // second time and read the request as fulfilled a second time
+            // after an "onChange" has been trigged due to a new upload.  That
+            // will cause the upload to be wiped out.  I'm not entirely sure
+            // what's causing the effect to fire again after the request has
+            // been updated to "fulfilled" because we haven't seen that in
+            // other components.
+            //
+            // In any case, the line below fixes it.
+            setDeleteRequestId(null)
 
             if ( uploadRequestId && uploadRequest )  {
                 setUploadRequestId(null)
