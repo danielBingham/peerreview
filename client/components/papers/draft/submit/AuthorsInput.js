@@ -34,6 +34,7 @@ const AuthorsInput = function(props) {
     const [authorName, setAuthorName] = useState('')
 
     const [highlightedSuggestion, setHighlightedSuggestion] = useState(0)
+    const [error, setError] = useState(null)
 
     // ======= Request Tracking =====================================
     const [requestId, setRequestId] = useState(null)
@@ -119,6 +120,7 @@ const AuthorsInput = function(props) {
     const handleChange = function(event) {
         setAuthorName(event.target.value)
         suggestAuthors(event.target.value)
+        setError(null)
     }
 
     /**
@@ -128,8 +130,13 @@ const AuthorsInput = function(props) {
      * authors.
      */
     const appendAuthor = function(user) {
-        setAuthorName('')
-        clearSuggestions()
+        if ( props.authors.find((a) => a.user.id == user.id) ) {
+            setError('author-already-added')
+            setAuthorName('')
+            clearSuggestions()
+            return
+        }
+
 
         const author = {
             user: user,
@@ -209,9 +216,6 @@ const AuthorsInput = function(props) {
     let suggestionsError = null
     let inviteAuthor = null
     if ( request && request.state != 'failed') {
-        console.log('Request is fulfilled.')
-        console.log('AuthorName: ' + authorName)
-        console.log(userSuggestions)
         for ( const [ index, user ] of userSuggestions.entries()) {
             suggestedAuthorList.push(<div key={user.name} onClick={(event) => { appendAuthor(user) }} className={ index == highlightedSuggestion ? "author-suggestion highlighted" : "author-suggestion" }>{user.name}</div>)
         }
@@ -231,6 +235,11 @@ const AuthorsInput = function(props) {
         )
     } 
 
+    let errorView = null
+    if ( error == 'author-already-added' ) {
+        errorView = ( <div className="error">That author has already been added to this paper!</div> )
+    }
+
 
     return (
         <div className="authors-input field-wrapper"> 
@@ -243,6 +252,7 @@ const AuthorsInput = function(props) {
                 onBlur={ (event) => props.onBlur ? props.onBlur(event) : null }
                 onChange={handleChange} 
             />
+            { errorView }
             { inviteAuthor }
             <div className="author-suggestions" 
                 style={ ( suggestedAuthorList.length > 0 || suggestionsError ? { display: 'block' } : { display: 'none' } ) }

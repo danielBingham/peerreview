@@ -13,4 +13,6 @@
 .authors-input .author-suggestions .author-suggestion:hover, .authors-input .author-suggestions .author-suggestion.highlighted {
     background-color: #dfdfdf;
 }
-
+.authors-input .error {
+    padding: 10px;
+}

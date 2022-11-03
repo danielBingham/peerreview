@@ -402,9 +402,10 @@ module.exports = class PaperController {
             SELECT DISTINCT users.id FROM users WHERE users.id = ANY($1::bigint[])
         `, [ authorIds ])
 
+
         if ( authorResults.rows.length != authorIds.length) {
             for ( const authorId of authorIds ) {
-                if ( ! authorResults.rows.find((id) => id == authorId) ) {
+                if ( ! authorResults.rows.find((row) => row.id == authorId) ) {
                     throw new ControllerError(400, `invalid-author`,
                         `User(${user.id}) submitted a paper with invalid Author(${authorId}).`, {
                             authorId: authorId
@@ -412,7 +413,7 @@ module.exports = class PaperController {
                 }
             }
             throw new ControllerError(400, 'invalid-author',
-                `User(${user.id}) submitted a paper with at least one invalid author.`)
+                `User(${user.id}) submitted a paper with at least one invalid author or with duplicate authors.`)
         }
 
         // 5. Paper has at least 1 valid field.
