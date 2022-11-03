@@ -83,12 +83,14 @@ const UserProfileEditForm = function(props) {
             return
         }
 
-        const user = { ...currentUser }
-        user.file = file
-        user.name = name
-        user.institution = institution
-        user.location = location
-        user.bio = bio
+        const user = { 
+            id: currentUser.id,
+            file: file,
+            name: name,
+            institution: institution,
+            location: location,
+            bio: bio
+        }
 
         setRequestId(dispatch(patchUser(user)))
     }

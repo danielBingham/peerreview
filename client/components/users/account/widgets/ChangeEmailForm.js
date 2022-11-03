@@ -91,7 +91,9 @@ const ChangeEmailForm = function(props) {
         if ( ! isValid() ) {
             return
         }
-        
+
+        // TODO TECHDEBT : We don't need to do this.  It's built into the patch
+        // endpoint now.
         setAuthRequestId(dispatch(patchAuthentication(currentUser.email, password)))
     }
 
@@ -102,7 +104,8 @@ const ChangeEmailForm = function(props) {
             if ( authRequest.status == 200 ) {
                 const user = {
                     id: currentUser.id,
-                    email: email
+                    email: email,
+                    oldPassword: password
                 }
                 setRequestId(dispatch(patchUser(user)))
             } 

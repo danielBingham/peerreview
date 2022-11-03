@@ -386,8 +386,8 @@ describe('UserController', function() {
             const oldPassword = 'foobar'
 
             connection.query
-                .mockReturnValueOnce({ rowcount: 1, rows: [ { id: 1, password: auth.hashPassword(oldPassword) } ] })
-                .mockReturnValueOnce({ rowcount: 1, rows: [ { id: 1, password: auth.hashPassword(oldPassword) } ] })
+                .mockReturnValueOnce({ rowCount: 1, rows: database.users[1] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { id: 1, password: auth.hashPassword(oldPassword) } ] })
                 .mockReturnValueOnce({ rowCount:1, rows: [] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
 

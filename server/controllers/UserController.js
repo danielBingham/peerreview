@@ -378,6 +378,7 @@ module.exports = class UserController {
          * 3. User(:id) must exist.
          * 4. If a password is included, then oldPassword or a valid token are
          * required.
+         * 5. If an email is included, then oldPassword is required.
          * 
          * **********************************************************/
 
@@ -409,6 +410,8 @@ module.exports = class UserController {
             throw new ControllerError(500, 'server-error',
                 `User(${id}) attempted to update themselves, but we couldn't find their database record!`)
         }
+
+        const existingUser = existingUsers[0]
 
 
         // 4. If a password is included, then oldPassword or a valid token are
@@ -485,6 +488,51 @@ module.exports = class UserController {
             user.password  = await this.auth.hashPassword(user.password)
         }
 
+        // 5. If an email is included, then oldPassword is required.
+        if ( user.email ) {
+            if ( user.oldPassword ) {
+                try {
+                    const existingUserId = await this.auth.authenticateUser({ 
+                        email: request.session.user.email, 
+                        password: user.oldPassword
+                    })
+
+                    if ( existingUserId != user.id) {
+                        throw new ControllerError(403, 'not-authorized:authentication-failure',
+                            `User(${user.id}) gave credentials that matched User(${existingUserId})!`)
+                    }
+
+                    // We're about to change their email, so the new email is
+                    // unconfirmed. Make sure to update the status.
+                    user.status = 'unconfirmed'
+
+                    // OldPassword was valid and the user successfully
+                    // authenticated. Now clean it off the user object before
+                    // we use it as a patch.
+                    delete user.oldPassword
+                } catch (error ) {
+                    if ( error instanceof ServiceError ) {
+                        if ( error.type == 'authentication-failed' || error.type == 'no-user' || error.type == 'no-user-password' ) {
+                            throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
+                        } else if ( error.type == 'multiple-users' ) {
+                            throw new ControllerError(400, 'multiple-users', error.message)
+                        } else if ( error.type == 'no-credential-password' ) {
+                            throw new ControllerError(400, 'no-password', error.message)
+                        } else {
+                            throw error
+                        }
+                    } else {
+                        throw error
+                    }
+                }
+
+                // User authenticated successfully.
+            } else {
+                throw new ControllerError(403, 'authentication-failure',
+                    `User(${user.id}) attempted to change their password with out reauthenticating.`)
+            }
+        }
+
         // We only need the Id.
         if ( user.file ) {
             user.fileId = user.file.id
@@ -505,6 +553,17 @@ module.exports = class UserController {
         // as the user in the session.  No one else is allowed to update the
         // user.
         request.session.user = returnUsers[0]
+
+        // If we've changed the email, then we need to send out a new
+        // confirmation token.
+        if ( returnUsers[0].email != existingUser.email ) {
+            const token = this.tokenDAO.createToken('email-confirmation')
+            token.userId = returnUsers[0].id
+            token.id = await this.tokenDAO.insertToken(token)
+
+            this.emailService.sendEmailConfirmation(returnUsers[0], token)
+        }
+
 
         return response.status(200).json(returnUsers[0])
     }

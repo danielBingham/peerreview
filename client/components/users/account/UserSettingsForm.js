@@ -26,6 +26,7 @@ const UserSettingsForm = function(props) {
         }
     })
 
+
     const [fieldsRequestId, setFieldsRequestId] = useState(null)
     const fieldsRequest = useSelector(function(state) {
         if ( fieldsRequestId ) {
@@ -48,6 +49,7 @@ const UserSettingsForm = function(props) {
     const fields = useSelector(function(state) {
         return state.fields.dictionary
     })
+
 
     // ======= Actions and Event Handling ===========================
 
@@ -104,13 +106,19 @@ const UserSettingsForm = function(props) {
 
     // ======= Effect Handling ======================================
 
+    // We're using this to ensure the fields dictionary has the fields we'll
+    // need.  TODO This is TECHDEBT.  The Field component can now query for its
+    // own field when initialized with an ID, and that's a better solution than
+    // this mess.
     useLayoutEffect(function() {
         const query = initializeFields()
         if ( query.ids.length > 0 ) {
-            setFieldsRequestId(dispatch(getFields(query)))
+            setFieldsRequestId(dispatch(getFields('settings', query)))
         }
     }, [])
 
+    // TODO TECHDEBT we should just be relying on the Field component to query
+    // for its own data.
     useLayoutEffect(function() {
         if ( fieldsRequest && fieldsRequest.state == 'fulfilled' ) {
             const query = initializeFields()
@@ -119,6 +127,12 @@ const UserSettingsForm = function(props) {
             }
         }
     }, [ fieldsRequest] )
+
+    useEffect(function() {
+        if ( settingsRequest && settingsRequest.state == 'fulfilled' ) {
+            setSettingsRequestId(null)
+        }
+    }, [ isolated, ignored ])
 
     useEffect(function() {
         return function cleanup() {
@@ -135,6 +149,11 @@ const UserSettingsForm = function(props) {
             }
         }
     }, [ settingsRequestId ])
+
+    let successMessage = null
+    if ( settingsRequest && settingsRequest.state == 'fulfilled' ) {
+        successMessage = ( <div className="success">Successfully updated field visibility preferences.</div>)
+    }
 
     if ( ! fieldsRequestId || (fieldsRequest && fieldsRequest.state == 'fulfilled')) {
         return (
@@ -161,6 +180,7 @@ const UserSettingsForm = function(props) {
                         <input type="submit" name="submit" value="Update Settings" />
                     </div>
                 </form>
+                { successMessage }
             </div>
         )
     } else {

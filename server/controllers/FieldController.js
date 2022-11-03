@@ -76,6 +76,13 @@ module.exports = class FieldController {
 
         }
 
+        if ( query.ids ) {
+            count += 1
+            result.where += `${ count > 1 ? ' AND ' : ''} fields.id = ANY($${count}::int[])`
+            result.params.push(query.ids)
+            options.ignorePage = true
+        }
+
         if ( query.parent ) {
             count += 1
             const childIds = await this.fieldDAO.selectFieldChildren(query.parent)
