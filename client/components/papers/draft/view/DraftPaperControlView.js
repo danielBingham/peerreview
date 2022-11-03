@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router'
 import { useSearchParams } from 'react-router-dom'
 
-import {  patchPaper, patchPaperVersion, cleanupRequest as cleanupPaperRequest } from '/state/papers'
+import {  patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import {  newReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import './DraftPaperControlView.css'
@@ -29,15 +29,6 @@ const DraftPaperControlView = function(props) {
             return null
         } else {
             return state.papers.requests[patchPaperRequestId]
-        }
-    })
-
-    const [ patchPaperVersionRequestId, setPatchPaperVersionRequestId] = useState(null)
-    const patchPaperVersionRequest = useSelector(function(state) {
-        if ( patchPaperVersionRequestId ) {
-            return state.papers.requests[patchPaperVersionRequestId]
-        } else {
-            return null
         }
     })
 
@@ -86,15 +77,6 @@ const DraftPaperControlView = function(props) {
             isDraft: false
         }
         setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
-
-        const latestVersion = paper.versions[0]
-        const paperVersionPatch = {
-            paperId: latestVersion.paperId,
-            version: latestVersion.version,
-            isPublished: true
-        }
-        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(paper, paperVersionPatch)))
-
     }
 
     const uploadVersion = function(event) {
@@ -119,13 +101,12 @@ const DraftPaperControlView = function(props) {
     // ======= Effect Handling ======================================
 
     useEffect(function() {
-        if (patchPaperRequest && patchPaperRequest.state == 'fulfilled'  
-            && patchPaperVersionRequest && patchPaperVersionRequest.state == 'fulfilled') 
+        if (patchPaperRequest && patchPaperRequest.state == 'fulfilled' )
         {
             const paperPath = '/paper/' + paper.id
             navigate(paperPath)
         }
-    }, [ patchPaperRequest, patchPaperVersionRequest ])
+    }, [ patchPaperRequest ])
 
     useEffect(function() {
         if ( postReviewsRequest && postReviewsRequest.state == 'fulfilled') {
@@ -142,15 +123,6 @@ const DraftPaperControlView = function(props) {
             }
         }
     }, [ patchPaperRequestId ])
-
-    useEffect(function() {
-        return function cleanup() {
-            if ( patchPaperVersionRequestId ) {
-                dispatch(cleanupPaperRequest({ requestId: patchPaperVersionRequestId }))
-            }
-        }
-    }, [ patchPaperVersionRequestId ])
-
 
     // Request tracker cleanup.
     useEffect(function() {

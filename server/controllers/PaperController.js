@@ -781,6 +781,8 @@ module.exports = class PaperController {
     }
 
     /**
+     * NOT IMPLEMENTED
+     *
      * PATCH /papers/:paper_id/version/:version
      *
      * Update an existing version on a paper.
@@ -794,7 +796,9 @@ module.exports = class PaperController {
      * @returns {Promise}   Resolves to void.
      */
     async patchPaperVersion(request, response) {
-        let paper_version = request.body
+        throw new ControllerError(501, 'not-implemented', `Attempt to call unimplemented PATCH version.`)
+
+        /*let paper_version = request.body
         const paperId = request.params.paper_id
 
         /*************************************************************
@@ -805,9 +809,8 @@ module.exports = class PaperController {
          * 3. User must be an owning author on Paper(:paper_id).
          * 4. Paper(:paper_id) must be a draft.
          * 5. PaperVersion(:version) must exist.
-         * 6. Only isPublished may be patched.
          * 
-         * **********************************************************/
+         * **********************************************************
         
         // We want to use the params.id over any id in the body.
         //
@@ -855,7 +858,7 @@ module.exports = class PaperController {
         /********************************************************
          * Permissions Checks and Validation Complete
          *      PATCH the version.
-         ********************************************************/
+         ********************************************************
 
         // We'll ignore these fields when assembling the patch SQL.  These are
         // fields that either need more processing (authors) or that we let the
@@ -870,11 +873,7 @@ module.exports = class PaperController {
                 continue
             }
 
-            if ( key == 'isPublished') {
-                sql += 'is_published = $' + count + ', '
-            } else {
-                sql += key + ' = $' + count + ', '
-            }
+            sql += key + ' = $' + count + ', '
 
             params.push(paper_version[key])
             count = count + 1
@@ -894,7 +893,7 @@ module.exports = class PaperController {
         if ( ! returnPapers ) {
             throw new ControllerError(500, 'server-error', `Paper(${paper.id}) not found after inserting a new version!`)
         } 
-        return response.status(200).json(returnPapers[0])
+        return response.status(200).json(returnPapers[0])*/
     }
 
 } 

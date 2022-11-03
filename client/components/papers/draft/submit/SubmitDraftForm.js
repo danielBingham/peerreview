@@ -122,8 +122,7 @@ const SubmitDraftForm = function(props) {
             authors: authors,
             versions: [
                 {
-                    file: file,
-                    isPublished: false
+                    file: file
                 }
             ]
 

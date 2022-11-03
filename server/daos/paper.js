@@ -367,9 +367,9 @@ module.exports = class PaperDAO {
         }
 
         const versionResults = await this.database.query(`
-            INSERT INTO paper_versions (paper_id, version, file_id, is_published, content, created_date, updated_date)
-                VALUES ($1, $2, $3, $4, $5, now(), now())
-        `, [ paper.id, versionNumber, file.id, version.isPublished, content ])
+            INSERT INTO paper_versions (paper_id, version, file_id, content, created_date, updated_date)
+                VALUES ($1, $2, $3, $4, now(), now())
+        `, [ paper.id, versionNumber, file.id, content ])
 
         if ( versionResults.rowCount <= 0) {
             throw new DAOError('failed-insertion', `Failed to insert version for paper ${paper.id} and file ${file.id}.`)
