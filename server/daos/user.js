@@ -20,6 +20,14 @@ module.exports = class UserDAO {
             users.reputation as user_reputation, 
             users.created_date as "user_createdDate", users.updated_date as "user_updatedDate"
         `
+
+        this.cleanSelectionString = `
+            users.id as user_id, users.orcid_id as "user_orcidId", users.file_id as "user_fileId",
+            users.name as user_name,
+            users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
+            users.reputation as user_reputation, 
+            users.created_date as "user_createdDate", users.updated_date as "user_updatedDate"
+        `
     }
 
     /**
@@ -28,10 +36,8 @@ module.exports = class UserDAO {
      * @param {Object[]}    rows    An array of rows returned from the database.
      *
      * @return {Object}     The users parsed into a dictionary keyed using user.id. 
-     *
-     * TODO This needs to preserve order, right now - it doesn't.
      */
-    hydrateUsers(rows) {
+    hydrateUsers(rows, clean) {
         if ( rows.length == 0 ) {
             return [] 
         }
@@ -41,19 +47,24 @@ module.exports = class UserDAO {
 
         for( const row of rows ) {
             const user = {
-                id: row.user_id,
-                orcidId: row.user_orcidId,
-                status: row.user_status,
-                permissions: row.user_permissions,
-                name: row.user_name,
-                email: row.user_email,
-                bio: row.user_bio,
-                location: row.user_location,
-                institution: row.user_institution,
-                reputation: row.user_reputation,
-                createdDate: row.user_createdDate,
-                updatedDate: row.user_updatedDate
+                id: ( row.user_id !== undefined ? row.user_id : null),
+                orcidId: ( row.user_orcidId !== undefined ? row.user_orcidId : null),
+                name: ( row.user_name !== undefined ? row.user_name : null),
+                bio: ( row.user_bio !== undefined ? row.user_bio : null),
+                location: ( row.user_location !== undefined ? row.user_location : null), 
+                institution: ( row.user_institution !== undefined ? row.user_institution : null), 
+                reputation: ( row.user_reputation !== undefined ? row.user_reputation : null),
+                createdDate: ( row.user_createdDate !== undefined ? row.user_createdDate : null),
+                updatedDate: ( row.user_updatedDate !== undefined ? row.user_updatedDate : null)
             }
+
+            if ( ! clean ) {
+                // Issue #132 - We don't want to expose the user's email.
+                user.email = ( row.user_email !== undefined ? row.user_email : null)
+                user.status = ( row.user_status !== undefined ? row.user_status : null)
+                user.permissions = ( row.user_permissions !== undefined ? row.user_permissions : null)
+            }
+
             if ( row.file_id ) {
                 user.file = this.fileDAO.hydrateFile(row)
             } else {
@@ -69,7 +80,22 @@ module.exports = class UserDAO {
         return list 
     }
 
-    async selectUsers(where, params, order, page) {
+    /**
+     * Get users with any sensitive data cleaned out of the record.  This
+     * method should be used any time we plan to return the users from the
+     * backend.
+     *
+     * @see this.selectUsers()
+     */
+    async selectCleanUsers(where, params, order, page) {
+        return await this.selectUsers(where, params, order, page, true)
+    }
+
+    /**
+     * Retrieve user records from the database.
+     *
+     */
+    async selectUsers(where, params, order, page, clean) {
         params = params ? params : []
         where = where ? where : ''
         order = order ? order : 'users.created_date desc'
@@ -95,7 +121,7 @@ module.exports = class UserDAO {
 
         const sql = `
                 SELECT 
-                    ${this.selectionString},
+                    ${ clean === true ? this.cleanSelectionString : this.selectionString},
                     ${this.fileDAO.getFilesSelectionString()}
                 FROM users
                     LEFT OUTER JOIN files ON files.id = users.file_id
@@ -105,7 +131,7 @@ module.exports = class UserDAO {
         `
 
         const results = await this.database.query(sql, params)
-        return this.hydrateUsers(results.rows)
+        return this.hydrateUsers(results.rows, (clean === true))
     }
 
     async countUsers(where, params, page) {

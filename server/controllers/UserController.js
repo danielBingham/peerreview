@@ -148,7 +148,8 @@ module.exports = class UserController {
             })
         }
         const meta = await this.userDAO.countUsers(where, params, page)
-        const users = await this.userDAO.selectUsers(where, params, order, page)
+        const users = await this.userDAO.selectCleanUsers(where, params, order, page)
+
         return response.status(200).json({
             meta: meta,
             result: users
@@ -251,7 +252,7 @@ module.exports = class UserController {
             }
         }
 
-        const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
+        const returnUsers = await this.userDAO.selectCleanUsers('WHERE users.id=$1', [user.id])
 
         if ( returnUsers.length <= 0) {
             throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
@@ -294,7 +295,7 @@ module.exports = class UserController {
          * Anyone may call this endpoint.
          * 
          * **********************************************************/
-        const returnUsers = await this.userDAO.selectUsers('WHERE users.id = $1', [request.params.id])
+        const returnUsers = await this.userDAO.selectCleanUsers('WHERE users.id = $1', [request.params.id])
 
         if ( returnUsers.length == 0 ) {
             throw new ControllerError(404, 'not-found', `User(${request.params.id}) not found.`)
@@ -390,6 +391,11 @@ module.exports = class UserController {
 
         // 2. User being patched must be the same as the logged in user.
         // 2a. :id must equal request.session.user.id
+        //
+        // NOTE: If this requirement changes (to allow admins to patch users,
+        // for instance), then make sure to strip the email out of the returned
+        // user at the botton of this function.  Or at least, spend some time
+        // considering whether you need to.
         if ( request.session.user.id != id) {
             throw new ControllerError(403, 'not-authorized', 
                 `User(${request.session.user.id}) attempted to update another user(${id}).`)
@@ -543,6 +549,9 @@ module.exports = class UserController {
 
         await this.userDAO.updatePartialUser(user)
 
+        // Issue #132 - We're going to allow the user's email to be returned in this case,
+        // because only authenticated users may call this endpoint and then
+        // only on themselves.
         const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
 
         if ( returnUsers.length <= 0 ) {

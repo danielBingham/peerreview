@@ -500,7 +500,7 @@ module.exports = function(database, logger, config) {
         })
     })
 
-    router.delete('/paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id', function(request, response) {
+    router.delete('/paper/:paper_id/review/:review_id/thread/:thread_id/comment/:comment_id', function(request, response, next) {
         reviewController.deleteComment(request, response).catch(function(error) {
             next(error)
         })

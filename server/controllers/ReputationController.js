@@ -89,6 +89,7 @@ module.exports = class ReputationController {
 
         try {
             await this.reputationGenerationService.initializeReputationForUser(userId)
+            return response.status(200).json({})
         } catch (error) {
             if ( error instanceof ServiceError) {
                 // Validation: 2. User must have an ORCID iD attached to their record.

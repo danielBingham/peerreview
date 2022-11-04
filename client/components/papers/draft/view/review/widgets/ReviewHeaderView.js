@@ -26,7 +26,7 @@ const ReviewHeaderView = function(props) {
         if ( selectedReviewId && selectedReviewId != 'all' ) {
             if ( state.reviews.dictionary[props.paper.id] ) {
                 const selectedReview = state.reviews.dictionary[props.paper.id][selectedReviewId]
-                if ( selectedReview.version == props.versionNumber ) {
+                if ( selectedReview && selectedReview.version == props.versionNumber ) {
                     return selectedReview
                 } else {
                     return null

@@ -21,6 +21,8 @@ describe('UserController', function() {
     const submittedUsers = SubmittedFixtures.users 
     const database = DatabaseFixtures.database 
     const expectedUsers = ExpectedFixtures.users 
+    const expectedUncleanUsers = ExpectedFixtures.usersUnclean
+
     const config = {
         postmark: {
             api_token: 'abde-fghi-jklm-nopq'
@@ -378,7 +380,7 @@ describe('UserController', function() {
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(databaseCall[1]).toEqual(expectedParams)
 
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUncleanUsers[0])
         })
 
         it('should hash the password', async function() {
@@ -420,7 +422,7 @@ describe('UserController', function() {
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(await auth.checkPassword(password, databaseCall[1][0])).toEqual(true)
 
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
+            expect(response.json.mock.calls[0][0]).toEqual(expectedUncleanUsers[0])
         })
 
         it('should throw ControllerError(403) if no user is authenticated', async function() {

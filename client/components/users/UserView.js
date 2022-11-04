@@ -91,7 +91,6 @@ const UserView = function(props) {
             <UserProfileImage file={user.file} /> 
             <div className="details">
                 <div><span className="label">Name</span> { user.name }</div>
-                <div><span className="label">Email</span> { user.email }</div>
                 <div><span className="label">ORCID iD</span> { user.orcidId && <ORCIDTag id={ user.orcidId} />}</div>
                 <div><span className="label">Institution</span> { user.institution } </div>
                 <div><span className="label">Location</span> { user.location }</div>

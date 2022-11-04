@@ -153,7 +153,7 @@ module.exports = class PaperDAO {
             const papers = this.hydratePapers(results.rows)
             for( const paper of papers) {
                 for ( const author of paper.authors ) {
-                    const users = await this.userDAO.selectUsers('WHERE users.id = $1', [ author.id])
+                    const users = await this.userDAO.selectCleanUsers('WHERE users.id = $1', [ author.id])
                     author.user = users[0]
                     delete author.id
                 }

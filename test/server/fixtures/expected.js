@@ -23,13 +23,14 @@ const fields = [
 
 ]
 
-const users = [
+const usersUnclean = [
     {
         id: 1,
         orcidId: null,
         name: 'James Watson',
         email: 'jwatson@university.edu',
         status: 'confirmed',
+        permissions: 'user',
         file: null,
         bio: 'Credited for discovering the structure of DNA.',
         location: 'Cambridge, UK',
@@ -44,6 +45,35 @@ const users = [
         name: 'Francis Crick',
         email: 'fcrick@university.edu',
         status: 'confirmed',
+        permissions: 'user',
+        file: null,
+        bio: 'Credited for discovering the structure of DNA.',
+        location: 'Cambridge, UK',
+        institution: 'University of Cambridge',
+        reputation: 10,
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP'
+    }
+]
+
+
+const usersCleaned = [
+    {
+        id: 1,
+        orcidId: null,
+        name: 'James Watson',
+        file: null,
+        bio: 'Credited for discovering the structure of DNA.',
+        location: 'Cambridge, UK',
+        institution: 'University of Cambridge',
+        reputation: 10,
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP'
+    },
+    {
+        id: 2,
+        orcidId: null,
+        name: 'Francis Crick',
         file: null,
         bio: 'Credited for discovering the structure of DNA.',
         location: 'Cambridge, UK',
@@ -85,12 +115,12 @@ const papers = [
         updatedDate: 'TIMESTAMP',
         authors: [
             {
-                user: users[0],
+                user: usersCleaned[0],
                 order: 1,
                 owner: true
             },
             {
-                user: users[1],
+                user: usersCleaned[1],
                 order: 2,
                 owner: false 
             }
@@ -122,12 +152,12 @@ const papers = [
         updatedDate: 'TIMESTAMP',
         authors: [
             {
-                user: users[0],
+                user: usersCleaned[0],
                 order: 1,
                 owner: true
             },
             {
-                user: users[1],
+                user: usersCleaned[1],
                 order: 2,
                 owner: false 
             }
@@ -155,6 +185,7 @@ const papers = [
 
 module.exports = {
     fields: fields,
-    users: users,
+    users: usersCleaned,
+    usersUnclean: usersUnclean,
     papers: papers
 }

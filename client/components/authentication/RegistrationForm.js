@@ -173,13 +173,6 @@ const RegistrationForm = function(props) {
         } 
     }, [ postUsersRequest ])
 
-
-    useLayoutEffect(function() {
-        // Handle errors in the registration process.
-        if ( postUsersRequest && postUsersRequest.status == 'failed' ) {
-        }
-    }, [ postUsersRequest ])
-
     // Cleanup the postUsersRequest.
     useEffect(function() {
         return function cleanup() {

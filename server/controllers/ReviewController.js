@@ -1356,7 +1356,7 @@ module.exports = class ReviewController {
             FROM reviews
                 JOIN papers on reviews.paper_id = papers.id
                 JOIN review_comment_threads on review_comment_threads.review_id = reviews.id
-                JOIN review_comments on review_comments.thread_id = review_comment_threads.thread_id
+                JOIN review_comments on review_comments.thread_id = review_comment_threads.id
             WHERE review_comments.id = $1
         `, [ commentId ])
 
@@ -1408,7 +1408,7 @@ module.exports = class ReviewController {
         //
         // If the review is in progress and they are not the reviewAuthor, then
         // we know they can't be here.
-        if ( exsting.review_status == 'in-progress' && ! isReviewAuthor ) {
+        if ( existing.review_status == 'in-progress' && ! isReviewAuthor ) {
             throw new ControllerError(403, 
                 'not-authorized', `Unauthorized User(${userId}) attempting to DELETE Comment(${commentId}).`)
         }
@@ -1438,9 +1438,13 @@ module.exports = class ReviewController {
         
         // If this is the last comment in the thread, then we want to
         // delete the whole thread.
-        const threadResults = await this.database.query(`SELECT count(id), thread_id FROM review_comments where thread_id in (SELECT thread_id FROM review_comments WHERE id = $1) group by thread_id`, [ commentId ])
+        const threadResults = await this.database.query(`
+            SELECT 
+                count(id), thread_id 
+            FROM review_comments 
+            WHERE thread_id in (SELECT thread_id FROM review_comments WHERE id = $1) group by thread_id`, [ commentId ])
         if ( threadResults.rows.length > 0 && threadResults.rows[0].count == 1) {
-            const results = await this.database.query(`DELETE FROM review_comment_threads where id = $1`, [ threadResults.rows[0].thread_id ])
+            const results = await this.database.query(`DELETE FROM review_comment_threads WHERE id = $1`, [ threadResults.rows[0].thread_id ])
 
             if ( results.rowCount == 0) {
                 throw new ControllerError(500, 'server-error', 
