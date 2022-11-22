@@ -14,7 +14,7 @@ const THRESHOLDS = {
     /**
      * Can publish.  Multiple of field.average_reputation
      */
-    publish: 2
+    publish: 0
 }
 
 module.exports = class ReputationPermissionService {

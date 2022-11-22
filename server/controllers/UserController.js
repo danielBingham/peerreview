@@ -252,27 +252,33 @@ module.exports = class UserController {
             }
         }
 
-        const returnUsers = await this.userDAO.selectCleanUsers('WHERE users.id=$1', [user.id])
+        const createdUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
 
-        if ( returnUsers.length <= 0) {
+        if ( createdUsers.length <= 0) {
             throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
         }
 
         if ( loggedInUser ) {
             const token = this.tokenDAO.createToken('invitation')
-            token.userId = returnUsers[0].id
+            token.userId = createdUsers[0].id
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendInvitation(loggedInUser,returnUsers[0], token)
+            this.emailService.sendInvitation(loggedInUser,createdUsers[0], token)
         } else {
             const token = this.tokenDAO.createToken('email-confirmation')
-            token.userId = returnUsers[0].id
+            token.userId = createdUsers[0].id
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendEmailConfirmation(returnUsers[0], token)
+            this.emailService.sendEmailConfirmation(createdUsers[0], token)
         }
 
-        await this.settingsDAO.initializeSettingsForUser(returnUsers[0])
+        await this.settingsDAO.initializeSettingsForUser(createdUsers[0])
+
+        const returnUsers = await this.userDAO.selectCleanUsers('WHERE users.id=$1', [ user.id ])
+
+        if (returnUsers.length <= 0) {
+            throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
+        }
 
         return response.status(201).json(returnUsers[0])
     }

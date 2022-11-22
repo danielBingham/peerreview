@@ -28,12 +28,12 @@ peers.
 
 `}
 </ReactMarkdown>
-<p>
+<div>
     <a href="/fields">Fields</a> are tags arranged in a hierarchy, where each field can have multiple
         parents and children (eg. <Field id={156} /> is a child of both <Field id={1} /> and <Field id={12} />).
 When reputation is gained in a child, it is also gained in that child's
 parents.
-</p>
+</div>
 <ReactMarkdown>
     {`
 
