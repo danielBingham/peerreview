@@ -1,0 +1,17 @@
+.review-view {
+    margin: 50px auto;
+    width: 900px;
+}
+.review-view  svg.ellipsis {
+    display: block;
+    margin: 10px auto;
+    width: 24px;
+    height: 24px;
+    color: #bbb;
+}
+.review-view .review-summary, .review-view .review-summary-form {
+    border: thin solid #bbb;
+    padding: 20px;
+}
+
+

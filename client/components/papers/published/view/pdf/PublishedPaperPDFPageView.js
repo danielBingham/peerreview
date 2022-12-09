@@ -1,5 +1,4 @@
 import React, { useRef, useEffect } from 'react'
-import { useNavigate } from 'react-router'
 import { useParams } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'

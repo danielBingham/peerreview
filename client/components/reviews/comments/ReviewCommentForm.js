@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { useNavigate } from 'react-router'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -71,7 +70,6 @@ const ReviewCommentForm = function(props) {
             content: content
         }
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
-
         return false
     }
 
@@ -87,8 +85,23 @@ const ReviewCommentForm = function(props) {
     }, [])
 
     useEffect(function() {
+        if ( patchCommentRequest && patchCommentRequest.state == 'fulfilled' && props.requestThreadReflow) {
+            props.requestThreadReflow()
+        }
+    }, [ patchCommentRequest ])
+
+    useEffect(function() {
+        if ( deleteCommentRequest && deleteCommentRequest.state == 'fulfilled' && props.requestThreadReflow) {
+            props.requestThreadReflow()
+        }
+    }, [ deleteCommentRequest ])
+
+    useEffect(function() {
         return function cleanup() {
             if ( patchCommentRequestId ) {
+                if ( props.requestThreadReflow ) {
+                    props.requestThreadReflow()
+                }
                 dispatch(cleanupRequest({ requestId: patchCommentRequestId }))
             }
         }
@@ -97,6 +110,9 @@ const ReviewCommentForm = function(props) {
     useEffect(function() {
         return function cleanup() {
             if ( deleteCommentRequestId) {
+                if ( props.requestThreadReflow ) {
+                    props.requestThreadReflow()
+                }
                 dispatch(cleanupRequest({ requestId: deleteCommentRequestId }))
             }
         }

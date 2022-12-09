@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 
 import {  patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import {  newReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
@@ -86,10 +85,13 @@ const DraftPaperControlView = function(props) {
 
     const changeVersion = function(event) {
         const versionNumber = event.target.value
-        searchParams.set('version', versionNumber)
-        searchParams.delete('review')
-        searchParams.delete('thread')
-        setSearchParams(searchParams)
+        let urlString = ''
+        if ( paper.isDraft ) {
+            urlString = `/draft/${props.id}/version/${versionNumber}/${props.tab}`
+        } else {
+            urlString = `/paper/${props.id}/version/${versionNumber}/${props.tab}` 
+        }
+        navigate(urlString)
     }
 
     const startReview = function(event) {
@@ -107,13 +109,6 @@ const DraftPaperControlView = function(props) {
             navigate(paperPath)
         }
     }, [ patchPaperRequest ])
-
-    useEffect(function() {
-        if ( postReviewsRequest && postReviewsRequest.state == 'fulfilled') {
-            searchParams.set('review', postReviewsRequest.result.id)
-            setSearchParams(searchParams)
-        }
-    }, [ postReviewsRequest ])
 
     // Request cleanup. 
     useEffect(function() {
@@ -155,7 +150,6 @@ const DraftPaperControlView = function(props) {
 
     return (
         <div className="draft-paper-controls">
-            { contents }
             <div className="version-controls">
                 <label htmlFor="versionNumber">Show Version</label>
                 <select name="versionNumber" value={props.versionNumber} onChange={changeVersion}>
@@ -163,6 +157,7 @@ const DraftPaperControlView = function(props) {
                 </select>
                 { ! reviewInProgress && ! viewOnly && <button onClick={startReview}>Start Review</button> }
             </div>
+            { contents }
         </div>
     )
 

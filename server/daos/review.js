@@ -109,7 +109,7 @@ module.exports = class ReviewDAO {
                 LEFT OUTER JOIN review_comment_threads on reviews.id = review_comment_threads.review_id
                 LEFT OUTER JOIN review_comments on review_comment_threads.id = review_comments.thread_id
             ${where}
-            ORDER BY reviews.updated_date DESC, review_comments.updated_date DESC
+            ORDER BY reviews.created_date ASC 
         `
 
         const results = await this.database.query(sql, params)

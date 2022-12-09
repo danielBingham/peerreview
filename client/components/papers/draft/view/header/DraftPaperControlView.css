@@ -1,0 +1,6 @@
+.draft-paper-controls { padding: 10px; text-align: right; }
+.draft-paper-controls .author-controls { display: inline-block; }
+.draft-paper-controls .version-controls { display: inline-block; }
+.draft-paper-controls button, .draft-paper-controls select, .draft-paper-controls label {
+    margin: 5px;
+}

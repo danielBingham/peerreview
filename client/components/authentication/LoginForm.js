@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 

@@ -43,21 +43,6 @@ const ReviewCommentView = function(props) {
 
     const dispatch = useDispatch()
 
-    const goToReview = function(event) {
-        event.preventDefault()
-        event.stopPropagation()
-        searchParams.set('review', props.review.id)
-        searchParams.set('thread', props.thread.id)
-        setSearchParams(searchParams)
-    }
-
-    const goToComment = function(event) {
-        event.preventDefault()
-        event.stopPropagation()
-        searchParams.set('thread', props.thread.id)
-        setSearchParams(searchParams)
-    }
-
     const edit = function(event) {
         event.preventDefault()
         event.stopPropagation()
@@ -109,15 +94,15 @@ const ReviewCommentView = function(props) {
                 execute={deleteComment} 
                 cancel={() => setAreYouSure(false)} 
             /> 
-            <div key={props.comment.id} id={props.comment.id} className="comment-outer">
+            <div key={props.comment.id} id={`comment-${props.comment.id}`} className="comment-outer">
                 { props.review.status == 'in-progress' && (
                     <span className="controls">
-                        <a href={`?review=${props.review.id}&thread=${props.thread.id}`} onClick={edit} className="edit">edit</a> 
+                        <a href={`?thread=${props.thread.id}`} onClick={edit} className="edit">edit</a> 
                         <span onClick={(e) => setAreYouSure(true)} className="delete"><XCircleIcon /></span>
                     </span>
                 ) }
                 <UserTag id={props.comment.userId} />
-                <div className="datetime">posted <a onClick={goToComment} href={`?review=${props.review.id}&thread=${props.thread.id}`}><DateTag timestamp={props.comment.updatedDate} /></a> in <a onClick={goToReview} href={`?review=${props.review.id}&thread=${props.thread.id}`}>review #{props.review.id}</a></div>
+                <div className="datetime">posted at <a href={`#comment-${props.comment.id}`}><DateTag timestamp={props.comment.updatedDate} /></a> in <a  href={`/draft/${props.paper.id}/version/${ props.review.version}/reviews#review-${props.review.id}`}>review #{props.review.id}</a></div>
                 <div className="comment-inner" style={{ padding: '5px' }} >
                     <ReactMarkdown>
                         {props.comment.content}

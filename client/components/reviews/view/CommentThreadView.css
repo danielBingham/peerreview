@@ -1,0 +1,26 @@
+.comment-thread-view-wrapper {
+    width: 800px;
+    margin: 20px auto;
+}
+.comment-thread-view-wrapper .page-number {
+    text-align: center;
+    padding: 5px;
+}
+.comment-thread-view-wrapper .page-viewport {
+    position: relative;
+    width: 800px;
+    border: thin solid #bbb;
+    margin-bottom: -1px;
+}
+.comment-thread-view-wrapper .page-viewport .loading {
+    text-align: center;
+}
+.comment-thread-view-wrapper .page-viewport .react-pdf__Page {
+    display: none;
+}
+.comment-thread-view-wrapper .page-viewport .comment-canvas { }
+.comment-thread-view-wrapper .page-viewport .comment-canvas.hidden { display: none }
+.comment-thread-view-wrapper .comment-thread {
+    width: 600px;
+    margin: 0 auto;
+}

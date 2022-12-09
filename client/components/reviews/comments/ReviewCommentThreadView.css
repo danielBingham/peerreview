@@ -1,0 +1,23 @@
+.comment-thread {
+    border: thin solid #ccc;
+    background: white;
+    z-index: 1;
+    width: 378px;
+}
+.comment-thread .controls {
+    text-align: right;
+}
+.comment-thread-outer .reply {
+    padding: 0;
+}
+.comment-thread-outer .reply a:link {
+    display: block;
+    padding: 10px;
+    margin: 0;
+    color: black;
+}
+.comment-thread-outer .reply a:hover, .comment-thread-outer .reply a:active, .comment-thread-outer .reply a:visited {
+    color: black;
+}
+
+

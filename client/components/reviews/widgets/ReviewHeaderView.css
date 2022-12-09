@@ -1,9 +1,11 @@
 .review-header {
-    border: thin solid #bbb;
     width: 800px;
     background-color: white;
 }
 
 .review-header .inner {
     padding: 10px;
+}
+.review-header .inner .instructions {
+    padding: 20px;
 }
