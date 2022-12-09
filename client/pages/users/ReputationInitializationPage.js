@@ -36,8 +36,10 @@ const ReputationInitializationPage = function(props) {
     useEffect(function() {
         if ( request && request.state == 'fulfilled') {
             if ( location.state.connect ) {
+            console.error(`Navigating.`)
                 navigate("/account/details")
             } else  {
+            console.error(`Navigating.`)
                 navigate("/")
             }
         }

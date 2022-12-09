@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { useNavigate } from 'react-router'
-
 import { useDispatch, useSelector } from 'react-redux'
+import { useNavigate } from 'react-router-dom'
+
 
 import { postPapers, setDraft, cleanupRequest as cleanupPapersRequest } from '/state/papers'
 
@@ -152,6 +152,7 @@ const SubmitDraftForm = function(props) {
     useEffect(function() {
         if ( postPapersRequest && postPapersRequest.state == 'fulfilled') {
             const path = "/draft/" + postPapersRequest.result.id
+            console.error(`Navigating.`)
             navigate(path)
         }
 

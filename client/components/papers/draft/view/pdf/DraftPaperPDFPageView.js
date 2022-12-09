@@ -8,7 +8,7 @@ import { postReviewThreads, newReview, cleanupRequest } from '/state/reviews'
 import { Page } from 'react-pdf/dist/esm/entry.webpack'
 import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
 
-import ReviewCommentThreadPinView from '../review/comments/ReviewCommentThreadPinView'
+import ReviewCommentThreadPinView from '/components/reviews/comments/ReviewCommentThreadPinView'
 
 import Spinner from '/components/Spinner'
 
@@ -33,6 +33,7 @@ const DraftPaperPDFPageView = function(props) {
     const [ width, setWidth ] = useState(0)
     const [ height, setHeight ] = useState(0)
     const [ loaded, setLoaded ] = useState(false)
+    const [ rendered, setRendered ] = useState(false)
 
     // ============ Request Tracking ==========================================
 
@@ -69,25 +70,18 @@ const DraftPaperPDFPageView = function(props) {
         return state.reviews.inProgress[props.paper.id][props.versionNumber]
     })
 
-    const selectedReview = searchParams.get('review')
     const threads = useSelector(function(state) {
-        if ( selectedReview && selectedReview !== 'all' && state.reviews.dictionary[props.paper.id] && state.reviews.dictionary[props.paper.id][selectedReview]) {
-            return state.reviews.dictionary[props.paper.id][selectedReview].threads.filter((t) => t.page == props.pageNumber)
-        } else if ( ! selectedReview ) {
-            return []
-        } else {
-            if ( state.reviews.list[props.paper.id] ) {
-                const reviews = state.reviews.list[props.paper.id][props.versionNumber]
-                const results = []
-                if ( reviews && reviews.length > 0 ) {
-                    for (const review of reviews ) {
-                        results.push(...review.threads.filter((t) => t.page == props.pageNumber))
-                    }
+        if ( state.reviews.list[props.paper.id] ) {
+            const reviews = state.reviews.list[props.paper.id][props.versionNumber]
+            const results = []
+            if ( reviews && reviews.length > 0 ) {
+                for (const review of reviews ) {
+                    results.push(...review.threads.filter((t) => t.page == props.pageNumber))
                 }
-                return results
-            } else {
-                return [] 
             }
+            return results
+        } else {
+            return [] 
         }
     })
 
@@ -108,6 +102,10 @@ const DraftPaperPDFPageView = function(props) {
             return
         }
 
+        if ( ! reviewInProgress ) {
+            return
+        }
+
         event.preventDefault()
 
         if ( canvasRef.current ) {
@@ -123,25 +121,15 @@ const DraftPaperPDFPageView = function(props) {
                     content: ''
                 }]
             }
-            if ( reviewInProgress )  {
-                thread.reviewId = reviewInProgress.id
-                setPostThreadsRequestId(dispatch(postReviewThreads(props.paper.id, reviewInProgress.id, thread)))
-            } else {
-                setNewReviewRequestId(dispatch(newReview(props.paper.id, props.versionNumber, currentUser.id, [thread])))
-            }
+
+            thread.reviewId = reviewInProgress.id
+            setPostThreadsRequestId(dispatch(postReviewThreads(props.paper.id, reviewInProgress.id, thread)))
+            props.requestThreadReflow()
         }
     }
 
     useEffect(function() {
-        if ( newReviewRequest && newReviewRequest.state == 'fulfilled') {
-            searchParams.set('review', reviewInProgress.id)
-            setSearchParams(searchParams)
-        }
-    }, [ newReviewRequest ])
-
-    useEffect(function() {
         if ( postThreadsRequest && postThreadsRequest.state == 'fulfilled') {
-            searchParams.set('review', reviewInProgress.id)
             if ( postThreadsRequest.result.threadIds.length == 1) {
                 searchParams.set('thread', postThreadsRequest.result.threadIds[0])
             }
@@ -185,7 +173,7 @@ const DraftPaperPDFPageView = function(props) {
 
 
     return (
-        <div className="draft-paper-pdf-page">
+        <div id={`draft-paper-pdf-page-${props.pageNumber}`} className="draft-paper-pdf-page">
             { threadPins }
             <Page key={`page-${props.pageNumber}`} 
                 canvasRef={canvasRef}
@@ -197,6 +185,12 @@ const DraftPaperPDFPageView = function(props) {
                     setWidth(page.width)
                     setHeight(page.height)
                     setLoaded(true)
+                }}
+                onRenderSuccess={() => {
+                    setRendered(true)
+                    if ( props.onRenderSuccess ) {
+                        props.onRenderSuccess()
+                    }
                 }}
             /> 
         </div>

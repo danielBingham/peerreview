@@ -46,15 +46,18 @@ const UploadPaperVersionPage = function(props) {
     // Confirm that we're allowed to be here.  Leave if not.
     useEffect(function() {
         if ( ! currentUser ) {
+            console.error(`Navigating.`)
             navigate("/")
         }
 
         if ( request && request.state == 'fulfilled') {
             if ( ! paper ) {
+                console.error(`Navigating.`)
                 navigate("/")
             }
 
             if ( ! paper.authors.find((a) => a.user.id == currentUser.id)) {
+                console.error(`Navigating.`)
                 navigate("/")
             }
         }

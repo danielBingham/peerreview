@@ -43,14 +43,14 @@ const ReviewCommentThreadView = function(props) {
         return state.reviews.dictionary[props.paper.id][thread.reviewId]
     })
 
-    const threadRef = useRef(null)
-
     // ======= Actions and Event Handling ===========================
     
 
     const dispatch = useDispatch()
 
     const newComment = function(event) {
+        event.preventDefault()
+
         const comment = {
             threadId: thread.id,
             userId: currentUser.id,
@@ -61,30 +61,13 @@ const ReviewCommentThreadView = function(props) {
         setRequestId(dispatch(postReviewComments(props.paper.id, review.id, thread.id, comment))) 
     }
 
-    const threadClicked = function(event) {
-        searchParams.set('thread', thread.id)
-        setSearchParams(searchParams)
-        if ( threadRef.current ) {
-            threadRef.current.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'center'
-            })
-        }
-    }
-
-
     // ======= Effect Handling ======================================
 
     useEffect(function() {
-        if ( searchParams.get('thread') == thread.id && threadRef.current ) {
-            threadRef.current.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-                inline: 'center'
-            })
+        if ( request && request.state == 'fulfilled'  && props.requestThreadReflow) {
+            props.requestThreadReflow()
         }
-    }, [ searchParams ])
+    }, [ request ])
 
     // Cleanup our requests.
     useEffect(function() {
@@ -94,22 +77,6 @@ const ReviewCommentThreadView = function(props) {
             }
         }
     }, [ requestId ])
-
-    useEffect(function() {
-        const onBodyClick = function(event) {
-            if ( ! event.target.matches('.comment-thread-pin') &&  ! event.target.matches('.comment-thread') 
-                && ! event.target.matches('.comment-thread-pin :scope') && ! event.target.matches('.comment-thread :scope') ) 
-            {
-                searchParams.delete('thread')
-                setSearchParams(searchParams)
-            } 
-        }
-        document.body.addEventListener('click', onBodyClick)
-
-        return function cleanup() {
-            document.body.removeEventListener('click', onBodyClick)
-        }
-    }, [ searchParams ])
 
     // ======= Rendering ============================================
 
@@ -121,7 +88,7 @@ const ReviewCommentThreadView = function(props) {
     for ( const comment of sortedComments) {
         if ( comment.status == 'in-progress' && comment.userId == currentUser.id) {
             inProgress = true
-            commentViews.push(<ReviewCommentForm key={comment.id} paper={props.paper} review={review} thread={thread} comment={comment} />)
+            commentViews.push(<ReviewCommentForm key={comment.id} paper={props.paper} review={review} thread={thread} comment={comment} requestThreadReflow={props.requestThreadReflow} />)
         } else if ( comment.status == 'posted' ) {
             commentViews.push(<ReviewCommentView key={comment.id} paper={props.paper} review={review} thread={thread} comment={comment} />)
         }
@@ -129,15 +96,10 @@ const ReviewCommentThreadView = function(props) {
 
     const selected = searchParams.get('thread') == thread.id 
     return (
-        <div  ref={threadRef} className="comment-thread-outer">
-            <div 
-                key={thread.id} 
-                id={`comment-thread-${thread.id}`} 
-                onClick={threadClicked} 
-                className={( selected ? "comment-thread selected "+props.paper.fields[0].type : "comment-thread "+props.paper.fields[0].type )} 
-            >
+        <div  className="comment-thread-outer">
+            <div key={thread.id} id={`comment-thread-${thread.id}`} className="comment-thread" >
                 { commentViews }
-                { ! inProgress && ! viewOnly && <div onClick={newComment} className="reply">Post a reply...</div> }
+                { ! inProgress && ! viewOnly && <div className="reply"><a href="" onClick={newComment}>Post a reply...</a></div> }
             </div>
         </div>
     )

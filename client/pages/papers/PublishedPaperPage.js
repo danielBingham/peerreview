@@ -2,7 +2,8 @@ import React from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
 
 import PublishedPaperView from '/components/papers/published/view/PublishedPaperView'
-import DraftPaperView from '/components/papers/draft/view/DraftPaperView'
+import DraftPaperHeader from '/components/papers/draft/view/DraftPaperHeader'
+import ReviewList from '/components/reviews/list/ReviewList'
 
 const PublishedPaperPage = function(props) {
 
@@ -28,7 +29,12 @@ const PublishedPaperPage = function(props) {
             </div>
             <div id="published-paper-page" className="page">
                 { selectedTab == 'paper' && <PublishedPaperView  id={id} /> }
-                { selectedTab == 'reviews' && <DraftPaperView id={id} versionNumber={versionNumber}/> }
+                { selectedTab == 'reviews' && 
+                    <>
+                        <DraftPaperHeader id={id} tab={selectedTab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
+                        <ReviewList paperId={id} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
+                    </>
+                 }
             </div>
         </>
     )

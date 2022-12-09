@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -78,6 +78,7 @@ const LoginForm = function(props) {
         // care if we were already logged in or if this is the result of a
         // successful authentication.
         if ( currentUser ) {
+            console.error(`Navigating.`)
             navigate("/")
         }
     })

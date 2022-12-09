@@ -27,6 +27,7 @@ const EmailConfirmationPage = function(props) {
 
         if ( ! token ) {
             // TODO Is there a better way to handle this?
+            console.error(`Navigating.`)
             navigate("/")
         }
 

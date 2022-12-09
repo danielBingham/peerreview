@@ -142,6 +142,7 @@ const AcceptInvitationForm = function(props) {
 
     useEffect(function() {
         if ( request && request.state == 'fulfilled' ) {
+            console.error(`Navigating.`)
             navigate("/")
         } 
     }, [ request ])

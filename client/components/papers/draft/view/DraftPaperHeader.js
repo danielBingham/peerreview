@@ -9,13 +9,9 @@ import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 import Error404 from '/components/Error404'
 
-import DraftPaperHeader from './DraftPaperHeader'
 import DraftPaperControlView from './DraftPaperControlView'
-import DraftPaperReviewsWrapperView from './review/DraftPaperReviewsWrapperView'
 
-import ReviewList from '/components/reviews/list/ReviewList'
-
-import './DraftPaperView.css'
+import './DraftPaperHeader.css'
 
 /**
  * Show a draft paper and its reviews, or show the reviews from the draft stage
@@ -28,7 +24,9 @@ import './DraftPaperView.css'
  * @param {int} props.id    The id of the draft paper we want to load and show
  * reviews for. 
  */
-const DraftPaperView = function({ id, versionNumber, tab }) {
+const DraftPaperHeader = function({ id, versionNumber, tab }) {
+    console.log(`\n\n### DraftPaperHeader ###`)
+    console.log(`id: ${id}, versionNumber: ${versionNumber}, tab: ${tab}`)
     
     // ================= Request Tracking =====================================
 
@@ -39,7 +37,6 @@ const DraftPaperView = function({ id, versionNumber, tab }) {
     })
 
     // ======= Effect Handling =====================
-   
 
     // ================= Render ===============================================
     
@@ -48,16 +45,28 @@ const DraftPaperView = function({ id, versionNumber, tab }) {
         throw new Error('Missing paper.')
     } 
 
+    const mostRecentVersion = paper.versions[0].version
+
+    let authors = [] 
+    for(const author of paper.authors) {
+        authors.push(<UserTag key={author.user.id} id={author.user.id} />)
+    }
+
+    let fields = []
+    for(const field of paper.fields) {
+        fields.push(<Field key={field.id} field={field} />)
+    }
+
     return (
-        <div id={`paper-${id}`} className="draft-paper">
-            <DraftPaperHeader id={id} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
-            <ReviewList paperId={id} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
-            { 
-                // <DraftPaperReviewsWrapperView paper={paper} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} /> 
-             }
+        <div id={`paper-${id}`} className="draft-paper-header">
+            <DraftPaperControlView id={id} tab={tab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
+            <h2 className="title">{paper.title}</h2>
+            <div className="submitted-date">submitted <DateTag timestamp={paper.createdDate} /></div>
+            <div className="authors">by {authors}</div>
+            <div className="fields">{fields}</div>
         </div>
     )
 
 }
 
-export default DraftPaperView 
+export default DraftPaperHeader 

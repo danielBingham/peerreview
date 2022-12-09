@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
@@ -162,6 +162,7 @@ const RegistrationForm = function(props) {
         // somehow winds up on the registration page.  Either way, we don't
         // want to be here.
         if ( currentUser ) {
+            console.error(`Navigating.`)
             navigate("/")
         }
     }, [ currentUser ])

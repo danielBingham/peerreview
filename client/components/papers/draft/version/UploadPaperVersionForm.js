@@ -81,6 +81,7 @@ const UploadPaperVersionForm = function(props) {
     useEffect(function() {
         if ( ! props.paper.isDraft ) {
             console.error('Attempt to upload a new version to a published paper.  This is invalid.')
+            console.error(`Navigating.`)
             navigate("/")
         }
     }, [])
@@ -100,6 +101,7 @@ const UploadPaperVersionForm = function(props) {
     useEffect(function() {
         if ( request && request.state == 'fulfilled') {
             const draftUri = `/draft/${props.paper.id}/`
+            console.error(`Navigating.`)
             navigate(draftUri)
         } else if ( request && request.state == 'failed' ) {
             setError(<div className="request-error">{ request.error }</div>)

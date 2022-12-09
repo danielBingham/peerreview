@@ -17,6 +17,9 @@ a:hover {
     color: #74c3fc;
 }
 
+input:focus, textarea:focus, select:focus {
+    outline-color: #74c3fc !important;
+}
 
 main {
     width: 100%;
@@ -39,7 +42,9 @@ main {
     display: inline-block;
     padding: 5px 20px;
     border: thin solid #aaa;
-    background-color: #ddd;
+    background-color: #eee;
+    font-size: 16px;
+    line-height: 1.8em;
 }
 .page-tab-bar .page-tab.selected  {
    background-color: white; 

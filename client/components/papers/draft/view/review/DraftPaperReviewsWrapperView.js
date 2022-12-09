@@ -7,8 +7,7 @@ import { getReviews, clearList, cleanupRequest as cleanupReviewRequest } from '/
 
 import Spinner from '/components/Spinner'
 
-import ReviewHeaderView from './widgets/ReviewHeaderView'
-import ReviewListView from './list/ReviewListView'
+import ReviewHeaderView from '/components/reviews/widgets/ReviewHeaderView'
 
 import DraftPaperPDFView from '../pdf/DraftPaperPDFView'
 
@@ -24,7 +23,6 @@ import './DraftPaperReviewsWrapperView.css'
  * selected.
  */
 const DraftPaperReviewsWrapperView = function(props) {
-
     // ======= Request Tracking =====================================
 
     const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
@@ -62,14 +60,9 @@ const DraftPaperReviewsWrapperView = function(props) {
     if ( reviewsRequest && reviewsRequest.state == 'fulfilled') {
         const id = `paper-${props.paper.id}-reviews`
         return (
-            <div id={id} className="draft-paper-reviews-wrapper">
-                <ReviewListView paper={props.paper} versionNumber={props.versionNumber}  />
-                <div className="toolbar">
-                </div>
-                <div className="scroll-pane">
-                    <ReviewHeaderView paper={props.paper} versionNumber={props.versionNumber} />
-                    <DraftPaperPDFView paper={props.paper} versionNumber={props.versionNumber} />
-                </div>
+            <div id={`paper-${props.paper.id}-reviews`} className="draft-paper-reviews-wrapper">
+                <ReviewHeaderView paper={props.paper} versionNumber={props.versionNumber} />
+                <DraftPaperPDFView paper={props.paper} versionNumber={props.versionNumber} />
             </div>
         )
     } else {

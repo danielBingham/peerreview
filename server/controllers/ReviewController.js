@@ -1352,7 +1352,7 @@ module.exports = class ReviewController {
                 papers.id as paper_id, papers.is_draft as "paper_isDraft",
                 reviews.id as review_id, reviews.user_id as "review_userId", reviews.status as "review_status",
                 review_comment_threads.id as thread_id,
-                review_comments.user_id as "comment_userId"
+                review_comments.user_id as "comment_userId", review_comments.status as "comment_status"
             FROM reviews
                 JOIN papers on reviews.paper_id = papers.id
                 JOIN review_comment_threads on review_comment_threads.review_id = reviews.id
@@ -1398,7 +1398,7 @@ module.exports = class ReviewController {
         //  2. Be author of Comment(:comment_id)
         if ( ! isCommentAuthor ) {
             throw new ControllerError(403, 
-                'not-authorized', `Unauthorized User(${userId}) attempting to DELETE Comment(${commentId}).`)
+                'not-authorized', `Unauthorized User(${userId}) attempting to DELETE Comment(${commentId}). (Not comment author.)`)
         }
 
         // 8. Review(:review_id) is in progress AND User is author of Review(:review_id)
@@ -1410,8 +1410,10 @@ module.exports = class ReviewController {
         // we know they can't be here.
         if ( existing.review_status == 'in-progress' && ! isReviewAuthor ) {
             throw new ControllerError(403, 
-                'not-authorized', `Unauthorized User(${userId}) attempting to DELETE Comment(${commentId}).`)
+                'not-authorized', `Unauthorized User(${userId}) attempting to DELETE Comment(${commentId}). (Not review author.)`)
         }
+
+        console.log(existing)
 
         // Otherwise, the review either isn't in-progress or they are the review author.  We already know
         // they are the comment author by this point, because we checked that earlier.
@@ -1427,8 +1429,10 @@ module.exports = class ReviewController {
         // Which means, if neither the Review nor the Comment is in progress, we should leave.
         if (existing.review_status != 'in-progress' && existing.comment_status != 'in-progress' ) {
             throw new ControllerError(403, 
-                'not-authorized', `Unauthorized User(${userId}) attempting to DELETE Comment(${commentId}).`)
+                'not-authorized', `Unauthorized User(${userId}) attempting to DELETE Comment(${commentId}). (Not in progress.)`)
         }
+
+
 
 
         /********************************************************
