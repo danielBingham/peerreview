@@ -23,7 +23,6 @@ const AdminPage = function(props) {
     // Only admins and superadmins may be here.
     useEffect(function() {
         if ( ! currentUser || (currentUser.permissions != 'admin' && currentUser.permissions != 'superadmin')) {
-            console.error(`Navigating.`)
             navigate("/")
         }
     }, [ currentUser ])

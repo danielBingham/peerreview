@@ -15,13 +15,10 @@ import './ReviewHeaderView.css'
  * Render the Header for the Draft View page.  Currently used on `/draft/:id`
  *
  * @param {Object} props    Standard React props object.
- * @param {Object} props.paper  Populated paper object. The draft we're viewing.
+ * @param {Object} props.paperId  The id of the paper this review belongs to.
  * @param {integer} props.versionNumber The version of the paper we're currently viewing.
  */
 const ReviewHeaderView = function(props) {
-    console.log(`\n\n ### ReviewHeaderView ###`)
-    console.log(`PaperId: ${props.paper.id}, versionNumber: ${props.versionNumber}.`)
-
     const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ================= Request Tracking =====================================
@@ -41,9 +38,13 @@ const ReviewHeaderView = function(props) {
         return state.authentication.currentUser
     })
 
+    const paper = useSelector(function(state) {
+        return state.papers.dictionary[props.paperId]
+    })
+
     const reviewInProgress = useSelector(function(state) {
-        if ( state.reviews.inProgress[props.paper.id] ) {
-            return state.reviews.inProgress[props.paper.id][props.versionNumber]
+        if ( state.reviews.inProgress[props.paperId] ) {
+            return state.reviews.inProgress[props.paperId][props.versionNumber]
         } else {
             return null
         }
@@ -54,9 +55,8 @@ const ReviewHeaderView = function(props) {
     const dispatch = useDispatch()
 
     const startReview = function(event) {
-        console.log(`ReviewHeaderView::startReview.`)
         if ( ! reviewInProgress ) {
-            setPostReviewRequestId(dispatch(newReview(props.paper.id, props.versionNumber, currentUser.id)))
+            setPostReviewRequestId(dispatch(newReview(props.paperId, props.versionNumber, currentUser.id)))
         }
     }
 
@@ -64,7 +64,6 @@ const ReviewHeaderView = function(props) {
     
     // Request tracker cleanup.
     useEffect(function() {
-        console.log(`ReviewHeaderView::useEffect - cleanup postReviewsRequest`)
         return function cleanup() {
             if ( postReviewsRequestId ) {
                 dispatch(cleanupReviewRequest({ requestId: postReviewsRequestId }))
@@ -73,19 +72,23 @@ const ReviewHeaderView = function(props) {
     }, [ postReviewsRequestId ])
 
     // ======= Render ===============================================
-
-    console.log(`ReviewHeaderView::render()`)
     let content = null 
-    if ( reviewInProgress ) {
-        content = ( 
-            <>
-                <div className="instructions">Currently reviewing version { props.versionNumber }.  Click anywhere on the document to add a comment.  Write review summary and make a recommentation below.  New comment threads will not be public until the review is submitted.  Comments added to existing threads are immediately public.</div>
-                <ReviewSummaryForm paper={props.paper} versionNumber={props.versionNumber} selectedReview={reviewInProgress} /> 
-            </>
-        )
+    if ( paper.isDraft ) {
+        if ( reviewInProgress ) {
+            content = ( 
+                <>
+                    <div className="instructions">Currently reviewing version { props.versionNumber }.  Click anywhere on the document to add a comment.  Write review summary and make a recommentation below.  New comment threads will not be public until the review is submitted.  Comments added to existing threads are immediately public.</div>
+                    <ReviewSummaryForm paper={paper} versionNumber={props.versionNumber} selectedReview={reviewInProgress} /> 
+                </>
+            )
+        } else {
+            content = (
+                <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.  <button onClick={startReview}>Start Review</button> to begin a new review and add comments.</p>
+            )
+        }
     } else {
         content = (
-            <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.  <button onClick={startReview}>Start Review</button> to begin a new review and add comments.</p>
+            <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.</p>
         )
     }
     return (

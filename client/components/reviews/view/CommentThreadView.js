@@ -49,7 +49,20 @@ const CommentThreadView = function({ id, reviewId, paperId, versionNumber }) {
     useEffect(function() {
         if ( hiddenCanvasLoaded && canvasRef.current && hiddenCanvasRef.current ) {
             const context = canvasRef.current.getContext("2d")
-            context.drawImage(hiddenCanvasRef.current, 0, (thread.pinY*height)-100, 800, 200, 0, 0, 800, 200)
+
+            // Handle high DPI devices.
+            const scale = window.devicePixelRatio
+
+            canvasRef.current.style.width = '800px'
+            canvasRef.current.style.height = '200px'
+
+            canvasRef.current.width = Math.floor(800*scale)
+            canvasRef.current.height = Math.floor(200*scale)
+
+            context.scale(scale, scale)
+
+            // TECHDEBT This was a guess that seems to be working.  I'm actually a little uneasy with the fact that it seems to be working.  
+            context.drawImage(hiddenCanvasRef.current, 0, ((thread.pinY*height)-100)*scale, 800*scale, 200*scale, 0, 0, 800, 200)
             setCanvasRendered(true)
         }
     }, [ hiddenCanvasLoaded ])

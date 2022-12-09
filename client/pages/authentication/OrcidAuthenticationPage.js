@@ -49,14 +49,11 @@ const OrcidAuthenticationPage = function(props) {
     useEffect(function() {
         if ( currentUser && request && request.state == 'fulfilled') {
             if ( request.result.type == 'connection' || request.result.type == 'registration') {
-            console.error(`Navigating.`)
                 navigate("/reputation/initialization", { replace: false, state: { connect: true } })
             } else {
                 if ( location.pathname == '/orcid/connect') {
-            console.error(`Navigating.`)
                     navigate("/account/details")
                 } else  {
-            console.error(`Navigating.`)
                     navigate("/")
                 }
             }

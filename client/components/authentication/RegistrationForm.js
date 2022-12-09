@@ -162,7 +162,6 @@ const RegistrationForm = function(props) {
         // somehow winds up on the registration page.  Either way, we don't
         // want to be here.
         if ( currentUser ) {
-            console.error(`Navigating.`)
             navigate("/")
         }
     }, [ currentUser ])

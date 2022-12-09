@@ -85,7 +85,12 @@ const DraftPaperControlView = function(props) {
 
     const changeVersion = function(event) {
         const versionNumber = event.target.value
-        const urlString = `/draft/${props.id}/version/${versionNumber}/${props.tab}`
+        let urlString = ''
+        if ( paper.isDraft ) {
+            urlString = `/draft/${props.id}/version/${versionNumber}/${props.tab}`
+        } else {
+            urlString = `/paper/${props.id}/version/${versionNumber}/${props.tab}` 
+        }
         navigate(urlString)
     }
 

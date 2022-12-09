@@ -152,7 +152,6 @@ const SubmitDraftForm = function(props) {
     useEffect(function() {
         if ( postPapersRequest && postPapersRequest.state == 'fulfilled') {
             const path = "/draft/" + postPapersRequest.result.id
-            console.error(`Navigating.`)
             navigate(path)
         }
 

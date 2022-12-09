@@ -24,7 +24,7 @@ import './DraftPaperPDFView.css'
  * currently selected in the Redux store (or all reviews) for each page.
  *
  * @param {object} props    The React props object.
- * @param {object} props.paper  The `paper` object for the draft paper who's
+ * @param {object} paper  The `paper` object for the draft paper who's
  * PDF file we're rendering.
  * @param {int} props.versionNumber The version number corresponding to the PDF
  * file we're rendering.
@@ -49,9 +49,13 @@ const DraftPaperPDFView = function(props) {
         return state.authentication.currentUser
     })
 
+    const paper = useSelector(function(state) {
+        return state.papers.dictionary[props.paperId]
+    })
+
     const threads = useSelector(function(state) {
-        if ( state.reviews.list[props.paper.id] ) {
-            const reviews = state.reviews.list[props.paper.id][props.versionNumber]
+        if ( state.reviews.list[props.paperId] ) {
+            const reviews = state.reviews.list[props.paperId][props.versionNumber]
             const results = []
             if ( reviews && reviews.length > 0 ) {
                 for (const review of reviews ) {
@@ -178,11 +182,11 @@ const DraftPaperPDFView = function(props) {
 
     // ================= Render ===============================================
 
-    if ( props.paper.versions.length > 0 ) {
+    if ( paper.versions.length > 0 ) {
 
-        let version = props.paper.versions.find((v) => v.version == props.versionNumber)
+        let version = paper.versions.find((v) => v.version == props.versionNumber)
         if ( ! version ) {
-            version = props.paper.versions[0]
+            version = paper.versions[0]
         }
         const pageViews = []
         if ( props.versionNumber == loadedVersion) {
@@ -191,7 +195,7 @@ const DraftPaperPDFView = function(props) {
                     <DraftPaperPDFPageView 
                         key={`page-${pageNumber}`} 
                         pageNumber={pageNumber}
-                        paper={props.paper}
+                        paper={paper}
                         versionNumber={props.versionNumber}
                         requestThreadReflow={requestThreadReflow}
                         onRenderSuccess={function() {
@@ -222,7 +226,7 @@ const DraftPaperPDFView = function(props) {
                     >
                         <ReviewCommentThreadView 
                             key={thread.id} 
-                            paper={props.paper} 
+                            paper={paper} 
                             versionNumber={props.versionNumber}
                             reviewId={thread.reviewId}
                             requestThreadReflow={requestThreadReflow}
@@ -237,7 +241,7 @@ const DraftPaperPDFView = function(props) {
         const url = new URL(version.file.filepath, version.file.location)
         const urlString = url.toString()
         return (
-            <article id={`paper-${props.paper.id}-content`} className="draft-paper-pdf">
+            <article id={`paper-${props.paperId}-content`} className="draft-paper-pdf">
                 <div id="collapsed-comments" onClick={(e) => {
                     searchParams.delete('thread')
                     setSearchParams(searchParams)

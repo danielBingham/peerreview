@@ -34,7 +34,6 @@ const AcceptInvitationPage = function(props) {
         // If we have a user already logged in, or don't have a token, bail
         // out.
         if ( ! token ) {
-            console.error(`Navigating.`)
             navigate("/")
         }
 

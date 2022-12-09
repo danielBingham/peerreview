@@ -99,7 +99,6 @@ const ReviewList = function({ paperId, versionNumber }) {
 
     useEffect(function() {
         if ( postReviewsRequest && postReviewsRequest.state == 'fulfilled' ) {
-            console.error(`Navigating.`)
             navigate(`/draft/${paperId}/version/${versionNumber}/drafts`)
         }
     }, [ postReviewsRequest ])
@@ -169,15 +168,21 @@ const ReviewList = function({ paperId, versionNumber }) {
 
     const url = new URL(version.file.filepath, version.file.location)
 
+    let draftsTabUrl = ''
+    if ( paper.isDraft ) {
+        draftsTabUrl = `/draft/${paperId}/version/${versionNumber}/drafts`
+    } else {
+        draftsTabUrl = `/paper/${paperId}/version/${versionNumber}/drafts`
+    }
     return (
         <div id={`paper-${paperId}-review-list`} className="review-list">
             <div className="header">
-                { reviewViews.length > 0 && <span>Viewing { reviews.length } reviews on version { versionNumber}.  To read the full text, go to the <a href={`/draft/${paperId}/version/${versionNumber}/drafts`}> drafts tab</a>.</span> }
+                { reviewViews.length > 0 && <span>Viewing { reviews.length } reviews on version { versionNumber}.  To read the full text, go to the <a href={draftsTabUrl}> drafts tab</a>.</span> }
                 { paper.isDraft && reviewViews.length <= 0 && ! reviewInProgress && <div className="empty-list">
-                No reviews have been written yet for version {versionNumber}.  Read the full text on the <a href={`/draft/${paperId}/version/${versionNumber}/file`}>drafts tab</a> and <button onClick={startReview} >Start Review</button> to be the first to write one!
+                No reviews have been written yet for version {versionNumber}.  Read the full text on the <a href={draftsTabUrl}>drafts tab</a> and <button onClick={startReview} >Start Review</button> to be the first to write one!
             </div> }
             { paper.isDraft && reviewViews.length <= 0 && reviewInProgress && <span>
-            No reviews have been written yet for version {versionNumber}.  Read the full text and complete your review in progress on the <a href={`/draft/${paperId}/version/${versionNumber}/file`}>drafts tab</a>!</span> }
+            No reviews have been written yet for version {versionNumber}.  Read the full text and complete your review in progress on the <a href={draftsTabUrl}>drafts tab</a>!</span> }
                 { reviewInProgress && <div>You have a review in progress.</div> }
             </div>
             <Document 

@@ -17,6 +17,7 @@ const createRequestTracker = function(requestId, method, endpoint) {
         method: method,
         endpoint: endpoint,
         timestamp: Date.now(),
+        uses: 1,
         cleaned: false,
         cacheBusted: false,
         state: 'pending',
@@ -94,6 +95,7 @@ export const recordRequestSuccess = completeRequest
  */
 export const useRequest = function(state, action) {
     const tracker = state.requests[action.payload.requestId]
+    tracker.uses += 1
     tracker.cleaned = false
 }
 
@@ -106,6 +108,13 @@ export const cleanupRequest = function(state, action) {
 
     if ( ! tracker ) {
         logger.warn('Warning: attempt to cleanup request that does not exist: ' + action.payload.requestId)
+        return
+    }
+
+    tracker.uses -= 1
+    // This tracker is still in use somewhere.  We're not ready to clean it
+    // yet.
+    if ( tracker.uses > 0 ) {
         return
     }
 

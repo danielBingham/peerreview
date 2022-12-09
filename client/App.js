@@ -248,17 +248,21 @@ const App = function(props) {
                         <Route path="/review" element={ <ReviewPapersListPage /> } />
                         <Route path="/drafts/" element={ <DraftPapersListPage /> } />
                         <Route path="/draft/:id" element={ <DraftPaperPage tab="reviews" /> }  />
+                        <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
                         <Route path="/draft/:id/reviews" element={ <DraftPaperPage tab="reviews" /> } />
                         <Route path="/draft/:id/drafts" element={ <DraftPaperPage tab="drafts" /> } />
-                        <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
                         <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage tab="reviews" /> } />
                         <Route path="/draft/:id/version/:versionNumber/reviews" element={ <DraftPaperPage tab="reviews" /> } />
                         <Route path="/draft/:id/version/:versionNumber/drafts" element={ <DraftPaperPage tab="drafts" /> } />
 
                         { /* ========= Published Papers ===================== */ }
                         <Route path="/search" element={ <PaperSearchPage /> } />
-                        <Route path="/paper/:id" element={ <PublishedPaperPage /> } />
-                        <Route path="/spinner" element={ <Spinner local={true} /> } />
+                        <Route path="/paper/:id" element={ <PublishedPaperPage tab="paper" /> } />
+                        <Route path="/paper/:id/reviews" element={ <PublishedPaperPage tab="reviews" /> } />
+                        <Route path="/paper/:id/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
+                        <Route path="/paper/:id/version/:versionNumber" element={ <PublishedPaperPage tab="drafts" /> } />
+                        <Route path="/paper/:id/version/:versionNumber/reviews" element={ <PublishedPaperPage tab="reviews" /> } />
+                        <Route path="/paper/:id/version/:versionNumber/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
                     </Routes>
                 </main>
             </Router>

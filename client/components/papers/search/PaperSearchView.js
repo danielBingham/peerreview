@@ -14,7 +14,6 @@ const PaperSearchView = function(props) {
     const onSubmit = function(event) {
         event.preventDefault()
         const newSearchParams = new URLSearchParams({ q: textQuery })
-            console.error(`Navigating.`)
         navigate(`/search?${newSearchParams.toString()}`)
     }
 

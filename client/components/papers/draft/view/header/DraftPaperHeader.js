@@ -25,9 +25,6 @@ import './DraftPaperHeader.css'
  * reviews for. 
  */
 const DraftPaperHeader = function({ id, versionNumber, tab }) {
-    console.log(`\n\n### DraftPaperHeader ###`)
-    console.log(`id: ${id}, versionNumber: ${versionNumber}, tab: ${tab}`)
-    
     // ================= Request Tracking =====================================
 
     // ================= Redux State ==========================================

@@ -4,9 +4,10 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 
 import { getPaper, cleanupRequest } from '/state/papers'
 
-import DraftPaperReviewsWrapperView from '/components/papers/draft/view/review/DraftPaperReviewsWrapperView'
+import DraftPaperView from '/components/papers/draft/view/DraftPaperView'
+import DraftPaperReviewsView from '/components/papers/draft/view/DraftPaperReviewsView'
 
-import DraftPaperHeader from '/components/papers/draft/view/DraftPaperHeader'
+import DraftPaperHeader from '/components/papers/draft/view/header/DraftPaperHeader'
 import ReviewList from '/components/reviews/list/ReviewList'
 
 import Spinner from '/components/Spinner'
@@ -86,47 +87,38 @@ const DraftPaperPage = function(props) {
 
 
 
-    if ( currentUser && paper ) {
-        let content = ( <Spinner local={true} /> )
-        const selectedTab = ( props.tab ? props.tab : 'reviews')
+    const selectedTab = ( props.tab ? props.tab : 'reviews')
+    let content = ( <Spinner local={true} /> )
+    if ( currentUser && request && request.state == 'fulfilled') {
         if ( selectedTab == 'reviews' ) {
             content = (
-                <>
-                    <DraftPaperHeader id={id} tab={selectedTab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
-                    <ReviewList paperId={id} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
-                </>
+                <DraftPaperReviewsView paperId={id} tab={selectedTab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
             )
         } else if ( selectedTab == 'drafts' ) {
-            content = (
-                <>
-                    <DraftPaperHeader id={id} tab={selectedTab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
-                    <DraftPaperReviewsWrapperView paper={paper} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} /> 
-                </>
+            content = ( 
+                <DraftPaperView id={id} tab={selectedTab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
             )
         }
 
-        return (
-            <>
-                <div className="page-tab-bar">
-                    <div onClick={(e) => selectTab('reviews')} className={`page-tab ${ ( selectedTab == 'reviews' ? 'selected' : '' )}`}>Reviews</div>
-                    <div onClick={(e) => selectTab('drafts')} className={`page-tab ${ ( selectedTab == 'drafts' ? 'selected' : '')}`}>Drafts</div>
-                </div>
-                <div id="draft-paper-page" className="page">
-                    { content }
-                </div>
-            </>
-        )
     } else if (request && request.state == 'failed' ) {
+        // TODO TECHDEBT Better error handling here.
+        console.error(request.error)
         return (
-            <div id="draft-paper-page" className="page">
-                <Error404 />
+            <Error404 />
+        )
+    } 
+    
+    return (
+        <>
+            <div className="page-tab-bar">
+                <div onClick={(e) => selectTab('reviews')} className={`page-tab ${ ( selectedTab == 'reviews' ? 'selected' : '' )}`}>Reviews</div>
+                <div onClick={(e) => selectTab('drafts')} className={`page-tab ${ ( selectedTab == 'drafts' ? 'selected' : '')}`}>Drafts</div>
             </div>
-        )
-    } else {
-        return (
-            <Spinner />
-        )
-    }
+            <div id="draft-paper-page" className="page">
+                { content }
+            </div>
+        </>
+    )
 }
 
 export default DraftPaperPage

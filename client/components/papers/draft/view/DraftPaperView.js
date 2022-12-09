@@ -1,19 +1,13 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getPaper, cleanupRequest } from '/state/papers'
+import { getReviews, clearList, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
-import UserTag from '/components/users/UserTag'
-import Field from '/components/fields/Field'
-import DateTag from '/components/DateTag'
+import DraftPaperHeader from './header/DraftPaperHeader'
+import ReviewHeaderView from '/components/reviews/widgets/ReviewHeaderView'
+import DraftPaperPDFView from './pdf/DraftPaperPDFView'
+
 import Spinner from '/components/Spinner'
-import Error404 from '/components/Error404'
-
-import DraftPaperHeader from './DraftPaperHeader'
-import DraftPaperControlView from './DraftPaperControlView'
-import DraftPaperReviewsWrapperView from './review/DraftPaperReviewsWrapperView'
-
-import ReviewList from '/components/reviews/list/ReviewList'
 
 import './DraftPaperView.css'
 
@@ -32,14 +26,41 @@ const DraftPaperView = function({ id, versionNumber, tab }) {
     
     // ================= Request Tracking =====================================
 
+    const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
+    const reviewsRequest = useSelector(function(state) {
+        if ( ! reviewsRequestId ) {
+            return null
+        } else {
+            return state.reviews.requests[reviewsRequestId]
+        }
+    })
     // ================= Redux State ==========================================
 
     const paper = useSelector(function(state) {
         return state.papers.dictionary[id]
     })
+    const mostRecentVersion = paper?.versions[0].version
 
     // ======= Effect Handling =====================
    
+    const dispatch = useDispatch()
+    /**
+     * Retrieve the reviews on mount.  Cleanup the request on dismount.
+     */
+    useEffect(function() {
+        if ( ! reviewsRequestId ) {
+            dispatch(clearList(id))
+            setReviewsRequestId(dispatch(getReviews(id)))
+        }
+    }, [])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( reviewsRequestId) {
+                dispatch(cleanupReviewRequest({ requestId: reviewsRequestId }))
+            }
+        }
+    }, [ reviewsRequestId ])
 
     // ================= Render ===============================================
     
@@ -48,15 +69,21 @@ const DraftPaperView = function({ id, versionNumber, tab }) {
         throw new Error('Missing paper.')
     } 
 
-    return (
-        <div id={`paper-${id}`} className="draft-paper">
-            <DraftPaperHeader id={id} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
-            <ReviewList paperId={id} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
-            { 
-                // <DraftPaperReviewsWrapperView paper={paper} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} /> 
-             }
-        </div>
-    )
+    if ( reviewsRequest && reviewsRequest.state == 'fulfilled') {
+        return (
+            <div id={`paper-${id}`} className="draft-paper">
+                <DraftPaperHeader id={id} tab={tab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
+                <ReviewHeaderView paperId={id} versionNumber={versionNumber} />
+                <DraftPaperPDFView paperId={id} versionNumber={versionNumber} />
+            </div>
+        )
+    } else {
+        return (
+            <div id={`paper-${id}`} className="draft-paper">
+                <Spinner local={true}/>
+            </div>
+        )
+    }
 
 }
 

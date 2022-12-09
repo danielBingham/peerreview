@@ -7,11 +7,11 @@ import { getReviews, clearList, cleanupRequest as cleanupReviewRequest } from '/
 
 import Spinner from '/components/Spinner'
 
-import ReviewHeaderView from '/components/reviews/widgets/ReviewHeaderView'
+import DraftPaperHeader from './header/DraftPaperHeader'
+import ReviewList from '/components/reviews/list/ReviewList'
 
-import DraftPaperPDFView from '../pdf/DraftPaperPDFView'
 
-import './DraftPaperReviewsWrapperView.css'
+import './DraftPaperReviewsView.css'
 
 /**
  * Display paper and its reviews.  Queries the backend for the freshest
@@ -22,7 +22,7 @@ import './DraftPaperReviewsWrapperView.css'
  * @param {integer} versionNumber   The version of the paper we currently have
  * selected.
  */
-const DraftPaperReviewsWrapperView = function(props) {
+const DraftPaperReviewsView = function(props) {
     // ======= Request Tracking =====================================
 
     const [ reviewsRequestId, setReviewsRequestId ] = useState(null)
@@ -34,6 +34,12 @@ const DraftPaperReviewsWrapperView = function(props) {
         }
     })
 
+    // ================= Redux State ==========================================
+
+    const paper = useSelector(function(state) {
+        return state.papers.dictionary[props.paperId]
+    })
+
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
@@ -42,8 +48,8 @@ const DraftPaperReviewsWrapperView = function(props) {
      */
     useEffect(function() {
         if ( ! reviewsRequestId ) {
-            dispatch(clearList(props.paper.id))
-            setReviewsRequestId(dispatch(getReviews(props.paper.id)))
+            dispatch(clearList(props.paperId))
+            setReviewsRequestId(dispatch(getReviews(props.paperId)))
         }
     }, [])
 
@@ -58,11 +64,10 @@ const DraftPaperReviewsWrapperView = function(props) {
     // ======= Render ===============================================
 
     if ( reviewsRequest && reviewsRequest.state == 'fulfilled') {
-        const id = `paper-${props.paper.id}-reviews`
         return (
-            <div id={`paper-${props.paper.id}-reviews`} className="draft-paper-reviews-wrapper">
-                <ReviewHeaderView paper={props.paper} versionNumber={props.versionNumber} />
-                <DraftPaperPDFView paper={props.paper} versionNumber={props.versionNumber} />
+            <div id={`paper-${props.paperId}-reviews`} className="draft-paper-reviews">
+                <DraftPaperHeader id={props.paperId} tab={props.tab} versionNumber={props.versionNumber} />
+                <ReviewList paperId={props.paperId} versionNumber={props.versionNumber} />
             </div>
         )
     } else {
@@ -72,5 +77,5 @@ const DraftPaperReviewsWrapperView = function(props) {
     }
 }
 
-export default DraftPaperReviewsWrapperView
+export default DraftPaperReviewsView
 
