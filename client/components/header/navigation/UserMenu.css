@@ -1,8 +1,8 @@
 #user-menu {
     position: absolute;
     top: 39px;
-    left: -10px;
-    min-width: 200px;
+    left: 0;
+    min-width: 225px;
     text-align: center;
     background-color: white;
     border-bottom: thin solid #bbb;

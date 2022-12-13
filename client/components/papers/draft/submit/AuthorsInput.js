@@ -31,6 +31,7 @@ const AuthorsInput = function(props) {
 
     // ======= Render State =========================================
 
+    const [showInviteForm, setShowInviteForm] = useState(false)
     const [authorName, setAuthorName] = useState('')
 
     const [highlightedSuggestion, setHighlightedSuggestion] = useState(0)
@@ -50,6 +51,7 @@ const AuthorsInput = function(props) {
     // ======= Refs =================================================
 
     const timeoutId = useRef(null)
+    const inputRef = useRef(null)
 
     // ======= Redux State ==========================================
 
@@ -104,7 +106,7 @@ const AuthorsInput = function(props) {
                     setRequestId(dispatch(getUsers('AuthorsInput', { name: name})))
                 }
 
-                if ( highlightedSuggestion >= userSuggestions.length ) {
+                if ( highlightedSuggestion >= userSuggestions.length+1 ) {
                     setHighlightedSuggestion(0)
                 }
             } 
@@ -130,6 +132,7 @@ const AuthorsInput = function(props) {
      * authors.
      */
     const appendAuthor = function(user) {
+        setShowInviteForm(false)
         if ( props.authors.find((a) => a.user.id == user.id) ) {
             setError('author-already-added')
             setAuthorName('')
@@ -167,8 +170,8 @@ const AuthorsInput = function(props) {
         } else if ( event.key == "ArrowDown" ) {
             event.preventDefault()
             let newHighlightedSuggestion = highlightedSuggestion+1
-            if ( newHighlightedSuggestion >= userSuggestions.length) {
-                newHighlightedSuggestion = userSuggestions.length-1
+            if ( newHighlightedSuggestion >= userSuggestions.length+1) {
+                newHighlightedSuggestion = userSuggestions.length
             }
             setHighlightedSuggestion(newHighlightedSuggestion)
         } else if ( event.key == "ArrowUp" ) {
@@ -181,6 +184,29 @@ const AuthorsInput = function(props) {
         } 
     }
 
+    const hideInviteForm = function() {
+        setShowInviteForm(false)
+        clearSuggestions()
+        suggestAuthors(authorName)
+        if ( inputRef.current ) {
+            inputRef.current.focus()
+        }
+    }
+
+    const onAuthorNameBlur = function(event) {
+        clearSuggestions()
+
+        if ( props.onBlur ) {
+            props.onBlur(event) 
+        }
+    }
+
+    const onAuthorNameFocus = function(event) {
+        if ( authorName.length > 0 ) {
+            suggestAuthors(event.target.value)
+        }
+    }
+
     // ======= Effect Handling ======================================
 
     // Clear the user list on mount.  
@@ -189,9 +215,9 @@ const AuthorsInput = function(props) {
     }, [])
 
     // Make sure the highlightedSuggestion is never outside the bounds of the
-    // userSuggestions list.
+    // userSuggestions list (plus the author invite selection).
     useLayoutEffect(function() {
-        if ( highlightedSuggestion >= userSuggestions.length && highlightedSuggestion != 0) {
+        if ( highlightedSuggestion >= userSuggestions.length+1 && highlightedSuggestion != 0) {
             setHighlightedSuggestion(0)
         }
     }, [ highlightedSuggestion, userSuggestions ])
@@ -206,27 +232,34 @@ const AuthorsInput = function(props) {
     }, [ requestId ])
 
     // ======= Render ===============================================
-    
-        /*const authorList = [] 
-    if ( props.authors ) {
-        for ( const  author of props.authors) {
-            authorList.push(<UserTag key={author.order} id={author.user.id} />)
-        }
-    }*/
 
     let suggestedAuthorList = []
     let suggestionsError = null
-    let inviteAuthor = null
     if ( request && request.state != 'failed') {
         for ( const [ index, user ] of userSuggestions.entries()) {
-            suggestedAuthorList.push(<div key={user.name} onClick={(event) => { appendAuthor(user) }} className={ index == highlightedSuggestion ? "author-suggestion highlighted" : "author-suggestion" }>{user.name}</div>)
-        }
-
-        if ( authorName.length > 0 && suggestedAuthorList.length <= 0 ) {
-            inviteAuthor = (
-                <AuthorInvite name={authorName} append={appendAuthor} />
+            suggestedAuthorList.push(
+                <div key={user.id} 
+                    onClick={(event) => { appendAuthor(user) }} 
+                    className={ index == highlightedSuggestion ? "author-suggestion highlighted" : "author-suggestion" }
+                >
+                    {user.name}
+                </div>
             )
         }
+
+        let index = suggestedAuthorList.length
+        suggestedAuthorList.push(
+            <div key="user-invite"
+                onClick={(event) => { 
+                    setShowInviteForm(true) 
+                    clearSuggestions()
+                }} 
+                className={ index == highlightedSuggestion ? "author-suggestion highlighted" : "author-suggestion" }
+            >
+                Invite Author 
+            </div>
+        )
+
     } else if ( request && request.state == 'failed' ) {
         suggestionsError = (
             <div className="error">
@@ -243,6 +276,12 @@ const AuthorsInput = function(props) {
     }
 
 
+    let inviteForm = null
+    if ( showInviteForm ) {
+        inviteForm = ( <AuthorInvite name={authorName} hideInviteForm={hideInviteForm} append={appendAuthor} /> )
+    }
+
+
     return (
         <div className="authors-input field-wrapper"> 
             <label htmlFor="authors">Authors</label>
@@ -250,18 +289,20 @@ const AuthorsInput = function(props) {
             <input type="text" 
                 name="authorName" 
                 value={authorName}
+                ref={inputRef}
                 onKeyDown={handleKeyDown}
-                onBlur={ (event) => props.onBlur ? props.onBlur(event) : null }
+                onBlur={onAuthorNameBlur}
+                onFocus={onAuthorNameFocus}
                 onChange={handleChange} 
             />
             { errorView }
-            { inviteAuthor }
             <div className="author-suggestions" 
                 style={ ( suggestedAuthorList.length > 0 || suggestionsError ? { display: 'block' } : { display: 'none' } ) }
             >
                 { suggestionsError }
                 { suggestedAuthorList }
             </div>
+            { inviteForm }
         </div>
     )
 

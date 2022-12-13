@@ -7,20 +7,21 @@ const IntroductionSection = function(props) {
         <section id="introduction">
             <ReactMarkdown>
                 {` 
-Peer Review is an [open source](https://github.com/danielbingham/peerreview), diamond open access (free to access, free to
-publish), non-profit academic publishing platform.  The
-platform enables crowdsourced peer review and public dissemination of scholarly
-papers.
+Peer Review is an experiment in scholarly publishing. It is a platform that
+enables crowdsourced peer review and public dissemination of scientific and
+academic papers.  For now, the platform can only handle pre-prints.  It is and
+will remain [open source](https://github.com/danielbingham/peerreview) and
+diamond open access.  It is currently being maintained by a single developer as
+a side project. 
 
-The peer review process is self selected, using a reputation system to ensure
-that only knowledgeable peers are offering reviews. To learn more,
-please read [how it works](/about#how-it-works).
-
-Our goal is to replace the academic journal system with something open to its
-core, democratic, and community managed.  We hope to solve any number of
-problems in the process, but we're starting with the file drawer problem. To learn more about
-our reasoning and the problems we hope to
-solve, read [our rationale](/about#rationale).
+Peer Review uses a reputation system to ensure that review and refereeing is
+done by qualified peers.  Reputation is primarily gained from publishing, but
+can also be gained from giving constructive reviews.  Review is separated into
+pre-publish "review" and post-publish "refereeing".  Review is entirely focused
+on giving authors constructive, supportive feedback.  Refereeing is intended to
+help maintain the integrity of the overall literature by identifying spam,
+malpractice, and misinformation.  To learn more, please read [how it
+works](/about#how-it-works).
                 `}
             </ReactMarkdown>
         </section>

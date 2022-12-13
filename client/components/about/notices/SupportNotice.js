@@ -97,13 +97,11 @@ const SupportNotice = function(props) {
                 <h2>We Need Your Support</h2>
                 <ReactMarkdown>
                     {`
-Peer Review is currently being developed and maintained by Daniel Bingham as a
-side project.  The infrastructure running Peer Review costs about $300 / month.
-Those costs will go up if more people begin using the platform.  If we raise
-enough donations to support Daniel's family, then he will commit to developing
-Peer Review full time. 
+Peer Review is currently being developed and maintained by a single developer as a
+side project.  Donations help support running the infrastructure. If we raise
+enough donations, then we can hire folks to work on it full time. 
 
-If you think Peer Review is an experiment that should succeed, please consider 
+If you want the experiment to succeed, please consider 
 [supporting us](https://github.com/sponsors/danielBingham) through Github Sponsors!
 `}
                 </ReactMarkdown>

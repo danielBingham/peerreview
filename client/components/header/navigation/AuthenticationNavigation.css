@@ -1,6 +1,13 @@
 #authentication-navigation {
     position: relative;
 }
+#authentication-navigation svg {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    margin-bottom: -4px;
+}
 #authentication-navigation.not-authenticated a:link, 
 #authentication-navigation.not-authenticated a:active, 
 #authentication-navigation.not-authenticated a:visited,

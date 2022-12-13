@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useEffect } from 'react'
+import React, { useState, useRef, useLayoutEffect, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { postUsers, cleanupRequest } from '/state/users'
@@ -23,6 +23,8 @@ const AuthorInvite = function(props) {
         }
     })
 
+    const nameInputRef = useRef(null)
+
     const dispatch = useDispatch()
 
     const invite = function(event) {
@@ -45,9 +47,19 @@ const AuthorInvite = function(props) {
         })))
     }
 
+    const cancel = function(event) {
+        props.hideInviteForm()
+    }
+
     useLayoutEffect(function() {
         setName(props.name)
     }, [ props.name ])
+
+    useEffect(function() {
+        if ( nameInputRef.current ) {
+            nameInputRef.current.focus()
+        }
+    }, [])
 
     useEffect(function() {
         if ( request && request.state == 'fulfilled' ) {
@@ -64,38 +76,52 @@ const AuthorInvite = function(props) {
         }
     }, [ requestId ])
 
-    let content = (
-        <>
-        <p>No author found that matches "{name}".  Would you like to add and invite them?</p>
-        <div className="user-inputs">
-            <label htmlFor="name">Name: </label>
-            <input type="text" onChange={(e) => setName(e.target.value)} value={name} name="name" />
-            <label htmlFor="email">Email: </label>
-            <input type="text" onChange={(e) => setEmail(e.target.value)} value={email}  name="email" />
-            <button onClick={invite} name="invite">Invite</button> 
-        </div>
-        <div className="errors">
-            { submissionError && ! name && <div className="error">Name is required.</div> }
-            { submissionError && ! email && <div className="error">Email is required.</div> }
-        </div>
-        </>
-    )    
+    let content = ( <Spinner local={true} /> )
 
-    if ( request && request.state == 'pending' ) {
-        content = ( <Spinner local={true} /> )
-    } else if ( request && request.state == 'failed' ) {
+    if ( ! request || request.state != 'pending' ) {
+
+        let requestError = null
+        if ( request && request.state == 'failed' ) {
+            requestError = (
+                <div className="error">
+                    Something went wrong: { request.error }
+                </div>
+            )
+        }
+        let successMessage = null
+        if ( request && request.state == 'fulfilled' ) {
+            successMessage = (
+                <div className="success">
+                    { request.result.name } has been invited!
+                </div>
+            )
+        }
+
         content = (
-            <div className="error">
-                Something went wrong: { request.error }
+            <>
+            <h3>Invite Your Co-author</h3> 
+            <p>To invite your co-author to join Peer Review, please enter their name and email. We'll send them an email letting them know they've been added as a co-author and allowing them to claim the account.</p>
+            <div className="user-inputs">
+                <div className="form-inputs">
+                    <label htmlFor="name">Name: </label>
+                    <input type="text" ref={nameInputRef} onChange={(e) => setName(e.target.value)} value={name} name="name" />
+                    <label htmlFor="email">Email: </label>
+                    <input type="text" onChange={(e) => setEmail(e.target.value)} value={email}  name="email" />
+                </div>
+                <div className="form-buttons">
+                    <button onClick={invite} name="invite">Invite</button><button onClick={cancel} name="cancel">Cancel</button>
+                </div>
             </div>
-        )
-    } else if ( request && request.state == 'fulfilled' ) {
-        content = (
-            <div className="success">
-                { request.result.name } has been invited!
+            <div className="errors">
+                { submissionError && ! name && <div className="error">Name is required.</div> }
+                { submissionError && ! email && <div className="error">Email is required.</div> }
+                { requestError }
             </div>
-        )
+            { successMessage }
+            </>
+        )    
     }
+
 
     return (
         <div className="author-invite">

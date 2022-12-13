@@ -49,10 +49,10 @@ const UserTag = function(props) {
     let content = ( <Spinner local={true} /> ) 
     if ( user ) {
         let name = null
-        if ( props.link ) {
-            name = ( <Link to={ `/user/${user.id}` }>{user.name}</Link> )
-        } else {
+        if ( props.link == false ) {
             name = user.name
+        } else {
+            name = ( <Link to={ `/user/${user.id}` }>{user.name}</Link> )
         }
 
         content = ( <> { name } ({parseInt(user.reputation).toLocaleString()}) </> ) 

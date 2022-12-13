@@ -11,3 +11,10 @@
     width: 100px;
     margin: 0 10px;
 }
+.author-invite .form-buttons {
+    padding: 10px 20px;
+    text-align: right;
+}
+.author-invite .form-buttons button {
+    margin: 0 5px;
+}
