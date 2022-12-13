@@ -14,7 +14,8 @@ export const getTracker = function(requestId, method, endpoint) {
         result: null,
         error: null,
         errorData: {},
-        status: null
+        status: null,
+        uses: 1
     }
     return expectedRequestTracker
 }
