@@ -46,13 +46,21 @@ const UserTag = function(props) {
 
     // ======= Render ===============================================
 
+    let content = ( <Spinner local={true} /> ) 
     if ( user ) {
-        return (
-            <span id={ `user-tag-${user.id}` } className="user-tag" ><Link to={ `/user/${user.id}` }>{user.name}</Link> ({parseInt(user.reputation).toLocaleString()})</span> 
-        )
-    } else {
-        return (<Spinner />)
+        let name = null
+        if ( props.link ) {
+            name = ( <Link to={ `/user/${user.id}` }>{user.name}</Link> )
+        } else {
+            name = user.name
+        }
+
+        content = ( <> { name } ({parseInt(user.reputation).toLocaleString()}) </> ) 
     }
+
+    return (
+        <span className="user-tag" > { content } </span> 
+    )
 
 }
 

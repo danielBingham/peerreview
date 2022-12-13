@@ -2,9 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {  Link } from 'react-router-dom'
 
-import { cleanupRequest, deleteAuthentication } from '/state/authentication'
-
 import UserTag from '/components/users/UserTag'
+import UserMenu from './UserMenu'
 
 import './AuthenticationNavigation.css'
 
@@ -14,17 +13,10 @@ import './AuthenticationNavigation.css'
  * @param {object} props    Standard React props object - empty.
  */
 const AuthenticationNavigation = function(props) {
+    
+    const [ menuVisible, setMenuVisible ] = useState(false)
 
     // ======= Request Tracking =====================================
-
-    const [ deleteAuthenticationRequestId, setDeleteAuthenticationRequestId ] = useState(null)
-    const deleteAuthenticationRequest = useSelector(function(state) {
-        if (deleteAuthenticationRequestId) {
-            return state.authentication.requests[deleteAuthenticationRequestId]
-        } else {
-            return null
-        }
-    })
 
     // ======= Redux State ==========================================
 
@@ -36,38 +28,37 @@ const AuthenticationNavigation = function(props) {
 
     const dispatch = useDispatch()
 
-    /**
-     * Handle a Logout request by dispatching the appropriate action.
-     *
-     * TODO Track this request and show an error if the attempt to deleteAuthentication
-     * fails.  Cleanup the request when we're done.
-     *
-     * @param {object} event - Standard event object.
-     */
-    const handleLogout = function(event) {
+    const toggleMenu = function(event) {
         event.preventDefault()
+        event.stopPropagation()
 
-        setDeleteAuthenticationRequestId(dispatch(deleteAuthentication()))
+        setMenuVisible( ! menuVisible )
     }
 
     // ======= Effect Handling ======================================
 
-    // Cleanup our request tracking.
     useEffect(function() {
-        return function cleanup() {
-            if (  deleteAuthenticationRequestId ) {
-                dispatch(cleanupRequest({ requestId: deleteAuthenticationRequestId }))
-            }
+        const onBodyClick = function(event) {
+            if ( ! event.target.matches('#authentication-navigation') 
+                && ! event.target.matches('#authentication-navigation:scope') ) 
+            {
+                setMenuVisible(false)
+            } 
         }
-    }, [ deleteAuthenticationRequestId ])
+        document.body.addEventListener('click', onBodyClick)
+
+        return function cleanup() {
+            document.body.removeEventListener('click', onBodyClick)
+        }
+    }, [ menuVisible ])
 
     // ============= Render =======================
     
     if ( currentUser ) {
         return (
             <div id="authentication-navigation" className="navigation-block authenticated">
-                <UserTag id={currentUser.id} />
-                <a href="" className="logout" onClick={handleLogout} >logout</a>
+                <a href="" onClick={toggleMenu}><UserTag id={currentUser.id} /></a>
+                <UserMenu visible={menuVisible} toggleMenu={toggleMenu} />
             </div>
         )
     } else {

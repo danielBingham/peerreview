@@ -1,4 +1,5 @@
 header {
+    display: flex;
     margin: 0 0 20px 0;
     padding: 10px 50px;
     border-bottom: thin solid #aaa;
@@ -7,13 +8,12 @@ header {
 }
 
 header #site-title {
-    display: inline-block;
-
     font-size: 24px;
     font-weight: bold;
 
+    flex-grow: 1;
+
     text-align: left;
-    width: 50%;
 }
 header #site-title img {
     width: 30px;
@@ -25,12 +25,11 @@ header #site-title .wip {
 }
 
 header #navigation {
-    display: inline-block; 
     text-align: right;
+    flex-grow: 1;
 
     font-size: 18px;
     padding: 3px 0;
-    width: 50%;
 }
 
 header .navigation-block {

@@ -1,3 +1,6 @@
+#authentication-navigation {
+    position: relative;
+}
 #authentication-navigation.not-authenticated a:link, 
 #authentication-navigation.not-authenticated a:active, 
 #authentication-navigation.not-authenticated a:visited,

@@ -1,0 +1,23 @@
+#user-menu {
+    position: absolute;
+    top: 39px;
+    left: -10px;
+    min-width: 200px;
+    text-align: center;
+    background-color: white;
+    border-bottom: thin solid #bbb;
+    border-left: thin solid #bbb;
+    border-right: thin solid #bbb;
+    padding: 10px 0 10px 0;
+}
+#user-menu .menu-section {
+    padding: 5px 0;
+    border-bottom: thin solid #bbb;
+}
+#user-menu .menu-section.bottom {
+    border-bottom: none;
+}
+#user-menu .menu-item {
+    padding: 5px 10px 5px 10px;
+}
+#user-menu .menu-item:hover { }
