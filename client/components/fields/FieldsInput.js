@@ -127,21 +127,35 @@ const FieldsInput = function(props) {
             if (fieldSuggestions.length > 0) {
                 appendField(fieldSuggestions[highlightedSuggestion])
             }
-        } else if ( event.key == "ArrowDown" || event.key == "ArrowRight" ) {
+        } else if (event.key == "ArrowRight" ) {
             event.preventDefault()
             let newHighlightedSuggestion = highlightedSuggestion+1
             if ( newHighlightedSuggestion >= fieldSuggestions.length) {
-                newHighlightedSuggestion = fieldSuggestions.length
-            }
-            setHighlightedSuggestion(newHighlightedSuggestion)
-        } else if ( event.key == "ArrowUp" || event.key == "ArrowLeft") {
-            event.preventDefault()
-            let newHighlightedSuggestion = highlightedSuggestion-1
-            if ( newHighlightedSuggestion < 0) {
                 newHighlightedSuggestion = 0 
             }
             setHighlightedSuggestion(newHighlightedSuggestion)
-        } 
+        } else if ( event.key == "ArrowLeft") {
+            event.preventDefault()
+            let newHighlightedSuggestion = highlightedSuggestion-1
+            if ( newHighlightedSuggestion < 0) {
+                newHighlightedSuggestion =  fieldSuggestions.length-1
+            }
+            setHighlightedSuggestion(newHighlightedSuggestion)
+        } else if (event.key == "ArrowDown" ) {
+            event.preventDefault()
+            let newHighlightedSuggestion = highlightedSuggestion+3
+            if ( newHighlightedSuggestion > fieldSuggestions.length ) {
+                newHighlightedSuggestion = newHighlightedSuggestion - fieldSuggestions.length
+            }
+            setHighlightedSuggestion(newHighlightedSuggestion)
+        } else if ( event.key == "ArrowUp" ) {
+            event.preventDefault()
+            let newHighlightedSuggestion = highlightedSuggestion-3
+            if ( newHighlightedSuggestion < 0 ) {
+                newHighlightedSuggestion = fieldSuggestions.length + newHighlightedSuggestion
+            }
+            setHighlightedSuggestion(newHighlightedSuggestion)
+        }
 
     }
 
