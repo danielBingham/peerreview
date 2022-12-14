@@ -17,18 +17,23 @@ The authors do.  The works are published under the [CC-BY
             <h3 id="faq-when-should-i-vote">When should I vote?</h3>
             <ReactMarkdown>
                 {`
-**Up votes** are for works that are honestly done and reasonably well done.
-For empirical work that means the methods are sound, well executed and the
-conclusions are a reasonable interpretation of the results. For non-empirical
-work that means the research is reasonably well done and the arguments are
-reasonably sound.  In neither case does it mean the work is perfect. It doesn't
-mean all possible avenues of exploration have been covered, or there are no
-mistakes, or that the arguments have no reasonable counter arguments. It is
-intended purely as an assessment of work that was reasonably well done and
-executed honestly, in good faith. 
+Journals traditionally ask reviewers to assess work using a number of criteria,
+but votes on Peer review are only intended to measure a single criteria -
+**rigor**.
 
-**Down votes** are for works which are fraudulent, dishonestly executed, or are
-so poorly executed that they fall into the category of malpractice.
+If an empiracal work is well executed, the methods are sound, and the conclusions
+reasonable then it is worthy of an **up vote**.
+
+If a non-empiracal work is well constructed and well argued with sound
+reasoning, then it is worthy of an **up vote**.
+
+The work should not need to be perfect to be worthy of an up vote. It need not
+have explored all possible avenues, be free of mistakes, and absent reasonable
+counter arguments. Up votes are intended only to mark work that was
+reasonably well done and executed honestly, in good faith. 
+
+**Down votes** are for works which are fraudulent, malpractice, or
+misinformation.
 
 That assessment is, of course, subjective. And there's a large grey area
 between "reasonably well done" and "malpractice".  So it will be up to each
@@ -51,6 +56,27 @@ results.  Indeed, if there are 5 null results, several inconclusive results and
 a positive result on a topic, probability suggests something went wrong with
 the positive result.  As long as the methods were sound and well executed, null
 and inconclusive results are an important contribution to the literature.
+
+Finally, **impact** should not be considered in a voting decision.
+Impact is something that's impossible to predict at the outset.  Seemingly
+trite or niche papers could later turn out to be of significant importance.
+Each paper provides useful knowledge and the state of our data storage
+capacity now means we do not need to be picky about which knowledge we
+store and which we do not.
+`}
+</ReactMarkdown>
+<h3 id="faq-what-are-fields">What are fields?</h3>
+<ReactMarkdown>
+    {`
+Fields in Peer Review are areas of potential knowledge.  They exist in a
+hierarchy, where each field can have multiple parents and multiple children.
+At the very top of the heirarchy are the traditional academic disciplines
+(physics, chemistry, biology, history, law, etc).  As one travels down the
+hierarchy there are subdisciplines and eventually topics and concepts.
+
+The hierarchy is currently 6 layers deep and consists of 65,000 fields.  The
+plan is for fields to be editable and for the hierarchy to grow and evolve as
+needed.
 `}
 </ReactMarkdown>
         </section>

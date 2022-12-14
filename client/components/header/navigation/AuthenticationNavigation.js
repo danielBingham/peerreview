@@ -5,7 +5,7 @@ import {  Link } from 'react-router-dom'
 import UserTag from '/components/users/UserTag'
 import UserMenu from './UserMenu'
 
-import { ChevronDoubleDownIcon } from '@heroicons/react/24/solid'
+import { ChevronDoubleDownIcon, BarsArrowDownIcon, BarsArrowUpIcon } from '@heroicons/react/24/solid'
 
 import './AuthenticationNavigation.css'
 
@@ -59,7 +59,7 @@ const AuthenticationNavigation = function(props) {
     if ( currentUser ) {
         return (
             <div id="authentication-navigation" className="navigation-block authenticated">
-                <a href="" onClick={toggleMenu}><ChevronDoubleDownIcon /><UserTag id={currentUser.id} link={false} /></a>
+                <a href="" onClick={toggleMenu}>{ menuVisible ? <BarsArrowUpIcon /> : <BarsArrowDownIcon /> }<UserTag id={currentUser.id} link={false} /></a>
                 <UserMenu visible={menuVisible} toggleMenu={toggleMenu} />
             </div>
         )

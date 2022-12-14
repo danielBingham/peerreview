@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
 import debounce from 'lodash.debounce'
 
@@ -37,8 +37,11 @@ const FieldsInput = function(props) {
     
     const [currentField, setCurrentField] = useState('')
     const [fieldSuggestions, setFieldSuggestions] = useState([])
+
     const [suggestionsError, setSuggestionsError] = useState(null)
     const [fieldSelectedError, setFieldSelectedError] = useState(false)
+
+    const [highlightedSuggestion, setHighlightedSuggestion] = useState(0)
 
     // ======= Request Tracking =====================================
 
@@ -84,6 +87,7 @@ const FieldsInput = function(props) {
         setFieldSelectedError(false)
         setFieldSuggestions([])
         setSuggestionsError(null)
+        setHighlightedSuggestion(0)
     }
 
     /**
@@ -116,14 +120,29 @@ const FieldsInput = function(props) {
      * @param {KeyboardEvent} event    The standard Javascript KeyboardEvent
      * object passed to the event handler.
      */
-    const handleCurrentFieldKeyPress = function(event) {
+    const handleCurrentFieldKeyDown = function(event) {
         if ( event.key == "Enter" ) {
             event.preventDefault()
 
             if (fieldSuggestions.length > 0) {
-                appendField(fieldSuggestions[0])
+                appendField(fieldSuggestions[highlightedSuggestion])
             }
-        }
+        } else if ( event.key == "ArrowDown" || event.key == "ArrowRight" ) {
+            event.preventDefault()
+            let newHighlightedSuggestion = highlightedSuggestion+1
+            if ( newHighlightedSuggestion >= fieldSuggestions.length) {
+                newHighlightedSuggestion = fieldSuggestions.length
+            }
+            setHighlightedSuggestion(newHighlightedSuggestion)
+        } else if ( event.key == "ArrowUp" || event.key == "ArrowLeft") {
+            event.preventDefault()
+            let newHighlightedSuggestion = highlightedSuggestion-1
+            if ( newHighlightedSuggestion < 0) {
+                newHighlightedSuggestion = 0 
+            }
+            setHighlightedSuggestion(newHighlightedSuggestion)
+        } 
+
     }
 
 
@@ -179,7 +198,27 @@ const FieldsInput = function(props) {
 
     }
 
+    const onFieldsBlur = function(event) {
+        clearSuggestions()
+
+        if ( props.onBlur ) {
+            props.onBlur(event) 
+        }
+    }
+
+    const onFieldsFocus = function(event) {
+        if ( currentField.length > 0 ) {
+            suggestFields(event.target.value)
+        }
+    }
+
     // ======= Effect Handling ======================================
+
+    useLayoutEffect(function() {
+        if ( highlightedSuggestion >= fieldSuggestions.length && highlightedSuggestion !== 0) {
+            setHighlightedSuggestion(0)
+        }
+    }, [highlightedSuggestion, fieldSuggestions ])
 
     /**
      * Watch the `fieldsRequest` and render a new set of suggestions when it
@@ -230,9 +269,13 @@ const FieldsInput = function(props) {
     let suggestedFieldList = []
     if ( ! suggestionsError) {
         if ( fieldSuggestions.length > 0) {
-            for (const field of fieldSuggestions) {
+            for (const [index, field] of fieldSuggestions.entries()) {
+
                 suggestedFieldList.push(
-                    <div className='badge-wrapper' key={field.id} onClick={(event) => { appendField(field) }}>
+                    <div className={ index == highlightedSuggestion ? "badge-wrapper highlighted" : "badge-wrapper" } 
+                        key={field.id} 
+                        onClick={(event) => { appendField(field) }}
+                    >
                         <FieldBadge id={field.id} noLink={true} />
                     </div>
                 )
@@ -249,8 +292,9 @@ const FieldsInput = function(props) {
             <input type="text" 
                 name="fields" 
                 value={currentField}
-                onKeyPress={handleCurrentFieldKeyPress} 
-                onBlur={ (event) => props.onBlur ? props.onBlur(event) : null }
+                onKeyDown={handleCurrentFieldKeyDown} 
+                onBlur={onFieldsBlur}
+                onFocus={onFieldsFocus}
                 onChange={(event) => {
                     suggestFields(event.target.value)
                     setCurrentField(event.target.value)
