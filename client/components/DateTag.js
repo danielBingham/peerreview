@@ -10,10 +10,10 @@ const DateTag = function(props) {
     //TODO TECHDEBT The database is recording dates in a weird way that I don't
     //understand.  It's not UTC.  I don't know what timezone its in.  We need
     //to sort it out. 
-    const secondsSinceEpoc = Math.floor((date.getTime() - (4*60*60*1000))/1000)
+    const secondsSinceEpoc = Math.floor((date.getTime())/1000)
 
     let content = null
-    const diff = Math.floor(Date.now()/1000) - secondsSinceEpoc
+    const diff = Math.floor(now.getTime()/1000) - secondsSinceEpoc
     if ( diff <= 60 ) {
         content = `${diff} seconds ago`
     } else if ( Math.floor(diff/60) < 60 ) {
