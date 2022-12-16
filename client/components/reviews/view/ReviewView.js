@@ -37,7 +37,7 @@ const ReviewView = function({ id, paperId, versionNumber }) {
     }
 
     let summary = null
-    if ( review.status == 'in-progress' ) {
+    if ( review.status == 'in-progress' && paper.isDraft ) {
         summary = ( 
             <ReviewSummaryForm paper={paper} versionNumber={versionNumber} selectedReview={review} /> 
         )

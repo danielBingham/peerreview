@@ -90,9 +90,7 @@ const ReviewSummaryView = function(props) {
 
     // ======= Render ===============================================
     
-    if ( props.selectedReview && props.selectedReview.status == 'in-progress' ) {
-        return null
-    } else if ( props.selectedReview ) {
+    if ( props.selectedReview ) {
         let authorControls = null
         if ( isAuthor && isOwner && ! reviewerIsAuthor && ! viewOnly
             && props.selectedReview.status == 'submitted' && props.selectedReview.recommendation !== 'commentary' ) 
@@ -135,7 +133,10 @@ const ReviewSummaryView = function(props) {
                     {message}
                 </div>
             )
+        } else {
+            recommendation = (<div className="recommendation">Unfinished</div>)
         }
+         
 
         return (
             <div className="review-summary">

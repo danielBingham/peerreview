@@ -179,11 +179,12 @@ const ReviewList = function({ paperId, versionNumber }) {
             <div className="header">
                 { reviewViews.length > 0 && <span>Viewing { reviews.length } reviews on version { versionNumber}.  To read the full text, go to the <a href={draftsTabUrl}> drafts tab</a>.</span> }
                 { paper.isDraft && reviewViews.length <= 0 && ! reviewInProgress && <div className="empty-list">
-                No reviews have been written yet for version {versionNumber}.  Read the full text on the <a href={draftsTabUrl}>drafts tab</a> and <button onClick={startReview} >Start Review</button> to be the first to write one!
-            </div> }
-            { paper.isDraft && reviewViews.length <= 0 && reviewInProgress && <span>
-            No reviews have been written yet for version {versionNumber}.  Read the full text and complete your review in progress on the <a href={draftsTabUrl}>drafts tab</a>!</span> }
+                        No reviews have been written yet for version {versionNumber}.  Read the full text on the <a href={draftsTabUrl}>drafts tab</a> and <button onClick={startReview} >Start Review</button> to be the first to write one!
+                    </div> }
+                { paper.isDraft && reviewViews.length <= 0 && reviewInProgress && <span>
+                    No reviews have been written yet for version {versionNumber}.  Read the full text and complete your review in progress on the <a href={draftsTabUrl}>drafts tab</a>!</span> }
                 { reviewInProgress && <div>You have a review in progress.</div> }
+                { ! paper.isDraft && reviewViews.length <= 0 && <span>No reviews were written for this paper.</span> }
             </div>
             <Document 
                 file={url.toString()} 
