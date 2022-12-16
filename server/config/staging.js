@@ -19,7 +19,8 @@ module.exports = {
     },
     session: {
         key: 'peer_review_id',
-        secret: process.env.SESSION_SECRET 
+        secret: process.env.SESSION_SECRET,
+        secure_cookie: true
     },
     spaces: {
         endpoint: 'https://nyc3.digitaloceanspaces.com',

@@ -17,7 +17,8 @@ module.exports = {
     },
     session: {
         key: null,
-        secret: null
+        secret: null,
+        secure_cookie: null
     },
     spaces: {
         endpoint: null,

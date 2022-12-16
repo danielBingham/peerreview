@@ -80,7 +80,8 @@ app.use(session({
     cookie: { 
         path: '/',
         httpOnly: true,
-        secure: false,
+        secure: config.session.secure_cookie,
+        sameSite: "lax",
         maxAge: 1000 * 60 * 60 * 24 // One 24 hour period.
 
     } 
