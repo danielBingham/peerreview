@@ -170,10 +170,17 @@ module.exports = class ResponseController {
          *      Create the new Response 
          ********************************************************/
 
-        paperResponse.id = await this.responseDAO.insertResponse(paperResponse)
-        for ( const version of paperResponse.versions ) {
-            await this.responseDAO.insertResponseVersion(paperResponse, version)
+        await this.database.query('BEGIN')
+        try {
+            paperResponse.id = await this.responseDAO.insertResponse(paperResponse)
+            for ( const version of paperResponse.versions ) {
+                await this.responseDAO.insertResponseVersion(paperResponse, version)
+            }
+        } catch (error) {
+            await this.database.query('ROLLBACK')
+            throw error
         }
+        await this.database.query('COMMIT')
 
         const returnResponses = await this.responseDAO.selectResponses('WHERE responses.id=$1', [paperResponse.id])
 
@@ -184,7 +191,14 @@ module.exports = class ResponseController {
 
         const returnResponse = returnResponses[0]
 
-        await this.reputationGenerationService.incrementReputationForPaper(returnResponse.paperId, returnResponse.vote)
+        await this.database.query('BEGIN')
+        try {
+            await this.reputationGenerationService.incrementReputationForPaper(returnResponse.paperId, returnResponse.vote)
+        } catch (error) {
+            await this.database.query(`ROLLBACK`)
+            throw error
+        }
+        await this.database.query('COMMIT')
 
         await this.paperDAO.refreshPaperScore(returnResponse.paperId)
 
@@ -265,19 +279,26 @@ module.exports = class ResponseController {
             }
         }
 
-        // We've checked the owner is allowed to do this - update the
-        // response.
-        await this.responseDAO.updateResponse(paperResponse)
+        await this.database.query(`BEGIN`)
+        try {
+            // We've checked the owner is allowed to do this - update the
+            // response.
+            await this.responseDAO.updateResponse(paperResponse)
 
-        const deleteResults = await this.database.query(`
-                DELETE FROM response_versions WHERE responses.id = $1
-            `, [ paperResponse.id ])
+            const deleteResults = await this.database.query(`
+                    DELETE FROM response_versions WHERE responses.id = $1
+                `, [ paperResponse.id ])
 
-        if( paperResponse.versions && paperResponse.versions.length > 0 ) {
-            for( const version of paperResponse.versions ) {
-                await this.responseDAO.insertVersion(paperResponse, version)
+            if( paperResponse.versions && paperResponse.versions.length > 0 ) {
+                for( const version of paperResponse.versions ) {
+                    await this.responseDAO.insertVersion(paperResponse, version)
+                }
             }
+        } catch (error) {
+            await this.database.query(`ROLLBACK`)
+            throw error
         }
+        await this.database.query(`COMMIT`)
 
         const returnResponses = await this.responseDAO.selectResponses('WHERE responses.id=$1', paperResponse.id)
         if ( returnResponses.length <= 0 ) {

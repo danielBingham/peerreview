@@ -224,19 +224,26 @@ module.exports = class ReviewController {
          ********************************************************/
 
 
-        const results = await this.database.query(`
+        await this.database.query(`BEGIN`)
+        try {
+            const results = await this.database.query(`
                 INSERT INTO reviews (paper_id, user_id, version, summary, recommendation, status, created_date, updated_date) 
                     VALUES ($1, $2, $3, $4, $5, $6, now(), now()) 
                     RETURNING id
                 `, 
-            [ paperId, userId, review.version, review.summary, review.recommendation, review.status ]
-        )
-        if ( results.rows.length == 0 ) {
-            throw new ControllerError(500, 'server-error', `User(${userId}) failed to insert a new review on Paper(${review.paperId})`)
-        }
+                [ paperId, userId, review.version, review.summary, review.recommendation, review.status ]
+            )
+            if ( results.rows.length == 0 ) {
+                throw new ControllerError(500, 'server-error', `User(${userId}) failed to insert a new review on Paper(${review.paperId})`)
+            }
 
-        review.id = results.rows[0].id
-        await this.reviewDAO.insertThreads(review) 
+            review.id = results.rows[0].id
+            await this.reviewDAO.insertThreads(review) 
+        } catch (error) {
+            await this.database.query(`ROLLBACK`)
+            throw error
+        }
+        await this.database.query(`COMMIT`)
 
         const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
         if ( ! returnReviews || returnReviews.length == 0) {
@@ -581,12 +588,20 @@ module.exports = class ReviewController {
                 `Failed to find Review(${review.id}) after User(${userId}) updated it.`)
         }
 
-        // We'll use the return review to increment the reputation since
-        // that will have all the information we need.
-        // If we got here, the update was successful.
-        if ( existing.review_status != 'accepted' && returnReviews[0].status == 'accepted' ) {
-            await this.reputationService.incrementReputationForReview(returnReviews[0])
+        await this.database.query(`BEGIN`)
+        try {
+            // We'll use the return review to increment the reputation since
+            // that will have all the information we need.
+            // If we got here, the update was successful.
+            if ( existing.review_status != 'accepted' && returnReviews[0].status == 'accepted' ) {
+                await this.reputationService.incrementReputationForReview(returnReviews[0])
+            }
+        } catch (error) {
+            await this.database.query('ROLLBACK')
+            throw error
         }
+        await this.database.query(`COMMIT`)
+
         this.reviewDAO.selectVisibleComments(userId, returnReviews)
         return response.status(200).json(returnReviews[0])
     }
@@ -806,7 +821,16 @@ module.exports = class ReviewController {
             paperId: paperId,
             threads: threads
         }
-        const threadIds = await this.reviewDAO.insertThreads(review)
+        let threadIds = [] 
+
+        await this.database.query(`BEGIN`)
+        try {
+            threadIds = await this.reviewDAO.insertThreads(review)
+        } catch (error) {
+            await this.database.query(`ROLLBACK`)
+            throw error
+        }
+        await this.database.query(`COMMIT`)
 
         const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
         if ( ! returnReviews || returnReviews.length == 0) {
@@ -1074,13 +1098,20 @@ module.exports = class ReviewController {
 
         // TODO Override threadOrder and number.  Only allow comments to
         // appended to the end of their thread, and enforce that here.
-        
-        const thread = {
-            id: threadId,
-            comments: comments
-        }
 
-        await this.reviewDAO.insertComments(thread)
+        await this.database.query(`BEGIN`)
+        try {
+            const thread = {
+                id: threadId,
+                comments: comments
+            }
+
+            await this.reviewDAO.insertComments(thread)
+        } catch (error) {
+            await this.database.query(`ROLLBACK`)
+            throw error
+        }
+        await this.database.query(`COMMIT`)
 
         const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
         if ( ! returnReviews || returnReviews.length == 0) {

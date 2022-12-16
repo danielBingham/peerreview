@@ -474,11 +474,18 @@ module.exports = class PaperController {
          * Permission Checks and Validation Complete
          *       Execute the POST
          ********************************************************/
-        
-        paper.id = await this.paperDAO.insertPaper(paper) 
-        await this.paperDAO.insertAuthors(paper) 
-        await this.paperDAO.insertFields(paper)
-        await this.paperDAO.insertVersions(paper)
+
+        await this.database.query(`BEGIN`)
+        try {
+            paper.id = await this.paperDAO.insertPaper(paper) 
+            await this.paperDAO.insertAuthors(paper) 
+            await this.paperDAO.insertFields(paper)
+            await this.paperDAO.insertVersions(paper)
+        } catch (error) {
+            await this.database.query('ROLLBACK')
+            throw error
+        }
+        await this.database.query('COMMIT')
 
         const returnPapers = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
         if ( returnPapers.length > 0 ) {

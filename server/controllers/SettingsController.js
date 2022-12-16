@@ -103,7 +103,14 @@ module.exports = class SettingsController {
                     `User(${request.session.user.id}) submitted setting for User(${setting.userId}) on endpoint for User(${userId}).`)
             }
 
-            await this.settingsDAO.insertSetting(setting)
+            await this.database.query(`BEGIN`)
+            try {
+                await this.settingsDAO.insertSetting(setting)
+            } catch (error) {
+                await this.database.query(`ROLLBACK`)
+                throw error
+            }
+            await this.database.query(`COMMIT`)
 
             const resultSettings= await this.settingsDAO.selectSettings('WHERE user_settings.id = $1', [ setting.id ])
             if ( resultSettings.length <= 0) {
@@ -270,7 +277,14 @@ module.exports = class SettingsController {
                 `User(${userId}) attempted to replace Setting(${id}) owned by User(${existingSettings[0].userId}).`)
         }
 
-        await this.settingsDAO.updateSetting(setting)
+        await this.database.query(`BEGIN`)
+        try {
+            await this.settingsDAO.updateSetting(setting)
+        } catch (error) {
+            await this.database.query(`ROLLBACK`)
+            throw error
+        }
+        await this.database.query(`COMMIT`)
 
         const returnSettings = await this.settingsDAO.selectSettings('WHERE user_settings.id = $1', [ setting.id ])
 
