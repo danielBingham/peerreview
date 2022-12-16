@@ -8,4 +8,5 @@ public/uploads/*
 .terraform
 infrastructure/**/secrets/
 **/*.lock.hcl
-database/dump/testing.sql
+database/test-data/**
+
