@@ -77,10 +77,13 @@ app.use(session({
     store: sessionStore,
     resave: false,
     saveUninitialized: true,
+    proxy: true,
     cookie: { 
         path: '/',
         httpOnly: true,
-        secure: config.session.secure_cookie,
+        // TODO TECHDEBT Issue #143  
+        //secure: true,
+        //secure: config.session.secure_cookie,
         sameSite: "lax",
         maxAge: 1000 * 60 * 60 * 24 // One 24 hour period.
 
