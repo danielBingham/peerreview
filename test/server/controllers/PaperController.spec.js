@@ -23,8 +23,7 @@ describe('PaperController', function() {
     const expectedPapers = ExpectedFixtures.papers
 
     const config = {
-        spaces: {
-            endpoint: '',
+        s3: {
             bucket_url: '',
             access_id: '',
             access_key: '',
