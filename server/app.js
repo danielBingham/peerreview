@@ -53,7 +53,7 @@ const connection = new Pool(databaseConfig)
 const app = express()
 
 app.use(cors({
-    origin: config.spaces.bucket_url,
+    origin: config.s3.bucket_url,
     methods: [ 'GET' ]
 }))
 

@@ -9,23 +9,22 @@ module.exports = class S3FileService {
     constructor(config) {
         this.config = config
 
-        const s3SpacesConfig = {
-            endpoint: config.spaces.endpoint,
+        const s3Config = {
             region: 'us-east-1',
             credentials: {
-                accessKeyId: config.spaces.access_id,
-                secretAccessKey: config.spaces.access_key
+                accessKeyId: config.s3.access_id,
+                secretAccessKey: config.s3.access_key
             }
         }
 
-        this.s3Client = new S3(s3SpacesConfig)
+        this.s3Client = new S3(s3Config)
     }
 
     async uploadFile(sourcePath, targetPath) {
         const filestream = fs.createReadStream(sourcePath)
 
         const params = {
-            Bucket: this.config.spaces.bucket,
+            Bucket: this.config.s3.bucket,
             Key: targetPath,
             Body: filestream,
             ACL: 'public-read'
@@ -36,8 +35,8 @@ module.exports = class S3FileService {
 
     async copyFile(currentPath, newPath) {
         const params = {
-            Bucket: this.config.spaces.bucket,
-            CopySource:this. config.spaces.bucket + '/' + currentPath,
+            Bucket: this.config.s3.bucket,
+            CopySource:this. config.s3.bucket + '/' + currentPath,
             Key: newPath,
             ACL: 'public-read'
 
@@ -53,7 +52,7 @@ module.exports = class S3FileService {
 
     async removeFile(path) {
         const params = {
-            Bucket: this.config.spaces.bucket,
+            Bucket: this.config.s3.bucket,
             Key: path
         }
 

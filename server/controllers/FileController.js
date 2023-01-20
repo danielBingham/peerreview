@@ -85,7 +85,7 @@ module.exports = class FileController {
             id: id,
             userId: request.session.user.id,
             type: type,
-            location: this.config.spaces.bucket_url,
+            location: this.config.s3.bucket_url,
             filepath: filepath
         }
 
