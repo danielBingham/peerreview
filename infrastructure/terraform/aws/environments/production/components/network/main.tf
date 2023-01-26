@@ -18,6 +18,6 @@ module "vpc" {
   availability_zones = [ "us-east-1a", "us-east-1c" ]
 
   application = "peer-review" 
-  environment = "staging" 
+  environment = "production" 
   service = "network" 
 }

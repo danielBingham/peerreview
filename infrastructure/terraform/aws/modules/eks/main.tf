@@ -108,7 +108,7 @@ resource "aws_iam_openid_connect_provider" "cluster" {
  * ***************************************************************************/
 
 resource "aws_iam_policy" "load_balancer_controller_policy" {
-  name = "AWSLoadBalancerControllerIAMPolicy"
+  name = "${var.application}-${var.environment}-AWSLoadBalancerControllerIAMPolicy"
   
   policy = <<POLICY
 {
@@ -363,7 +363,7 @@ resource "aws_iam_role" "load_balancer_controller_role" {
  * **************************************************************************/
 
 resource "aws_iam_policy" "cluster_autoscaler_policy" {
-  name = "AmazonEKSClusterAutoscalerPolicy"
+  name = "${var.application}-${var.environment}-AmazonEKSClusterAutoscalerPolicy"
   
   policy = <<POLICY
 {

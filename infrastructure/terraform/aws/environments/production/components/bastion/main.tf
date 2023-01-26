@@ -9,7 +9,7 @@ module "bastion" {
   public_key_path = var.public_key_path
 
   application = "peer-review" 
-  environment = "staging" 
+  environment = "production" 
   service = "network" 
 }
 

@@ -81,17 +81,13 @@ Then logout.  Next you'll run two `psql` commands to load in the database
 schema and the field structure.  From the root repo directory:
 
 ```bash
+$ psql --host localhost --username postgres --dbname peer_review --port [port] --file="database/permissions.sql"
+
 $ psql --host localhost --username postgres --dbname peer_review --port [port] --file="database/schema.sql"
 Password for user postgres:
 CREATE TABLE
 [... more statements ...]
 CREATE TABLE
-
-$ psql --host localhost --username postgres --dbname peer_review --port [port]--file="database/fields.sql"
-Password for user postgres:
-INSERT 0 6
-[... more statements ...]
-INSERT 0 1
 ```
 
 Finally, we'll login using `psql` and use the `\copy` commands to initialize

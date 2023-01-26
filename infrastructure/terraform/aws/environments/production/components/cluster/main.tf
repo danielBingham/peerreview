@@ -23,7 +23,7 @@ module "cluster" {
   alarm_topic_arn = var.alarm_topic_arn
 
   application = "peer-review" 
-  environment = "staging" 
+  environment = "production" 
   service = "cluster"
 }
 
