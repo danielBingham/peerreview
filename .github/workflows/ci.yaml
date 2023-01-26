@@ -1,15 +1,9 @@
-name: CI/CD 
+name: CI
 
 on:
   push:
     branches: 
       - main 
-      - 'release/**'
-  pull_request:
-    branches:
-      - main 
-      - 'release/**' 
-
 jobs:
   build:
 
