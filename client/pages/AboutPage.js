@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 
 import GetInvolved from '/components/about/sections/GetInvolved'
 import IntroductionSection from '/components/about/sections/IntroductionSection'
@@ -9,6 +9,13 @@ import FAQSection from '/components/about/sections/FAQSection'
 import './AboutPage.css'
 
 const AboutPage = function(props) {
+
+    useEffect(function() {
+        console.log(document.location.hash)
+        if ( document.location.hash ) {
+            document.querySelector(document.location.hash).scrollIntoView()
+        }
+    }, [])
 
     return (
         <article id="about-page" className="page">

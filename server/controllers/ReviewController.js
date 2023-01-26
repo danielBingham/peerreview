@@ -1263,7 +1263,6 @@ module.exports = class ReviewController {
         //
         // Which means, if neither the Review nor the Comment is in progress, we should leave.
         if (existing.review_status != 'in-progress' && existing.comment_status != 'in-progress' ) {
-            console.log(existing)
             throw new ControllerError(403, 'not-authorized:not-in-progress', 
                 `Unauthorized User(${userId}) attempting to PATCH Comment(${commentId}).`)
         }
@@ -1443,8 +1442,6 @@ module.exports = class ReviewController {
             throw new ControllerError(403, 
                 'not-authorized', `Unauthorized User(${userId}) attempting to DELETE Comment(${commentId}). (Not review author.)`)
         }
-
-        console.log(existing)
 
         // Otherwise, the review either isn't in-progress or they are the review author.  We already know
         // they are the comment author by this point, because we checked that earlier.

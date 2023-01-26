@@ -50,7 +50,6 @@ module.exports = class FeatureDAO {
             ${where}
         `
 
-        console.log(sql)
         const results = await this.database.query(sql, params)
 
         return this.hydrateFeatures(results.rows)

@@ -27,12 +27,11 @@ module.exports = {
         secret: 'hot-dev',
         secure_cookie: false
     },
-    spaces: {
-        endpoint: 'https://nyc3.digitaloceanspaces.com',
-        bucket_url: 'https://peer-review-development-files.nyc3.digitaloceanspaces.com/',
-        access_id: process.env.SPACES_ACCESS_ID,
-        access_key: process.env.SPACES_ACCESS_KEY,
-        bucket: 'peer-review-development-files'
+    s3: {
+        bucket_url: 'https://peer-review-development-storage.s3.amazonaws.com',
+        bucket: 'peer-review-development-storage',
+        access_id: process.env.S3_ACCESS_ID,
+        access_key: process.env.S3_ACCESS_KEY
     },
     orcid: {
         authorization_host: 'https://sandbox.orcid.org',

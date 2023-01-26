@@ -20,7 +20,7 @@ const Header = function(props) {
     
     return (
         <header>
-            <div id="site-title"><Link to="/"><img src="/img/icon.svg" /> Peer Review</Link><sub className="wip">( alpha )</sub></div>
+            <div id="site-title"><Link to="/"><img src="/img/icon.svg" /> Peer Review</Link><sub className="wip">( beta )</sub></div>
             <div id="navigation">
                 <MainNavigation />
                 <UserNavigation /> 

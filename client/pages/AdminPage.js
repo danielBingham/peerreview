@@ -27,7 +27,6 @@ const AdminPage = function(props) {
         }
     }, [ currentUser ])
 
-    console.log(features)
     const rows = []
     for(const name in features ) {
         rows.push(

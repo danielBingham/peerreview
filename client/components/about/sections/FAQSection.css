@@ -1,0 +1,11 @@
+#faq h3 {
+    margin-top: 40px;
+}
+#faq h3 a:link, #faq h3 a:visited, #faq h3 a:active {
+    color: #333;
+    text-decoration: none;
+}
+#faq h3 a:hover {
+    color: #666;
+    text-decoration: none;
+}

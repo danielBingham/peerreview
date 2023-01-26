@@ -49,7 +49,6 @@ const HomePage = function(props) {
 
     return (
         <div id="home-page" className="page">
-            { wipNoticeFeature && wipNoticeFeature.status == 'enabled' && <WIPNotice /> }
             <WelcomeNotice />
             <SupportNotice />
             <PaperSearchView />

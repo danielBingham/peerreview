@@ -34,14 +34,6 @@ module.exports = {
         port: 3000,
         open: true,
         historyApiFallback: true,
-        server: {
-            type: 'https',
-            options: {
-                key: './infrastructure/local/secrets/localhost.key',
-                cert: './infrastructure/local/secrets/localhost.crt',
-                requestCert: true
-            }
-        },
         proxy: {
             '/config': 'http://localhost:8080',
             '/api/0.0.0': 'http://localhost:8080',
