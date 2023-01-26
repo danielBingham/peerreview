@@ -1,8 +1,23 @@
+variable "vpc_id" {
+  description = "The id of the VPC to launch the cluster into."
+}
 
-variable "subnet_ids" {
-  description = "The subnets to launch the cluster into."
+variable "private_subnet_ids" {
+  description = "The private subnets to associate with the cluster.  These will be used for the node groups."
   type = list(any)
 }
+
+variable "public_subnet_ids" {
+  description = "The public subnets to associate with the cluster.  These will be used for ELBs for the ingress."
+  type = list(any)
+}
+
+variable "alarm_topic_arn" {
+  description = "The ARN of the SNS topic to send alarms to."
+}
+
+
+
 
 /**
  * Naming variables.  

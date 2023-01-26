@@ -88,6 +88,7 @@ resource "aws_db_instance" "this" {
   vpc_security_group_ids = [ aws_security_group.this.id ]
 
   skip_final_snapshot = true
+  backup_retention_period = 7
 
   tags = merge(
     local.tags,
@@ -96,5 +97,23 @@ resource "aws_db_instance" "this" {
       Resource = "rds.aws_db_instance.this"
     }
   )
+}
+
+resource "aws_cloudwatch_metric_alarm" "cpu_utilization" {
+  alarm_name = "${var.application}-${var.environment}-${var.service}-database-cpu-utilization"
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  evaluation_periods = 2
+  metric_name = "CPUUtilization"
+  namespace = "AWS/RDS"
+  period = 120
+  statistic = "Average"
+  threshold = 80
+  alarm_description = "Monitors average CPU utilization for the database."
+
+  dimensions = {
+    DBInstanceIdentifier = aws_db_instance.this.id 
+  }
+
+  alarm_actions = [var.alarm_topic_arn]
 }
 

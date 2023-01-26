@@ -31,6 +31,8 @@ resource "aws_subnet" "public" {
     {
       Name = "${var.application}-${var.environment}-${var.service}-${var.availability_zone}-public-subnet"
       Resource = "availability_zone.aws_subnet.public"
+      "kubernetes.io/role/elb" = 1
+      "kubernetes.io/cluster/${var.application}-${var.environment}-cluster-eks-cluster" = "shared"
     }
   )
 }
@@ -139,6 +141,8 @@ resource "aws_subnet" "private" {
     {
       Name = "${var.application}-${var.environment}-${var.service}-${var.availability_zone}-private-subnet"
       Resource = "availability_zone.aws_subnet.private"
+      "kubernetes.io/role/internal-elb" = 1
+      "kubernetes.io/cluster/${var.application}-${var.environment}-cluster-eks-cluster" = "shared"
     }
   )
 }
