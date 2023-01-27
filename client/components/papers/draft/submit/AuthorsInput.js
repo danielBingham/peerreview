@@ -165,7 +165,7 @@ const AuthorsInput = function(props) {
             const suggestionsWrappers = document.getElementsByClassName('author-suggestions')
             const suggestions = suggestionsWrappers[0].children
             if (suggestions.length > 0) {
-                suggestions[highlightedSuggestion].click()
+                appendAuthor(userSuggestions[highlightedSuggestion])
             }
         } else if ( event.key == "ArrowDown" ) {
             event.preventDefault()

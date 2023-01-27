@@ -25,6 +25,12 @@ module.exports = class ReputationPermissionService {
     }
 
     async getVisibleDrafts(userId) {
+        let admin = false
+        const userResult = await this.database.query(`SELECT id, permissions FROM users WHERE users.id = $1`, [ userId ])
+        if ( userResult.rows[0].permissions == 'superadmin' || userResult.rows[0].permissions == 'admin' ) {
+            admin = true 
+        }
+
         const sql = `
             SELECT DISTINCT 
                     papers.id
@@ -34,11 +40,11 @@ module.exports = class ReputationPermissionService {
                     JOIN fields ON paper_fields.field_id = fields.id
                     JOIN user_field_reputation ON paper_fields.field_id = user_field_reputation.field_id
                 WHERE papers.is_draft = true 
-                    AND ((user_field_reputation.user_id = $1 AND user_field_reputation.reputation > fields.average_reputation*${THRESHOLDS.review}) OR (paper_authors.user_id = $1))
+                    AND ((user_field_reputation.user_id = $1 AND user_field_reputation.reputation > fields.average_reputation*${THRESHOLDS.review}) OR (paper_authors.user_id = $1) OR $2)
                 GROUP BY papers.id
         `
 
-        const results = await this.database.query(sql, [ userId ])
+        const results = await this.database.query(sql, [ userId, admin ])
 
         if ( results.rows.length <= 0 ) {
             return []
@@ -52,18 +58,24 @@ module.exports = class ReputationPermissionService {
     }
 
     async canReview(userId, paperId) {
+        let admin = false
+        const userResult = await this.database.query(`SELECT id, permissions FROM users WHERE users.id = $1`, [ userId ])
+        if ( userResult.rows[0].permissions == 'superadmin' || userResult.rows[0].permissions == 'admin' ) {
+            admin = true 
+        }
+
         const sql = `
             SELECT DISTINCT
                     fields.id
                 FROM fields
                     JOIN paper_fields on fields.id = paper_fields.field_id
                     JOIN user_field_reputation on fields.id = user_field_reputation.field_id
-                WHERE user_field_reputation.user_id = $1 
+                WHERE ( user_field_reputation.user_id = $1 
                     AND paper_fields.paper_id = $2 
-                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.review}
+                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.review}) OR $3
         `
 
-        const results = await this.database.query(sql, [userId, paperId])
+        const results = await this.database.query(sql, [userId, paperId, admin])
 
         // If they have enough reputation - great!  We're done here.
         if ( results.rows.length > 0 ) {
@@ -83,23 +95,35 @@ module.exports = class ReputationPermissionService {
     }
 
     async canReferee(userId, paperId) {
+        let admin = false
+        const userResult = await this.database.query(`SELECT id, permissions FROM users WHERE users.id = $1`, [ userId ])
+        if ( userResult.rows[0].permissions == 'superadmin' || userResult.rows[0].permissions == 'admin' ) {
+            admin = true 
+        }
+
         const sql = `
             SELECT DISTINCT
                     fields.id
                 FROM fields
                     JOIN paper_fields on fields.id = paper_fields.field_id
                     JOIN user_field_reputation on fields.id = user_field_reputation.field_id
-                WHERE user_field_reputation.user_id = $1 
+                WHERE (user_field_reputation.user_id = $1 
                     AND paper_fields.paper_id = $2 
-                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.referee}
+                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.referee}) OR $3
         `
 
-        const results = await this.database.query(sql, [userId, paperId])
+        const results = await this.database.query(sql, [userId, paperId, admin])
 
         return results.rows.length > 0
     }
 
     async canPublish(userId, paper) {
+        let admin = false
+        const userResult = await this.database.query(`SELECT id, permissions FROM users WHERE users.id = $1`, [ userId ])
+        if ( userResult.rows[0].permissions == 'superadmin' || userResult.rows[0].permissions == 'admin' ) {
+            admin = true 
+        }
+
         const fieldIds = paper.fields.map((f) => f.id)
         const authorIds = paper.authors.map((a) => a.user.id)
 
@@ -120,12 +144,12 @@ module.exports = class ReputationPermissionService {
                     fields.id
                 FROM fields
                     JOIN user_field_reputation on fields.id = user_field_reputation.field_id
-                WHERE user_field_reputation.user_id = ANY($1::bigint[]) 
+                WHERE (user_field_reputation.user_id = ANY($1::bigint[]) 
                     AND fields.id = ANY($2::bigint[])
-                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.publish}
+                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.publish}) OR $3
         `
 
-        const results = await this.database.query(sql, [authorIds, fieldIds])
+        const results = await this.database.query(sql, [authorIds, fieldIds, admin])
 
         let missingFields = []
         if ( results.rows.length > 0 ) {
