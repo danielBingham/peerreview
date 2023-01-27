@@ -8,3 +8,11 @@
 #about-page h1 {
     text-align: center;
 }
+#about-page h2 a:link, #about-page h2 a:active, #about-page h2 a:visited {
+    color: #333;
+    text-decoration: none;
+}
+#about-page h2 a:hover {
+    color: #666;
+    text-decoration: none;
+}

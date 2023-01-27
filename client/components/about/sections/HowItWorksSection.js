@@ -7,7 +7,7 @@ const HowItWorksSection = function(props) {
 
     return (
         <section id="how-it-works">
-            <h2>How It Works</h2>
+            <h2><a href="#how-it-works">How It Works</a></h2>
             <ReactMarkdown>
                 {`
 Peer Review uses a reputation system tied to a field tagging system to match
