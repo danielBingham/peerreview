@@ -533,7 +533,7 @@ module.exports = class PaperController {
             const canReview = await this.reputationPermissionService.canReview(request.session.user.id, paper.id) 
             if ( ! canReview ) {
                 throw new ControllerError(404, 'no-resource',
-                    `User(${user.id}) attempting to view Paper(${paper.id}) they don't have permission to review.`)
+                    `User(${request.session.user.id}) attempting to view Paper(${paper.id}) they don't have permission to review.`)
             }
 
         }

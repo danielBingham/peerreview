@@ -38,7 +38,7 @@ module.exports = class ReputationPermissionService {
                     JOIN paper_fields ON papers.id = paper_fields.paper_id
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
                     JOIN fields ON paper_fields.field_id = fields.id
-                    JOIN user_field_reputation ON paper_fields.field_id = user_field_reputation.field_id
+                    LEFT OUTER JOIN user_field_reputation ON paper_fields.field_id = user_field_reputation.field_id
                 WHERE papers.is_draft = true 
                     AND ((user_field_reputation.user_id = $1 AND user_field_reputation.reputation > fields.average_reputation*${THRESHOLDS.review}) OR (paper_authors.user_id = $1) OR $2)
                 GROUP BY papers.id
@@ -70,12 +70,12 @@ module.exports = class ReputationPermissionService {
                 FROM fields
                     JOIN paper_fields on fields.id = paper_fields.field_id
                     JOIN user_field_reputation on fields.id = user_field_reputation.field_id
-                WHERE ( user_field_reputation.user_id = $1 
+                WHERE user_field_reputation.user_id = $1 
                     AND paper_fields.paper_id = $2 
-                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.review}) OR $3
+                    AND user_field_reputation.reputation >= fields.average_reputation * ${THRESHOLDS.review}
         `
 
-        const results = await this.database.query(sql, [userId, paperId, admin])
+        const results = await this.database.query(sql, [userId, paperId ])
 
         // If they have enough reputation - great!  We're done here.
         if ( results.rows.length > 0 ) {
@@ -88,6 +88,10 @@ module.exports = class ReputationPermissionService {
 
         // They are an author on the paper.  They are allowed.
         if ( authorResults.rows.length > 0 ) {
+            return true
+        }
+
+        if ( admin ) {
             return true
         }
 
@@ -109,7 +113,7 @@ module.exports = class ReputationPermissionService {
                     JOIN user_field_reputation on fields.id = user_field_reputation.field_id
                 WHERE (user_field_reputation.user_id = $1 
                     AND paper_fields.paper_id = $2 
-                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.referee}) OR $3
+                    AND user_field_reputation.reputation >= fields.average_reputation * ${THRESHOLDS.referee}) OR $3
         `
 
         const results = await this.database.query(sql, [userId, paperId, admin])
@@ -124,6 +128,13 @@ module.exports = class ReputationPermissionService {
             admin = true 
         }
 
+        if ( admin ) {
+            return {
+                canPublish: true,
+                missingFields: []
+            }
+        }
+
         const fieldIds = paper.fields.map((f) => f.id)
         const authorIds = paper.authors.map((a) => a.user.id)
 
@@ -135,36 +146,52 @@ module.exports = class ReputationPermissionService {
             }
         }
 
-        // This should select one row for each field that at least one author
-        // has enough reputation to publish in.  If any of the fields are
-        // missing, that should mean that no authors had enough reputation to
-        // publish in it.
+        const fieldResults = await this.database.query('SELECT id, average_reputation FROM fields WHERE id = ANY($1::bigint[])', [ fieldIds ])
+        
+        const fieldReputationMap = {}
+        for(const row of fieldResults.rows) {
+            fieldReputationMap[row['id']] = {
+                highest_author_reputation: false,
+                average_field_reputation: row['average_reputation']
+            }
+        }
+
         const sql = `
-            SELECT DISTINCT
-                    fields.id
-                FROM fields
-                    JOIN user_field_reputation on fields.id = user_field_reputation.field_id
-                WHERE (user_field_reputation.user_id = ANY($1::bigint[]) 
-                    AND fields.id = ANY($2::bigint[])
-                    AND user_field_reputation.reputation > fields.average_reputation * ${THRESHOLDS.publish}) OR $3
+SELECT DISTINCT
+    users.id, user_field_reputation.field_id as field_id, user_field_reputation.reputation as reputation
+FROM users
+    LEFT OUTER JOIN user_field_reputation ON user_field_reputation.user_id = users.id
+    LEFT OUTER JOIN fields on fields.id = user_field_reputation.field_id
+WHERE users.id = ANY($1::bigint[]) AND user_field_reputation.field_id = ANY($2::bigint[])
         `
 
-        const results = await this.database.query(sql, [authorIds, fieldIds, admin])
+        const results = await this.database.query(sql, [authorIds, fieldIds ])
 
-        let missingFields = []
-        if ( results.rows.length > 0 ) {
-            for(const fieldId of fieldIds ) {
-                if ( ! results.rows.find((f) => f.id == fieldId) ) {
-                    missingFields.push(fieldId)
-                }
+        for(const row of results.rows) {
+            if ( fieldReputationMap[row['field_id']].highest_author_reputation === false ) {
+                fieldReputationMap[row['field_id']].highest_author_reputation = row['reputation']
             }
-        } else {
-            missingFields = fieldIds
+
+            if ( fieldReputationMap[row['field_id']].highest_author_reputation < row['reputation'] ) {
+                fieldReputationMap[row['field_id']].highest_author_reputation = row['reputation']
+            }
+        }
+
+        let canPublish = true
+        const missingFields = []
+
+        for(const fieldId of fieldIds) {
+            if ( fieldReputationMap[fieldId].highest_author_reputation !== false 
+                && fieldReputationMap[fieldId].highest_author_reputation < fieldReputationMap[fieldId].average_field_reputation * THRESHOLDS.publish ) 
+            {
+                missingFields.push(fieldId)
+                canPublish = false
+            }
         }
 
         return {
-            canPublish: results.rows.length == fieldIds.length,
-            missingFields: missingFields
+            canPublish: canPublish, 
+            missingFields: missingFields 
         }
     }
 

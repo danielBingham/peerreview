@@ -186,7 +186,6 @@ const SubmitDraftForm = function(props) {
                         <p>No author has enough reputation to publish in the following fields:</p> 
                         {missingFieldViews}
                         <p>Please either add an author with enough reputation to publish, or remove the fields in question.</p>
-                        <p><strong>NOTE:</strong> During closed beta, publish reputation has been set at 2x average field reputation.  Once we're out of closed beta and into open beta, this will be set at 0 reputation.</p>
                     </>
                 )
             }
