@@ -206,6 +206,18 @@ stringData:
 Then use `kubectl apply -f <file>` to push the each of the secrets to the
 cluster in turn.
 
+Before you create the peer review deployment, add the ELB Readiness Gate label to the default namespace:
+
+```
+$ kubectl label namespace default elbv2.k8s.aws/pod-readiness-gate-inject=enabled
+```
+
+Finally, you'll need to create the Peer Review deployment.
+
+```
+$ kubectl apply -f infrastructure/kubernetes/staging/peer-review.yaml
+```
+
 Once you've created the AWS Load Balancer Controller and prepared the secrets
 on the cluster, you can push the primary Peer Review manifest.  First you'll
 need to update it with the ARN of the Load Balancer Certificate from the
