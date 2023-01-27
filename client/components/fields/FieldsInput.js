@@ -276,7 +276,7 @@ const FieldsInput = function(props) {
     let fieldList = [] 
     if ( props.fields.length > 0) {
         for(const field of props.fields) {
-            fieldList.push(<Field key={field.id} field={field} noLink={true} remove={removeField} />)
+            fieldList.push(<Field key={field.id} field={field} remove={removeField} />)
         }
     }
 
@@ -288,7 +288,7 @@ const FieldsInput = function(props) {
                 suggestedFieldList.push(
                     <div className={ index == highlightedSuggestion ? "badge-wrapper highlighted" : "badge-wrapper" } 
                         key={field.id} 
-                        onClick={(event) => { appendField(field) }}
+                        onMouseDown={(event) => { appendField(field) }}
                     >
                         <FieldBadge id={field.id} noLink={true} />
                     </div>

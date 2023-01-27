@@ -239,7 +239,7 @@ const AuthorsInput = function(props) {
         for ( const [ index, user ] of userSuggestions.entries()) {
             suggestedAuthorList.push(
                 <div key={user.id} 
-                    onClick={(event) => { appendAuthor(user) }} 
+                    onMouseDown={(event) => { appendAuthor(user) }} 
                     className={ index == highlightedSuggestion ? "author-suggestion highlighted" : "author-suggestion" }
                 >
                     {user.name}

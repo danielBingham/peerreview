@@ -183,9 +183,9 @@ const Field = function(props) {
     }
 
     let content = (
-        <Link to={ `/field/${field.id}` }>
+        <a href={ `/field/${field.id}` } target="_blank" >
             {field.name}
-        </Link>
+        </a>
 
     )
     if ( props.noLink ) {
