@@ -93,7 +93,7 @@ const SupportNotice = function(props) {
     if ( ! isClosed ) {
         return (
             <div className="support-notice">
-                <div className="close" onClick={close}><XCircleIcon /></div>
+                <a className="close" onClick={close}><XCircleIcon /></a>
                 <h2>We Need Your Support</h2>
                 <ReactMarkdown>
                     {`
