@@ -30,6 +30,12 @@ spec:
           resources:
             requests:
               cpu: 500m
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 3 
+            failureThreshold: 20
           env:
             - name: DEBUG
               value: "peer-review:*"

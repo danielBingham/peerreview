@@ -115,6 +115,11 @@ const router = require('./router')(connection, logger, config)
 // ``/api/v1/`` and so on, with out impacting the old versions of the router.
 app.use(config.backend, router)
 
+app.get('/health', function(request, response) {
+    console.log('health probe')
+    response.status(200).send()
+})
+
 /**
  * Send configuration information up to the front-end.  Be *very careful*
  * about what goes in here.
