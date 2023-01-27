@@ -110,21 +110,38 @@ particular field by clicking on that field.
 <img src="/img/how-it-works/field-reputation.png" width={800} />
 <ReactMarkdown>
     {`
-Users can start a review by either clicking the "Start Review" button or by
-clicking anywhere on the rendered PDF of the paper.  Reviewers can then add
-additional comments to their review by clicking anywhere on the rendered PDF.
-Each comment is pinned to the spot they clicked on the paper.  Clicking on the
-comment scrolls the paper to the pin, and clicking on the pin scrolls the
-sidebar to the comment.  
+
+The review screen has two tabs showing two different views.  On the "Reviews"
+tab, reviews are listed in chronological order, oldest to newest, with a
+snapshot of the relevant piece of the paper for each comment.
 `}
 </ReactMarkdown>
-<img src="/img/how-it-works/review-example.png" width={800} />
+<img src="/img/how-it-works/review-example-4.png" width={800} />
+<ReactMarkdown>
+    {`
+On the "Drafts" tab, users can see a rendered PDF of the full paper, along with
+all comments from all submitted reviews.  Comments are pinned the paper, and
+are arranged to avoid overlap.  To center a comment on its pin either click the
+comment or click the pin.
+`}
+</ReactMarkdown>
+<img src="/img/how-it-works/review-example-3.png" width={800} />
+<ReactMarkdown>
+{`
+Users can start a review by clicking the "Start Review" button.  
+
+Reviewers can then add comments to their review by going to the Drafts tab and
+clicking anywhere on the rendered PDF.  Each comment is pinned to the spot they
+clicked on the paper.    
+`}
+</ReactMarkdown>
 <ReactMarkdown>
     {`
 Reviews that are still in progress are only visible to the reviewer writing
-them.  Comments may be edited or deleted while the review is still in
-progress.  Once the reviewer is ready, they can write up a summary of their
-review, select a recommendation, and submit it.  Possible recommendations are:
+them.  Comments may be edited or deleted while the review is still in progress.  
+
+Once the reviewer is ready, they can write up a summary of their review, select
+a recommendation, and submit it.  Possible recommendations are:
 
 - **Commentary**: No recommendation, just offering comments.
 - **Recommend Changes**: Recommend the authors make the changes outlined in the
@@ -145,7 +162,6 @@ were unconstructive and unhelpful.  This doesn't remove reputation from the
 reviewer, but it doesn't grant them any either.
 `}
 </ReactMarkdown>
-<img src="/img/how-it-works/accept-review-example.png" width={800} />
 <ReactMarkdown>
     {`
 Authors who have **owner** permissions can upload as many versions of their
