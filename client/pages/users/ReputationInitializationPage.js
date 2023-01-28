@@ -144,15 +144,10 @@ const ReputationInitializationPage = function(props) {
                         reasons.  OpenAlex has a very large dataset, but they
                         don't have access to everything.  Right now, OpenAlex
                         and ORCID iD are our only way to initialize reputation.
-                        If you'd like to get initial reputation, please reach
-                        out to OpenAlex and work with them to attach your ORCID
-                        iD to your body of existing work.
-                    </p>
-                    <p>
-                        Once your ORCID iD is associated with your OpenAlex
-                        record, you can return to this page to initialize your
-                        reputation.  In the meantime, you can use the site with
-                        out initial reputation.
+
+                        OpenAlex is a small team and they're working very hard
+                        to improve there data set.  If you'd like to see our
+                    reputation generation improve, support them in their work!
                     </p>
                     <p className="return-home">
                         Return to the <Link to="/">home page</Link>.
@@ -166,9 +161,9 @@ const ReputationInitializationPage = function(props) {
                 <div className="error">
                     <p>
                         We found multiple OpenAlex author records attached to
-                        your ORCID iD.  Please work with OpenAlex to
-                        consolidate your author records down to a single
-                        record.
+                        your ORCID iD. OpenAlex is working on cleaning on their
+                        data. You can return to this page to try again once
+                    your ORCID ID has been disambiguated in OpenAlex. 
                     </p>
                     <p className="return-home">
                         Return to the <Link to="/">home page</Link>.
