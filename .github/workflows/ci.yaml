@@ -21,14 +21,17 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
       - name: Install NPM Modules
+        working-directory: ./web-application
         run: |
           npm ci
       - name: Run unit tests
+        working-directory: ./web-application
         run: | 
           npm run test
       - name: Build the docker container
+        working-directory: ./web-application
         run: |
-          docker build -t ghcr.io/danielbingham/peerreview:latest . 
+           docker build -t ghcr.io/danielbingham/peerreview:latest .
       - name: Login to Github Container Repository
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin

@@ -1,0 +1,19 @@
+{
+  "name": "peerreview-backend",
+  "version": "0.0.1",
+  "description": "The backend of Peer Review.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/danielbingham/peerreview.git"
+  },
+  "author": "Daniel Bingham",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/danielbingham/peerreview/issues"
+  },
+  "homepage": "https://github.com/danielbingham/peerreview#README"
+}
