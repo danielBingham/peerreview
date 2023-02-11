@@ -1,4 +1,4 @@
-const FieldDAO = require('./field')
+const FieldDAO = require('./FieldDAO')
 
 const PAGE_SIZE = 20 
 

@@ -1,5 +1,5 @@
 const DAOError = require('../errors/DAOError')
-const FileDAO = require('./files')
+const FileDAO = require('./FileDAO')
 
 const PAGE_SIZE = 20
 

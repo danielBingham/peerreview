@@ -4,17 +4,9 @@
  * Restful routes for manipulating users.
  *
  ******************************************************************************/
-
-const AuthenticationService = require('../services/authentication')
-const EmailService = require('../services/EmailService')
-
-const UserDAO = require('../daos/user')
-const SettingsDAO = require('../daos/settings')
-const TokenDAO = require('../daos/TokenDAO')
+const backend = require('@peerreview/backend')
 
 const ControllerError = require('../errors/ControllerError')
-const DAOError = require('../errors/DAOError')
-const ServiceError = require('../errors/ServiceError')
 
 module.exports = class UserController {
 
@@ -23,12 +15,12 @@ module.exports = class UserController {
         this.logger = logger
         this.config = config
 
-        this.auth = new AuthenticationService(database, logger)
-        this.emailService = new EmailService(logger, config)
+        this.auth = new backend.AuthenticationService(database, logger)
+        this.emailService = new backend.EmailService(logger, config)
 
-        this.userDAO = new UserDAO(database)
-        this.settingsDAO = new SettingsDAO(database, logger)
-        this.tokenDAO = new TokenDAO(database, logger)
+        this.userDAO = new backend.UserDAO(database)
+        this.settingsDAO = new backend.SettingsDAO(database, logger)
+        this.tokenDAO = new backend.TokenDAO(database, logger)
     }
 
     /**
@@ -236,7 +228,7 @@ module.exports = class UserController {
         try {
             user.id = await this.userDAO.insertUser(user)
         } catch ( error ) {
-            if ( error instanceof DAOError ) {
+            if ( error instanceof backend.DAOError ) {
                 // `insertUser()` check both of the following:
                 // 4. request.body.name is required.
                 // 5. request.body.email is required. 
@@ -437,7 +429,7 @@ module.exports = class UserController {
                 try {
                     token = await this.tokenDAO.validateToken(user.token, [ 'reset-password', 'invitation' ])
                 } catch (error ) {
-                    if ( error instanceof DAOError ) {
+                    if ( error instanceof backend.DAOError ) {
                         throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
                     } else {
                         throw error
@@ -475,7 +467,7 @@ module.exports = class UserController {
                     // we use it as a patch.
                     delete user.oldPassword
                 } catch (error ) {
-                    if ( error instanceof ServiceError ) {
+                    if ( error instanceof backend.ServiceError ) {
                         if ( error.type == 'authentication-failed' || error.type == 'no-user' || error.type == 'no-user-password' ) {
                             throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
                         } else if ( error.type == 'multiple-users' ) {
@@ -523,7 +515,7 @@ module.exports = class UserController {
                     // we use it as a patch.
                     delete user.oldPassword
                 } catch (error ) {
-                    if ( error instanceof ServiceError ) {
+                    if ( error instanceof backend.ServiceError ) {
                         if ( error.type == 'authentication-failed' || error.type == 'no-user' || error.type == 'no-user-password' ) {
                             throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
                         } else if ( error.type == 'multiple-users' ) {

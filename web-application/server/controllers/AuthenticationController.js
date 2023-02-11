@@ -5,12 +5,9 @@
  *
  * ***************************************************************************/
 
-const AuthenticationService = require('../services/authentication')
-const UserDAO = require('../daos/user')
-const SettingsDAO = require('../daos/settings')
+const backend = require('@peerreview/backend')
 
 const ControllerError = require('../errors/ControllerError')
-const ServiceError = require('../errors/ServiceError')
 
 /**
  * Controller for the authentication resource.
@@ -25,9 +22,9 @@ module.exports = class AuthenticationController {
         this.logger = logger
         this.config = config
 
-        this.auth = new AuthenticationService(database, logger)
-        this.userDAO = new UserDAO(database)
-        this.settingsDAO = new SettingsDAO(database)
+        this.auth = new backend.AuthenticationService(database, logger)
+        this.userDAO = new backend.UserDAO(database)
+        this.settingsDAO = new backend.SettingsDAO(database)
     }
 
 
@@ -98,7 +95,7 @@ module.exports = class AuthenticationController {
 
             return response.status(200).json(responseBody)
         } catch (error ) {
-            if ( error instanceof ServiceError ) {
+            if ( error instanceof backend.ServiceError ) {
                 if ( error.type == 'no-user' ) {
                     throw new ControllerError(403, 'authentication-failed', error.message)
                 } else if ( error.type == 'multiple-users') {
@@ -153,7 +150,7 @@ module.exports = class AuthenticationController {
 
             return response.status(200).json(users[0])
         } catch (error ) {
-            if ( error instanceof ServiceError ) {
+            if ( error instanceof backend.ServiceError ) {
                 if ( error.type == 'no-user' ) {
                     throw new ControllerError(403, 'authentication-failed', error.message)
                 } else if ( error.type == 'multiple-users') {

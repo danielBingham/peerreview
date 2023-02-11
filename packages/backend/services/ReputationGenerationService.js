@@ -4,8 +4,8 @@
  * Methods to help calculate and manage reputation.
  */
 
-const FieldDAO = require('../daos/field')
-const UserDAO = require('../daos/user')
+const FieldDAO = require('../daos/FieldDAO')
+const UserDAO = require('../daos/UserDAO')
 const OpenAlexService = require('./OpenAlexService')
 
 const ServiceError = require('../errors/ServiceError')

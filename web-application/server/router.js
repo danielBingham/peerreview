@@ -10,6 +10,7 @@
 module.exports = function(database, logger, config) {
     const express = require('express')
     const multer = require('multer')
+    const backend = require('@peerreview/backend')
 
     const ControllerError = require('./errors/ControllerError')
 
@@ -169,8 +170,7 @@ module.exports = function(database, logger, config) {
     // TODO Remove before we go to production.  (Or formalize into a
     // admin/development interface only loaded on development and staging
     // environments.)
-    const ReputationService = require('./services/ReputationGenerationService')
-    const reputationService = new ReputationService(database, logger)
+    const reputationService = new backend.ReputationGenerationService(database, logger)
     router.get('/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {
         reputationService.initializeReputationForUserWithOrcidId(request.params.id, request.params.orcidId).then(function() {
             return response.status(200).send()

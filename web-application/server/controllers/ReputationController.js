@@ -1,10 +1,6 @@
-const ReputationPermissionService = require('../services/ReputationPermissionService')
-const ReputationGenerationService = require('../services/ReputationGenerationService')
-const ReputationDAO = require('../daos/ReputationDAO')
+const backend = require('@peerreview/backend')
 
-const ServiceError = require('../errors/ServiceError')
 const ControllerError = require('../errors/ControllerError')
-
 
 module.exports = class ReputationController {
 
@@ -12,9 +8,9 @@ module.exports = class ReputationController {
         this.database = database
         this.logger = logger
 
-        this.reputationPermissionService = new ReputationPermissionService(database, logger)
-        this.reputationGenerationService = new ReputationGenerationService(database, logger)
-        this.reputationDAO = new ReputationDAO(database, logger)
+        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
+        this.reputationGenerationService = new backend.ReputationGenerationService(database, logger)
+        this.reputationDAO = new backend.ReputationDAO(database, logger)
     }
 
     /**
@@ -91,7 +87,7 @@ module.exports = class ReputationController {
             await this.reputationGenerationService.initializeReputationForUser(userId)
             return response.status(200).json({})
         } catch (error) {
-            if ( error instanceof ServiceError) {
+            if ( error instanceof bakcend.ServiceError) {
                 // Validation: 2. User must have an ORCID iD attached to their record.
                 // We checked this in ReputationGenerationService::initializeReputationForUser()
                 if (error.type == 'no-orcid') {

@@ -1,6 +1,5 @@
-const ReviewDAO = require('../daos/review')
-const ReputationGenerationService = require('../services/ReputationGenerationService')
-const ReputationPermissionService = require('../services/ReputationPermissionService')
+const backend = require('@peerreview/backend')
+
 const ControllerError = require('../errors/ControllerError')
 
 /**
@@ -12,10 +11,10 @@ module.exports = class ReviewController {
         this.database = database
         this.logger = logger
 
-        this.reviewDAO = new ReviewDAO(database)
+        this.reviewDAO = new backend.ReviewDAO(database)
         
-        this.reputationService = new ReputationGenerationService(database, logger)
-        this.reputationPermissionService = new ReputationPermissionService(database, logger)
+        this.reputationService = new backend.ReputationGenerationService(database, logger)
+        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
     }
 
     async countReviews(request, response) {

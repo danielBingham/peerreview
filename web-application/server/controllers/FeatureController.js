@@ -1,5 +1,4 @@
-const FeatureService = require('../services/FeatureService')
-const FeatureDAO = require('../daos/FeatureDAO')
+const backend = require('@peerreview/backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -10,8 +9,8 @@ module.exports = class FeatureController {
         this.logger = logger
         this.config = config
 
-        this.featureService = new FeatureService(database, logger, config)
-        this.featureDAO = new FeatureDAO(database, logger, config)
+        this.featureService = new backend.FeatureService(database, logger, config)
+        this.featureDAO = new backend.FeatureDAO(database, logger, config)
     }
 
     /**

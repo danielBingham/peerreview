@@ -5,15 +5,9 @@
  *
  ******************************************************************************/
 
-const PaperDAO = require('../daos/paper.js')
-const FieldDAO = require('../daos/field.js')
-
-const ReputationPermissionService = require('../services/ReputationPermissionService')
+const backend = require('@peerreview/backend')
 
 const ControllerError = require('../errors/ControllerError')
-const DAOError = require('../errors/DAOError')
-
-
 
 /**
  *
@@ -23,9 +17,9 @@ module.exports = class PaperController {
     constructor(database, logger, config) {
         this.database = database
         this.logger = logger
-        this.paperDAO = new PaperDAO(database, config)
-        this.fieldDAO = new FieldDAO(database)
-        this.reputationPermissionService = new ReputationPermissionService(database, logger)
+        this.paperDAO = new backend.PaperDAO(database, config)
+        this.fieldDAO = new backend.FieldDAO(database)
+        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
     }
 
     /**

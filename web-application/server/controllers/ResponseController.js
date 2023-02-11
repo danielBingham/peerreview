@@ -4,15 +4,10 @@
  * Restful routes for manipulating responses.
  *
  ******************************************************************************/
-const ResponseDAO = require('../daos/responses')
-const PaperDAO = require('../daos/paper')
 
-const ReputationGenerationService = require('../services/ReputationGenerationService')
-const ReputationPermissionService = require('../services/ReputationPermissionService')
+const backend = require('@peerreview/backend')
 
 const ControllerError = require('../errors/ControllerError')
-const DAOError = require('../errors/DAOError')
-
 
 module.exports = class ResponseController {
 
@@ -20,11 +15,11 @@ module.exports = class ResponseController {
         this.database = database
         this.logger = logger
 
-        this.responseDAO = new ResponseDAO(database, logger)
-        this.paperDAO = new PaperDAO(database, config)
+        this.responseDAO = new backend.ResponseDAO(database, logger)
+        this.paperDAO = new backend.PaperDAO(database, config)
 
-        this.reputationGenerationService = new ReputationGenerationService(database, logger)
-        this.reputationPermissionService = new ReputationPermissionService(database, logger)
+        this.reputationGenerationService = new backend.ReputationGenerationService(database, logger)
+        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
     }
 
     // TODO Techdebt Need to merge this with getResponses and use the

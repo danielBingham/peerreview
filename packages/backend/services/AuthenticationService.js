@@ -2,8 +2,8 @@ const bcrypt = require('bcrypt');
 
 const ServiceError = require('../errors/ServiceError')
 
-const UserDAO = require('../daos/user')
-const SettingsDAO = require('../daos/settings')
+const UserDAO = require('../daos/UserDAO')
+const SettingsDAO = require('../daos/SettingsDAO')
 
 module.exports = class AuthenticationService {
 

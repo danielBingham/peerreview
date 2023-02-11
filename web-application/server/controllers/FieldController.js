@@ -4,7 +4,8 @@
  * Restful routes for manipulating fields.
  *
  ******************************************************************************/
-const FieldDAO = require('../daos/field')
+const backend = require('@peerreview/backend')
+
 const ControllerError = require('../errors/ControllerError')
 
 
@@ -13,7 +14,7 @@ module.exports = class FieldController {
     constructor(database, logger) {
         this.database = database
         this.logger = logger
-        this.fieldDAO = new FieldDAO(database, logger)
+        this.fieldDAO = new backend.FieldDAO(database, logger)
     }
 
     /**

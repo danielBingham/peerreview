@@ -1,13 +1,6 @@
-
-const AuthenticationService = require('../services/authentication')
-const EmailService = require('../services/EmailService')
-
-const TokenDAO = require('../daos/TokenDAO')
-const UserDAO = require('../daos/user')
+const backend = require('@peerreview/backend')
 
 const ControllerError = require('../errors/ControllerError')
-const DAOError = require('../errors/DAOError')
-
 
 module.exports = class TokenController {
 
@@ -16,11 +9,11 @@ module.exports = class TokenController {
         this.logger = logger
         this.config = config
 
-        this.authenticationService = new AuthenticationService(database, logger)
-        this.emailService = new EmailService(logger, config)
+        this.authenticationService = new backend.AuthenticationService(database, logger)
+        this.emailService = new backend.EmailService(logger, config)
 
-        this.tokenDAO = new TokenDAO(database, logger)
-        this.userDAO = new UserDAO(database, logger)
+        this.tokenDAO = new backend.TokenDAO(database, logger)
+        this.userDAO = new backend.UserDAO(database, logger)
     }
 
     /**
@@ -72,7 +65,7 @@ module.exports = class TokenController {
             // 4. Token(:token) must have type equal to request.query.type 
             token = await this.tokenDAO.validateToken(request.params.token, [ request.query.type ])
         } catch (error) {
-            if ( error instanceof DAOError ) {
+            if ( error instanceof backend.DAOError ) {
                 throw new ControllerError(403, 'not-authorized:invalid-token', error.message)
             } else {
                 throw error

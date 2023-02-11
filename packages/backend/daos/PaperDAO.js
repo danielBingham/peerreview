@@ -5,9 +5,9 @@ const pdfjslib = require('pdfjs-dist/legacy/build/pdf.js')
 
 const DAOError = require('../errors/DAOError')
 
-const UserDAO = require('./user')
-const FileDAO = require('./files')
-const FieldDAO = require('./field')
+const UserDAO = require('./UserDAO')
+const FileDAO = require('./FileDAO')
+const FieldDAO = require('./FieldDAO')
 const S3FileService = require('../services/S3FileService')
 
 const PAGE_SIZE = 50 
