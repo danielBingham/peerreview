@@ -1,8 +1,10 @@
+const backend = require('@danielbingham/peerreview-backend')
+const DAOError = backend.DAOError
+
 const PaperController = require('../../../server/controllers/PaperController')
 
 const Logger = require('../../../server/logger')
 const ControllerError = require('../../../server/errors/ControllerError')
-const DAOError = require('../../../server/errors/DAOError')
 
 const DatabaseFixtures = require('../fixtures/database')
 const ExpectedFixtures = require('../fixtures/expected')

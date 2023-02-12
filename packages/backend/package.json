@@ -1,5 +1,5 @@
 {
-  "name": "@peerreview/backend",
+  "name": "@danielbingham/peerreview-backend",
   "version": "0.0.1",
   "description": "The backend of Peer Review.",
   "main": "index.js",
@@ -12,7 +12,7 @@
       "directory": "packages/backend"
   },
   "publishConfig": {
-      "registry": "https://npm.pkg.github.com"
+      "registry": "https://npm.pkg.github.com/"
   },
   "author": "Daniel Bingham",
   "license": "GPL-3.0",

@@ -4,7 +4,7 @@
  * Restful routes for manipulating users.
  *
  ******************************************************************************/
-const backend = require('@peerreview/backend')
+const backend = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 

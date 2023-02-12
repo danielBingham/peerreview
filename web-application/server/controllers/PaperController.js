@@ -5,7 +5,7 @@
  *
  ******************************************************************************/
 
-const backend = require('@peerreview/backend')
+const backend = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 

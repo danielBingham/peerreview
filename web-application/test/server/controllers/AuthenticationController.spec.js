@@ -1,6 +1,7 @@
+const backend = require('@danielbingham/peerreview-backend')
+const AuthenticationService = backend.AuthenticationService
 
 const AuthenticationController = require('../../../server/controllers/AuthenticationController')
-const AuthenticationService = require('../../../server/services/authentication')
 const Logger = require('../../../server/logger')
 
 describe('AuthenticationController', function() {
