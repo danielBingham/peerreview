@@ -39,6 +39,7 @@ jobs:
         working-directory: ./web-application
         run: |
           npm link @danielbingham/peerreview-backend
+          npm install
       - name: Run Web Application Unit Tests
         working-directory: ./web-application
         run: | 
