@@ -1,8 +1,10 @@
 {
   "name": "@peerreview/web-application",
-  "version": "0.0.9",
+  "version": "0.1.0-dev",
+  "description": "The web application of Peer Review.",
+  "author": "Daniel Bingham",
+  "license": "GPL-3.0",
   "private": true,
-  "main": "server/bin/www",
   "repository": {
       "type": "git",
       "url": "https://github.com/danielbingham/peerreview.git",
@@ -11,6 +13,7 @@
   "publishConfig": {
       "registry": "https://npm.pkg.github.com"
   },
+  "main": "server/bin/www",
   "scripts": {
     "start": "node ./server/bin/www",
     "build": "webpack --mode production",

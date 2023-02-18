@@ -1,10 +1,12 @@
 {
   "name": "@danielbingham/peerreview-backend",
-  "version": "0.0.1",
+  "version": "0.1.0-dev",
   "description": "The backend of Peer Review.",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "author": "Daniel Bingham",
+  "license": "GPL-3.0",
+  "homepage": "https://github.com/danielbingham/peerreview#README",
+  "bugs": {
+    "url": "https://github.com/danielbingham/peerreview/issues"
   },
   "repository": {
       "type": "git",
@@ -14,12 +16,11 @@
   "publishConfig": {
       "registry": "https://npm.pkg.github.com/"
   },
-  "author": "Daniel Bingham",
-  "license": "GPL-3.0",
-  "bugs": {
-    "url": "https://github.com/danielbingham/peerreview/issues"
+  "main": "index.js",
+  "scripts": {
+    "jest": "jest",
+    "test": "jest test"
   },
-  "homepage": "https://github.com/danielbingham/peerreview#README",
   "dependencies": {
     "aws-sdk": "^2.1312.0",
     "bcrypt": "^5.1.0",
