@@ -34,6 +34,8 @@ jobs:
           npm version prerelease
       - name: Publish the backend package
         working-directory: ./packages/backend
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm publish
 
