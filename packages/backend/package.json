@@ -9,12 +9,12 @@
     "url": "https://github.com/danielbingham/peerreview/issues"
   },
   "repository": {
-      "type": "git",
-      "url": "https://github.com/danielbingham/peerreview.git",
-      "directory": "packages/backend"
+    "type": "git",
+    "url": "https://github.com/danielbingham/peerreview.git",
+    "directory": "packages/backend"
   },
   "publishConfig": {
-      "registry": "https://npm.pkg.github.com/"
+    "registry": "https://npm.pkg.github.com/"
   },
   "main": "index.js",
   "scripts": {
@@ -28,5 +28,8 @@
     "pdfjs-dist": "^3.3.122",
     "postmark": "^3.0.15",
     "sanitize-filename": "^1.6.3"
+  },
+  "devDependencies": {
+    "jest": "^29.4.3"
   }
 }
