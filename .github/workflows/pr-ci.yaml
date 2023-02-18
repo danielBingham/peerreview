@@ -32,6 +32,10 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm version prerelease
+          git add package.json
+          git add package-lock.json
+          git commit -m 'Backend version'
+          git push origin ${{ github.ref_name }}
       - name: Publish the backend package
         working-directory: ./packages/backend
         env:
