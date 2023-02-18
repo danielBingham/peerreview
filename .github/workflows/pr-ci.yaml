@@ -17,9 +17,6 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-      - name: Determine Version
-        run: 
-          echo "VERSION=$( echo '${{ github.ref_name }}-${{ github.sha }}' | sed 's|/|-|g')" >> $GITHUB_ENV
 
 
       # Build and publish @danielbingham/peerreview-backend
@@ -27,27 +24,21 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm ci 
+      - name: Run NPM link
+        working-directory: ./packages/backend
+        run: |
+          npm link
       - name: Run Backend Unit Tests
         working-directory: ./packages/backend
         run: |
           npm run test
-      - name: Version using the branch name
-        working-directory: ./packages/backend
-        run: |
-          npm version $VERISON
-      - name: Publish to Github Packages
-        working-directory: ./packages/backend
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm publish
 
       # Test web-application, then build the docker container and push it to
       # the Github Container registry
-      - name: Install updated backend package 
+      - name: Link the backend package
         working-directory: ./web-application
         run: |
-          npm install @danielbingham/peerreview-backend@$VERSION
+          npm link @danielbingham/peerreview-backend
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
         run: |
@@ -56,14 +47,4 @@ jobs:
         working-directory: ./web-application
         run: | 
           npm run test
-      - name: Build the  Web Application Docker Container
-        working-directory: ./web-application
-        run: |
-           docker build -t ghcr.io/danielbingham/peerreview:$VERSION .
-      - name: Login to Github Container Repository
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
-      - name: Push the newly built container to the Repostory under the $VERSION tag
-        run: |
-          docker push ghcr.io/danielbingham/peerreview:$VERSION
 
