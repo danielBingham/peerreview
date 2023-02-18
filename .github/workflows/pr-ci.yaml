@@ -24,22 +24,25 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm ci 
-      - name: Run NPM link
-        working-directory: ./packages/backend
-        run: |
-          npm link
       - name: Run Backend Unit Tests
         working-directory: ./packages/backend
         run: |
           npm run test
+      - name: Version the backend package
+        working-directory: ./packages/backend
+        run: |
+          npm version prerelease
+      - name: Publish the backend package
+        working-directory: ./packages/backend
+        run: |
+          npm publish
 
       # Test web-application, then build the docker container and push it to
       # the Github Container registry
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
         run: |
-          npm link @danielbingham/peerreview-backend
-          npm install
+          npm ci 
       - name: Run Web Application Unit Tests
         working-directory: ./web-application
         run: | 
