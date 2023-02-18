@@ -35,13 +35,10 @@ jobs:
 
       # Test web-application, then build the docker container and push it to
       # the Github Container registry
-      - name: Link the backend package
-        working-directory: ./web-application
-        run: |
-          npm link @danielbingham/peerreview-backend
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
         run: |
+          npm link @danielbingham/peerreview-backend
           npm ci
       - name: Run Web Application Unit Tests
         working-directory: ./web-application
