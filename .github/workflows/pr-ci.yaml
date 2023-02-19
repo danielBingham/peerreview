@@ -31,14 +31,10 @@ jobs:
 
       # Test web-application, then build the docker container and push it to
       # the Github Container registry
-      - name: Setup NPMRC
-        working-directory: ./web-application
-        run: |
-          echo "//npm.pkg.github.com/:_authToken=\${GITHUB_TOKEN}" >> .npmrc
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
         env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci 
       - name: Link the backend package for testing
