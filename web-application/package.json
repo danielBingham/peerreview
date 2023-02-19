@@ -6,12 +6,12 @@
   "license": "GPL-3.0",
   "private": true,
   "repository": {
-      "type": "git",
-      "url": "https://github.com/danielbingham/peerreview.git",
-      "directory": "web-application"
+    "type": "git",
+    "url": "https://github.com/danielbingham/peerreview.git",
+    "directory": "web-application"
   },
   "publishConfig": {
-      "registry": "https://npm.pkg.github.com"
+    "registry": "https://npm.pkg.github.com"
   },
   "main": "server/bin/www",
   "scripts": {
@@ -73,6 +73,7 @@
     "@babel/preset-env": "^7.17.10",
     "@babel/preset-react": "^7.16.7",
     "@babel/register": "^7.17.7",
+    "@babel/runtime": "^7.20.13",
     "babel-jest": "^28.0.3",
     "babel-loader": "^8.2.5",
     "clean-webpack-plugin": "^4.0.0",

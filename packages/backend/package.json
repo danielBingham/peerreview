@@ -22,7 +22,8 @@
     "test": "jest test"
   },
   "dependencies": {
-    "aws-sdk": "^2.1312.0",
+    "@aws-sdk/client-s3": "^3.272.0",
+    "@babel/runtime": "^7.20.13",
     "bcrypt": "^5.1.0",
     "mime": "^3.0.0",
     "pdfjs-dist": "^3.3.122",
