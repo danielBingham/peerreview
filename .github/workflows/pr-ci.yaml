@@ -9,6 +9,10 @@ jobs:
       matrix:
         node-version: [ 18.x ]
 
+    permissions:
+      contents: read
+      packages: write
+
     steps:
       
       - name: Checkout Monorepo
@@ -28,13 +32,6 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm run test
-      - name: version and publish
-        working-directory: ./packages/backend
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm version prerelease
-          npm publish
 
       # Test web-application, then build the docker container and push it to
       # the Github Container registry
