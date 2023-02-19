@@ -6,21 +6,20 @@ on:
       - '[0-9]+.[0-9]+.[0-9]+' 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [ 18.x ]
-
+    permissions:
+      contents: write 
+      packages: write
     steps:
-      - name: Git Checkout
+      - name: Checkout Repo 
         uses: actions/checkout@v2
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node-version }}
-
 
       # Build and publish @danielbingham/peerreview-backend
       - name: Install Backend NPM Modules
@@ -31,21 +30,31 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm run test
-      - name: Publish to Github Packages
+      - name: Version the Backend Package
         working-directory: ./packages/backend
         run: |
+          npm version ${{ github.ref_name }} 
+      - name: Publish to Github Packages
+        working-directory: ./packages/backend
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           npm publish
-      
+
       # Test web-application, then build the docker container and push it to
       # the Github Container registry
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
         run: |
           npm ci
-      - name: Run Web APplication Unit Tests
+      - name: Run Web Application Unit Tests
         working-directory: ./web-application
         run: | 
           npm run test
+      - name: Version the Web Application Package
+        working-directory: ./web-application
+        run: |
+          npm version ${{ github.ref_name }} 
       - name: Build the  Web Application Docker Container
         working-directory: ./web-application
         run: |
@@ -56,3 +65,13 @@ jobs:
       - name: Push the newly built container to the Repostory under the ${{ github.ref_name }} tag
         run: |
           docker push ghcr.io/danielbingham/peerreview:${{ github.ref_name }}
+
+      # Commit the change version back to the repo.
+      - name: Commit version changes
+        run: |
+          NAME=$( git log --format="%an" ${{ github.sha }}^! )
+          EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
+          git config --global user.name $NAME
+          git config --global user.email $EMAIL
+          git commit -am 'Automated verison increments'
+          git push
