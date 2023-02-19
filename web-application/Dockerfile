@@ -3,6 +3,7 @@ FROM node
 WORKDIR /src
 
 COPY package.json .
+COPY .npmrc .
 RUN npm install
 
 # Copy only the files and directories we need, one per command, from least
