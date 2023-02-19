@@ -34,7 +34,7 @@ jobs:
       - name: Setup NPMRC
         working-directory: ./web-application
         run: |
-          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=\${GITHUB_TOKEN}" >> .npmrc
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
         env: 
