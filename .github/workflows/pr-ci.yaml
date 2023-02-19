@@ -28,24 +28,10 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm run test
-      - name: Version the backend package
+      - name: Link the package
         working-directory: ./packages/backend
         run: |
-          npm version prerelease
-          NAME=$(git log --format="%an" ${{ github.sha }}^!)
-          EMAIL=$(git log --format="%ae" ${{ github.sha }}^!)
-          git config user.name $NAME
-          git config user.email $EMAIL
-          git add package.json
-          git add package-lock.json
-          git commit -m 'Backend version'
-          git push origin ${{ github.ref_name }}
-      - name: Publish the backend package
-        working-directory: ./packages/backend
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm publish
+          npm link
 
       # Test web-application, then build the docker container and push it to
       # the Github Container registry
@@ -53,6 +39,10 @@ jobs:
         working-directory: ./web-application
         run: |
           npm ci 
+      - name: Link the backend package for testing
+        working-directory: ./web-application
+        run: |
+          npm link @danielbingham/peerreview-backend
       - name: Run Web Application Unit Tests
         working-directory: ./web-application
         run: | 
