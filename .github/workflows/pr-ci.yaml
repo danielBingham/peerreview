@@ -45,7 +45,7 @@ jobs:
         working-directory: ./web-application
         run: |
           rm -r node_modules/@danielbingham/peerreview-backend
-          ln -s ../packages/backend node_modules/@danielbingham/peerreview-backend
+          ln -s ../../../packages/backend node_modules/@danielbingham/peerreview-backend
           ls -al node_modules/@danielbingham 
       - name: Run Web Application Unit Tests
         working-directory: ./web-application
