@@ -28,10 +28,6 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm run test
-      - name: Link the package
-        working-directory: ./packages/backend
-        run: |
-          npm link
 
       # Test web-application, then build the docker container and push it to
       # the Github Container registry
@@ -42,7 +38,8 @@ jobs:
       - name: Link the backend package for testing
         working-directory: ./web-application
         run: |
-          npm link @danielbingham/peerreview-backend
+          rm -r node_modules/@danielbingham/peerreview-backend
+          ln -s ../packages/backend node_modules/@danielbingham/peerreview-backend
       - name: Run Web Application Unit Tests
         working-directory: ./web-application
         run: | 
