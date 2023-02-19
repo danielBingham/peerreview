@@ -32,6 +32,10 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm version prerelease
+          NAME=$(git log --format="%an" ${{ github.sha }}^!)
+          EMAIL=$(git log --format="%ae" ${{ github.sha }}^!)
+          git config user.name $NAME
+          git config user.email $EMAIL
           git add package.json
           git add package-lock.json
           git commit -m 'Backend version'
