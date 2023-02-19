@@ -1,0 +1,48 @@
+name: Pull Request CI
+
+on: pull_request
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 18.x ]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Repo 
+        uses: actions/checkout@v2
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+
+
+      # Build and test @danielbingham/peerreview-backend
+      - name: Install Backend NPM Modules
+        working-directory: ./packages/backend
+        run: |
+          npm ci 
+      - name: Run Backend Unit Tests
+        working-directory: ./packages/backend
+        run: |
+          npm run test
+
+      # Test @danielbingham/peerreview-web-application
+      - name: Install Web Application NPM Modules
+        working-directory: ./web-application
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm ci 
+      - name: Link the backend package for testing
+        working-directory: ./web-application
+        run: |
+          rm -r node_modules/@danielbingham/peerreview-backend
+          ln -s ../../../packages/backend node_modules/@danielbingham/peerreview-backend
+      - name: Run Web Application Unit Tests
+        working-directory: ./web-application
+        run: | 
+          npm run test
+
