@@ -4,18 +4,14 @@ on: pull_request
 jobs:
   build:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [ 18.x ]
-
     permissions:
       contents: read
       packages: write
-
     steps:
-      
-      - name: Checkout Monorepo
+      - name: Checkout Repo 
         uses: actions/checkout@v2
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
@@ -23,7 +19,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
 
-      # Build and publish @danielbingham/peerreview-backend
+      # Build and test @danielbingham/peerreview-backend
       - name: Install Backend NPM Modules
         working-directory: ./packages/backend
         run: |
@@ -33,8 +29,7 @@ jobs:
         run: |
           npm run test
 
-      # Test web-application, then build the docker container and push it to
-      # the Github Container registry
+      # Test @danielbingham/peerreview-web-application
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
         env: 

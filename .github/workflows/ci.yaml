@@ -6,16 +6,15 @@ on:
       - main 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
         node-version: [ 18.x ]
-
+    permissions:
+      contents: write 
+      packages: write
     steps:
-      
-      - name: Checkout Monorepo
+      - name: Checkout Repo 
         uses: actions/checkout@v2
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v1
@@ -31,10 +30,14 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm run test
+      - name: Version the Backend Package
+        working-directory: ./packages/backend
+        run: |
+          npm version prerelease
       - name: Publish to Github Packages
         working-directory: ./packages/backend
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm publish
 
@@ -48,6 +51,10 @@ jobs:
         working-directory: ./web-application
         run: | 
           npm run test
+      - name: Version the Web Application Package
+        working-directory: ./web-application
+        run: |
+          npm version prerelease
       - name: Build the  Web Application Docker Container
         working-directory: ./web-application
         run: |
@@ -59,3 +66,12 @@ jobs:
         run: |
           docker push ghcr.io/danielbingham/peerreview:latest
 
+      # Commit the change version back to the repo.
+      - name: Commit version changes
+        run: |
+          NAME=$( git log --format="%an" ${{ github.sha }}^! )
+          EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
+          git config --global user.name $NAME
+          git config --global user.email $EMAIL
+          git commit -am 'Automated verison increments'
+          git push
