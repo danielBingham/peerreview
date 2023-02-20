@@ -34,6 +34,14 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm version prerelease
+      - name: Commit Backend version changes
+        run: |
+          NAME=$( git log --format="%an" ${{ github.sha }}^! )
+          EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
+          git config --global user.name $NAME
+          git config --global user.email $EMAIL
+          git commit -am 'Automated backend verison increments'
+          git push
       - name: Publish to Github Packages
         working-directory: ./packages/backend
         env:
@@ -55,6 +63,14 @@ jobs:
         working-directory: ./web-application
         run: |
           npm version prerelease
+      - name: Commit Web Application version changes
+        run: |
+          NAME=$( git log --format="%an" ${{ github.sha }}^! )
+          EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
+          git config --global user.name $NAME
+          git config --global user.email $EMAIL
+          git commit -am 'Automated web application verison increments'
+          git push
       - name: Build the  Web Application Docker Container
         working-directory: ./web-application
         run: |
@@ -66,12 +82,3 @@ jobs:
         run: |
           docker push ghcr.io/danielbingham/peerreview:latest
 
-      # Commit the change version back to the repo.
-      - name: Commit version changes
-        run: |
-          NAME=$( git log --format="%an" ${{ github.sha }}^! )
-          EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
-          git config --global user.name $NAME
-          git config --global user.email $EMAIL
-          git commit -am 'Automated verison increments'
-          git push
