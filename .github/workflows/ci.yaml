@@ -58,7 +58,7 @@ jobs:
       - name: Build the  Web Application Docker Container
         working-directory: ./web-application
         run: |
-           docker build -t ghcr.io/danielbingham/peerreview:latest .
+           docker build --build-arg TOKEN=${{ secrets.GITHUB_TOKEN }} -t ghcr.io/danielbingham/peerreview:latest .
       - name: Login to Github Container Repository
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin

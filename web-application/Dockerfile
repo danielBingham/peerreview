@@ -1,5 +1,7 @@
 FROM node 
 
+ARG TOKEN
+
 WORKDIR /src
 
 COPY package.json .
