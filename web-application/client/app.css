@@ -5,6 +5,10 @@
     --header-text-highlight-color: white;
     --header-spacer-color: #D3D9DE;
 
+    --footer-background-color: #2a2c2e;
+    --footer-border-color: #2a2c2e;
+    --footer-text-color: #D3D9DE;
+
     --user-menu-background-color: #2a2c2e;
     --user-menu-border-color: #2a2c2e;
     --user-menu-spacer-color: #D3D9DE;
@@ -33,9 +37,14 @@
     --link-highlight-color: #74c3fc;
 }
 
+html {
+    height: 100%;
+}
+
 body {
     padding: 0;
     margin: 0;
+    height: 100%;
 
     font-family: Arial, sans-serif;
     font-size: 14px;
@@ -56,9 +65,16 @@ input:focus, textarea:focus, select:focus {
     outline-color: var(--input-highlight-color) !important;
 }
 
+#root {
+    height: 100vh;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+}
+
 main {
     width: 100%;
     margin: 0 auto;
+    padding-bottom: 50px;
 }
 
 .page {
@@ -92,4 +108,13 @@ main {
    border: thin solid var(--tab-bar-border-color);
    border-bottom: none;
 }
-
+.page-tab img {
+    width: 20px;
+    margin-right: 5px;
+    margin-bottom: -5px;
+}
+.page-tab svg {
+    width: 20px;
+    margin-right: 5px;
+    margin-bottom: -5px;
+}

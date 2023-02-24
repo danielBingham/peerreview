@@ -20,6 +20,7 @@ import { getFeatures, cleanupRequest as cleanupFeaturesRequest } from '/state/fe
 import AdminPage from '/pages/AdminPage'
 
 import Header from '/components/header/Header'
+import Footer from '/components/footer/Footer'
 import NeedEmailConfirmationNotice from '/components/authentication/NeedEmailConfirmationNotice'
 
 import HomePage from '/pages/HomePage'
@@ -235,7 +236,7 @@ const App = function(props) {
                         <Route path="/users" element={ <UsersListPage /> } />
                         <Route path="/user/:id" element={ <UserProfilePage /> } />
                         <Route path="/account">
-                            <Route path=":pane" element={ <UserAccountPage /> } />
+                            <Route path=":tab" element={ <UserAccountPage /> } />
                             <Route index element={ <UserAccountPage /> } />
                         </Route>
 
@@ -268,6 +269,7 @@ const App = function(props) {
                         <Route path="/paper/:id/version/:versionNumber/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
                     </Routes>
                 </main>
+                <Footer />
             </Router>
         </ErrorBoundary>
     )

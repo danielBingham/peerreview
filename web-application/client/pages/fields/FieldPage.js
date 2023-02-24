@@ -5,6 +5,8 @@ import FieldView from '/components/fields/FieldView'
 import FieldListView from '/components/fields/list/FieldListView'
 import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
 
+import { DocumentCheckIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/20/solid'
+
 import Spinner from '/components/Spinner'
 
 import './FieldPage.css'
@@ -48,9 +50,9 @@ const FieldPage = function(props) {
     return (
         <>
             <div className="page-tab-bar">
-                <div onClick={(e) => selectTab('papers')} className={`page-tab ${ ( selectedTab == 'papers' ? 'selected' : '' )}`}>Papers</div>
-                <div onClick={(e) => selectTab('parents')} className={`page-tab ${ ( selectedTab == 'parents' ? 'selected' : '')}`}>Parents</div>
-                <div onClick={(e) => selectTab('children')} className={`page-tab ${ ( selectedTab == 'children' ? 'selected' : '' ) }`}>Children</div>
+                <div onClick={(e) => selectTab('papers')} className={`page-tab ${ ( selectedTab == 'papers' ? 'selected' : '' )}`}> <DocumentCheckIcon /> Papers</div>
+                <div onClick={(e) => selectTab('parents')} className={`page-tab ${ ( selectedTab == 'parents' ? 'selected' : '')}`}><ArrowUpIcon /> Parents</div>
+                <div onClick={(e) => selectTab('children')} className={`page-tab ${ ( selectedTab == 'children' ? 'selected' : '' ) }`}><ArrowDownIcon /> Children</div>
             </div>
             <div id="field-page" className="page">
                 <FieldView id={ id } />

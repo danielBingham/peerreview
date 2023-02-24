@@ -10,6 +10,8 @@ import DraftPaperReviewsView from '/components/papers/draft/view/DraftPaperRevie
 import DraftPaperHeader from '/components/papers/draft/view/header/DraftPaperHeader'
 import ReviewList from '/components/reviews/list/ReviewList'
 
+import { ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
+
 import Spinner from '/components/Spinner'
 import Error404 from '/components/Error404'
 
@@ -111,8 +113,8 @@ const DraftPaperPage = function(props) {
     return (
         <>
             <div className="page-tab-bar">
-                <div onClick={(e) => selectTab('reviews')} className={`page-tab ${ ( selectedTab == 'reviews' ? 'selected' : '' )}`}>Reviews</div>
-                <div onClick={(e) => selectTab('drafts')} className={`page-tab ${ ( selectedTab == 'drafts' ? 'selected' : '')}`}>Drafts</div>
+                <div onClick={(e) => selectTab('reviews')} className={`page-tab ${ ( selectedTab == 'reviews' ? 'selected' : '' )}`}><ChatBubbleLeftRightIcon /> Reviews</div>
+                <div onClick={(e) => selectTab('drafts')} className={`page-tab ${ ( selectedTab == 'drafts' ? 'selected' : '')}`}><DocumentTextIcon /> Drafts</div>
             </div>
             <div id="draft-paper-page" className="page">
                 { content }

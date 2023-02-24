@@ -1,7 +1,3 @@
-#user-account-page.page {
-    background-color: inherit;
-    border: none;
-}
 #user-account-page .login-notice {
     border: thin solid var(--main-border-color);
     background-color: white;
