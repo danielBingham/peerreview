@@ -2,8 +2,8 @@
     display: grid;
     grid-template-columns: 300px auto;
     padding: 20px;
-    border-bottom: thin solid #bbb;
-    border-top: thin solid #bbb;
+    border-bottom: thin solid var(--main-border-color);
+    border-top: thin solid var(--main-border-color);
 }
 .paper-response-view .sidebar {
     grid-column: 1/2;

@@ -1,10 +1,12 @@
 .user-list {
+    margin: 50px auto 0 auto;
+    border: thin solid var(--main-border-color);
 }
 .user-list .header {
     display: grid;
     grid-template-columns: 1fr, 1fr;
     grid-template-rows: auto;
-    border-bottom: thin solid #bbb;
+    border-bottom: thin solid var(--main-border-color);
     padding: 10px 20px;
 }
 .user-list .header h2 {

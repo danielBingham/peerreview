@@ -5,5 +5,5 @@
 }
 
 .draft-paper-pdf-page .react-pdf__Page {
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
 }

@@ -7,10 +7,10 @@
     margin: 10px auto;
     width: 24px;
     height: 24px;
-    color: #bbb;
+    color: var(--main-icon-color);
 }
 .review-view .review-summary, .review-view .review-summary-form {
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     padding: 20px;
 }
 

@@ -8,6 +8,11 @@
     margin-right: 6px;
     margin-bottom: -4px;
 }
+#authentication-navigation .logged-in-user {
+    display: inline-block;
+    min-width: 225px;
+    text-align: left;
+}
 #authentication-navigation.not-authenticated a:link, 
 #authentication-navigation.not-authenticated a:active, 
 #authentication-navigation.not-authenticated a:visited,

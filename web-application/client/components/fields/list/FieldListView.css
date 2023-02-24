@@ -1,13 +1,23 @@
 .field-list {
-    margin: 0 auto;
+    margin: 50px auto 0 auto;
+    border: thin solid var(--main-border-color);
+}
+.field-list .content {
+    padding: 5px;
 }
 
 .field-list .header {
-    border-bottom: thin solid #bbb;
-    margin: 20px 0;
+    display: grid;
+    grid-template-columns: 1fr, 1fr;
+    grid-template-rows: auto;
+    border-bottom: thin solid var(--main-border-color);
+    padding: 10px 20px;
 }
-
 .field-list .header h2 {
+    grid-column: 1 / 2;
     padding: 0;
     margin: 0;
+}
+.field-list .header .controls {
+    grid-column: 2 / 3;
 }

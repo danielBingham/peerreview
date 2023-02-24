@@ -1,3 +1,7 @@
+
 #review-papers-list-page .login-notice {
+    border: thin solid var(--main-border-color);
+    background-color: white;
+    padding: 20px;
     text-align: center;
 }

@@ -1,6 +1,6 @@
 .comment-outer {
     padding: 20px 5px 0 5px;
-    border-bottom: thin solid #bbb;
+    border-bottom: thin solid var(--main-border-color);
 }
 .comment-outer .profile-picture {
     float: left;
@@ -8,8 +8,8 @@
     width: 30px;
     margin-right: 10px;
     margin-bottom: 5px;
-    border: thin solid #aaa;
-    background-color: #bbb;
+    border: thin solid var(--main-border-color);
+    background-color: var(--main-border-color);
 }
 .comment-outer .comment-inner {
     clear: both;

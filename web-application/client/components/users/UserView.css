@@ -1,7 +1,7 @@
 .user-view .header {
     display: grid;
     grid-template-columns: auto auto;
-    border-bottom: thin solid #bbb;
+    border-bottom: thin solid var(--main-border-color);
     margin-bottom: 20px;
 }
 .user-view .header h1 {

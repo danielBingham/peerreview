@@ -74,7 +74,10 @@ const ReputationThresholds = function(props) {
     let currentReputation = null
     if ( currentUser && field ) {
        currentReputation = ( 
-           <div className="current-reputation">You have <strong>{ reputation ? reputation.reputation : 0}</strong> reputation in <Field field={field} /></div>
+           <div className="current reputation">
+               { reputation ? reputation.reputation : 0} 
+               <div className="label">Reputation</div>
+           </div>
        )
     }
 
@@ -82,17 +85,17 @@ const ReputationThresholds = function(props) {
     if ( field ) {
         reputationRequirements = (
             <>
-                <div className="publish reputation-requirement"> 
+                <div className="publish reputation"> 
                     { reputationThresholds.publish * field.averageReputation } 
-                    <div className="label">To Publish</div>
+                    <div className="label">Publish</div>
                 </div>
-                <div className="review reputation-requirement">
+                <div className="review reputation">
                     { reputationThresholds.review * field.averageReputation } 
-                    <div className="label">To Review</div>
+                    <div className="label">Review</div>
                 </div>
-                <div className="referee reputation-requirement">
+                <div className="referee reputation">
                     { reputationThresholds.referee * field.averageReputation } 
-                    <div className="label">To Vote and Respond</div>
+                    <div className="label">Referee</div>
                 </div>
             </>
         )
@@ -101,9 +104,7 @@ const ReputationThresholds = function(props) {
     return (
         <div className="reputation-thresholds">
             <div className="header"><h2>Reputation</h2></div>
-            { currentReputation }
-            <div className="explanation">To publish, review, or referee papers in this field, you will need to meet the reputation thresholds outlined below.  You only need to meet the threshold in one of the fields a paper is tagged with in order to act on that paper.</div>
-            <div className="reputation-requirements-wrapper">
+            <div className="content">
                 { reputationRequirements }
             </div>
         </div>

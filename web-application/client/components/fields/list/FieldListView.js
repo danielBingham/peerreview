@@ -106,7 +106,7 @@ const FieldListView = function(props) {
         content = []
         if ( fields ) {
             for ( const field of fields)  {
-                content.push(<FieldBadge key={field.id} id={field.id} />)
+                content.push(<FieldBadge key={field.id} id={field.id} target="_self" />)
             }
         }
         if ( content.length == 0) {
@@ -120,9 +120,13 @@ const FieldListView = function(props) {
         <div className="field-list">
             <div className="header">
                 <h2>{ title }</h2>
+                <div class="controls">
+                </div>
             </div>
-            {content}
-            { meta.numberOfPages > 1 && <PaginationControls prefix={title} counts={meta} /> }
+            <div className="content">
+                {content}
+                <PaginationControls prefix={title} counts={meta} />
+            </div>
         </div>
     )
 }

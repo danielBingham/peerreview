@@ -127,7 +127,7 @@ const UserListView = function(props) {
             <div className="user-wrapper">
                 { content } 
             </div>
-            { meta.numberOfPages > 1 && <PaginationControls prefix={'users'} counts={meta} /> }
+            <PaginationControls prefix={'users'} counts={meta} /> 
         </div>
     )
         

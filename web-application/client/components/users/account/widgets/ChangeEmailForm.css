@@ -18,7 +18,7 @@
 }
 .change-email-form .form-field input {
     padding: 5px;
-    border: thin solid #bbb;
+    border: thin solid var(--input-border-color);
     width: 750px;
 }
 .change-email-form .submit {

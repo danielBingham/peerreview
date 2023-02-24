@@ -1,9 +1,16 @@
-.field-view h1 {
+.field-view {
+    display: grid;
+    grid-template-columns: 4fr 1fr;
+}
+.field-view .field-details {
+    grid-column: 1 / 2;
+}
+.field-view .reputation-thresholds {
+    grid-column: 2 / 3;
+}
+
+.field-view .field-details h1 {
     font-size: 2em;
-    text-align: center;
 }
-.field-view .header {
-    border-bottom: thin solid #bbb;
-    margin: 20px 0;
-}
+
 

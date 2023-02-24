@@ -69,5 +69,5 @@
     padding: 10px;
     text-align: center;
     margin: 10px 0;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
 }

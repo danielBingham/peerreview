@@ -242,6 +242,9 @@ const App = function(props) {
                         { /* ========== fields ================================= */ }
                         <Route path="/fields" element={ <FieldsListPage /> } />
                         <Route path="/field/:id" element={ <FieldPage /> } />
+                        <Route path="/field/:id/papers" element={ <FieldPage tab="papers" /> } />
+                        <Route path="/field/:id/parents" element={ <FieldPage tab="parents" /> } />
+                        <Route path="/field/:id/children" element={ <FieldPage tab="children" /> } />
 
                         { /* ========= Draft Papers  ============================ */ }
                         <Route path="/submit" element={ <SubmitPage /> }  />

@@ -3,7 +3,7 @@
     border: none;
 }
 #user-account-page .login-notice {
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     background-color: white;
     padding: 20px;
     text-align: center;

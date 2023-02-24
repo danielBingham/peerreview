@@ -70,11 +70,13 @@ const FieldView = function(props) {
     if ( request && request.state == 'fulfilled' ) {
         if ( field ) {
             content = ( 
-                <div className="field-details">
-                    <h1>{ field.name }<Field field={field} /></h1>
-                    <section className="description"><ReactMarkdown>{ field.description }</ReactMarkdown></section>
+                <>
+                    <div className="field-details">
+                        <h1>{ field.name }<Field field={field} /></h1>
+                        <section className="description"><ReactMarkdown>{ field.description }</ReactMarkdown></section>
+                    </div>
                     <ReputationThresholds fieldId={field.id} />
-                </div>
+                </>
             )
         } else {
           content = (  <div className="field-not-found">We weren't able to find that field.</div> )

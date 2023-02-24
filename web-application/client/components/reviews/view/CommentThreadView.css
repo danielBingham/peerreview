@@ -9,7 +9,7 @@
 .comment-thread-view-wrapper .page-viewport {
     position: relative;
     width: 800px;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     margin-bottom: -1px;
 }
 .comment-thread-view-wrapper .page-viewport .loading {

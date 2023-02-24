@@ -1,24 +1,59 @@
+:root {
+    --header-background-color: #2a2c2e;
+    --header-border-color: #2a2c2e;
+    --header-text-color: #D3D9DE;
+    --header-text-highlight-color: white;
+    --header-spacer-color: #D3D9DE;
+
+    --user-menu-background-color: #2a2c2e;
+    --user-menu-border-color: #2a2c2e;
+    --user-menu-spacer-color: #D3D9DE;
+    --user-menu-text-color: #D3D9DE;
+    --user-menu-text-highlight-color: white;
+
+    --page-background-color: white;
+    --page-text-color: #2a2c2e;
+    --page-border-color: none;
+
+    --tab-bar-background-color: #D3D9DE;
+    --tab-bar-border-color: #B6c0c8;
+    --tab-bar-text-color: #2a2c2e;
+    --tab-bar-icon-color: #B6c0c8;
+
+    --main-background-color: white;
+    --main-border-color: #D3d9de;
+    --main-text-color: #2a2c2e;
+    --main-icon-color: #B6c0c8;
+    --main-icon-highlight-color: #D3d9de;
+
+    --input-border-color: #B6c0c8;
+    --input-highlight-color: #74c3fc;
+
+    --link-color: #0796fc;
+    --link-highlight-color: #74c3fc;
+}
+
 body {
     padding: 0;
     margin: 0;
 
-    font-family: Georgia, serif;
+    font-family: Arial, sans-serif;
     font-size: 14px;
-    background-color: #dfdfdf;
+    background-color: white;
 }
 
 a:link, a:active, a:visited {
     text-decoration: none;
-    color: #0796fc;
+    color: var(--link-color); 
 }
 
 a:hover {
     text-decoration: none;
-    color: #74c3fc;
+    color: var(--link-highlight-color); 
 }
 
 input:focus, textarea:focus, select:focus {
-    outline-color: #74c3fc !important;
+    outline-color: var(--input-highlight-color) !important;
 }
 
 main {
@@ -29,27 +64,32 @@ main {
 .page {
     width: 1200px;
     margin: 50px auto;
-    border: thin solid #aaa;
     background-color: white;
     padding: 20px;
 }
 .page-tab-bar {
+    width: 100%;
+    margin: 0 auto -50px auto;
+    padding: 50px 20px 0 20px;
+    background-color: var(--tab-bar-background-color);
+    border-bottom: thin solid var(--tab-bar-border-color);
+
+}
+.page-tab-bar .tabs-wrapper {
     width: 1200px;
-    margin: 50px auto -50px auto;
-    padding: 0 20px;
+    margin: 0 auto;
 }
 .page-tab-bar .page-tab {
     display: inline-block;
     padding: 5px 20px;
-    border: thin solid #aaa;
-    background-color: #eee;
     font-size: 16px;
     line-height: 1.8em;
 }
 .page-tab-bar .page-tab.selected  {
    background-color: white; 
    padding-bottom: 7px;
-   margin-bottom: -2px;
+   margin-bottom: -1px;
+   border: thin solid var(--tab-bar-border-color);
    border-bottom: none;
 }
 

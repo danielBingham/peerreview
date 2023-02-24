@@ -12,7 +12,7 @@
 .file-upload .file .document-icon svg {
     width: 34px;
     height: 34px;
-    color: #bbb;
+    color: var(--main-icon-color);
 }
 .file-upload .file .file-details {
     grid-column: 2 / 3;
@@ -26,8 +26,8 @@
     width: 24px;
     height: 24px;
     padding: 5px;
-    color: #bbb;
+    color: var(--main-icon-color);
 }
 .file-upload .file .close-icon svg:hover {
-    color: #ddd;
+    color: var(--main-icon-highlight-color);
 }

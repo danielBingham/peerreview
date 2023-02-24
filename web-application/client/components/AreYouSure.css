@@ -8,7 +8,7 @@
     text-align: center;
     margin-left: -100px;
     margin-top: -50px;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     background-color: white;
     z-index: 1000;
 }

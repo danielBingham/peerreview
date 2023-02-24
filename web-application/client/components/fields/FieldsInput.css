@@ -1,7 +1,7 @@
 .fields-input .field-suggestions {
     position: relative;
     padding: 10px;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     box-shadow: 2px 2px 2px #666;
 }
 .fields-input .field-suggestions .badge-wrapper {
@@ -29,7 +29,7 @@
 .fields-input input[type=text] {
     width: 948px;
     padding: 5px;
-    border: thin solid #bbb;
+    border: thin solid var(--input-border-color);
 }
 .fields-input .error {
     padding: 10px;

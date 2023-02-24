@@ -5,7 +5,7 @@
     clear: both;
     display: grid;
     grid-template-columns: auto 400px;
-    border-bottom: thin solid #bbb;
+    border-bottom: thin solid var(--main-border-color);
     margin-top: 30px;
 }
 .reputation-list .header h2 {

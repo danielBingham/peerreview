@@ -2,7 +2,7 @@
     width: 100%;
     margin: 50px auto 0 auto;
     background-color: white;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
 }
 .published-paper-list .spinner-wrapper {
     padding: 10px;
@@ -12,7 +12,7 @@
     display: grid;
     grid-template-columns: 1fr, 1fr;
     grid-template-rows: auto;
-    border-bottom: thin solid #bbb;
+    border-bottom: thin solid var(--main-border-color);
     padding: 10px 20px;
 }
 .published-paper-list .header h2 {

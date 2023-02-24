@@ -1,10 +1,9 @@
 .field-badge {
     display: inline-block;
-    width: 274px;
+    width: 270px;
     height: 100px;
     padding: 10px;
     margin: 2px;
-    border: thin solid #bbb;
     overflow: hidden;
 }
 .field-badge .wrapper {

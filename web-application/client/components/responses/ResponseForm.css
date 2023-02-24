@@ -12,7 +12,7 @@
     width: 800px;
     height: 150px;
     padding: 10px;
-    border: thin solid #bbb;
+    border: thin solid var(--input-border-color);
 }
 .paper-response-form .submit {
     margin: 5px auto;

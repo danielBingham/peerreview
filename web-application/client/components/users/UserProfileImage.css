@@ -10,5 +10,5 @@
     max-height: 100%;
 }
 .profile-image svg {
-    color: #aaa;
+    color: var(--main-icon-color);
 }

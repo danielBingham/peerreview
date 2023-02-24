@@ -3,7 +3,7 @@
 .review-summary-form textarea {
     box-sizing: border-box;
     display: block;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     height: 200px;
     width: 100%;
     padding: 10px;
