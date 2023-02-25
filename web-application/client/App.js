@@ -234,7 +234,10 @@ const App = function(props) {
                         { /* ========== Users ================================= */ }
                         <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 
                         <Route path="/users" element={ <UsersListPage /> } />
-                        <Route path="/user/:id" element={ <UserProfilePage /> } />
+                        <Route path="/user/:id">
+                            <Route path=":tab" element={ <UserProfilePage /> } />
+                            <Route index element={ <UserProfilePage /> } />
+                        </Route>
                         <Route path="/account">
                             <Route path=":tab" element={ <UserAccountPage /> } />
                             <Route index element={ <UserAccountPage /> } />

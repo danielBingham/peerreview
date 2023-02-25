@@ -30,6 +30,8 @@
     --main-icon-color: #B6c0c8;
     --main-icon-highlight-color: #D3d9de;
 
+    --icon-color: #2a2c2e;
+
     --input-border-color: #B6c0c8;
     --input-highlight-color: #74c3fc;
 
@@ -117,4 +119,5 @@ main {
     width: 20px;
     margin-right: 5px;
     margin-bottom: -5px;
+    color: var(--icon-color);
 }

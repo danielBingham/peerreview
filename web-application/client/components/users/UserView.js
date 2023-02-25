@@ -10,6 +10,7 @@ import { getUser, cleanupRequest } from '/state/users'
 import ORCIDTag from '/components/authentication/ORCIDTag'
 import UserProfileImage from '/components/users/UserProfileImage'
 
+import {  BuildingOffice2Icon, MapPinIcon } from '@heroicons/react/24/outline'
 import Spinner from '/components/Spinner'
 
 import './UserView.css'
@@ -84,17 +85,13 @@ const UserView = function(props) {
 
     return (
         <article id={ user.id } className='user-view'>
-            <div className="header">
-                <h1>{ user.name }</h1>
-                { shouldRenderControls && <div className="controls"><Link to="/account">edit</Link></div> }
-            </div>
             <UserProfileImage file={user.file} /> 
             <div className="details">
-                <div><span className="label">Name</span> { user.name }</div>
-                <div><span className="label">ORCID iD</span> { user.orcidId && <ORCIDTag id={ user.orcidId} />}</div>
-                <div><span className="label">Institution</span> { user.institution } </div>
-                <div><span className="label">Location</span> { user.location }</div>
-                <div><span className="label">Biography</span><ReactMarkdown children={ user.bio } /> </div>
+                <div className="name"> { user.name }</div>
+                { user.orcidId && <div className="orcid"> <ORCIDTag id={ user.orcidId} /></div> }
+                { user.institution && <div className="institution"><BuildingOffice2Icon /> { user.institution } </div> }
+                { user.location && <div className="location"><MapPinIcon /> { user.location }</div> }
+                { user.bio && <div className="bio"><ReactMarkdown children={ user.bio } /> </div>}
             </div>
         </article>
     )

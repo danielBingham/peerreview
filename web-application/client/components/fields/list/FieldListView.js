@@ -120,7 +120,7 @@ const FieldListView = function(props) {
         <div className="field-list">
             <div className="header">
                 <h2>{ title }</h2>
-                <div class="controls">
+                <div className="controls">
                 </div>
             </div>
             <div className="content">

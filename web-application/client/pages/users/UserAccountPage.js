@@ -12,7 +12,7 @@ import ChangeEmailForm from '/components/users/account/widgets/ChangeEmailForm'
 import ORCIDTag from '/components/authentication/ORCIDTag'
 import ORCIDAuthenticationButton from '/components/authentication/ORCIDAuthenticationButton'
 
-import { UserCircleIcon, EnvelopeIcon, Cog8ToothIcon, LockClosedIcon } from '@heroicons/react/20/solid'
+import { UserCircleIcon, EnvelopeIcon, Cog8ToothIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 
 import Spinner from '/components/Spinner'
 

@@ -28,15 +28,19 @@ const ReputationList = function(props) {
         return state.reputation.query[props.userId]
     })
 
-    const dispatch = useDispatch()
-
-    useEffect(function() {
-        if ( props.id && reputationRequest && reputationRequest.state == 'fulfilled') {
-            const element = document.getElementById(props.id)
-            element.scrollIntoView(true) 
+    const meta = useSelector(function(state) {
+        if ( ! state.reputation.query[props.userId] ) {
+            return {
+                count: 0,
+                page: 1,
+                pageSize: 1,
+                numberOfPages: 1
+            }
         }
-    }, [ props.id, reputationRequest ])
+        return state.reputation.query[props.userId].meta
+    })
 
+    const dispatch = useDispatch()
     useEffect(function() {
         const page = searchParams.get('reputation-page')
         if ( page ) {
@@ -80,7 +84,7 @@ const ReputationList = function(props) {
             <div className="content">
                 {content}
             </div>
-            { reputations && <PaginationControls  prefix={'reputation'} counts={reputations.meta} /> }
+            <PaginationControls  prefix={'reputation'} counts={meta} /> 
         </div>
     )
 

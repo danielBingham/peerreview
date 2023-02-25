@@ -1,12 +1,13 @@
 .reputation-list {
-    min-height: 348px;
+    margin: 50px auto 0 auto;
+    border: thin solid var(--main-border-color);
 }
 .reputation-list .header {
-    clear: both;
     display: grid;
-    grid-template-columns: auto 400px;
+    grid-template-columns: 1fr, 1fr;
+    grid-template-rows: auto;
     border-bottom: thin solid var(--main-border-color);
-    margin-top: 30px;
+    padding: 10px 20px;
 }
 .reputation-list .header h2 {
     grid-column: 1 / 2;
@@ -15,14 +16,11 @@
 }
 .reputation-list .header .controls {
     grid: 2 / 3;
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
 }
 .reputation-list .controls .control {
     text-align: center;
 }
 .reputation-list .content {
-    min-height: 245px;
     padding: 10px;
 }
 .reputation-list .content .grid-wrapper {

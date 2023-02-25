@@ -10,7 +10,7 @@ import DraftPaperReviewsView from '/components/papers/draft/view/DraftPaperRevie
 import DraftPaperHeader from '/components/papers/draft/view/header/DraftPaperHeader'
 import ReviewList from '/components/reviews/list/ReviewList'
 
-import { ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
+import { ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 
 import Spinner from '/components/Spinner'
 import Error404 from '/components/Error404'

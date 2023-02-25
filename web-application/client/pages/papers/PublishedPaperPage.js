@@ -8,7 +8,7 @@ import PublishedPaperView from '/components/papers/published/view/PublishedPaper
 import DraftPaperView from '/components/papers/draft/view/DraftPaperView'
 import DraftPaperReviewsView from '/components/papers/draft/view/DraftPaperReviewsView'
 
-import { DocumentCheckIcon, ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
+import { DocumentCheckIcon, ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 
 import Spinner from '/components/Spinner'
 
