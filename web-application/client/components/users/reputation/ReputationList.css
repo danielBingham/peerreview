@@ -1,32 +1,3 @@
-.reputation-list {
-    margin: 50px auto 0 auto;
-    border: thin solid var(--main-border-color);
-}
-.reputation-list .header {
-    display: grid;
-    grid-template-columns: 1fr, 1fr;
-    grid-template-rows: auto;
-    border-bottom: thin solid var(--main-border-color);
-    padding: 10px 20px;
-}
-.reputation-list .header h2 {
-    grid-column: 1 / 2;
-    padding: 0;
-    margin: 0;
-}
-.reputation-list .header .controls {
-    grid: 2 / 3;
-}
-.reputation-list .controls .control {
-    text-align: center;
-}
-.reputation-list .content {
-    padding: 10px;
-}
-.reputation-list .content .grid-wrapper {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
-}
-.reputation-list .content .grid-wrapper .reputation {
+.reputation {
     padding: 5px;
 }

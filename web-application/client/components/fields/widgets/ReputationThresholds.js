@@ -35,18 +35,6 @@ const ReputationThresholds = function(props) {
         return state.fields.dictionary[props.fieldId]
     })
     
-    const reputation = useSelector(function(state) {
-        if ( ! currentUser ) {
-            return null
-        }
-
-        if ( ! state.reputation.dictionary[currentUser.id] ) {
-            return null
-        }
-
-        return state.reputation.dictionary[currentUser.id][props.fieldId]
-    })
-
     // ======= Effect Handling ======================================
     
     const dispatch = useDispatch()
@@ -71,15 +59,6 @@ const ReputationThresholds = function(props) {
 
     // ======= Render ===============================================
 
-    let currentReputation = null
-    if ( currentUser && field ) {
-       currentReputation = ( 
-           <div className="current reputation">
-               { reputation ? reputation.reputation : 0} 
-               <div className="label">Reputation</div>
-           </div>
-       )
-    }
 
     let reputationRequirements = null
     if ( field ) {
@@ -103,7 +82,7 @@ const ReputationThresholds = function(props) {
 
     return (
         <div className="reputation-thresholds">
-            <div className="header"><h2>Reputation</h2></div>
+            <div className="header"><h2>Thresholds</h2></div>
             <div className="content">
                 { reputationRequirements }
             </div>

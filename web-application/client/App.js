@@ -213,9 +213,9 @@ const App = function(props) {
     return (
         <ErrorBoundary>
             <Router>
-                { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
                 <Header />
                 <main>
+                    { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
                     <Routes>
                         <Route path="/" element={ <HomePage /> } />
                         <Route path="/about" element={ <AboutPage />} />

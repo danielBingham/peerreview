@@ -6,6 +6,9 @@ import ReputationList from '/components/users/reputation/ReputationList'
 import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
 
 import { DocumentCheckIcon, TagIcon } from '@heroicons/react/24/outline'
+
+import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
+import PageTab from '/components/generic/pagetabbar/PageTab'
 import Spinner from '/components/Spinner'
 
 import './UserProfilePage.css'
@@ -34,10 +37,14 @@ const UserProfilePage = function(props) {
 
     return (
         <>
-            <div className="page-tab-bar">
-                <div onClick={(e) => selectTab('papers')} className={`page-tab ${ ( selectedTab == 'papers' ? 'selected' : '' )}`}><DocumentCheckIcon /> Papers</div>
-                <div onClick={(e) => selectTab('reputation')} className={`page-tab ${ ( selectedTab == 'reputation' ? 'selected' : '')}`}><TagIcon /> Reputation</div>
-            </div>
+            <PageTabBar>
+                <PageTab url={`/user/${id}/papers`} selected={selectedTab == 'papers'}>
+                    <DocumentCheckIcon /> Papers
+                </PageTab>
+                <PageTab url={`/user/${id}/reputation`} selected={selectedTab == 'reputation'}>
+                    <TagIcon /> Reputation
+                </PageTab> 
+            </PageTabBar>
             <div id="user-profile-page" className="page">
                 <UserView id={id} />
                 <div className="tab-content">

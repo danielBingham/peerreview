@@ -38,6 +38,23 @@ const FieldView = function(props) {
         return state.fields.dictionary[props.id]
     })
 
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
+    const reputation = useSelector(function(state) {
+        if ( ! currentUser ) {
+            return null
+        }
+
+        if ( ! state.reputation.dictionary[currentUser.id] ) {
+            return null
+        }
+
+        return state.reputation.dictionary[currentUser.id][props.id]
+    })
+
+
 
 
     // ======= Effect Handling ======================================
@@ -66,13 +83,22 @@ const FieldView = function(props) {
 
     // ======= Render ===============================================
 
+    let currentReputation = null
+    if ( currentUser && field ) {
+        const formattedReputation = parseInt(reputation ? reputation.reputation : 0).toLocaleString()
+       currentReputation = ( 
+           <div className="current reputation">You have { formattedReputation } reputation.</div>
+       )
+    }
+
     let content = ( <Spinner /> )
     if ( request && request.state == 'fulfilled' ) {
         if ( field ) {
             content = ( 
                 <>
                     <div className="field-details">
-                        <h1>{ field.name }<Field field={field} /></h1>
+                        <h1>{ field.name }<Field field={field} /> </h1>
+                        {currentReputation}
                         <section className="description"><ReactMarkdown>{ field.description }</ReactMarkdown></section>
                     </div>
                     <ReputationThresholds fieldId={field.id} />

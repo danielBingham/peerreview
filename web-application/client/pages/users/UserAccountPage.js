@@ -14,6 +14,8 @@ import ORCIDAuthenticationButton from '/components/authentication/ORCIDAuthentic
 
 import { UserCircleIcon, EnvelopeIcon, Cog8ToothIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 
+import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
+import PageTab from '/components/generic/pagetabbar/PageTab'
 import Spinner from '/components/Spinner'
 
 import './UserAccountPage.css'
@@ -25,26 +27,6 @@ const UserAccountPage = function(props) {
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
-
-    const navigate = useNavigate()
-    const selectTab = function(tabName) {
-        if ( tabName == 'profile' ) {
-            const url = `/account/profile`
-            navigate(url)
-        } else if ( tabName == 'change-password' ) {
-            const url =`/account/change-password`
-            navigate(url)
-        } else if ( tabName == 'change-email' ) {
-            const url =`/account/change-email`
-            navigate(url)
-        } else if ( tabName == 'orcid' ) {
-            const url =`/account/orcid`
-            navigate(url)
-        } else if ( tabName == 'settings' ) {
-            const url = `/account/settings`
-            navigate(url)
-        }
-    }
 
     // ======= Render =====================================
     const selectedTab = ( tab ? tab : 'profile')
@@ -67,10 +49,11 @@ const UserAccountPage = function(props) {
             )
         } else {
             orcidIdConnection = (
-                <>
+                <div className="orcid-connection">
                     <h2>Connect your ORCID iD</h2>
+                    <p>Authenticate with your ORCID iD to connect it to your account.  When you connect your ORCID iD to you're account, we will attempt to generate initial reputation for you using <a href="https://openalex.org">Open Alex</a>.</p>
                     <ORCIDAuthenticationButton connect={true} />
-                </>
+                </div>
             )
         }
         content = orcidIdConnection
@@ -80,13 +63,23 @@ const UserAccountPage = function(props) {
 
     return (
         <>
-            <div className="page-tab-bar">
-                <div onClick={(e) => selectTab('profile')} className={`page-tab ${ ( selectedTab == 'profile' ? 'selected' : '' )}`}><UserCircleIcon /> Public Profile</div>
-                <div onClick={(e) => selectTab('change-email')} className={`page-tab ${ ( selectedTab == 'change-email' ? 'selected' : '')}`}><EnvelopeIcon /> Change Email</div>
-                <div onClick={(e) => selectTab('change-password')} className={`page-tab ${ ( selectedTab == 'change-password' ? 'selected' : '')}`}><LockClosedIcon /> Change Password</div>
-                <div onClick={(e) => selectTab('orcid')} className={`page-tab ${ ( selectedTab == 'orcid' ? 'selected' : '')}`}><img src="/img/ORCID.svg" /> ORCID iD</div>
-                <div onClick={(e) => selectTab('settings')} className={`page-tab ${ ( selectedTab == 'settings' ? 'selected' : '' ) }`}> <Cog8ToothIcon /> Settings</div>
-            </div>
+            <PageTabBar>
+                <PageTab url="/account/profile" selected={selectedTab == 'profile'}>
+                    <UserCircleIcon /> Public Profile
+                </PageTab>
+                <PageTab url="/account/change-email" selected={selectedTab == 'change-email'}>
+                    <EnvelopeIcon /> Change Email
+                </PageTab>
+                <PageTab url="/account/change-password" selected={selectedTab == 'change-password'}>
+                    <LockClosedIcon /> Change Password
+                </PageTab>
+                <PageTab url="/account/orcid" selected={selectedTab == 'orcid'}>
+                    <img src="/img/ORCID.svg" /> ORCID iD
+                </PageTab>
+                <PageTab url="/account/settings" selected={selectedTab == 'settings'}>
+                    <Cog8ToothIcon /> Settings
+                </PageTab>
+            </PageTabBar>
             <div id="user-account-page" className="page">
                 { currentUser && content }
         

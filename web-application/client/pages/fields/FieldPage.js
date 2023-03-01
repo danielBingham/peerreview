@@ -1,5 +1,5 @@
 import React  from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 
 import FieldView from '/components/fields/FieldView'
 import FieldListView from '/components/fields/list/FieldListView'
@@ -7,27 +7,14 @@ import PublishedPaperList from '/components/papers/published/list/PublishedPaper
 
 import { DocumentCheckIcon, TagIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
 
+import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
+import PageTab from '/components/generic/pagetabbar/PageTab'
 import Spinner from '/components/Spinner'
 
 import './FieldPage.css'
 
 const FieldPage = function(props) {
     const { id } = useParams()
-
-    const navigate = useNavigate()
-    
-    const selectTab = function(tabName) {
-        if ( tabName == 'papers' ) {
-            const url = `/field/${id}/papers`
-            navigate(url)
-        } else if ( tabName == 'parents' ) {
-            const url = `/field/${id}/parents`
-            navigate(url)
-        } else if ( tabName == 'children' ) {
-            const url = `/field/${id}/children`
-            navigate(url)
-        }
-    }
     
     // ======= Render =====================================
     const selectedTab = ( props.tab ? props.tab : 'papers')
@@ -49,11 +36,17 @@ const FieldPage = function(props) {
 
     return (
         <>
-            <div className="page-tab-bar">
-                <div onClick={(e) => selectTab('papers')} className={`page-tab ${ ( selectedTab == 'papers' ? 'selected' : '' )}`}> <DocumentCheckIcon /> Papers</div>
-                <div onClick={(e) => selectTab('parents')} className={`page-tab ${ ( selectedTab == 'parents' ? 'selected' : '')}`}><TagIcon /> Parents</div>
-                <div onClick={(e) => selectTab('children')} className={`page-tab ${ ( selectedTab == 'children' ? 'selected' : '' ) }`}><TagIcon /> Children</div>
-            </div>
+            <PageTabBar>
+                <PageTab url={`/field/${id}/papers`} selected={selectedTab == 'papers'}>
+                    <DocumentCheckIcon /> Papers
+                </PageTab>
+                <PageTab url={`/field/${id}/parents`} selected={selectedTab == 'parents'}>
+                    <TagIcon /> Parents
+                </PageTab>
+                <PageTab url={`/field/${id}/children`} selected={selectedTab == 'children'}>
+                    <TagIcon /> Children
+                </PageTab>
+            </PageTabBar>
             <div id="field-page" className="page">
                 <FieldView id={ id } />
                 { content }

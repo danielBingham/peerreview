@@ -4,3 +4,12 @@
     padding: 20px;
     text-align: center;
 }
+#user-account-page .orcid-connection h2 {
+    text-align: center;
+}
+#user-account-page .orcid-connection p {
+    margin: 1.6em auto;
+    width: 600px;
+}
+
+

@@ -69,13 +69,15 @@ input:focus, textarea:focus, select:focus {
 
 #root {
     height: 100vh;
+    width: 100%;
     display: grid;
     grid-template-rows: auto 1fr auto;
 }
 
 main {
-    width: 100%;
+    box-sizing: border-box;
     margin: 0 auto;
+    width: 100%;
     padding-bottom: 50px;
 }
 
@@ -84,40 +86,4 @@ main {
     margin: 50px auto;
     background-color: white;
     padding: 20px;
-}
-.page-tab-bar {
-    width: 100%;
-    margin: 0 auto -50px auto;
-    padding: 50px 20px 0 20px;
-    background-color: var(--tab-bar-background-color);
-    border-bottom: thin solid var(--tab-bar-border-color);
-
-}
-.page-tab-bar .tabs-wrapper {
-    width: 1200px;
-    margin: 0 auto;
-}
-.page-tab-bar .page-tab {
-    display: inline-block;
-    padding: 5px 20px;
-    font-size: 16px;
-    line-height: 1.8em;
-}
-.page-tab-bar .page-tab.selected  {
-   background-color: white; 
-   padding-bottom: 7px;
-   margin-bottom: -1px;
-   border: thin solid var(--tab-bar-border-color);
-   border-bottom: none;
-}
-.page-tab img {
-    width: 20px;
-    margin-right: 5px;
-    margin-bottom: -5px;
-}
-.page-tab svg {
-    width: 20px;
-    margin-right: 5px;
-    margin-bottom: -5px;
-    color: var(--icon-color);
 }

@@ -5,6 +5,11 @@ import { useSearchParams } from 'react-router-dom'
 import { getReputations, clearQuery, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 
 import Field from '/components/fields/Field'
+import List from '/components/generic/list/List'
+import ListControl from '/components/generic/list/ListControl'
+import ListHeader from '/components/generic/list/ListHeader'
+import ListGridContent from '/components/generic/list/ListGridContent'
+import ListNoContent from '/components/generic/list/ListNoContent'
 import PaginationControls from '/components/PaginationControls'
 import Spinner from '/components/Spinner'
 
@@ -60,32 +65,41 @@ const ReputationList = function(props) {
 
 
     let content = ( <Spinner local={true} /> )
+    let noContent = null
     if ( reputationRequest && reputationRequest.state == 'fulfilled') {
         if ( reputations && reputations.results ) {
             const reputationViews = []
             for ( const reputation of reputations.results) {
                 reputationViews.push(<div key={ reputation.field.id } className="reputation"><Field field={ reputation.field } /> { parseInt(reputation.reputation).toLocaleString() } </div>)
             }
-            content = (
-                <div  className="grid-wrapper">
-                    {reputationViews}
-                </div>
-            )
-        } 
+
+            if ( reputationViews.length > 0 ) {
+                content = reputationViews
+            } else {
+                content = null
+                noContent = (<span>No reputation earned.</span>)
+            }
+        }  else {
+            content = null
+            noContent = (<span>No reputation earned.</span>)
+        }
     } else if ( reputationRequest && reputationRequest.state == 'failed' ) {
-        content = (<div className="error"> Something went wrong with the attempt to retrieve reputation: { reputationRequest.error }.</div>)
+        content = null
+        noContent = (<div className="error"> Something went wrong with the attempt to retrieve reputation: { reputationRequest.error }.</div>)
     }
 
     return (
-        <div id={props.id} className="reputation-list">
-            <div className="header">
-                <h2>Reputation</h2>
-            </div>
-            <div className="content">
+        <List>
+            <ListHeader title="Reputation">
+            </ListHeader>
+            <ListNoContent>
+                {noContent}
+            </ListNoContent>
+            <ListGridContent>
                 {content}
-            </div>
+            </ListGridContent>
             <PaginationControls  prefix={'reputation'} counts={meta} /> 
-        </div>
+        </List>
     )
 
 }

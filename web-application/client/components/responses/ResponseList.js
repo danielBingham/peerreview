@@ -7,6 +7,12 @@ import { getReputations, cleanupRequest as cleanupReputationRequest } from '/sta
 import ResponseForm from './ResponseForm'
 import ResponseView from './ResponseView'
 
+import List from '/components/generic/list/List'
+import ListControl from '/components/generic/list/ListControl'
+import ListHeader from '/components/generic/list/ListHeader'
+import ListRowContent from '/components/generic/list/ListRowContent'
+import ListNoContent from '/components/generic/list/ListNoContent'
+
 import Spinner from '/components/Spinner'
 
 import './ResponseList.css'
@@ -98,6 +104,7 @@ const ResponseList = function(props) {
     // ======= Render ===============================================
     
     let content = ( <Spinner /> )
+    let noContent = null
     let userResponse = null
     if ( request && request.state == 'fulfilled') {
         let responseViews = []
@@ -109,12 +116,14 @@ const ResponseList = function(props) {
         }
 
         if ( responseViews.length == 0 ) {
-            content = ( <div className="no-content">No one has written a response yet.</div> )
+            content = null 
+            noContent = (<span>No one has written a response yet.</span>)
         } else {
             content = responseViews
         }
     } else if ( request && request.state == 'failed' ) {
-        content = ( <div className="error">Request failed: { request.error }</div>)
+        content = null
+        noContent = ( <div className="error">Request failed: { request.error }</div>)
     }
 
     let canRespond = false
@@ -130,11 +139,17 @@ const ResponseList = function(props) {
     let isAuthor = props.paper.authors.find((a) => a.user.id == currentUser?.id)
 
     return (
-        <div className="paper-response-list">
-            <div className="header">
-                <h2>Responses</h2>
-            </div>
-            { content }
+        <div className="responses">
+            <List className="response-list">
+                <ListHeader title="Responses">
+                </ListHeader>
+                <ListNoContent>
+                    {noContent}
+                </ListNoContent>
+                <ListRowContent>
+                    { content }
+                </ListRowContent>
+            </List>
             { (currentUser && ! isAuthor && canRespond && ! userResponse) && <ResponseForm paper={props.paper} currentUser={currentUser} /> }
         </div>
     )
