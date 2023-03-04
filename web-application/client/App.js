@@ -25,6 +25,8 @@ import NeedEmailConfirmationNotice from '/components/authentication/NeedEmailCon
 
 import HomePage from '/pages/HomePage'
 import AboutPage from '/pages/AboutPage'
+import TermsOfServicePage from '/pages/TermsOfServicePage'
+import PrivacyPage from '/pages/PrivacyPage'
 
 import RegistrationPage from '/pages/authentication/RegistrationPage'
 import LoginPage from '/pages/authentication/LoginPage'
@@ -219,6 +221,8 @@ const App = function(props) {
                     <Routes>
                         <Route path="/" element={ <HomePage /> } />
                         <Route path="/about" element={ <AboutPage />} />
+                        <Route path="/tos" element={ <TermsOfServicePage /> } />
+                        <Route path="/privacy" element={ <PrivacyPage /> } />
                         <Route path="/admin" element={ <AdminPage />} />
 
                         { /* ========== Authentication Controls =============== */ }

@@ -1,0 +1,13 @@
+#privacy {
+    width: 800px;
+    padding: 30px 200px 125px 200px;
+
+    font-size: 18px;
+    line-height: 1.7em;
+}
+#privacy h1 {
+    text-align: center;
+}
+#privacy h2 {
+    font-size: 1.1em;
+}
