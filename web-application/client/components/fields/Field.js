@@ -183,7 +183,7 @@ const Field = function(props) {
     }
 
     let content = (
-        <a href={ `/field/${field.id}` } target="_blank" >
+        <a href={ `/field/${field.id}` } target={props.target ? props.target : "_self"} >
             {field.name}
         </a>
 

@@ -1,7 +1,7 @@
 .authors-input .author-suggestions {
     position: relative;
     padding: 10px;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     box-shadow: 2px 2px 2px #666;
 }
 .authors-input .authors {

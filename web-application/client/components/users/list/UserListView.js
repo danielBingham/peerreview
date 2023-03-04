@@ -7,6 +7,11 @@ import {getUsers, clearQuery, cleanupRequest } from '/state/users'
 import UserBadge from '../UserBadge'
 
 import Spinner from '/components/Spinner'
+import List from '/components/generic/list/List'
+import ListControl from '/components/generic/list/ListControl'
+import ListHeader from '/components/generic/list/ListHeader'
+import ListGridContent from '/components/generic/list/ListGridContent'
+import ListNoContent from '/components/generic/list/ListNoContent'
 import PaginationControls from '/components/PaginationControls'
 
 import './UserListView.css'
@@ -64,7 +69,7 @@ const UserListView = function(props) {
     useEffect(function() {
         const params = {}
 
-        params.page = searchParams.get('users-page')
+        params.page = searchParams.get('page')
         if ( ! params.page ) {
             params.page = 1
         }
@@ -92,14 +97,17 @@ const UserListView = function(props) {
     // ======= Render ===============================================
 
     let content = ( <Spinner local={ true } /> )
+    let noContent = null
+
     if ( users ) {
         const userBadges = []
         for( const user of users) {
-            userBadges.push(<div key={user.id} className="badge-wrapper"><UserBadge id={user.id} /></div>)
+            userBadges.push(<UserBadge key={user.id} id={user.id} />)
         }
         content = userBadges
     } else if (request && request.state == 'fulfilled') {
-        content = 'No users found.'
+        content = null
+        noContent = (<span>No users found.</span>)
     } 
 
     const newestParams = new URLSearchParams(searchParams.toString())
@@ -110,25 +118,22 @@ const UserListView = function(props) {
 
     const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
     return (
-        <div className="user-list">
-            <div className="header">
-                <h2>Users</h2>
-                <div className="controls">
-                    <div className="sort">
-                        <a href={`?${newestParams.toString()}`} 
-                            onClick={(e) => { e.preventDefault(); setSort('newest')}} 
-                            className={( sort == 'newest' ? 'selected' : '' )} >Newest</a>
-                        <a href={`?${reputationParams.toString()}`} 
-                            onClick={(e) => { e.preventDefault(); setSort('reputation')}} 
-                            className={( sort == 'reputation' ? 'selected' : '' )} >Reputation</a>
-                    </div>
-                </div>
-            </div>
-            <div className="user-wrapper">
+        <List className="user-list">
+            <ListHeader title="Users">
+                <ListControl url={`?${newestParams.toString()}`} 
+                    onClick={() => setSort('newest')} 
+                    selected={sort == 'newest'} 
+                    name="Newest" />
+                <ListControl url={`?${reputationParams.toString()}`} 
+                    onClick={() => setSort('reputation')} 
+                    selected={sort == 'reputation'} 
+                    name="Reputation" />
+            </ListHeader>
+            <ListGridContent>
                 { content } 
-            </div>
-            { meta.numberOfPages > 1 && <PaginationControls prefix={'users'} counts={meta} /> }
-        </div>
+            </ListGridContent>
+            <PaginationControls counts={meta} /> 
+        </List>
     )
         
 }

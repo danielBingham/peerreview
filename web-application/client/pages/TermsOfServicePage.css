@@ -1,0 +1,10 @@
+#terms-of-service {
+    width: 800px;
+    padding: 30px 200px 125px 200px;
+
+    font-size: 18px;
+    line-height: 1.7em;
+}
+#terms-of-service h1 {
+    text-align: center;
+}

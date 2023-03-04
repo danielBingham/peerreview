@@ -3,7 +3,7 @@
     margin: 50px auto;
     padding: 20px 20px 30px 20px ;
     width: 600px;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     background-color: white;
 }
 #registration-page .sso-options {

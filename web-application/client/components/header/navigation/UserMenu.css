@@ -1,18 +1,18 @@
 #user-menu {
     position: absolute;
-    top: 39px;
+    top: 44px;
     left: 0;
     min-width: 225px;
     text-align: center;
-    background-color: white;
-    border-bottom: thin solid #bbb;
-    border-left: thin solid #bbb;
-    border-right: thin solid #bbb;
+    background-color: var(--user-menu-background-color);
+    border-bottom: thin solid var(--user-menu-border-color);
+    border-left: thin solid var(--user-menu-border-color);
+    border-right: thin solid var(--user-menu-border-color);
     padding: 10px 0 10px 0;
 }
 #user-menu .menu-section {
     padding: 5px 0;
-    border-bottom: thin solid #bbb;
+    border-bottom: thin solid var(--user-menu-spacer-color);
 }
 #user-menu .menu-section.bottom {
     border-bottom: none;

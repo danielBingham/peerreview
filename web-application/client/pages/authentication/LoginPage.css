@@ -3,7 +3,7 @@
     margin: 50px auto;
     padding: 20px;
     width: 500px;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     background-color: white;
 }
 #login-page .inner-wrapper {

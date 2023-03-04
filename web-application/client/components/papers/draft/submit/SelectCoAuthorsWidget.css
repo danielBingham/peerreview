@@ -1,5 +1,5 @@
 .submission-form {
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     margin: 50px auto;
     padding: 20px;
     width: 1000px;

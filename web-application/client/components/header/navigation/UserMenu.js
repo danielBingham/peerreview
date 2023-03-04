@@ -69,7 +69,9 @@ const UserMenu = function(props) {
             </div>
             <div className="menu-section">
                 <div className="menu-item"><Link to="/account/profile">edit profile</Link></div>
-                <div className="menu-item"><Link to="/account/details">account details</Link></div>
+                <div className="menu-item"><Link to="/account/change-email">change email</Link></div>
+                <div className="menu-item"><Link to="/account/change-password">change password</Link></div>
+                <div className="menu-item"><Link to="/account/orcid">connect ORCID iD</Link></div>
                 <div className="menu-item"><Link to="/account/settings">account settings</Link></div>
             </div>
             <div className="menu-section bottom"> 

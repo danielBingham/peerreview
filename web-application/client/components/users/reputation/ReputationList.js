@@ -5,6 +5,11 @@ import { useSearchParams } from 'react-router-dom'
 import { getReputations, clearQuery, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 
 import Field from '/components/fields/Field'
+import List from '/components/generic/list/List'
+import ListControl from '/components/generic/list/ListControl'
+import ListHeader from '/components/generic/list/ListHeader'
+import ListGridContent from '/components/generic/list/ListGridContent'
+import ListNoContent from '/components/generic/list/ListNoContent'
 import PaginationControls from '/components/PaginationControls'
 import Spinner from '/components/Spinner'
 
@@ -28,15 +33,19 @@ const ReputationList = function(props) {
         return state.reputation.query[props.userId]
     })
 
-    const dispatch = useDispatch()
-
-    useEffect(function() {
-        if ( props.id && reputationRequest && reputationRequest.state == 'fulfilled') {
-            const element = document.getElementById(props.id)
-            element.scrollIntoView(true) 
+    const meta = useSelector(function(state) {
+        if ( ! state.reputation.query[props.userId] ) {
+            return {
+                count: 0,
+                page: 1,
+                pageSize: 1,
+                numberOfPages: 1
+            }
         }
-    }, [ props.id, reputationRequest ])
+        return state.reputation.query[props.userId].meta
+    })
 
+    const dispatch = useDispatch()
     useEffect(function() {
         const page = searchParams.get('reputation-page')
         if ( page ) {
@@ -56,32 +65,41 @@ const ReputationList = function(props) {
 
 
     let content = ( <Spinner local={true} /> )
+    let noContent = null
     if ( reputationRequest && reputationRequest.state == 'fulfilled') {
         if ( reputations && reputations.results ) {
             const reputationViews = []
             for ( const reputation of reputations.results) {
                 reputationViews.push(<div key={ reputation.field.id } className="reputation"><Field field={ reputation.field } /> { parseInt(reputation.reputation).toLocaleString() } </div>)
             }
-            content = (
-                <div  className="grid-wrapper">
-                    {reputationViews}
-                </div>
-            )
-        } 
+
+            if ( reputationViews.length > 0 ) {
+                content = reputationViews
+            } else {
+                content = null
+                noContent = (<span>No reputation earned.</span>)
+            }
+        }  else {
+            content = null
+            noContent = (<span>No reputation earned.</span>)
+        }
     } else if ( reputationRequest && reputationRequest.state == 'failed' ) {
-        content = (<div className="error"> Something went wrong with the attempt to retrieve reputation: { reputationRequest.error }.</div>)
+        content = null
+        noContent = (<div className="error"> Something went wrong with the attempt to retrieve reputation: { reputationRequest.error }.</div>)
     }
 
     return (
-        <div id={props.id} className="reputation-list">
-            <div className="header">
-                <h2>Reputation</h2>
-            </div>
-            <div className="content">
+        <List>
+            <ListHeader title="Reputation">
+            </ListHeader>
+            <ListNoContent>
+                {noContent}
+            </ListNoContent>
+            <ListGridContent>
                 {content}
-            </div>
-            { reputations && <PaginationControls  prefix={'reputation'} counts={reputations.meta} /> }
-        </div>
+            </ListGridContent>
+            <PaginationControls  prefix={'reputation'} counts={meta} /> 
+        </List>
     )
 
 }

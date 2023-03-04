@@ -1,9 +1,10 @@
 header {
     display: flex;
-    margin: 0 0 20px 0;
-    padding: 10px 50px;
-    border-bottom: thin solid #aaa;
-    background-color: white;
+    margin: 0;
+    padding: 15px 50px;
+    border-bottom: thin solid var(--header-border-color);
+    background-color: var(--header-background-color);
+    color: var(--header-text-color);
     min-width: 1200px;
 }
 
@@ -38,9 +39,9 @@ header .navigation-block {
 }
 
 header a:link, header a:active, header a:visited {
-    color: black;
+    color: var(--header-text-color);
 }
 
 header a:hover {
-    color: #666;
+    color: white;
 }

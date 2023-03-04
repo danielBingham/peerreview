@@ -5,20 +5,53 @@ import FieldView from '/components/fields/FieldView'
 import FieldListView from '/components/fields/list/FieldListView'
 import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
 
+import { DocumentCheckIcon, TagIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
+
+import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
+import PageTab from '/components/generic/pagetabbar/PageTab'
+import Spinner from '/components/Spinner'
+
 import './FieldPage.css'
 
 const FieldPage = function(props) {
     const { id } = useParams()
-
+    
     // ======= Render =====================================
+    const selectedTab = ( props.tab ? props.tab : 'papers')
+
+    let content = ( <Spinner local={true} /> )
+    if ( selectedTab == 'papers' ) {
+        content = (
+            <PublishedPaperList fieldId={ id } />
+        )
+    } else if ( selectedTab == 'parents' ) {
+        content = (
+            <FieldListView title={ 'Parents' } child={ id } />
+        )
+    } else if ( selectedTab == 'children' ) {
+        content = (
+            <FieldListView title={ 'Children' } parent={ id } />
+        )
+    }
 
     return (
-        <div id="field-page" className="page">
-            <FieldView id={ id } />
-            <FieldListView title={ 'Parents' } child={ id } />
-            <FieldListView title={ 'Children' } parent={ id } />
-            <PublishedPaperList fieldId={ id } />
-        </div>
+        <>
+            <PageTabBar>
+                <PageTab url={`/field/${id}/papers`} selected={selectedTab == 'papers'}>
+                    <DocumentCheckIcon /> Papers
+                </PageTab>
+                <PageTab url={`/field/${id}/parents`} selected={selectedTab == 'parents'}>
+                    <TagIcon /> Parents
+                </PageTab>
+                <PageTab url={`/field/${id}/children`} selected={selectedTab == 'children'}>
+                    <TagIcon /> Children
+                </PageTab>
+            </PageTabBar>
+            <div id="field-page" className="page">
+                <FieldView id={ id } />
+                { content }
+            </div>
+        </>
     )
 }
 

@@ -11,7 +11,6 @@ import './AboutPage.css'
 const AboutPage = function(props) {
 
     useEffect(function() {
-        console.log(document.location.hash)
         if ( document.location.hash ) {
             document.querySelector(document.location.hash).scrollIntoView()
         }

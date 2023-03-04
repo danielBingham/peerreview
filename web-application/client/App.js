@@ -20,10 +20,13 @@ import { getFeatures, cleanupRequest as cleanupFeaturesRequest } from '/state/fe
 import AdminPage from '/pages/AdminPage'
 
 import Header from '/components/header/Header'
+import Footer from '/components/footer/Footer'
 import NeedEmailConfirmationNotice from '/components/authentication/NeedEmailConfirmationNotice'
 
 import HomePage from '/pages/HomePage'
 import AboutPage from '/pages/AboutPage'
+import TermsOfServicePage from '/pages/TermsOfServicePage'
+import PrivacyPage from '/pages/PrivacyPage'
 
 import RegistrationPage from '/pages/authentication/RegistrationPage'
 import LoginPage from '/pages/authentication/LoginPage'
@@ -212,12 +215,14 @@ const App = function(props) {
     return (
         <ErrorBoundary>
             <Router>
-                { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
                 <Header />
                 <main>
+                    { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
                     <Routes>
                         <Route path="/" element={ <HomePage /> } />
                         <Route path="/about" element={ <AboutPage />} />
+                        <Route path="/tos" element={ <TermsOfServicePage /> } />
+                        <Route path="/privacy" element={ <PrivacyPage /> } />
                         <Route path="/admin" element={ <AdminPage />} />
 
                         { /* ========== Authentication Controls =============== */ }
@@ -233,15 +238,21 @@ const App = function(props) {
                         { /* ========== Users ================================= */ }
                         <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 
                         <Route path="/users" element={ <UsersListPage /> } />
-                        <Route path="/user/:id" element={ <UserProfilePage /> } />
+                        <Route path="/user/:id">
+                            <Route path=":tab" element={ <UserProfilePage /> } />
+                            <Route index element={ <UserProfilePage /> } />
+                        </Route>
                         <Route path="/account">
-                            <Route path=":pane" element={ <UserAccountPage /> } />
+                            <Route path=":tab" element={ <UserAccountPage /> } />
                             <Route index element={ <UserAccountPage /> } />
                         </Route>
 
                         { /* ========== fields ================================= */ }
                         <Route path="/fields" element={ <FieldsListPage /> } />
                         <Route path="/field/:id" element={ <FieldPage /> } />
+                        <Route path="/field/:id/papers" element={ <FieldPage tab="papers" /> } />
+                        <Route path="/field/:id/parents" element={ <FieldPage tab="parents" /> } />
+                        <Route path="/field/:id/children" element={ <FieldPage tab="children" /> } />
 
                         { /* ========= Draft Papers  ============================ */ }
                         <Route path="/submit" element={ <SubmitPage /> }  />
@@ -265,6 +276,7 @@ const App = function(props) {
                         <Route path="/paper/:id/version/:versionNumber/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
                     </Routes>
                 </main>
+                <Footer />
             </Router>
         </ErrorBoundary>
     )

@@ -8,6 +8,10 @@ import PublishedPaperView from '/components/papers/published/view/PublishedPaper
 import DraftPaperView from '/components/papers/draft/view/DraftPaperView'
 import DraftPaperReviewsView from '/components/papers/draft/view/DraftPaperReviewsView'
 
+import { DocumentCheckIcon, ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
+
+import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
+import PageTab from '/components/generic/pagetabbar/PageTab'
 import Spinner from '/components/Spinner'
 
 const PublishedPaperPage = function(props) {
@@ -40,24 +44,10 @@ const PublishedPaperPage = function(props) {
 
     // ================= User Action Handling  ================================
     
-    const dispatch = useDispatch()
-    const navigate = useNavigate()
-    
-    const selectTab = function(tabName) {
-        if ( tabName == 'paper' ) {
-            const url = `/paper/${id}`
-            navigate(url)
-        } else if ( tabName == 'reviews' ) {
-            const url = `/paper/${id}/version/${ ( versionNumber ? versionNumber : mostRecentVersion ) }/reviews`
-            navigate(url)
-        } else if ( tabName == 'drafts' ) {
-            const url = `/paper/${id}/version/${ ( versionNumber ? versionNumber : mostRecentVersion )}/drafts`
-            navigate(url)
-        }
-    }
 
     // ======= Effect Handling =====================
     
+    const dispatch = useDispatch()
     
     /**
      * If we haven't retrieved the paper we're viewing yet, go ahead and
@@ -106,11 +96,17 @@ const PublishedPaperPage = function(props) {
 
     return (
         <>
-            <div className="page-tab-bar">
-                <div onClick={(e) => selectTab('paper')} className={`page-tab ${ ( selectedTab == 'paper' ? 'selected' : '' )}`}>Paper</div>
-                <div onClick={(e) => selectTab('reviews')} className={`page-tab ${ ( selectedTab == 'reviews' ? 'selected' : '')}`}>Reviews</div>
-                <div onClick={(e) => selectTab('drafts')} className={`page-tab ${ ( selectedTab == 'drafts' ? 'selected' : '' ) }`}>Drafts</div>
-            </div>
+            <PageTabBar>
+                <PageTab url={`/paper/${id}`} selected={selectedTab == 'paper'}>
+                    <DocumentCheckIcon /> Paper
+                </PageTab>
+                <PageTab url={`/paper/${id}/version/${ ( versionNumber ? versionNumber : mostRecentVersion ) }/reviews`} selected={selectedTab == 'reviews'}>
+                    <ChatBubbleLeftRightIcon /> Reviews
+                </PageTab>
+                <PageTab url={`/paper/${id}/version/${ ( versionNumber ? versionNumber : mostRecentVersion )}/drafts`} selected={selectedTab == 'drafts'}>
+                    <DocumentTextIcon /> Drafts
+                </PageTab>
+            </PageTabBar>
             <div id="published-paper-page" className="page">
                 {content}
             </div>

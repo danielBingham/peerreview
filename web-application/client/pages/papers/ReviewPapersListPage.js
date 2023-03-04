@@ -14,7 +14,12 @@ const ReviewPapersListPage = function(props) {
 
     return (
         <div id="review-papers-list-page" className="page">
-            { ! currentUser && <div className="login-notice">You must be logged in to review submitted drafts.  Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</div> }
+            { ! currentUser && 
+            <div className="login-notice">
+                <p>You must be logged in to review submitted drafts.</p>
+                <p>Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</p>
+            </div>
+            }
             { currentUser && <DraftPapersListView /> }
         </div>
     )

@@ -6,6 +6,11 @@ import FieldBadge from '../FieldBadge'
 import { getFields, clearQuery, cleanupRequest } from '/state/fields'
 
 import Spinner from '/components/Spinner'
+import List from '/components/generic/list/List'
+import ListControl from '/components/generic/list/ListControl'
+import ListHeader from '/components/generic/list/ListHeader'
+import ListGridContent from '/components/generic/list/ListGridContent'
+import ListNoContent from '/components/generic/list/ListNoContent'
 import PaginationControls from '/components/PaginationControls'
 
 import './FieldListView.css'
@@ -102,28 +107,35 @@ const FieldListView = function(props) {
     // Wait for the request to finish before displaying.  That ensures we don't
     // flicker with partial data.
     let content = ( <Spinner /> ) 
+    let noContent = null
     if (request && request.state == 'fulfilled') {
         content = []
         if ( fields ) {
             for ( const field of fields)  {
-                content.push(<FieldBadge key={field.id} id={field.id} />)
+                content.push(<FieldBadge key={field.id} id={field.id} target="_self" />)
             }
         }
         if ( content.length == 0) {
-            content = ( <div className="empty-list">No fields found.</div> )
+            content = null
+            noContent = ( <div className="empty-list">No fields found.</div> )
         }
     } else if ( (request && request.state == 'failed') ) {
-        content = ( <div className="error">Request for fields failed with error: { request.error }. Please report this as a bug.</div> )
+        content = null
+        noContent = ( <div className="error">Request for fields failed with error: { request.error }. Please report this as a bug.</div> )
     }
 
     return (
-        <div className="field-list">
-            <div className="header">
-                <h2>{ title }</h2>
-            </div>
-            {content}
-            { meta.numberOfPages > 1 && <PaginationControls prefix={title} counts={meta} /> }
-        </div>
+        <List>
+            <ListHeader title={ title }>
+            </ListHeader>
+            <ListNoContent>
+                {noContent}
+            </ListNoContent>
+            <ListGridContent>
+                {content}
+            </ListGridContent>
+            <PaginationControls prefix={title} counts={meta} />
+        </List>
     )
 }
 

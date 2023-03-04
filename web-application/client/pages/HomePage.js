@@ -49,8 +49,6 @@ const HomePage = function(props) {
 
     return (
         <div id="home-page" className="page">
-            <WelcomeNotice />
-            <SupportNotice />
             <PaperSearchView />
             <PublishedPaperList query={query} />
         </div>

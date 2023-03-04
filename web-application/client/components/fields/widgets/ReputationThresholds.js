@@ -35,18 +35,6 @@ const ReputationThresholds = function(props) {
         return state.fields.dictionary[props.fieldId]
     })
     
-    const reputation = useSelector(function(state) {
-        if ( ! currentUser ) {
-            return null
-        }
-
-        if ( ! state.reputation.dictionary[currentUser.id] ) {
-            return null
-        }
-
-        return state.reputation.dictionary[currentUser.id][props.fieldId]
-    })
-
     // ======= Effect Handling ======================================
     
     const dispatch = useDispatch()
@@ -71,28 +59,22 @@ const ReputationThresholds = function(props) {
 
     // ======= Render ===============================================
 
-    let currentReputation = null
-    if ( currentUser && field ) {
-       currentReputation = ( 
-           <div className="current-reputation">You have <strong>{ reputation ? reputation.reputation : 0}</strong> reputation in <Field field={field} /></div>
-       )
-    }
 
     let reputationRequirements = null
     if ( field ) {
         reputationRequirements = (
             <>
-                <div className="publish reputation-requirement"> 
+                <div className="publish reputation"> 
                     { reputationThresholds.publish * field.averageReputation } 
-                    <div className="label">To Publish</div>
+                    <div className="label">Publish</div>
                 </div>
-                <div className="review reputation-requirement">
+                <div className="review reputation">
                     { reputationThresholds.review * field.averageReputation } 
-                    <div className="label">To Review</div>
+                    <div className="label">Review</div>
                 </div>
-                <div className="referee reputation-requirement">
+                <div className="referee reputation">
                     { reputationThresholds.referee * field.averageReputation } 
-                    <div className="label">To Vote and Respond</div>
+                    <div className="label">Referee</div>
                 </div>
             </>
         )
@@ -100,10 +82,8 @@ const ReputationThresholds = function(props) {
 
     return (
         <div className="reputation-thresholds">
-            <div className="header"><h2>Reputation</h2></div>
-            { currentReputation }
-            <div className="explanation">To publish, review, or referee papers in this field, you will need to meet the reputation thresholds outlined below.  You only need to meet the threshold in one of the fields a paper is tagged with in order to act on that paper.</div>
-            <div className="reputation-requirements-wrapper">
+            <div className="header"><h2>Thresholds</h2></div>
+            <div className="content">
                 { reputationRequirements }
             </div>
         </div>

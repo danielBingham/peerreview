@@ -1,5 +1,5 @@
 .draft-paper-submission-form {
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     margin: 50px auto;
     padding: 20px;
     width: 1000px;
@@ -23,7 +23,7 @@
 .draft-paper-submission-form input[type=text] {
     width: 948px;
     padding: 5px;
-    border: thin solid #bbb;
+    border: thin solid var(--input-border-color);
 }
 
 .draft-paper-submission-form .submit {

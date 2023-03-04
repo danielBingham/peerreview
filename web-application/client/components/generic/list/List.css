@@ -1,0 +1,6 @@
+.list {
+    width: 100%;
+    margin: 0 auto;
+    background-color: white;
+    border: thin solid var(--main-border-color);
+}

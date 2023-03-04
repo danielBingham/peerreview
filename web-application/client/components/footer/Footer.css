@@ -1,0 +1,38 @@
+footer {
+    padding: 50px;
+    border-top: thin solid var(--footer-border-color);
+    background-color: var(--footer-background-color);
+    color: var(--footer-text-color);
+    font-style: italic;
+}
+footer .wrapper {
+    margin: 0 auto;
+    width: 1200px;
+    text-align: center; 
+
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+
+}
+footer .explanation-copyright {
+    grid-column: 1 / 2;
+}
+footer .explanation {
+    line-height: 1.6em;
+    margin-bottom: 2em;
+}
+footer .about-links {
+    grid-column: 2 /3;
+}
+footer .involve-links {
+    grid-column: 3 / 4;
+}
+
+footer a:link, footer a:active, footer a:visited {
+    color: var(--footer-text-color);
+    font-style: normal;
+}
+
+footer a:hover {
+    color: white;
+}

@@ -59,7 +59,7 @@ const AuthenticationNavigation = function(props) {
     if ( currentUser ) {
         return (
             <div id="authentication-navigation" className="navigation-block authenticated">
-                <a href="" onClick={toggleMenu}>{ menuVisible ? <BarsArrowUpIcon /> : <BarsArrowDownIcon /> }<UserTag id={currentUser.id} link={false} /></a>
+                <span className="logged-in-user"><a href="" onClick={toggleMenu}>{ menuVisible ? <BarsArrowUpIcon /> : <BarsArrowDownIcon /> }<UserTag id={currentUser.id} link={false} /></a></span>
                 <UserMenu visible={menuVisible} toggleMenu={toggleMenu} />
             </div>
         )

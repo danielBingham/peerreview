@@ -27,7 +27,7 @@
 }
 .user-profile-edit-form .form-field input {
     padding: 5px;
-    border: thin solid #bbb;
+    border: thin solid var(--input-border-color);
     width: 800px;
 }
 .user-profile-edit-form .form-text {
@@ -40,7 +40,7 @@
 .user-profile-edit-form .form-text textarea {
     width: 900px;
     height: 200px;
-    border: thin solid #bbb;
+    border: thin solid var(--input-border-color);
 }
 .user-profile-edit-form .submit {
     text-align: center;

@@ -7,7 +7,7 @@
     display: none;
     padding: 10px;
     width: 358px;
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     text-align: center;
 }
 .draft-paper-pdf #collapsed-comments.show {

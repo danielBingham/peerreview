@@ -5,7 +5,7 @@
 .paper-response-list .header {
     display: grid;
     grid-template-columns: auto 450px;
-    border-bottom: thin solid #bbb;
+    border-bottom: thin solid var(--main-border-color);
 }
 .paper-response-list .header h2 {
     grid-column: 1 / 2;

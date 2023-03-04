@@ -1,10 +1,15 @@
-#user-account-page.page {
-    background-color: inherit;
-    border: none;
-}
 #user-account-page .login-notice {
-    border: thin solid #bbb;
+    border: thin solid var(--main-border-color);
     background-color: white;
     padding: 20px;
     text-align: center;
 }
+#user-account-page .orcid-connection h2 {
+    text-align: center;
+}
+#user-account-page .orcid-connection p {
+    margin: 1.6em auto;
+    width: 600px;
+}
+
+

@@ -10,6 +10,10 @@ import DraftPaperReviewsView from '/components/papers/draft/view/DraftPaperRevie
 import DraftPaperHeader from '/components/papers/draft/view/header/DraftPaperHeader'
 import ReviewList from '/components/reviews/list/ReviewList'
 
+import { ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
+
+import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
+import PageTab from '/components/generic/pagetabbar/PageTab'
 import Spinner from '/components/Spinner'
 import Error404 from '/components/Error404'
 
@@ -42,16 +46,11 @@ const DraftPaperPage = function(props) {
 
     // ======= Actions ====================================
 
-    const selectTab = function(tabName) {
-        let version = versionNumber || mostRecentVersion
-        const urlString = `/draft/${id}/version/${version}/${tabName}`
-        navigate(urlString)
-    }
 
     // ======= Effect Handling =====================
    
-    const navigate = useNavigate()
     const dispatch = useDispatch()
+    const navigate = useNavigate()
 
 
     useEffect(function() {
@@ -87,6 +86,7 @@ const DraftPaperPage = function(props) {
 
 
 
+    const version = versionNumber || mostRecentVersion
     const selectedTab = ( props.tab ? props.tab : 'reviews')
     let content = ( <Spinner local={true} /> )
     if ( currentUser && request && request.state == 'fulfilled') {
@@ -110,10 +110,14 @@ const DraftPaperPage = function(props) {
     
     return (
         <>
-            <div className="page-tab-bar">
-                <div onClick={(e) => selectTab('reviews')} className={`page-tab ${ ( selectedTab == 'reviews' ? 'selected' : '' )}`}>Reviews</div>
-                <div onClick={(e) => selectTab('drafts')} className={`page-tab ${ ( selectedTab == 'drafts' ? 'selected' : '')}`}>Drafts</div>
-            </div>
+            <PageTabBar>
+                <PageTab url={`/draft/${id}/version/${version}/reviews`} selected={selectedTab == 'reviews'}>
+                    <ChatBubbleLeftRightIcon /> Reviews
+                </PageTab>
+                <PageTab url={`/draft/${id}/version/${version}/drafts`} selected={selectedTab == 'drafts'}>
+                    <DocumentTextIcon /> Drafts
+                </PageTab>
+            </PageTabBar>
             <div id="draft-paper-page" className="page">
                 { content }
             </div>
