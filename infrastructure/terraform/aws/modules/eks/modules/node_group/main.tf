@@ -217,26 +217,3 @@ resource "aws_eks_node_group" "this" {
   ]
 }
 
-resource "aws_cloudwatch_metric_alarm" "cpu_utilization" {
-  for_each = toset(flatten([for resource in aws_eks_node_group.this.resources : [
-      for group in resource.autoscaling_groups : group.name
-    ]
-  ]))
-
-  alarm_name = "${var.application}-${var.environment}-${var.service}-node-cpu-utilization"
-  comparison_operator = "GreaterThanOrEqualToThreshold"
-  evaluation_periods = 2
-  metric_name = "CPUUtilization"
-  namespace = "AWS/EC2"
-  period = 120
-  statistic = "Average"
-  threshold = 80
-  alarm_description = "Monitors average CPU utilization for the EKS webapp nodegroup."
-
-  dimensions = {
-    AutoScalingGroupName = each.key 
-  }
-
-  alarm_actions = [var.alarm_topic_arn]
-}
-

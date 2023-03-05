@@ -13,14 +13,12 @@
  *
  ******************************************************************************/
 
-module "cluster" {
+module "eks" {
   source = "../../../../modules/eks"
 
   vpc_id = var.vpc_id
   private_subnet_ids = var.private_subnet_ids
   public_subnet_ids = var.public_subnet_ids
-
-  alarm_topic_arn = var.alarm_topic_arn
 
   application = "peer-review" 
   environment = "staging" 

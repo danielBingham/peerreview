@@ -9,10 +9,6 @@ variable "public_subnet_ids" {
   description = "The public subnets to associate with the cluster.  These will be used for ELBs for the ingress."
   type = list(any)
 }
-variable "alarm_topic_arn" {
-  description = "The ARN of the SNS topic to send alarms to."
-}
-
 
 variable "aws_config" {
   description = "Path to the AWS config file we want to use."

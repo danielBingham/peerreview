@@ -44,10 +44,6 @@ variable "subnet_ids" {
   type = list(string)
 }
 
-variable "alarm_topic_arn" {
-  description = "The ARN of the SNS topic to send alarms to."
-}
-
 /**
  * Naming variables.  
  *

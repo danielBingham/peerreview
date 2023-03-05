@@ -451,8 +451,6 @@ module "node_group" {
   max_size = 10 
   min_size = 2
 
-  alarm_topic_arn = var.alarm_topic_arn
-
   application = var.application
   environment = var.environment
   service = var.service

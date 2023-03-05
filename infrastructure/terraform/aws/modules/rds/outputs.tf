@@ -6,6 +6,9 @@ output "database_security_group_id" {
   value = aws_security_group.this.id
 }
 
+/**
+ * Necessary to add monitoring to the database.
+ */
 output "database_id" {
   value = aws_db_instance.this.id
 }

@@ -47,9 +47,6 @@ variable "min_size" {
   description = "The minimum number of nodes we want the node group to scale down to."
 }
 
-variable "alarm_topic_arn" {
-  description = "The arn of the SNS topic to send alarms to."
-}
 
 /**
  * Naming variables.  

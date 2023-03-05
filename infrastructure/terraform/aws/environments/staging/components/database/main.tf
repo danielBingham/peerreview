@@ -12,7 +12,7 @@
  *
  ******************************************************************************/
 
-module "database" {
+module "rds" {
   source = "../../../../modules/rds"
 
   username = var.username
@@ -24,8 +24,6 @@ module "database" {
 
   instance_class = "db.t4g.small"
   allocated_storage = 20
-
-  alarm_topic_arn = var.alarm_topic_arn
 
   application = "peer-review" 
   environment = "staging" 

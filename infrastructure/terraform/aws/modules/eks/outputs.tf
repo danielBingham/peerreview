@@ -22,3 +22,6 @@ output "webapp_nodes_security_group_id" {
   value = module.node_group.nodes_security_group_id
 }
 
+output "webapp_node_group_resources" {
+  value = module.node_group.eks_node_group_resources
+}
