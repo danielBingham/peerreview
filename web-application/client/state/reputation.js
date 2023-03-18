@@ -1,6 +1,10 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
+import { addSettingsToDictionary } from '/state/settings'
+import { setCurrentUser, setSettings } from '/state/authentication'
+import { addUsersToDictionary } from '/state/users'
+
 import { 
     makeTrackedRequest,
     makeSearchParams,
@@ -101,6 +105,7 @@ const reputationSlice = createSlice({
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
         useRequest: useRequest,
+        bustRequestCache: bustRequestCache,
         cleanupRequest: cleanupTrackedRequest, 
         garbageCollectRequests: garbageCollectTrackedRequests
     }
@@ -188,8 +193,16 @@ export const getReputation = function(userId, fieldId) {
  */
 export const initializeReputation = function(userId) {
     return function(dispatch, getState) {
+        dispatch(reputationSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reputationSlice,
-            'GET', `/user/${userId}/reputation/initialization`)
+            'GET', `/user/${userId}/reputation/initialization`, null,
+            function(responseBody) {
+                dispatch(setCurrentUser(responseBody.user))
+                dispatch(setSettings(responseBody.settings))
+                dispatch(addSettingsToDictionary(responseBody.settings))
+                dispatch(addUsersToDictionary(responseBody.user))
+            }
+        )
     }
 }
 

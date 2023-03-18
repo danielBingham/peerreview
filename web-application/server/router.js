@@ -195,6 +195,27 @@ module.exports = function(database, logger, config) {
         })
     })
 
+    /**************************************************************************
+     * Testing Routes
+     *
+     * These routes are only used for testing and are removed from Production.
+     **************************************************************************/
+
+    const TestingController = require('./controllers/TestingController')
+    const testingController = new TestingController(database, logger, config)
+
+    router.post('/testing/orcid', function(request, response, next) {
+        testingController.postOrcid(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/testing/orcid/reset', function(request, response, next) {
+        testingController.getOrcidReset(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
     /******************************************************************************
      *          User Settings REST Routes
      ******************************************************************************/

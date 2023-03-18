@@ -11,6 +11,7 @@ import ChangeEmailForm from '/components/users/account/widgets/ChangeEmailForm'
 
 import ORCIDTag from '/components/authentication/ORCIDTag'
 import ORCIDAuthenticationButton from '/components/authentication/ORCIDAuthenticationButton'
+import TestOrcidForm from '/components/users/account/TestOrcidForm'
 
 import { UserCircleIcon, EnvelopeIcon, Cog8ToothIcon, LockClosedIcon } from '@heroicons/react/24/outline'
 
@@ -27,6 +28,11 @@ const UserAccountPage = function(props) {
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
+
+    const configuration = useSelector(function(state) {
+        return state.system.configuration
+    })
+    
 
     // ======= Render =====================================
     const selectedTab = ( tab ? tab : 'profile')
@@ -59,6 +65,8 @@ const UserAccountPage = function(props) {
         content = orcidIdConnection
     } else if ( selectedTab == 'settings' ) {
         content = ( <UserSettingsForm /> ) 
+    } else if ( selectedTab == 'test-orcid') {
+        content = ( <TestOrcidForm /> )
     }
 
     return (
@@ -79,6 +87,9 @@ const UserAccountPage = function(props) {
                 <PageTab url="/account/settings" selected={selectedTab == 'settings'}>
                     <Cog8ToothIcon /> Settings
                 </PageTab>
+                { configuration.environment != 'production' && <PageTab url="/account/test-orcid" selected={selectedTab == 'test-orcid'}>
+                    Test ORCID
+                </PageTab> }
             </PageTabBar>
             <div id="user-account-page" className="page">
                 { currentUser && content }

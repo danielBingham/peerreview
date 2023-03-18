@@ -11,6 +11,8 @@ module.exports = class ReputationController {
         this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
         this.reputationGenerationService = new backend.ReputationGenerationService(database, logger)
         this.reputationDAO = new backend.ReputationDAO(database, logger)
+        this.userDAO = new backend.UserDAO(database)
+        this.settingsDAO = new backend.SettingsDAO(database, logger)
     }
 
     /**
@@ -85,9 +87,30 @@ module.exports = class ReputationController {
 
         try {
             await this.reputationGenerationService.initializeReputationForUser(userId)
-            return response.status(200).json({})
+
+            const users = await this.userDAO.selectUsers('WHERE users.id=$1', [userId])
+            if ( ! users ) {
+                throw new ServiceError('no-user', 'Failed to get full record for authenticated user!')
+            } 
+
+            const settings = await this.settingsDAO.selectSettings(
+                'WHERE user_settings.user_id = $1', 
+                [ userId ]
+            )
+
+            request.session.user = users[0]
+
+            const responseBody = {
+                user: request.session.user,
+                settings: settings[0]
+            }
+
+            console.log('Response body: ')
+            console.log(responseBody)
+
+            return response.status(200).json(responseBody)
         } catch (error) {
-            if ( error instanceof bakcend.ServiceError) {
+            if ( error instanceof backend.ServiceError) {
                 // Validation: 2. User must have an ORCID iD attached to their record.
                 // We checked this in ReputationGenerationService::initializeReputationForUser()
                 if (error.type == 'no-orcid') {

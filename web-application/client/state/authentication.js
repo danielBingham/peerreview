@@ -17,6 +17,7 @@ import {
 
 import { addSettingsToDictionary } from '/state/settings'
 import { reset } from '/state/system'
+import { addUsersToDictionary } from '/state/users'
 
 export const authenticationSlice = createSlice({
     name: 'authentication',
@@ -83,8 +84,8 @@ export const getAuthentication = function() {
     return function(dispatch, getState) {
         const endpoint = '/authentication'
 
-        // TODO techdebt May need a way to just turn off using cached requests in certain
-        // cases.
+        // Don't need to bust the cache for authentication requests, because we
+        // override cleanupRequest to avoid caching them at all.
         return makeTrackedRequest(dispatch, getState, authenticationSlice,
             'GET', endpoint, null,
             function(responseBody ) {
@@ -92,6 +93,7 @@ export const getAuthentication = function() {
                     dispatch(authenticationSlice.actions.setCurrentUser(responseBody.user))
                     dispatch(authenticationSlice.actions.setSettings(responseBody.settings))
                     dispatch(addSettingsToDictionary(responseBody.settings))
+                    dispatch(addUsersToDictionary(responseBody.user))
                 } else if ( responseBody ) {
                     dispatch(authenticationSlice.actions.setCurrentUser(null))
                     dispatch(authenticationSlice.actions.setSettings(responseBody.settings))
@@ -129,6 +131,7 @@ export const postAuthentication = function(email, password) {
                 dispatch(authenticationSlice.actions.setCurrentUser(responseBody.user))
                 dispatch(authenticationSlice.actions.setSettings(responseBody.settings))
                 dispatch(addSettingsToDictionary(responseBody.settings))
+                dispatch(addUsersToDictionary(responseBody.user))
             }
         )
     }
@@ -216,6 +219,7 @@ export const postOrcidAuthentication = function(code, connect) {
                 dispatch(authenticationSlice.actions.setCurrentUser(responseContent.user))
                 dispatch(authenticationSlice.actions.setSettings(responseContent.settings))
                 dispatch(addSettingsToDictionary(responseContent.settings))
+                dispatch(addUsersToDictionary(responseBody.user))
             }
         )
     }
@@ -232,6 +236,7 @@ export const validateToken = function(token, type) {
                 dispatch(authenticationSlice.actions.setCurrentUser(responseContent.user))
                 dispatch(authenticationSlice.actions.setSettings(responseContent.settings))
                 dispatch(addSettingsToDictionary(responseContent.settings))
+                dispatch(addUsersToDictionary(responseBody.user))
             }
         )
     }

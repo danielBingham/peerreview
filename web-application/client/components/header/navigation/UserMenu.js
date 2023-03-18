@@ -60,7 +60,8 @@ const UserMenu = function(props) {
     }, [ deleteAuthenticationRequestId ])
 
     // ======= Render ===============================================
-    
+   
+    const isAdmin = currentUser.permissions == 'admin' || currentUser.permissions == 'superadmin'
     return (
         <div id="user-menu" className="floating-menu" onClick={props.toggleMenu} style={{ display: ( props.visible ? 'block' : 'none' ) }} >
             <div className="menu-section">
@@ -74,6 +75,9 @@ const UserMenu = function(props) {
                 <div className="menu-item"><Link to="/account/orcid">connect ORCID iD</Link></div>
                 <div className="menu-item"><Link to="/account/settings">account settings</Link></div>
             </div>
+            { isAdmin && <div className="menu-section admin">
+                <div className="menu-item"><Link to="/admin">admin</Link></div>
+            </div> }
             <div className="menu-section bottom"> 
                 <div className="menu-item"><a href="" className="logout" onClick={handleLogout} >logout</a></div>
             </div>

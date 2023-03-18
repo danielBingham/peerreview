@@ -28,6 +28,8 @@ module.exports = class ReputationGenerationService {
      *
      * @param {int} userId  The id of the user we want to recalculate
      * reputation for.
+     *
+     * TODO Update this to account for initial reputation.
      */
     async recalculateReputation(userId) {
         // ======== Clear out the existing reputation =========================
@@ -67,6 +69,25 @@ module.exports = class ReputationGenerationService {
 
         console.log(`Recalculating User's Total reputation.`)
         await this.recalculateReputationForUser(userId)
+
+        // ======== Add initial field reputation back in ======================
+        const initialFieldResults = await this.database.query(`
+            SELECT field_id, reputation 
+                FROM user_initial_field_reputation
+            WHERE user_id = $1
+        `, [ userId ])
+
+        for (const row of initialFieldResults.rows) {
+            const upsertResult = await this.database.query(`
+                INSERT INTO user_field_reputation (field_id, user_id, reputation) VALUES($1, $2, $3)
+                    ON CONFLICT (field_id, user_id) DO
+                UPDATE SET reputation = user_field_reputation.reputation + $3
+            `, [ row['field_id'], userId, row['reputation'] ])
+
+            if ( upsertResult.rowCount == 0 ) {
+                throw new Error(`Something went wrong in an attempt to upsert reputation for user ${userId} and ${row['field_id']}.`)
+            }
+        }
     }
 
     /**
@@ -395,6 +416,13 @@ module.exports = class ReputationGenerationService {
         await this.recalculateReputationForUser(review.userId)
     }
 
+    /**************************************************************************
+     *  Reputation Initialization Calculations
+     *
+     *  Methods to add initial reputation to a user from Open Alex.
+     *
+     **************************************************************************/
+
     /**
      * Add a work to the `user_initial_works_reputation` table.  A work is Open
      * Alex's version of a "paper", but can include more than just published
@@ -521,8 +549,10 @@ module.exports = class ReputationGenerationService {
         // increments the value of `user_field_reputation` for each initial
         // field.  This is to save us a query down the line.
         //
-        // So we need to call `recalculateReputation` first so that it can wipe and then regenerate `user_field_reputation`
-        // based on their Peer Review papers and reviews.  Then 
+        // So we need to call `recalculateReputation` first so that it can wipe
+        // and then regenerate `user_field_reputation` based on their Peer
+        // Review papers and reviews.  Then we call this with those already
+        // zeroed out.
         console.log(`Calculating field reputation for ${works.length} works.`) 
         for ( const work of works) {
             await this.incrementInitialUserReputationForFields(userId, work.fields, work.citations*10)
