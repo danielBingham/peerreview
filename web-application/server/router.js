@@ -170,27 +170,22 @@ module.exports = function(database, logger, config) {
     // TODO Remove before we go to production.  (Or formalize into a
     // admin/development interface only loaded on development and staging
     // environments.)
-    const reputationService = new backend.ReputationGenerationService(database, logger)
-    router.get('/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {
-        reputationService.initializeReputationForUserWithOrcidId(request.params.id, request.params.orcidId).then(function() {
-            return response.status(200).send()
-        }).catch(function(error) {
+    const AdminController = require('./controllers/AdminController') 
+    const adminController = new AdminController(database, logger, config)
+    router.get('/admin/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {
+        adminController.initializeReputationFromOrcid(request, response).catch(function(error) {
             next(error)
         })
     })
 
-    router.get('/user/:id/initialize-reputation/openalex/:openAlexId', function(request, response, next) {
-        reputationService.initializeReputationForUserWithOpenAlexId(request.params.id, request.params.openAlexId).then(function() {
-            return response.status(200).send()
-        }).catch(function(error) {
+    router.get('/admin/user/:id/initialize-reputation/openalex/:openAlexId', function(request, response, next) {
+        adminController.initializeReputationFromOpenAlex(request, response).catch(function(error) {
             next(error)
         })
     })
 
-    router.get('/user/:id/recalculate-reputation', function(request, response, next) {
-        reputationService.recalculateReputationForUser(request.params.id).then(function() {
-            return response.status(200).send()
-        }).catch(function(error) {
+    router.get('/admin/user/:id/recalculate-reputation', function(request, response, next) {
+        adminController.recalculateReputation(request, response).catch(function(error) {
             next(error)
         })
     })
