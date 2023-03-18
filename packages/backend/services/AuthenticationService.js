@@ -30,6 +30,9 @@ module.exports = class AuthenticationService {
         return bcrypt.compareSync(password, hash);
     }
 
+    /**
+     *
+     */
     async loginUser(id, request) {
         const users = await this.userDAO.selectUsers('WHERE users.id=$1', [id])
         if ( ! users ) {
@@ -42,6 +45,8 @@ module.exports = class AuthenticationService {
         }
 
         request.session.user = users[0]
+        console.log('Setting session to user: ')
+        console.log(request.session.user)
         return {
             user: request.session.user,
             settings: settings[0] 
@@ -97,4 +102,15 @@ module.exports = class AuthenticationService {
         return userMatch.id 
     }
 
+    async connectOrcid(request, orcidId) {
+        const user = {
+            id: request.session.user.id,
+            orcidId: orcidId
+        }
+        await this.userDAO.updatePartialUser(user)
+
+        const responseBody = await this.loginUser(request.session.user.id, request)
+        responseBody.type = "connection"
+        return responseBody
+    }
 }

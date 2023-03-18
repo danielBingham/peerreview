@@ -12,6 +12,7 @@ import fieldsReducer from './fields'
 import settingsReducer from './settings'
 import filesReducer from './files'
 import responsesReducer from './responses'
+import testingReducer from './testing'
 
 
 const reducers = combineReducers({
@@ -25,7 +26,8 @@ const reducers = combineReducers({
     fields: fieldsReducer,
     settings: settingsReducer,
     files: filesReducer,
-    responses: responsesReducer
+    responses: responsesReducer,
+    testing: testingReducer
 })
 
 const rootReducer = function(state, action) {

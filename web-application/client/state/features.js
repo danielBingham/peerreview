@@ -7,7 +7,7 @@ import {
     recordRequestFailure, 
     recordRequestSuccess, 
     useRequest,
-    bustRequestCache,
+    bustRequestCache as bustTrackedRequestCache,
     cleanupRequest as cleanupTrackedRequest, 
     garbageCollectRequests } from './helpers/requestTracker'
 
@@ -60,7 +60,7 @@ export const featuresSlice = createSlice({
         failRequest: recordRequestFailure, 
         completeRequest: recordRequestSuccess,
         useRequest: useRequest,
-        bustRequestCache: bustRequestCache,
+        bustRequestCache: bustTrackedRequestCache,
         cleanupRequest: function(state, action) {
             // Don't cache authentication requests.
             action.payload.cacheTTL = 0  
@@ -171,6 +171,6 @@ export const patchFeature = function(feature) {
     }
 }
 
-export const { cleanupRequest} = featuresSlice.actions
+export const { bustRequestCache, cleanupRequest} = featuresSlice.actions
 
 export default featuresSlice.reducer

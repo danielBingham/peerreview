@@ -1,0 +1,35 @@
+.test-orcid-form {}
+.test-orcid-form h2 {
+    text-align: center;
+}
+.test-orcid-form .form-field {
+    padding: 20px;
+}
+.test-orcid-form .form-field .error {
+    padding: 10px;
+    color: red;
+    text-align: center;
+}
+.test-orcid-form .form-field label {
+    display: inline-block;
+    width: 150px;
+    text-align: right;
+    padding: 5px 20px 5px 5px;
+}
+.test-orcid-form .form-field input {
+    padding: 5px;
+    border: thin solid var(--input-border-color);
+    width: 750px;
+}
+.test-orcid-form .submit {
+    text-align: center;
+}
+.test-orcid-form .orcid svg {
+    width: 24px;
+    margin-right: 6px;
+    margin-bottom: -6px;
+    color: var(--input-border-color);
+}
+.test-orcid-form .orcid svg:hover {
+    color: red;
+}

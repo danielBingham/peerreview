@@ -276,15 +276,7 @@ module.exports = class AuthenticationController {
         //  If we have orcidResults, then that means this ORCID iD is already
         //  linked to an account - either this one or another one. 
         if ( request.session.user &&  orcidResults.rows.length <= 0 ) {
-            const user = {
-                id: request.session.user.id,
-                orcidId: orcidId
-            }
-            await this.userDAO.updatePartialUser(user)
-
-            // Initialize their reputation.
-            const responseBody = await this.auth.loginUser(request.session.user.id, request)
-            responseBody.type = "connection"
+            const responseBody = await this.auth.connectOrcid(request, orcidId)
             return response.status(200).json(responseBody)
         } else if ( request.session.user ) {
             throw new ControllerError(400, 'already-linked',

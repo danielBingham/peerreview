@@ -1,0 +1,23 @@
+.feature-flags .header h2 {
+    text-align: center;
+}
+.feature-flags .feature-rows-header {
+    display: grid;
+    grid-template-columns: 200px 200px auto;
+    font-weight: bold;
+}
+.feature-flags .feature-rows-header .feature-name {
+    grid-column: 1 / 2;
+    padding: 10px;
+    text-align: center;
+}
+.feature-flags .feature-rows-header .feature-status {
+    grid-column: 2 / 3;
+    padding: 10px;
+    text-align: center;
+}
+.feature-flags .feature-rows-header .feature-controls {
+    grid-column: 3 / 4;
+    padding: 10px;
+    text-align: center;
+}

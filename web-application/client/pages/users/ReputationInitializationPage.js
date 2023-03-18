@@ -36,7 +36,7 @@ const ReputationInitializationPage = function(props) {
     useEffect(function() {
         if ( request && request.state == 'fulfilled') {
             if ( location.state.connect ) {
-                navigate("/account/details")
+                navigate("/account/orcid")
             } else  {
                 navigate("/")
             }
