@@ -1,19 +1,35 @@
-import React, { useEffect, useState} from 'react'
+import React, { useEffect, useState, useRef} from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 
-import { initializeReputation, cleanupRequest} from '/state/reputation'
+// import { initializeReputation, cleanupRequest} from '/state/reputation'
+import { getJob, postJobs, cleanupRequest } from '/state/jobs'
 
+import ProgressBar from '/components/ProgressBar'
 import Spinner from '/components/Spinner'
 
 import './ReputationInitializationPage.css'
 
 const ReputationInitializationPage = function(props) {
+    const [ jobId, setJobId ] = useState(null)
+    const [ step, setStep ] = useState('initializing')
+    const [ stepDescription, setStepDescription ] = useState('Initializing...')
+    const [ progress, setProgress ] = useState(0)
+    const [ error, setError ] = useState(null)
 
-    const [requestId,  setRequestId] = useState(null)
-    const request = useSelector(function(state) {
-        if ( requestId ) {
-            return state.reputation.requests[requestId]
+    const [postJobsRequestId,  setPostJobsRequestId] = useState(null)
+    const postJobsRequest = useSelector(function(state) {
+        if ( postJobsRequestId) {
+            return state.jobs.requests[postJobsRequestId]
+        } else {
+            return null
+        }
+    })
+
+    const [ getJobRequestId, setGetJobRequestId ] = useState(null)
+    const getJobRequest = useSelector(function(state) {
+        if ( getJobRequestId ) {
+            return state.jobs.requests[getJobRequestId]
         } else {
             return null
         }
@@ -29,49 +45,94 @@ const ReputationInitializationPage = function(props) {
     const navigate = useNavigate()
     const location = useLocation()
 
+    const timeout = useRef(null)
+
     useEffect(function() {
-         setRequestId(dispatch(initializeReputation(currentUser.id)))         
+        setPostJobsRequestId(dispatch(postJobs('initialize-reputation', { userId: currentUser.id })))         
     }, [])
 
     useEffect(function() {
-        if ( request && request.state == 'fulfilled') {
-            if ( location.state.connect ) {
-                navigate("/account/orcid")
-            } else  {
-                navigate("/")
+        if ( ! getJobRequestId && postJobsRequest?.state == 'fulfilled' ) {
+            const id = postJobsRequest.result.id
+            setJobId(id)
+
+            setGetJobRequestId(dispatch(getJob(id)))
+        }
+    }, [ postJobsRequest ])
+
+    useEffect(function() {
+        if ( getJobRequest?.state == 'fulfilled' ) {
+            if ( getJobRequest.result?.progress.step == 'complete') {
+                if ( location.state.connect ) {
+                    navigate("/account/orcid")
+                } else  {
+                    navigate("/")
+                }
+            } else if ( ! getJobRequest.result?.returnvalue?.error ) {
+                setStep(getJobRequest.result?.progress.step || 'initializing')
+                setStepDescription(getJobRequest.result?.progress.stepDescription || 'Initializing...')
+                setProgress(getJobRequest.result?.progress.progress || 0)
+                setGetJobRequestId(null)
+                timeout.current = setTimeout(function() {
+
+                    setGetJobRequestId(dispatch(getJob(jobId)))
+                }, 250)
+
+            } else if ( getJobRequest.result?.returnvalue?.error ) {
+                setError(getJobRequest.result.returnvalue.error)
             }
         }
-    }, [ request ])
+
+    }, [getJobRequest])
+
+    useEffect(function() {
+        return function cleanupHangingTimeout() {
+            if ( timeout.current ) {
+                clearTimeout(timeout.current)
+            }
+        }
+    }, [])
 
     useEffect(function() {
         return function cleanup() {
-            if ( requestId ) {
-                dispatch(cleanupRequest({ requestId: requestId }))
+            if ( postJobsRequestId ) {
+                dispatch(cleanupRequest({ requestId: postJobsRequestId}))
             }
         }
-    }, [ requestId ])
+    }, [ postJobsRequestId ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( getJobRequestId ) {
+                dispatch(cleanupRequest({ requestId: getJobRequestId}))
+            }
+        }
+    }, [ getJobRequestId ])
 
     // ======= Render ===============================================
 
     // Initialize with the pending content.
     let content = (
         <div className="initializing-reputation">
-            We're now attempting to initialize your reputation
-            using your ORCID iD record and OpenAlex.<br />
-            <br />
-            This could take a moment, especially if you have a lot
-            of published works.  We'll redirect you to the homepage
-            when we're done!<br />
-            <Spinner local={true} />
+            <div className="text-wrapper">
+                We're now attempting to initialize your reputation using your ORCID
+                iD record and OpenAlex.  This could take a moment, especially if
+                you have a lot of published works.  We'll redirect you to the
+                homepage when we're done!<br />
+            </div>
+            <div className="progress-bar-wrapper">
+                <div className="step-description">{ stepDescription }</div>
+                <ProgressBar progress={ progress } />
+            </div>
         </div>
     )
 
     // ========== Reputation Request Failed =======================
-    if ( request && request.state == 'failed' ) {
+    if ( error ) {
 
         // They aren't logged in, or someone hit the API endpoint with out including the user id.
         // The former error shouldn't ever bit hit from this page, but we'll handle it anyway.
-        if ( request.error == 'userid-is-required' || request.error == 'not-authenticated' ) {
+        if ( error == 'userid-is-required' || error == 'not-authenticated' ) {
             content = (
                 <div className="error">
                    You don't seem to be logged in.  You cannot initialize your reputation with out being logged in. 
@@ -81,7 +142,7 @@ const ReputationInitializationPage = function(props) {
         // They somehow called the endpoint with a different user than they
         // have authenticated as.  This is an error we should never hit
         // from this page, but we'll handle it anyway.
-        else if ( request.error == 'not-authorized:wrong-user' ) {
+        else if ( error == 'not-authorized:wrong-user' ) {
             content = (
                 <div className="error">
                     You appear to be attempting to initialize someone else's reputation.  That's not allowed.
@@ -91,7 +152,7 @@ const ReputationInitializationPage = function(props) {
         // There was no ORCID iD on their record.  This can happen if they
         // navigate to this page with out going through the ORCID
         // authentication flow.  
-        else if ( request.error == 'no-orcid' ) {
+        else if ( error == 'no-orcid' ) {
             content = (
                 <div className="error">
                     <p> 
@@ -109,7 +170,7 @@ const ReputationInitializationPage = function(props) {
         } 
         // One of our requests to OpenAlex failed for some reason.  Logs should
         // give more details.
-        else if ( request.error == 'server-error:api-connection' ) {
+        else if ( error == 'server-error:api-connection' ) {
             content = (
                 <div className="error">
                     <p>
@@ -134,7 +195,7 @@ const ReputationInitializationPage = function(props) {
 
         // We weren't able to find an OpenAlex Author record attached to that
         // ORCID iD.
-        else if ( request.error == 'no-openalex-record' ) {
+        else if ( error == 'no-openalex-record' ) {
             content = (
                 <div className="error">
                     <h2>No OpenAlex Author Record</h2>
@@ -156,7 +217,7 @@ const ReputationInitializationPage = function(props) {
             )
         }
 
-        else if ( request.error == 'multiple-openalex-record' ) {
+        else if ( error == 'multiple-openalex-record' ) {
             content = (
                 <div className="error">
                     <p>
@@ -175,21 +236,21 @@ const ReputationInitializationPage = function(props) {
         else {
             content = (
                 <div className="error">
-                    { request.error }
+                    { error }
                 </div>
             )
         }
     }
 
     // ========== Reputation Request Succeeded ====================
-    if ( request && request.state == 'fulfilled' ) {
+    /*if ( request && request.state == 'fulfilled' ) {
         content = (
             <div className="success">
                 We have successfully initialized your reputation!<br />
                 You'll be redirected to the homepage shortly.
             </div>
         )
-    }
+    }*/
 
     // Render the component
     return (

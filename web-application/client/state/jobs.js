@@ -12,8 +12,8 @@ import {
     garbageCollectRequests } from './helpers/requestTracker'
 
 
-export const featuresSlice = createSlice({
-    name: 'features',
+export const jobsSlice = createSlice({
+    name: 'jobs',
     initialState: {
         /**
          * A dictionary of RequestTracker objects created by
@@ -24,7 +24,7 @@ export const featuresSlice = createSlice({
         requests: {},
 
         /**
-         * A dictionary of feature keyed by the feature's name.
+         * A dictionary of job keyed by the job's name.
          */
         dictionary: {}
     },
@@ -35,7 +35,7 @@ export const featuresSlice = createSlice({
          *
          * @param {Object}  state   The redux state slice.
          * @param {Object}  action  The redux action.
-         * @param {Object}  action.payload  The dictionary of features we got
+         * @param {Object}  action.payload  The dictionary of jobs we got
          * from the backend.
          */ 
         setDictionary: function(state, action) {
@@ -47,7 +47,7 @@ export const featuresSlice = createSlice({
          *
          * @param {Object}  state   The redux state slice.
          * @param {Object}  action  The redux action.
-         * @param {Object}  action.payload  The feature object to add to the
+         * @param {Object}  action.payload  The job object to add to the
          * dictionary, overriding any set on its `name` key.
          */
         setInDictionary: function(state, action) {
@@ -62,12 +62,12 @@ export const featuresSlice = createSlice({
         useRequest: useRequest,
         bustRequestCache: bustTrackedRequestCache,
         cleanupRequest: function(state, action) {
-            // Don't cache feature requests.
+            // Don't cache job requests.
             action.payload.cacheTTL = 0  
             cleanupTrackedRequest(state, action)
         }, 
         garbageCollectRequests: function(state, action) {
-            // Don't cache feature requests.
+            // Don't cache job requests.
             action.payload = 0  
             garbageCollectRequests(state, action)
         }
@@ -76,101 +76,76 @@ export const featuresSlice = createSlice({
 })
 
 /**
- * GET /features
+ * GET /jobs
  *
- * Get a dictionary containing all the features visible to this user.  Fully
- * popoulates state.features.dictionary
+ * Get a dictionary containing all the jobs visible to this user.  Fully
+ * popoulates state.jobs.dictionary
  *
  * @returns {string}    A uuid requestId that can be used to track this
  * request.
  */
-export const getFeatures = function() {
+export const getJobs = function() {
     return function(dispatch, getState) {
-        const endpoint = '/features'
+        const endpoint = '/jobs'
 
-        return makeTrackedRequest(dispatch, getState, featuresSlice,
+        return makeTrackedRequest(dispatch, getState, jobsSlice,
             'GET', endpoint, null,
             function(responseBody) {
-                dispatch(featuresSlice.actions.setDictionary(responseBody))
+                dispatch(jobsSlice.actions.setDictionary(responseBody))
             }
         )
     }
 }
 
 /**
- * POST /features
+ * POST /jobs
  *
- * Insert and initialize a feature.
+ * Trigger a job.
  *
- * @param {Object}  feature The feature we want to initialize.  At a minimum
- * feature.name must be set.
+ * @param {string} name The name of the job we want to trigger. 
+ * @param {object} data The data needed for this job.
  *
  * @returns {string}    A uuid requestId that can be used to track this
  * request.
  */
-export const postFeatures = function(feature) {
+export const postJobs = function(name, data) {
     return function(dispatch, getState) {
-        const endpoint = '/features'
+        const endpoint = '/jobs'
 
-        return makeTrackedRequest(dispatch, getState, featuresSlice,
-            'POST', endpoint, feature,
+        return makeTrackedRequest(dispatch, getState, jobsSlice,
+            'POST', endpoint, { name: name, data: data },
             function(responseBody) {
-                dispatch(featuresSlice.actions.setInDictionary(responseBody))
+                dispatch(jobsSlice.actions.setInDictionary(responseBody))
             }
         )
     }
 }
 
 /**
- * GET /feature/:id
+ * GET /job/:id
  *
- * Get a feature.
+ * Get a job.
  *
  * @see client/state/helpers/requestTracker.js
  *
- * @param {int} id  The entity id of the feature we want to retrieve.
+ * @param {int} id  The entity id of the job we want to retrieve.
  *
  * @returns {string}    A uuid requestId that can be used to track this
  * request.
  */
-export const getFeature = function(name) {
+export const getJob = function(id) {
     return function(dispatch, getState) {
-        const endpoint = `/feature/${name}`
+        const endpoint = `/job/${id}`
 
-        return makeTrackedRequest(dispatch, getState, featuresSlice,
+        return makeTrackedRequest(dispatch, getState, jobsSlice,
             'GET', endpoint, null,
             function(responseBody) {
-                dispatch(featuresSlice.actions.setInDictionary(responseBody))
+                dispatch(jobsSlice.actions.setInDictionary(responseBody))
             }
         )
     }
 }
 
-/**
- * PATCH /feature/:feature.entity.id
- *
- * Update a feature with partial data.
- *
- * @see client/state/helpers/requestTracker.js for mechanics. 
- *
- * @param {Object} feature  The patch for the feature.
- *
- * @returns {string}    A uuid requestId that can be used to track this
- * request.
- */
-export const patchFeature = function(feature) {
-    return function(dispatch, getState) {
-        const endpoint = `/feature/${feature.name}`
+export const { cleanupRequest} = jobsSlice.actions
 
-        return makeTrackedRequest(dispatch, getState, featuresSlice,
-            'PATCH', endpoint, feature,
-            function(responseBody) {
-                dispatch(featuresSlice.actions.setInDictionary(responseBody))
-            }
-        )
-    }
-}
-
-export const { bustRequestCache, cleanupRequest} = featuresSlice.actions
-
-export default featuresSlice.reducer
+export default jobsSlice.reducer

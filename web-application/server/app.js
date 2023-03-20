@@ -12,14 +12,16 @@ const cors = require('cors')
 
 const morgan = require('morgan')
 const debug = require('debug')('peer-review:server')
+
 const { Client, Pool } = require('pg')
 const pgSession = require('connect-pg-simple')(session)
+
 
 const path = require('path')
 const fs = require('fs')
 const Uuid = require('uuid')
 
-const Logger = require('./logger')
+const backend = require('@danielbingham/peerreview-backend')
 const ControllerError = require('./errors/ControllerError')
 
 // Load our configuration file.  Loads the index.js file from the config/ directory which
@@ -30,7 +32,7 @@ const ControllerError = require('./errors/ControllerError')
 // For sturcture, see config/default.js
 const config = require('./config')
 
-const logger = new Logger(config.log_level)
+const logger = new backend.Logger(config.log_level)
 
 const databaseConfig = {
     host: config.database.host,

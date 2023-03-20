@@ -7,3 +7,16 @@
 #reputation-initialization h2 {
     text-align: center;
 }
+#reputation-initialization .initializing-reputation .text-wrapper {
+    width: 800px;
+    margin: 0 auto;
+    text-align: center;
+}
+#reputation-initialization .progress-bar-wrapper {
+    width: 800px;
+    padding: 20px;
+    margin: 20px auto;
+}
+#reputation-initialization .progress-bar-wrapper .step-description {
+    padding: 5px 0;
+}

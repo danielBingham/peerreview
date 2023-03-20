@@ -1,18 +1,29 @@
+/******************************************************************************
+ *
+ *
+ *
+ * ***************************************************************************/
+
+const BullQueue = require('bull')
+
 const backend = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
 module.exports = class ReputationController {
 
-    constructor(database, logger) {
+    constructor(database, logger, config) {
         this.database = database
         this.logger = logger
+        this.config = config
 
         this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
         this.reputationGenerationService = new backend.ReputationGenerationService(database, logger)
         this.reputationDAO = new backend.ReputationDAO(database, logger)
         this.userDAO = new backend.UserDAO(database)
         this.settingsDAO = new backend.SettingsDAO(database, logger)
+
+        this.processQueue = new BullQueue('reputation', { redis: config.redis })
     }
 
     /**
@@ -86,7 +97,11 @@ module.exports = class ReputationController {
         }
 
         try {
-            await this.reputationGenerationService.initializeReputationForUser(userId)
+            const job = await this.processQueue.add('initialize-reputation', { userId: userId })
+            return response.status(200).json({ job: { id: job.id } })
+
+
+            /*await this.reputationGenerationService.initializeReputationForUser(userId)
 
             const users = await this.userDAO.selectUsers('WHERE users.id=$1', [userId])
             if ( ! users ) {
@@ -106,9 +121,9 @@ module.exports = class ReputationController {
             }
 
             console.log('Response body: ')
-            console.log(responseBody)
+            console.log(responseBody) 
 
-            return response.status(200).json(responseBody)
+            return response.status(200).json({}) */
         } catch (error) {
             if ( error instanceof backend.ServiceError) {
                 // Validation: 2. User must have an ORCID iD attached to their record.

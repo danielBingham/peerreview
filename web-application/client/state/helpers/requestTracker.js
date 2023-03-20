@@ -139,6 +139,12 @@ export const garbageCollectRequests = function(state, action) {
         if ( state.requests[requestId].cleaned && (isStale(state.requests[requestId], cacheTTL) || state.requests[requestId].cacheBusted)) {
             delete state.requests[requestId]
         }
+        // If the cacheTTL is set to zero, that means we don't want to track
+        // requests at all.  Every time we garbage collect, mark them as busted
+        // so that they won't be reused.
+        else if ( cacheTTL == 0 ) {
+            state.requests[requestId].cacheBusted = true
+        }
     }
 }
 
