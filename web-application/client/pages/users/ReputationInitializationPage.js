@@ -47,31 +47,52 @@ const ReputationInitializationPage = function(props) {
 
     const timeout = useRef(null)
 
+    // Create the job.  If there's already an 'initialize-reputation' job
+    // running for this user, then this call will return that job id and we can
+    // begin polling it.
     useEffect(function() {
         setPostJobsRequestId(dispatch(postJobs('initialize-reputation', { userId: currentUser.id })))         
     }, [])
 
     useEffect(function() {
         if ( ! getJobRequestId && postJobsRequest?.state == 'fulfilled' ) {
+            // Easier to check the job id than this request result.   It's the
+            // only thing we need from the result.
             const id = postJobsRequest.result.id
             setJobId(id)
 
+            // Trigger the first poll.  We'll continue polling  in the next
+            // useEffect.
             setGetJobRequestId(dispatch(getJob(id)))
         }
     }, [ postJobsRequest ])
 
+    // Poll for the job's state.  Poll every 250 ms and update our display of
+    // the job's progress.
     useEffect(function() {
         if ( getJobRequest?.state == 'fulfilled' ) {
-            if ( getJobRequest.result?.progress.step == 'complete') {
-                if ( location.state.connect ) {
-                    navigate("/account/orcid")
-                } else  {
-                    navigate("/")
-                }
+            if ( getJobRequest.result?.progress.step == 'complete' && ! getJobRequest.result?.returnvalue?.error ) {
+                setStep(getJobRequest.result?.progress.step || 'initializing')
+                setStepDescription(getJobRequest.result?.progress.stepDescription || 'Initializing...')
+                setProgress(getJobRequest.result?.progress.progress || 0)
             } else if ( ! getJobRequest.result?.returnvalue?.error ) {
                 setStep(getJobRequest.result?.progress.step || 'initializing')
                 setStepDescription(getJobRequest.result?.progress.stepDescription || 'Initializing...')
                 setProgress(getJobRequest.result?.progress.progress || 0)
+
+                // jobRequestId isn't going to be set by the timeout for 250
+                // ms.  If we don't set it to null here it prevents us from
+                // determining whether we've already triggered the next poll.
+                // useEffect will fire more frequently than the polling
+                // timeout, so we'll repeatedly set the timeout, before the
+                // polling even gets a chance to fire.  In doing so, we'll
+                // repeatedly set getJobRequestId and thus getJobRequest and
+                // will never get to see any of the jobs return. 
+                //
+                // Setting getJobRequestId to null before we set the timeout
+                // fixes the problem, because it prevents this useEffect from
+                // firing and setting another timeout until the current timeout
+                // (the one we create on the next line) completes.
                 setGetJobRequestId(null)
                 timeout.current = setTimeout(function() {
 
@@ -85,6 +106,8 @@ const ReputationInitializationPage = function(props) {
 
     }, [getJobRequest])
 
+    // If we leave this component with a timeout waiting, kill that timeout.
+    // No point in letting it finish.
     useEffect(function() {
         return function cleanupHangingTimeout() {
             if ( timeout.current ) {
@@ -111,14 +134,30 @@ const ReputationInitializationPage = function(props) {
 
     // ======= Render ===============================================
 
-    // Initialize with the pending content.
+    let message = null
+    if ( progress == 100 ) {
+        message = (
+            <div>
+                <p>We've finished generating initial reputation for you.</p> 
+                <Link to={`/user/${currentUser.id}/reputation`}>View profile</Link>
+            </div>
+        )
+    } else {
+        message = (
+            <div>
+                We're now attempting to initialize your reputation using your ORCID
+                iD record and OpenAlex.  This could take a moment, especially if
+                you have a lot of published works. 
+            </div>
+        )
+    }
+
+
+    // Show the progress bar and step.
     let content = (
         <div className="initializing-reputation">
             <div className="text-wrapper">
-                We're now attempting to initialize your reputation using your ORCID
-                iD record and OpenAlex.  This could take a moment, especially if
-                you have a lot of published works.  We'll redirect you to the
-                homepage when we're done!<br />
+                { message }
             </div>
             <div className="progress-bar-wrapper">
                 <div className="step-description">{ stepDescription }</div>
@@ -155,16 +194,16 @@ const ReputationInitializationPage = function(props) {
         else if ( error == 'no-orcid' ) {
             content = (
                 <div className="error">
+                    <h2>No ORCID iD</h2>
                     <p> 
-                        We couldn't find an ORCID iD on your user record.  You
+                        We couldn't find an <a href="https://orcid.org">ORCID iD</a> on your user record.  You
                         must have an ORCID iD linked to your account in order
                         to initialize your reputation. 
                     </p>
                     <p>
-                        If you would like to initialize your reputation, please
-                        go to your Settings Page and connect your ORCID iD to
-                        this account by authenticating with ORCID.
+                        If you would like to initialize your reputation, please <Link to="/account/orcid">connect your ORCID iD</Link> to your account.
                     </p>
+                    <p>Return to the <Link to="/">home page</Link>.</p>
                 </div>
             )
         } 
@@ -173,22 +212,17 @@ const ReputationInitializationPage = function(props) {
         else if ( error == 'server-error:api-connection' ) {
             content = (
                 <div className="error">
-                    <p>
-                        Something went wrong with our attempt to connect to
-                        OpenAlex on the backend.  We're not sure what.
-                        OpenAlex may be down, or something might have gone
-                        wrong with our backend.  Please wait a little while and
-                        try again.  You can try again by just refreshing this
-                        page.
-                    </p>
+                    <h2>API Connection Error</h2>
+                    <p> Something went wrong with our attempt to connect to <a href="https://openalex.org">OpenAlex</a> on the backend.</p>
+                    <p>Please wait a little while and try again.  You can try again by just refreshing this page.</p>
                     <p>
                         If this error persists, please report a bug by
                         contacting <a
                         href="mailto:contact@peer-review.io">contact@peer-review.io</a>,
                         or by visting our <a
-                        href="https://github.com/danielbingham/peerreview">Github</a>
-                        and creating an Issue.
+                        href="https://github.com/danielbingham/peerreview">Github</a> and creating an Issue.
                     </p>
+                    <p>Return to the <Link to="/">Home page</Link>.</p>
                 </div>
             )
         }
@@ -200,12 +234,13 @@ const ReputationInitializationPage = function(props) {
                 <div className="error">
                     <h2>No OpenAlex Author Record</h2>
                     <p>
-                        We were unable to find an OpenAlex author record for
-                        your ORCID iD.  This could happen for any number of
+                        We were unable to find an <a href="https://openalex.org">OpenAlex</a> author record for
+                        your <a href={`https://orcid.org/${currentUser.orcidId}`}>ORCID iD</a>.  This could happen for any number of
                         reasons.  OpenAlex has a very large dataset, but they
                         don't have access to everything.  Right now, OpenAlex
                         and ORCID iD are our only way to initialize reputation.
-
+                    </p>
+                    <p>
                         OpenAlex is a small team and they're working very hard
                         to improve there data set.  If you'd like to see our
                     reputation generation improve, support them in their work!
@@ -220,11 +255,16 @@ const ReputationInitializationPage = function(props) {
         else if ( error == 'multiple-openalex-record' ) {
             content = (
                 <div className="error">
+                    <h2>Multiple Author Records</h2>
                     <p>
-                        We found multiple OpenAlex author records attached to
-                        your ORCID iD. OpenAlex is working on cleaning on their
-                        data. You can return to this page to try again once
-                    your ORCID ID has been disambiguated in OpenAlex. 
+                        We found multiple <a
+                        href="https://openalex.org">OpenAlex</a> author records
+                    attached to your ORCID iD.  Without knowing which one is
+                        the correct record (if any) we can't generate
+                        reputation for you.</p>
+                    <p>OpenAlex is working on cleaning up their data. You can
+                        return to this page to try again once your ORCID iD has
+                        been disambiguated in OpenAlex. 
                     </p>
                     <p className="return-home">
                         Return to the <Link to="/">home page</Link>.

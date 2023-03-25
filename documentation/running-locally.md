@@ -10,6 +10,12 @@ After pulling the github repo, you can run the development server by first runni
 container. To run peerreview, you can either use nodemon and the react dev server or build a Docker
 container.
 
+From the root project directory, run a redis docker container:
+
+```
+$ docker run -d -p 6379:6379 --name peer-redis redis
+```
+
 From the root project directory, build the postgres docker container:
 
 ```
@@ -25,15 +31,31 @@ $ docker network create peer-network
 $ docker run -d -p 5432:5432 --name peer-review-database-service --net peer-network peer-sql
 ```
 
-Run ``npm install`` to install project dependencies:
+Run `npm install` for the worker. From the root directory:
 
 ```
+$ cd worker
 $ npm install
 ```
 
-Run the development server for react and node to allow hot reloading while you develop:
+Run the worker in development mode. From the root directory:
 
 ```
+$ cd worker
+$ npm run dev
+```
+
+Run `npm install` for the web application to install project dependencies. From the root directory:
+
+```
+$ cd web-application
+$ npm install
+```
+
+Run the development server for react and node to allow hot reloading while you develop. From the root directory:
+
+```
+$ cd web-application
 $ npm run dev
 ```
 

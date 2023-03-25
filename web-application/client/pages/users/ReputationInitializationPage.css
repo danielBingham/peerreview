@@ -12,6 +12,13 @@
     margin: 0 auto;
     text-align: center;
 }
+#reputation-initialization .error {
+    width: 800px;
+    margin: 0 auto;
+}
+#reputation-initialization .error h2 {
+    text-align: center;
+}
 #reputation-initialization .progress-bar-wrapper {
     width: 800px;
     padding: 20px;
@@ -20,3 +27,4 @@
 #reputation-initialization .progress-bar-wrapper .step-description {
     padding: 5px 0;
 }
+
