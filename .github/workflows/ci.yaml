@@ -51,10 +51,6 @@ jobs:
 
       # Build the worker Docker container and push it to
       # the Github Container registry
-      - name: Install Worker NPM Modules
-        working-directory: ./worker
-        run: |
-          npm ci
       - name: Version the Worker Package
         working-directory: ./worker
         run: |
@@ -82,6 +78,8 @@ jobs:
       # the Github Container registry
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
       - name: Run Web Application Unit Tests
