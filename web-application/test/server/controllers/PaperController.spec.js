@@ -3,7 +3,6 @@ const DAOError = backend.DAOError
 
 const PaperController = require('../../../server/controllers/PaperController')
 
-const Logger = require('../../../server/logger')
 const ControllerError = require('../../../server/errors/ControllerError')
 
 const DatabaseFixtures = require('../fixtures/database')
@@ -14,7 +13,7 @@ const fs = require('fs')
 
 describe('PaperController', function() {
 
-    const logger = new Logger()
+    const logger = new backend.Logger()
     // Disable logging.
     logger.level = -1 
 

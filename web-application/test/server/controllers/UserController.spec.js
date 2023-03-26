@@ -4,7 +4,6 @@ const DAOError = backend.DAOError
 
 const UserController = require('../../../server/controllers/UserController')
 
-const Logger = require('../../../server/logger')
 const ControllerError = require('../../../server/errors/ControllerError')
 
 const DatabaseFixtures = require('../fixtures/database')
@@ -14,7 +13,7 @@ const SubmittedFixtures = require('../fixtures/submitted')
 describe('UserController', function() {
     
     const auth = new AuthenticationService()
-    const logger = new Logger()
+    const logger = new backend.Logger()
     // Disable logging.
     logger.level = -1
 

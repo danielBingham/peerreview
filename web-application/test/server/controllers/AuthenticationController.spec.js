@@ -2,12 +2,11 @@ const backend = require('@danielbingham/peerreview-backend')
 const AuthenticationService = backend.AuthenticationService
 
 const AuthenticationController = require('../../../server/controllers/AuthenticationController')
-const Logger = require('../../../server/logger')
 
 describe('AuthenticationController', function() {
     
     const auth = new AuthenticationService()
-    const logger = new Logger()
+    const logger = new backend.Logger()
     // Disable logging.
     logger.level = -1
 

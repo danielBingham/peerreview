@@ -3,6 +3,7 @@ import { combineReducers } from 'redux'
 
 import systemReducer from './system'
 import featuresReducer from './features'
+import jobsReducer from './jobs'
 import reputationReducer from './reputation'
 import authenticationReducer from './authentication'
 import usersReducer from './users'
@@ -18,6 +19,7 @@ import testingReducer from './testing'
 const reducers = combineReducers({
     system: systemReducer,
     features: featuresReducer,
+    jobs: jobsReducer,
     reputation: reputationReducer,
     authentication: authenticationReducer,
     users: usersReducer,

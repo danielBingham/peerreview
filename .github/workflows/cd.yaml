@@ -36,6 +36,23 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm publish
+      
+      # Build the worker docker container and push it to the Github Container
+      # registry
+      - name: Install Worker NPM Modules
+        working-directory: ./worker
+        run: |
+          npm ci
+      - name: Build the Worker Docker Container
+        working-directory: ./worker
+        run: |
+           docker build --build-arg TOKEN=${{ secrets.GITHUB_TOKEN }} -t ghcr.io/danielbingham/peerreview-worker:${{ github.ref_name }} .
+      - name: Login to Github Container Repository
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
+      - name: Push the newly built container to the Repostory under the ${{ github.ref_name }} tag
+        run: |
+          docker push ghcr.io/danielbingham/peerreview-worker:${{ github.ref_name }}
 
       # Test web-application, then build the docker container and push it to
       # the Github Container registry

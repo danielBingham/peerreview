@@ -24,3 +24,4 @@ exports.ReputationGenerationService = require('./services/ReputationGenerationSe
 exports.ReputationPermissionService = require('./services/ReputationPermissionService')
 exports.S3FileService = require('./services/S3FileService')
 
+exports.Logger = require('./logger.js')

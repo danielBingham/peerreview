@@ -107,15 +107,23 @@ module.exports = class OpenAlexService {
     /**
      * Get all works for an Author from Open Alex.
      *
-     * @param {Object} author   An Author record from Open Alex: https://docs.openalex.org/about-the-data/author
+     * @param {Object} author   An Author record from Open Alex:
+     * https://docs.openalex.org/about-the-data/author
+     * @param {Job} job (Optional) A bull queue job who's progress will be
+     * updated if provided.
      *
      * @return {Object[]} An array of all Works records for the given Author
      * from Open Alex: https://docs.openalex.org/about-the-data/work
      */
-    async getAuthorsWorks(author) {
+    async getAuthorsWorks(author, job) {
+        if ( job ) {
+            job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: 0 })
+        }
+
         const works = []
 
         const firstResponse = await this.getAuthorsWorksPage(author, 1)
+
 
         if ( ! firstResponse ) {
             throw new ServiceError('empty-page', 'Failed to retrieve works from Open Alex for author ' + author.display_name)
@@ -126,6 +134,11 @@ module.exports = class OpenAlexService {
         works.push(...firstResponse.results)
 
         let numberOfPages = parseInt(count / perPage) + ( count % perPage > 0 ? 1 : 0)
+
+        if ( job ) {
+            job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: parseInt((1/numberOfPages)*100) })
+        }
+
         for(let page = 2; page <= numberOfPages; page++) {
             const worksResponse = await this.getAuthorsWorksPage(author, page)
 
@@ -134,6 +147,10 @@ module.exports = class OpenAlexService {
             }
 
             works.push(...worksResponse.results)
+
+            if ( job ) {
+                job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: parseInt((page/numberOfPages)*100) })
+            }
         }
 
         return works
@@ -156,6 +173,8 @@ module.exports = class OpenAlexService {
      * for the given Open Alex Author record.
      *
      * @param {Object} author   The Open Alex author record to get papers for. 
+     * @param {Job} job (Optional) A bull queue job who's progress will be
+     * updated if provided.
      *
      * @return {Object[]}   An array of "papers", in this case Open Alex works
      * with their workId, citation numbers, and an array of concepts translated
@@ -170,8 +189,12 @@ module.exports = class OpenAlexService {
      * ]
      * ```
      */
-    async getPapers(author) {
-        const works = await this.getAuthorsWorks(author)
+    async getPapers(author, job) {
+        const works = await this.getAuthorsWorks(author, job)
+
+        if ( job ) {
+            job.progress({ step: 'get-papers-from-works', stepDescription: `Processing works...`, progress: 0 })
+        }
 
         const papers = []
         for(const work of works) {
@@ -184,7 +207,12 @@ module.exports = class OpenAlexService {
                 citations: work.cited_by_count,
                 fields: fields 
             })
+
+            if ( job ) {
+                job.progress({ step: 'get-papers-from-works', stepDescription: `Processing works...`, progress: parseInt((papers.length/works.length)*100) })
+            }
         }
+
         return papers
     }
 
@@ -193,12 +221,23 @@ module.exports = class OpenAlexService {
      * fields for an ORCID iD.
      *
      * @param {string} orcidId  The ORCID iD we want to retrieve papers for.
+     * @param {Job} job (Optional) A bull queue job who's progress will be
+     * updated if provided.
      *
      * @return {Object[]}   An array of papers.  @see this.getPapers()
      */
-    async getPapersForOrcidId(orcidId) {
+    async getPapersForOrcidId(orcidId, job) {
+        if ( job ) {
+            job.progress({ step: 'get-open-alex-author', stepDescription: `Retrieving author record from Open Alex...`, progress: 0 })
+        }
+
         const author = await this.getAuthorWithOrcidId(orcidId)
-        return await this.getPapers(author)
+    
+        if ( job ) {
+            job.progress({ step: 'get-open-alex-author', stepDescription: `Retrieving author record from Open Alex...`, progress: 100 })
+        }
+
+        return await this.getPapers(author, job)
     }
 
     /**

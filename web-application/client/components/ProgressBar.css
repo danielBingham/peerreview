@@ -1,0 +1,13 @@
+.progress-bar {
+    position: relative;
+    height: 5px;
+    background: var(--input-border-color);
+    padding: 2px;
+}
+.progress-bar > span {
+    display: block;
+    height: 100%;
+    background-color: var(--input-highlight-color);
+    position: relative;
+    overflow: hidden;
+}

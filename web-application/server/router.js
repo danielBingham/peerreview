@@ -46,6 +46,42 @@ module.exports = function(database, logger, config) {
         })
     })
 
+    /**************************************************************************
+     * Job REST Routes
+     **************************************************************************/
+    const JobController = require('./controllers/JobController')
+    const jobController = new JobController(database, logger, config)
+
+    router.get('/jobs', function(request, response, next) {
+        jobController.getJobs(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/jobs', function(request, response, next) {
+        jobController.postJob(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/job/:id', function(request, response, next) {
+        jobController.getJob(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/job/:id', function(request, response, next) {
+        jobController.patchJob(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.delete('/job/:id', function(request, response, next) {
+        jobController.deleteJob(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
     /******************************************************************************
      *          File REST Routes
      ******************************************************************************/
@@ -120,7 +156,7 @@ module.exports = function(database, logger, config) {
      **************************************************************************/
 
     const ReputationController = require('./controllers/ReputationController')
-    const reputationController = new ReputationController(database, logger)
+    const reputationController = new ReputationController(database, logger, config)
 
     router.get('/reputation/thresholds', function(request, response, next) {
         reputationController.getReputationThresholds(request, response).catch(function(error) {

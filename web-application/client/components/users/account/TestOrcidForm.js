@@ -29,14 +29,10 @@ const TestOrcidForm = function(props) {
             return null
         }
     })
-    console.log(`requestId: ${requestId}`)
-    console.log(request)
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
-    console.log('CurrentUser: ')
-    console.log(currentUser)
 
     // ======= Actions and Event Handling ===========================
 
@@ -51,7 +47,6 @@ const TestOrcidForm = function(props) {
     }
 
     const reset = function(event) {
-        console.log('Reset!')
         event.preventDefault()
 
         setRequestId(dispatch(getTestingOrcidReset()))
