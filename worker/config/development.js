@@ -8,11 +8,15 @@ module.exports = {
     backend: '/api/0.0.0',
     // Database configuration
     database: {
-        host: 'peer-review-database-service',
+        host: 'peer-review-database',
         port: 5432,
         user: 'app',
         password: 'local-development',
         name: 'peer_review' 
+    },
+    redis: {
+        host: 'peer-review-redis',
+        port: 6379
     },
     session: {
         key: 'peer_review_id',

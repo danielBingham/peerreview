@@ -5,26 +5,30 @@
  **************************************************************************************************/
 
 module.exports = {
+    host: 'https://localhost:3000/',
     backend: '/api/0.0.0',
     // Database configuration
     database: {
-        host: 'peer-review-database-service',
-        port: 5432,
-        user: 'app',
-        password: 'local-development',
+        host: process.env.DATABASE_HOST,
+        port: process.env.DATABASE_PORT,
+        user: process.env.DATABASE_USER,
+        password: process.env.DATABASE_PASSWORD,
         name: 'peer_review' 
+    },
+    redis: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT 
     },
     session: {
         key: 'peer_review_id',
-        secret: 'development',
+        secret: process.env.SESSION_SECRET,
         secure_cookie: false
     },
-    spaces: {
-        endpoint: 'https://nyc3.digitaloceanspaces.com',
-        bucket_url: 'https://peer-review-development-files.nyc3.digitaloceanspaces.com/',
-        access_id: process.env.SPACES_ACCESS_ID,
-        access_key: process.env.SPACES_ACCESS_KEY,
-        bucket: 'peer-review-development-files'
+    s3: {
+        bucket_url: 'https://peer-review-staging-storage.s3.amazonaws.com/',
+        bucket: 'peer-review-staging-storage',
+        access_id: process.env.S3_ACCESS_ID,
+        access_key: process.env.S3_ACCESS_KEY
     },
     orcid: {
         authorization_host: 'https://sandbox.orcid.org',
@@ -33,6 +37,9 @@ module.exports = {
         client_secret: process.env.ORCID_CLIENT_SECRET,
         authentication_redirect_uri: 'https://localhost:3000/orcid/authentication',
         connect_redirect_uri: 'https://localhost:3000/orcid/connect'
+    },
+    postmark: {
+        api_token: process.env.POSTMARK_API_TOKEN
     },
     log_level: 'debug'
 };

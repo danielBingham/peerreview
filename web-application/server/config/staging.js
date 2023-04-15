@@ -1,7 +1,7 @@
 /**************************************************************************************************
  *          Staging Configuration
  *
- * This is the configuration for the `staging` environment on Digital Ocean.
+ * This is the configuration for the `staging` environment.
  *
  **************************************************************************************************/
 
@@ -15,6 +15,10 @@ module.exports = {
         user: process.env.DATABASE_USER,
         password: process.env.DATABASE_PASSWORD,
         name: 'peer_review'
+    },
+    redis: {
+        host: process.env.REDIS_HOST, 
+        port: process.env.REDIS_POST 
     },
     session: {
         key: 'peer_review_id',

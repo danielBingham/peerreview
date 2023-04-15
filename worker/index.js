@@ -14,7 +14,8 @@ const config = require('./config')
 
 const logger = new backend.Logger(config.log_level)
 logger.setId('Worker')
-logger.info('Starting up...')
+logger.info(`Starting up as ${process.env.NODE_ENV}...`)
+logger.debug(`Using debug logging.`)
 
 const databaseConfig = {
     host: config.database.host,
@@ -33,6 +34,7 @@ if ( config.database.certificate ) {
 
 const connection = new Pool(databaseConfig)
 
+logger.debug(`Connecting to redis ${config.redis.host}:${config.redis.port}.`)
 const queue = new BullQueue('peer-review', { redis: config.redis }) 
 
 const reputationGenerationService = new backend.ReputationGenerationService(connection, logger)

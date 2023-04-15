@@ -49,5 +49,4 @@ module.exports = {
         api_token: process.env.POSTMARK_API_TOKEN
     },
     log_level: 'debug'
-
 };

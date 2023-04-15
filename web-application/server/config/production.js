@@ -16,6 +16,10 @@ module.exports = {
         password: process.env.DATABASE_PASSWORD,
         name: 'peer_review'
     },
+    redis: {
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT 
+    },
     session: {
         key: 'peer_review_id',
         secret: process.env.SESSION_SECRET,

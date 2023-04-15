@@ -11,7 +11,8 @@ module.exports = class JobController {
         this.logger = logger
         this.config = config
 
-        this.queue = new BullQueue('peer-review')
+        this.logger.debug(`Connecting to redis ${this.config.redis.host}:${this.config.redis.port}.`)
+        this.queue = new BullQueue('peer-review', { redis: this.config.redis })
 
     }
 
