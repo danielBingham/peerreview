@@ -146,7 +146,7 @@ const ReputationInitializationPage = function(props) {
         message = (
             <div>
                 We're now attempting to initialize your reputation using your ORCID
-                iD record and OpenAlex.  This could take a moment, especially if
+                iD record and OpenAlex.  This could take a while, especially if
                 you have a lot of published works. 
             </div>
         )

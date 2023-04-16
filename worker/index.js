@@ -52,6 +52,7 @@ queue.process('initialize-reputation', async function(job, done) {
     try {
         await reputationGenerationService.initializeReputationForUser(job.data.userId, job)
     } catch (error) {
+        console.error(error)
         if ( error instanceof backend.ServiceError) {
             // Validation: 2. User must have an ORCID iD attached to their record.
             // We checked this in ReputationGenerationService::initializeReputationForUser()

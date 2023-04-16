@@ -34,7 +34,7 @@ module.exports = class ReputationGenerationService {
     async recalculateReputation(userId) {
         // ======== Clear out the existing reputation =========================
 
-        console.log(`Resetting reputation tables for ${userId}.`)
+        this.logger.debug(`Resetting reputation tables for ${userId}.`)
         // Reset reputation gained from papers.
         await this.database.query(`
             DELETE FROM user_paper_reputation WHERE user_id = $1
@@ -59,15 +59,15 @@ module.exports = class ReputationGenerationService {
             WHERE paper_authors.user_id = $1
         `, [ userId ])
 
-        console.log(`Calculating reputation for ${paperResults.rows.length} papers.`)
+        this.logger.debug(`Calculating reputation for ${paperResults.rows.length} papers.`)
         for ( const row of paperResults.rows) {
             await this.recalculateUserReputationForPaper(userId, row.paper_id)
         }
 
-        console.log(`Calculating Review Reputation for User(${userId}).`)
+        this.logger.debug(`Calculating Review Reputation for User(${userId}).`)
         await this.recalculateUserReviewReputation(userId)
 
-        console.log(`Recalculating User's Total reputation.`)
+        this.logger.debug(`Recalculating User's Total reputation.`)
         await this.recalculateReputationForUser(userId)
 
         // ======== Add initial field reputation back in ======================
@@ -528,7 +528,7 @@ module.exports = class ReputationGenerationService {
     async initializeReputationForUserWithWorks(userId, works, job) {
         // Before we initialize them, clear out the initial reputation tables.
         // This makes this Idempotent.
-        console.log('Clearing initial reputation tables.') 
+        this.logger.debug('Clearing initial reputation tables.') 
         await this.database.query(`
             DELETE FROM user_initial_field_reputation WHERE user_id = $1
         `, [ userId ])
@@ -537,7 +537,7 @@ module.exports = class ReputationGenerationService {
             DELETE FROM user_initial_works_reputation WHERE user_id = $1
         `, [ userId ])
 
-        console.log(`Processing ${works.length} works.`)
+        this.logger.debug(`Processing ${works.length} works.`)
         if ( job ) {
             job.progress({ step: 'works-reputation', stepDescription: `Generating reputation for works...`, progress: 0 })
         }
@@ -552,7 +552,7 @@ module.exports = class ReputationGenerationService {
             }
         } 
 
-        console.log(`Recalculating reputation.`)
+        this.logger.debug(`Recalculating reputation.`)
         if ( job ) {
             job.progress({ step: 'recalculate-reputation', stepDescription: `Recalculating user's total reputation...`, progress: 0 })
         }
@@ -571,7 +571,7 @@ module.exports = class ReputationGenerationService {
         // and then regenerate `user_field_reputation` based on their Peer
         // Review papers and reviews.  Then we call this with those already
         // zeroed out.
-        console.log(`Calculating field reputation for ${works.length} works.`) 
+        this.logger.debug(`Calculating field reputation for ${works.length} works.`) 
         if ( job ) {
             job.progress({ step: 'calculate-field-reputation', stepDescription: `Calculating user's reputation in fields...`, progress: 0 })
         }
@@ -580,7 +580,7 @@ module.exports = class ReputationGenerationService {
             await this.incrementInitialUserReputationForFields(userId, work.fields, work.citations*10)
             count += 1
             if ( job ) {
-                job.progress({ step: 'calculate-field-reputation', stepDescription: `Calculating user's reputation in fields...`, progress: parseInt((count/works.length)*100) })
+                job.progress({ step: 'calculate-field-reputation', stepDescription: `Calculating user's reputation in fields for work ${count} of ${works.length}...`, progress: parseInt((count/works.length)*100) })
             }
         } 
 

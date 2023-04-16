@@ -41,7 +41,9 @@ module.exports = class OpenAlexService {
         const response = await this.queryOpenAlex(AUTHORS, { filter: `openalex_id:${openAlexId}` })
 
         if ( ! response.ok ) {
-            throw new Error(`Filed to retrieve author from OpenAlex for Open Alex ID: ${openAlexId}.`)
+            this.logger.error(`${AUTHORS}?filter=openalex_id:${openAlexId}`)
+            this.logger.error(response)
+            throw new Error(`Failed to retrieve author from OpenAlex for Open Alex ID: ${openAlexId}.`)
         }
 
         const responseBody = await response.json()
@@ -68,6 +70,8 @@ module.exports = class OpenAlexService {
         const response = await this.queryOpenAlex(AUTHORS, { filter: `orcid:${orcidId}` }) 
 
         if ( ! response.ok ) {
+            this.logger.error(`${AUTHORS}?filter=orcid:${orcidId}`)
+            this.logger.error(response)
             throw new ServiceError('request-failed', `Failed to retrieve author from OpenAlex for ORCID iD ${orcidId}.`)
         }
 
@@ -92,12 +96,15 @@ module.exports = class OpenAlexService {
      *
      * @return {Object[]} An array of Open Alex Works records: https://docs.openalex.org/about-the-data/work
      */
-    async getAuthorsWorksPage(author, page) {
-        const response = await fetch(`${author.works_api_url}&page=${page}&per_page=200&mailto=contact@peer-review.io`, {
+    async getAuthorsWorksPage(author, cursor) {
+        cursor = cursor || '*'
+        const response = await fetch(`${author.works_api_url}&per_page=200&cursor=${cursor}&mailto=contact@peer-review.io`, {
             method: "GET"
         })
 
         if ( ! response.ok ) {
+            this.logger.error(`Errored on ${author.works_api_url}&page=${page}&per_page=200&mailto=contact@peer-review.io`)
+            this.logger.error(response)
             throw new ServiceError('request-failed', `Failed to retrieve works for author ${author.id}, page ${page}`)
         }
 
@@ -120,36 +127,66 @@ module.exports = class OpenAlexService {
             job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: 0 })
         }
 
-        const works = []
+        // Make sure we handle OpenAlex's API rate limits appropriately.  The
+        // documented rate limit is 10 rquests per second in the polite pool.
+        //
+        // https://docs.openalex.org/how-to-use-the-api/rate-limits-and-authentication
+        let requestsMade = 0
+        let batchStartTime = Date.now()
+        this.logger.debug(`Starting request batch at ${batchStartTime}.`)
 
-        const firstResponse = await this.getAuthorsWorksPage(author, 1)
+        const works = []
+        const firstResponse = await this.getAuthorsWorksPage(author)
 
 
         if ( ! firstResponse ) {
+            this.logger.error(firstResponse)
             throw new ServiceError('empty-page', 'Failed to retrieve works from Open Alex for author ' + author.display_name)
         }
 
-        const count = firstResponse.meta.count
-        const perPage = firstResponse.meta.per_page
+        const total = firstResponse.meta.count
+        let count = firstResponse.results.length
+        let nextCursor = firstResponse.meta.next_cursor
         works.push(...firstResponse.results)
 
-        let numberOfPages = parseInt(count / perPage) + ( count % perPage > 0 ? 1 : 0)
-
         if ( job ) {
-            job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: parseInt((1/numberOfPages)*100) })
+            job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: parseInt((count/total)*100) })
         }
 
-        for(let page = 2; page <= numberOfPages; page++) {
-            const worksResponse = await this.getAuthorsWorksPage(author, page)
+        while (nextCursor != null) {
+            const worksResponse = await this.getAuthorsWorksPage(author, nextCursor)
 
             if ( ! worksResponse ) {
-                throw new ServiceError('empty-page', 'Works response failed for page ' + page + ' of ' + numberOfPages)
+                this.logger.error(worksResponse)
+                throw new ServiceError('empty-page', 'Works response failed for ' + count + ' of ' + total)
             }
 
+            nextCursor = worksResponse.meta.next_cursor
+            count += worksResponse.results.length
             works.push(...worksResponse.results)
 
             if ( job ) {
-                job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: parseInt((page/numberOfPages)*100) })
+                job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: parseInt((count/total)*100) })
+            }
+
+
+            // Make sure we don't go over OpenAlex's rate limits.
+            requestsMade += 1
+            const currentTime = Date.now()
+            const batchTime = currentTime - batchStartTime
+            this.logger.debug(`Finished request #${requestsMade} in batch started at ${batchStartTime} at ${currentTime} with ${batchTime} taken so far.`)
+            if ( requestsMade >= 9 && batchTime < 1000 ) {
+                // If we've made at least 9 requests, sleep the rest of the second.
+                // 9 requests to err on the side of caution and not push the limit.
+                await new Promise((resolve, reject) => setTimeout(resolve, 1000-batchTime+1))
+
+                // Start a new batch
+                batchStartTime = Date.now()
+                requestsMade = 0
+            } else if ( requestsMade < 9 && batchTime > 1000 ) {
+                // Reset the batch, the last one didn't hit the rate limit.
+                batchStartTime = Date.now()
+                requestsMade = 0
             }
         }
 

@@ -41,16 +41,32 @@ module.exports = class Logger  {
     }
 
     log(level, message) {
+        // We don't need to log anything. 
+        if ( level > this.level ) {
+            return
+        }
+
         const now = Date()
         const logPrefix = `${now}:Session(${this.id}):: `
-        if ( level <= this.level ) {
+        if ( level == Logger.levels.warn ) {
+            logPrefix += 'Warning: '
+        }
+        if ( typeof message === 'object' ) {
+            if ( level == Logger.levels.error) {
+                console.log(logPrefix + 'Error encountered.') 
+                console.error(message)
+            } else {
+                console.log(logPrefix + 'Logging object.')
+                console.log(message)
+            }
+        } else {
             if ( level == Logger.levels.error) {
                 console.log(logPrefix + 'Error encountered.') 
                 console.error( message)
             } else {
                 console.log(logPrefix + message)
             }
-        } 
+        }
     }
 
     error(message) {
