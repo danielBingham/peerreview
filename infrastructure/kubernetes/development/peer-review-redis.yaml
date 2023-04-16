@@ -1,52 +1,52 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: peer-review-database-deployment
+  name: peer-review-redis-deployment
   labels: 
     application: peer-review
-    function: database 
+    function: redis 
     environment: local
 spec:
   selector:
     matchLabels:
       application: peer-review
-      function: database 
+      function: redis 
       environment: local
   replicas: 1
   template: 
     metadata:
-      name: peer-review-database-pod-template
+      name: peer-review-redis-pod-template
       labels:
         application: peer-review
-        function: database 
+        function: redis 
         environment: local
         container: peer-sql 
     spec:
       containers:
-        - name: peer-review-database-container
-          image: peer-sql:latest 
+        - name: peer-review-redis-container
+          image: redis
           ports:
-            - containerPort: 5432 
+            - containerPort: 6379 
           resources:
             limits:
-              cpu: 1 
-              memory: 2Gi
+              cpu: 200m 
+              memory: 256M 
           imagePullPolicy: Never
 
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: peer-review-database
+  name: peer-review-redis
 spec:
   selector:
     application: peer-review
-    function: database 
+    function: redis 
     environment: local
   ports:
     - protocol: TCP
-      port: 5432 
-      targetPort: 5432 
+      port: 6379 
+      targetPort: 6379 
 
 
 

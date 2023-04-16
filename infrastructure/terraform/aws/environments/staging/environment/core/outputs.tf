@@ -39,6 +39,12 @@ output "database_port" {
   value = module.database.database_port 
 }
 
+// =========== Cache Outputs ==============================
+
+output "cache_nodes" {
+  value = module.cache.cache_nodes
+}
+
 // =========== Cluster Outputs ============================
 
 output "cluster_id" {

@@ -27,28 +27,80 @@ spec:
           image: peerreview:latest
           ports:
             - containerPort: 8080
+          resources:
+            requests:
+              cpu: 400m
+            limits:
+              cpu: 500m 
+              memory: 512M 
+          imagePullPolicy: Never
           env:
             - name: DEBUG
               value: "peer-review:*"
             - name: NODE_ENV
               value: development
-            - name: SPACES_ACCESS_ID
+            - name: DATABASE_HOST
               valueFrom:
                 secretKeyRef:
-                  name: peer-review-spaces-credentials
+                  name: peer-review-database-credentials
+                  key: host
+                  optional: false
+            - name: DATABASE_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-database-credentials
+                  key: port
+                  optional: false
+            - name: DATABASE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-database-credentials
+                  key: username
+                  optional: false
+            - name: DATABASE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-database-credentials
+                  key: password
+                  optional: false
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-session-secret
+                  key: session_secret
+                  optional: false
+            - name: S3_ACCESS_ID
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-s3-credentials
                   key: access_id
                   optional: false
-            - name: SPACES_ACCESS_KEY
+            - name: S3_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
-                  name: peer-review-spaces-credentials
+                  name: peer-review-s3-credentials
                   key: access_key
                   optional: false
-          resources:
-            limits:
-              cpu: 0.5
-              memory: 0.5Gi
-          imagePullPolicy: Never
+            - name: ORCID_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-orcid-secrets
+                  key: client_id
+                  optional: false
+            - name: ORCID_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-orcid-secrets
+                  key: client_secret
+                  optional: false
+            - name: POSTMARK_API_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: peer-review-postmark-secrets
+                  key: api_token 
+                  optional: false
+
+                 optional: false
 
 ---
 apiVersion: v1

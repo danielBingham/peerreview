@@ -35,6 +35,13 @@ module "database" {
   subnet_ids = module.network.private_subnet_ids 
 }
 
+module "cache" {
+  source = "../../components/cache"
+
+  vpc_id = module.network.vpc_id
+  subnet_ids = module.network.private_subnet_ids
+}
+
 module "cluster" {
   source = "../../components/cluster"
 

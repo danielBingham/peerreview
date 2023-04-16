@@ -1,52 +1,36 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: peer-review-app-deployment
+  name: peer-review-workers-deployment
   labels: 
     application: peer-review
-    function: frontend-api 
+    function: workers 
     environment: staging
 spec:
   selector:
     matchLabels:
       application: peer-review
-      function: frontend-api 
+      function: workers 
       environment: staging
-  replicas: 4
+  replicas: 2
   template: 
     metadata:
-      name: peer-review-app-pod-template
+      name: peer-review-workers-pod-template
       labels:
         application: peer-review
-        function: frontend-api 
+        function: workers 
         environment: staging
         container: peerreview
     spec:
       terminationGracePeriodSeconds: 70
       containers:
-        - name: peer-review-app-container
-          image: ghcr.io/danielbingham/peerreview:latest
+        - name: peer-review-workers-container
+          image: ghcr.io/danielbingham/peerreview-worker:latest
           ports:
             - containerPort: 8080
           resources:
             requests:
               cpu: 300m
-          lifecycle:
-            preStop:
-              exec:
-                command: ["/bin/sh", "-c", "sleep 40"]
-          startupProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            periodSeconds: 3 
-            failureThreshold: 20
-          livenessProbe:
-            httpGet:
-              path: /health
-              port: 8080
-            failureThreshold: 1
-            periodSeconds: 10
           env:
             - name: DEBUG
               value: "peer-review:*"
@@ -118,79 +102,19 @@ spec:
               value: '6379'
 
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: peer-review-app-service
-  annotations:
-    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:843012963492:certificate/9bb78fe6-f9d9-4dcc-9193-e7bc7cd7590d
-    alb.ingress.kubernetes.io/healthcheck-interval-seconds: '10'
-    alb.ingress.kubernetes.io/healthcheck-path: /health
-    alb.ingress.kubernetes.io/healthcheck-port: '8080'
-    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
-    alb.ingress.kubernetes.io/success-codes: '200'
-spec:
-  type: NodePort 
-  selector:
-    application: peer-review
-    function: frontend-api
-    environment: staging
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80 
-      targetPort: 8080
-    - name: https
-      protocol: TCP
-      port: 443 
-      targetPort: 8080
-
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: peer-review-app-ingress 
-  labels:
-    application: peer-review
-    function: frontend-api
-    environment: staging
-  annotations:
-    alb.ingress.kubernetes.io/scheme: internet-facing
-    alb.ingress.kubernetes.io/target-type: ip
-    alb.ingress.kubernetes.io/load-balancer-name: peer-review-staging-ingress 
-    alb.ingress.kubernetes.io/certificate-arn: "arn:aws:acm:us-east-1:843012963492:certificate/9bb78fe6-f9d9-4dcc-9193-e7bc7cd7590d" 
-    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS":443}]'
-    alb.ingress.kubernetes.io/ssl-redirect: '443'
-    alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=10
-    alb.ingress.kubernetes.io/target-group-attributes: stickiness.enabled=true
-spec:
-  ingressClassName: alb
-  rules:
-  - host: staging.peer-review.io
-    http:
-      paths:
-      - pathType: Prefix
-        path: /
-        backend:
-          service:
-            name: peer-review-app-service
-            port: 
-              number: 80
-
----
 apiVersion: autoscaling/v1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: peer-review-app 
+  name: peer-review-workers 
   labels:
     application: peer-review
-    function: frontend-api
+    function: workers
     environment: staging
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: peer-review-app-deployment 
-  minReplicas: 4
-  maxReplicas: 30 
+    name: peer-review-workers-deployment 
+  minReplicas: 2
+  maxReplicas: 20 
   targetCPUUtilizationPercentage: 70
