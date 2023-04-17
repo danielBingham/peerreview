@@ -5,7 +5,7 @@
  **************************************************************************************************/
 
 module.exports = {
-    host: 'https://localhost:3000/',
+    host: 'https://localhost/',
     backend: '/api/0.0.0',
     // Database configuration
     database: {

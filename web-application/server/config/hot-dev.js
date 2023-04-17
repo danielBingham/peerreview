@@ -16,24 +16,24 @@ module.exports = {
     backend: '/api/0.0.0',
     // Database configuration
     database: {
-        host: 'localhost',
-        port: 5432,
-        user: 'postgres',
-        password: 'password',
+        host: process.env.DATABASE_HOST,
+        port: process.env.DATABASE_PORT,
+        user: process.env.DATABASE_USER,
+        password: process.env.DATABASE_PASSWORD,
         name: 'peer_review' 
     },
     redis: {
-        host: 'localhost',
-        port: 6379
+        host: process.env.REDIS_HOST,
+        port: process.env.REDIS_PORT 
     },
     session: {
         key: 'peer_review_id',
-        secret: 'hot-dev',
+        secret: process.env.SESSION_SECRET,
         secure_cookie: false
     },
     s3: {
-        bucket_url: 'https://peer-review-development-storage.s3.amazonaws.com',
-        bucket: 'peer-review-development-storage',
+        bucket_url: 'https://peer-review-staging-storage.s3.amazonaws.com/',
+        bucket: 'peer-review-staging-storage',
         access_id: process.env.S3_ACCESS_ID,
         access_key: process.env.S3_ACCESS_KEY
     },

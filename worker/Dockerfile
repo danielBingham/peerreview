@@ -20,4 +20,4 @@ RUN npm install
 COPY config config
 COPY index.js index.js
 
-ENTRYPOINT [ "npm", "start" ]
+ENTRYPOINT [ "node", "./index.js" ]
