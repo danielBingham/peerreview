@@ -1,34 +1,13 @@
 #!/usr/bin/env node
 
+console.log('Beginning server bootstrapping...')
+
 /**
  * Module dependencies.
  */
-
-var app = require('../app');
+var { app, shutdown } = require('../app');
 var debug = require('debug')('peer-review:server');
 var http = require('http');
-
-/**
- * Get port from environment and store in Express.
- */
-
-var port = normalizePort(process.env.PORT || '8080');
-app.set('port', port);
-console.log(`Starting up server on port ${port}.`)
-
-/**
- * Create HTTP server.
- */
-
-var server = http.createServer(app);
-
-/**
- * Listen on provided port, on all network interfaces.
- */
-
-server.listen(port);
-server.on('error', onError);
-server.on('listening', onListening);
 
 /**
  * Normalize a port into a number, string, or false.
@@ -49,6 +28,13 @@ function normalizePort(val) {
 
   return false;
 }
+
+/**
+ * Create HTTP server.
+ */
+
+var server = http.createServer(app);
+
 
 /**
  * Event listener for HTTP server "error" event.
@@ -78,6 +64,7 @@ function onError(error) {
       throw error;
   }
 }
+server.on('error', onError);
 
 /**
  * Event listener for HTTP server "listening" event.
@@ -89,3 +76,34 @@ function onListening() {
     : 'port ' + addr.port;
   debug('Listening on ' + bind);
 }
+server.on('listening', onListening);
+
+
+/**
+ * Get port from environment and store in Express.
+ */
+
+var port = normalizePort(process.env.PORT || '8080');
+app.set('port', port);
+console.log(`Starting up server on port ${port}.`)
+
+/**
+ * Listen on provided port, on all network interfaces.
+ */
+server.listen(port);
+
+const shutdownServer = function() {
+    console.log('Attempting a graceful shutdown...')
+    // Close the http server so we stop taking new connections before we close
+    // down the resources needed to process those connections.
+    server.close(async function() {
+        // Now close down the resources needed to process the http connections.
+        await shutdown()
+
+        console.log('Shutdown complete.')
+        process.exit(0)
+    })
+}
+
+process.on('SIGTERM', shutdownServer)
+process.on('SIGINT', shutdownServer)

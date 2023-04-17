@@ -7,7 +7,7 @@
  * really ``/api/0.0.0/users``.  This is so that we can load multiple versions
  * of the api as we make changes and leave past versions still accessible.
  **************************************************************************************************/
-module.exports = function(database, logger, config) {
+module.exports = function(database, queue, logger, config) {
     const express = require('express')
     const multer = require('multer')
     const backend = require('@danielbingham/peerreview-backend')
@@ -50,7 +50,7 @@ module.exports = function(database, logger, config) {
      * Job REST Routes
      **************************************************************************/
     const JobController = require('./controllers/JobController')
-    const jobController = new JobController(database, logger, config)
+    const jobController = new JobController(database, queue, logger, config)
 
     router.get('/jobs', function(request, response, next) {
         jobController.getJobs(request, response).catch(function(error) {

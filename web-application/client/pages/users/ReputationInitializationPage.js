@@ -135,7 +135,7 @@ const ReputationInitializationPage = function(props) {
     // ======= Render ===============================================
 
     let message = null
-    if ( progress == 100 ) {
+    if ( step == 'complete' && progress == 100 ) {
         message = (
             <div>
                 <p>We've finished generating initial reputation for you.</p> 

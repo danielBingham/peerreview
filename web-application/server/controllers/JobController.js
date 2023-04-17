@@ -1,19 +1,14 @@
 const backend = require('@danielbingham/peerreview-backend')
 
-const BullQueue = require('bull')
-
 const ControllerError = require('../errors/ControllerError')
 
 module.exports = class JobController {
 
-    constructor(database, logger, config) {
+    constructor(database, queue, logger, config) {
         this.database = database
+        this.queue = queue 
         this.logger = logger
         this.config = config
-
-        this.logger.debug(`Connecting to redis ${this.config.redis.host}:${this.config.redis.port}.`)
-        this.queue = new BullQueue('peer-review', { redis: this.config.redis })
-
     }
 
     async getJobs(request, response) {

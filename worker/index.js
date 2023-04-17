@@ -81,3 +81,19 @@ queue.process('initialize-reputation', async function(job, done) {
 })
 
 logger.info('Initialized and listening...')
+
+const shutdown = async function() {
+    logger.info('Attempting a graceful shutdown...')
+    logger.info('Closing queue.')
+    await queue.close()
+    logger.info('Queue closed.')
+    logger.info('Ending connection pool.')
+    await connection.end()
+    logger.info('Pool closed.  Ready for shutdown.')
+
+    process.exit(0)
+}
+
+// We've gotten the termination signal, attempt a graceful shutdown.
+process.on('SIGTERM', shutdown)
+process.on('SIGINT', shutdown)

@@ -22,12 +22,10 @@ spec:
         environment: staging
         container: peerreview
     spec:
-      terminationGracePeriodSeconds: 70
+      terminationGracePeriodSeconds: 600 
       containers:
         - name: peer-review-workers-container
           image: ghcr.io/danielbingham/peerreview-worker:latest
-          ports:
-            - containerPort: 8080
           resources:
             requests:
               cpu: 300m

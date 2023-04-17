@@ -16,6 +16,7 @@ const debug = require('debug')('peer-review:server')
 const { Client, Pool } = require('pg')
 const pgSession = require('connect-pg-simple')(session)
 
+const BullQueue = require('bull')
 
 const path = require('path')
 const fs = require('fs')
@@ -49,7 +50,11 @@ if ( config.database.certificate ) {
     }
 }
 
+logger.info(`Connecting to postgres database at ${databaseConfig.host}:${databaseConfig.port} with ${databaseConfig.user}.`)
 const connection = new Pool(databaseConfig)
+
+logger.info(`Connecting to redis ${config.redis.host}:${config.redis.port}.`)
+const queue = new BullQueue('peer-review', { redis: config.redis })
 
 // Load express.
 const app = express()
@@ -69,6 +74,7 @@ app.use(express.urlencoded({ limit: "50mb", extended: false }))
 
 // Set up our session storage.  We're going to use database backed sessions to
 // maintain a stateless app.
+logger.info('Setting up the database backed session store.')
 const sessionStore = new pgSession({
     pool: connection,
     createTableIfMissing: true
@@ -110,7 +116,7 @@ app.use(function(request, response, next) {
 })
 
 // Get the api router, pre-wired up to the controllers.
-const router = require('./router')(connection, logger, config)
+const router = require('./router')(connection, queue, logger, config)
 
 // Load our router at the ``/api/v0/`` route.  This allows us to version our api. If,
 // in the future, we want to release an updated version of the api, we can load it at
@@ -194,4 +200,17 @@ app.use(function(error, request, response, next) {
     }
 })
 
-module.exports = app
+const shutdown = async function() {
+    logger.info('Closing the connection pool.')
+    await connection.end()
+    logger.info('Connection pool closed.')
+
+    logger.info('Closing the redis queue connection.')
+    await queue.close()
+    logger.info('Redis queue closed.')
+}
+
+module.exports = { 
+    app: app,
+    shutdown: shutdown
+}
