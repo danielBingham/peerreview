@@ -37,6 +37,11 @@ const UserAccountPage = function(props) {
     // ======= Render =====================================
     const selectedTab = ( tab ? tab : 'profile')
 
+    const showTest = ( 
+        configuration.environment != "production" 
+            || (currentUser && (currentUser.permissions == 'admin' || currentUser.permissions == 'superadmin'))
+    )
+
     let content = ( <Spinner local={true} /> )
     if ( selectedTab == 'profile' ) {
         content = ( <UserProfileEditForm /> )
@@ -65,7 +70,7 @@ const UserAccountPage = function(props) {
         content = orcidIdConnection
     } else if ( selectedTab == 'settings' ) {
         content = ( <UserSettingsForm /> ) 
-    } else if ( selectedTab == 'test-orcid') {
+    } else if ( showTest && selectedTab == 'test-orcid') {
         content = ( <TestOrcidForm /> )
     }
 
@@ -87,7 +92,7 @@ const UserAccountPage = function(props) {
                 <PageTab url="/account/settings" selected={selectedTab == 'settings'}>
                     <Cog8ToothIcon /> Settings
                 </PageTab>
-                { configuration.environment != 'production' && <PageTab url="/account/test-orcid" selected={selectedTab == 'test-orcid'}>
+                { showTest && <PageTab url="/account/test-orcid" selected={selectedTab == 'test-orcid'}>
                     Test ORCID
                 </PageTab> }
             </PageTabBar>
