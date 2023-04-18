@@ -16,6 +16,30 @@ module.exports = class TestingController {
     }
 
     async postOrcid(request, response) {
+        /**********************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Permissions:
+         *
+         * 1. User must be logged in.
+         * 2. On production, user must be admin or superadmin.
+         * 
+         * ********************************************************************/
+        if ( process.env.NODE_ENV == 'production' ) {
+            if ( request.session.user 
+                && request.session.user.permissions != 'admin' 
+                && request.session.user.permissions != 'superadmin' ) 
+            { 
+                throw new ControllerError(501, 'not-implemented', 
+                    `Attempt to call test path on production by non-admin.`)
+            }
+        }
+
+        if ( ! request.session.user ) {
+            throw new ControllerError(401, 'not-authenticated',
+                `Attempt to set orcid using test path by non-authenticated user.`)
+        }
+
         const orcidId = request.body.orcidId
         const orcidResults = await this.database.query(`
                 SELECT users.id FROM users WHERE users.orcid_id = $1
@@ -28,8 +52,6 @@ module.exports = class TestingController {
         //  linked to an account - either this one or another one. 
         if ( request.session.user &&  orcidResults.rows.length <= 0 ) {
             const responseBody = await this.auth.connectOrcid(request, orcidId)
-            console.log('Finished connecting orcid: ')
-            console.log(responseBody)
             return response.status(200).json(responseBody)
         } else if ( request.session.user ) {
             throw new ControllerError(400, 'already-linked',
@@ -38,9 +60,26 @@ module.exports = class TestingController {
     }
 
     async getOrcidReset(request, response) {
+        /**********************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Permissions:
+         *
+         * 1. User must be logged in.
+         * 2. On production, user must be admin or superadmin.
+         * 
+         * ********************************************************************/
+        if ( process.env.NODE_ENV == 'production' ) {
+            if ( request.session.user 
+                && request.session.user.permissions != 'admin' 
+                && request.session.user.permissions != 'superadmin' ) 
+            { 
+                throw new ControllerError(501, 'not-implemented', 
+                    `Attempt to call test path on production by non-admin.`)
+            }
+        }
+
         const user = request.session.user
-        console.log('Resetting user: ')
-        console.log(user)
         if ( ! user ) {
             throw new ControllerError(401, 'not-authenticated',
                 `Attempt to reset orcid with out an authenticated user.`)
@@ -77,9 +116,6 @@ module.exports = class TestingController {
             user: request.session.user,
             settings: settings[0]
         }
-
-        console.log('Response body: ')
-        console.log(responseBody)
 
         return response.status(200).json(responseBody)
     }
