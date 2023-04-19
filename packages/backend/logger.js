@@ -47,7 +47,7 @@ module.exports = class Logger  {
         }
 
         const now = Date()
-        const logPrefix = `${now}:Session(${this.id}):: `
+        let logPrefix = `${now}:Session(${this.id}):: `
         if ( level == Logger.levels.warn ) {
             logPrefix += 'Warning: '
         }
