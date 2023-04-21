@@ -1,6 +1,6 @@
 {
   "name": "@danielbingham/peerreview-backend",
-  "version": "0.0.2-23",
+  "version": "0.0.2-24",
   "description": "The backend of Peer Review.",
   "author": "Daniel Bingham",
   "license": "GPL-3.0",
