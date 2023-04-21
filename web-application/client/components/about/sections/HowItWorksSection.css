@@ -1,0 +1,11 @@
+#how-it-works h3 {
+    margin-top: 40px;
+}
+#how-it-works h3 a:link, #how-it-works h3 a:visited, #how-it-works h3 a:active {
+    color: #333;
+    text-decoration: none;
+}
+#how-it-works h3 a:hover {
+    color: #666;
+    text-decoration: none;
+}

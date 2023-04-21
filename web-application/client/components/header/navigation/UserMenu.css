@@ -9,6 +9,7 @@
     border-left: thin solid var(--user-menu-border-color);
     border-right: thin solid var(--user-menu-border-color);
     padding: 10px 0 10px 0;
+    z-index: 1000;
 }
 #user-menu .menu-section {
     padding: 5px 0;

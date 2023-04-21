@@ -3,6 +3,8 @@ import ReactMarkdown from 'react-markdown'
 
 import Field from '/components/fields/Field'
 
+import './HowItWorksSection.css'
+
 const HowItWorksSection = function(props) {
 
     return (
@@ -46,7 +48,7 @@ is to replace the journal system, but we recognize that it will be a while
 before that happens.
 `}
 </ReactMarkdown>
-<h3>Registering and Getting Initial Reputation</h3>
+<h3 id="registering-and-getting-initial-reputation"><a href="#registering-and-getting-initial-reputation">Registering and Getting Initial Reputation</a></h3>
 <ReactMarkdown>
     {`
 When you register using your [ORCID iD](https://orcid.org), or when you connect your ORCID iD to
@@ -61,7 +63,7 @@ immediately, without having to build a reputation on Peer Review separate from
 their existing body of work.
 `}
 </ReactMarkdown>
-<h3>Submitting a Paper</h3>
+            <h3 id="submitting-a-paper"><a href="#submitting-a-paper">Submitting a Paper</a></h3>
 <ReactMarkdown>
     {`
 When you are ready to submit a paper, you click the [submit](/submit) link in
@@ -88,14 +90,14 @@ When you click "Submit Draft for Pre-Publish Review", the paper will enter the
 pre-publish community review stage. 
 `}
 </ReactMarkdown>
-<h3>Pre-Publish Review</h3>
+            <h3 id="pre-publish-review"><a href="#pre-publish-review">Pre-Publish Review</a></h3>
 <ReactMarkdown>
     {`
 In pre-publish review, your paper will be visible to any users who have at
 least **Review** reputation in any of the fields you tagged your paper with.
-Users with **Review** reputation can also submit reviews of your paper.  
+Users with **Review** reputation can submit reviews of your paper.  
 
-Reviews at this stage are entirely about helping the authors by giving them
+Reviews at this stage are intended to help the authors by giving them
 constructive, critical feedback. Authors should expect honest critical
 feedback.  Reviewers should seek to give feedback that is constructive and
 helpful.  Authors can reward feedback they find helpful by granting reviewers
@@ -113,10 +115,10 @@ particular field by clicking on that field.
 
 The review screen has two tabs showing two different views.  On the "Reviews"
 tab, reviews are listed in chronological order, oldest to newest, with a
-snapshot of the relevant piece of the paper for each comment.
+snapshot of the relevant piece of the paper for each comment thread.
 `}
 </ReactMarkdown>
-<img src="/img/how-it-works/review-example-4.png" width={800} />
+<img src="/img/how-it-works/review-example-1.png" width={800} />
 <ReactMarkdown>
     {`
 On the "Drafts" tab, users can see a rendered PDF of the full paper, along with
@@ -125,7 +127,7 @@ are arranged to avoid overlap.  To center a comment on its pin either click the
 comment or click the pin.
 `}
 </ReactMarkdown>
-<img src="/img/how-it-works/review-example-3.png" width={800} />
+<img src="/img/how-it-works/review-example-2.png" width={800} />
 <ReactMarkdown>
 {`
 Users can start a review by clicking the "Start Review" button.  
@@ -179,7 +181,7 @@ get to a point where a paper published on Peer Review does count as the version 
 record.
 `}
 </ReactMarkdown>
-<h3>Literature Integrity Management</h3>
+            <h3 id="literature-integrity-maintenance"><a href="#literature-integrity-maintenance">Literature Integrity Maintenance</a></h3>
 <ReactMarkdown>
     {`
 Once a paper has been published, it becomes public for anyone to view.  The
@@ -192,7 +194,11 @@ pre-publish reviews and draft versions stay with the paper and become public
     {`
 Users who have **referee** reputation in any of the fields the paper is tagged
 with can vote and respond at this stage.
-
+    `}
+</ReactMarkdown>
+<img src="/img/how-it-works/response-example.png" width={800} />
+<ReactMarkdown>
+    {`
 **Up votes** grant the authors 10 reputation in each of the fields the paper is
 tagged with.  **Down votes** remove 10 reputation from the authors in each of
 the fields the paper is tagged with. Votes require responses of at least 125

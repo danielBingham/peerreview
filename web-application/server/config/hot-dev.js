@@ -32,8 +32,8 @@ module.exports = {
         secure_cookie: false
     },
     s3: {
-        bucket_url: 'https://peer-review-staging-storage.s3.amazonaws.com/',
-        bucket: 'peer-review-staging-storage',
+        bucket_url: 'https://peer-review-development-storage.s3.amazonaws.com',
+        bucket: 'peer-review-development-storage',
         access_id: process.env.S3_ACCESS_ID,
         access_key: process.env.S3_ACCESS_KEY
     },

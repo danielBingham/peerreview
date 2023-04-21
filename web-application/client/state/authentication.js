@@ -236,7 +236,7 @@ export const validateToken = function(token, type) {
                 dispatch(authenticationSlice.actions.setCurrentUser(responseContent.user))
                 dispatch(authenticationSlice.actions.setSettings(responseContent.settings))
                 dispatch(addSettingsToDictionary(responseContent.settings))
-                dispatch(addUsersToDictionary(responseBody.user))
+                dispatch(addUsersToDictionary(responseContent.user))
             }
         )
     }

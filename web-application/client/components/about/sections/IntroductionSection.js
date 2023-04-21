@@ -24,6 +24,13 @@ malpractice, and misinformation.  To learn more, please read [how it
 works](/about#how-it-works).
                 `}
             </ReactMarkdown>
+            <h3>Contents</h3>
+            <ul>
+                <li><a href="#how-it-works">How it Works</a></li>
+                <li><a href="#governance">Governance and Structure</a></li>
+                <li><a href="#the-team">The Team</a></li>
+                <li><a href="#faq">Frequently Asked Questions</a></li>
+            </ul>
         </section>
 
     )

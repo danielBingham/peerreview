@@ -5,6 +5,8 @@ import IntroductionSection from '/components/about/sections/IntroductionSection'
 import HowItWorksSection from '/components/about/sections/HowItWorksSection'
 import RationaleSection from '/components/about/sections/RationaleSection'
 import FAQSection from '/components/about/sections/FAQSection'
+import GovernanceSection from '/components/about/sections/GovernanceSection'
+import TeamSection from '/components/about/sections/TeamSection'
 
 import './AboutPage.css'
 
@@ -22,6 +24,8 @@ const AboutPage = function(props) {
             <h1>About Peer Review</h1>
             <IntroductionSection />
             <HowItWorksSection />
+            <GovernanceSection />
+            <TeamSection />
             <FAQSection />
         </article>
     )
