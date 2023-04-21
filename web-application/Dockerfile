@@ -1,4 +1,4 @@
-FROM node 
+FROM node:18.16.0
 
 ARG TOKEN
 
