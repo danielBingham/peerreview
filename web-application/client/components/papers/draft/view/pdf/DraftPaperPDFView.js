@@ -118,7 +118,7 @@ const DraftPaperPDFView = function(props) {
     }
 
     const reflow = function() {
-        if ( renderedVersion == props.versionNumber ) {
+        if ( loadedVersion == props.versionNumber ) {
             resetCollapsedView()
 
             const centeredThreadId = searchParams.get('thread')
@@ -141,7 +141,7 @@ const DraftPaperPDFView = function(props) {
         // spreading from the centered thread assumes the threads have already
         // been spread from the top.
         reflow()
-    }, [ renderedVersion ])
+    }, [ loadedVersion, renderedVersion])
 
     // An effect to trigger whenever searchParams changes - since that likely
     // means the selected thread has also changed.  Triggers a reflow.
@@ -201,6 +201,7 @@ const DraftPaperPDFView = function(props) {
                         onRenderSuccess={function() {
                             renderedPages.current = renderedPages.current+1
 
+                            setThreadReflowRequests(threadReflowRequests+1)
                             if ( renderedPages.current == numberOfPages ) {
                                 setRenderedVersion(props.versionNumber)
                             }
@@ -212,7 +213,7 @@ const DraftPaperPDFView = function(props) {
 
         const selectedThread = searchParams.get('thread')
         const threadViews = []
-        if ( props.versionNumber == renderedVersion ) {
+        if ( props.versionNumber == loadedVersion) {
             for(let thread of threads) {
                 threadViews.push(
                     <div 
