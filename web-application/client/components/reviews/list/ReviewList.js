@@ -191,6 +191,12 @@ const ReviewList = function({ paperId, versionNumber }) {
                 loading={<Spinner />} 
                 onSourceError={(error) => console.log(error)}
                 onLoadError={(error) => console.log(error)}
+                onLoadSuccess={() => {
+                    // Scroll to the hash once the document has loaded.
+                    if ( document.location.hash ) {
+                        document.querySelector(document.location.hash).scrollIntoView()
+                    }
+                }}
             >
                 { reviewViews }
             </Document>

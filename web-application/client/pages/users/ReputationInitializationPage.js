@@ -242,7 +242,7 @@ const ReputationInitializationPage = function(props) {
                     </p>
                     <p>
                         OpenAlex is a small team and they're working very hard
-                        to improve there data set.  If you'd like to see our
+                        to improve their data set.  If you'd like to see our
                     reputation generation improve, support them in their work!
                     </p>
                     <p className="return-home">

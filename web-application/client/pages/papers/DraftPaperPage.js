@@ -70,7 +70,13 @@ const DraftPaperPage = function(props) {
 
     useEffect(function() {
         if ( paper && ! paper.isDraft ) {
-            const url = `/paper/${paper.id}`
+            let url = `/paper/${paper.id}`
+            if ( versionNumber ) {
+                url += `/version/${versionNumber}`
+                if ( props.tab ) {
+                    url += `/${props.tab}`
+                }
+            }
             navigate(url)
         }
     }, [ paper ])

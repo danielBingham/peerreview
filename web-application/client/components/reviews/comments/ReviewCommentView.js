@@ -102,7 +102,7 @@ const ReviewCommentView = function(props) {
                     </span>
                 ) }
                 <UserTag id={props.comment.userId} />
-                <div className="datetime">posted <a href={`#comment-${props.comment.id}`}><DateTag timestamp={props.comment.updatedDate} /></a> in <a  href={`/draft/${props.paper.id}/version/${ props.review.version}/reviews#review-${props.review.id}`}>review #{props.review.id}</a></div>
+                <div className="datetime">posted <a href={`#comment-${props.comment.id}`}><DateTag timestamp={props.comment.updatedDate} /></a> in <a  href={`#review-${props.review.id}`}>review #{props.review.id}</a></div>
                 <div className="comment-inner" style={{ padding: '5px' }} >
                     <ReactMarkdown>
                         {props.comment.content}
