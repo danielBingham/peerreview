@@ -171,9 +171,9 @@ app.use('*', function(request,response) {
     const metadata = {
         url: config.host,
         applicationName: "Peer Review",
-        title: "Peer Review - A Universal PrePrint+ Platform",
-        description: "Peer Review is an experiment in scholarly publishing. It is a platform that enables crowdsourced peer review and public dissemination of scientific and academic papers. For now, the platform can only handle pre-prints. It is and will remain open source and diamond open access. It is currently being maintained by a single developer as a side project.",
-        image: `${config.host}/img/how-it-works/review-example-2.png`,
+        title: "Peer Review (beta) - A Universal PrePrint+ Platform",
+        description: "Peer Review is an experimental scholarly publishing platform. It enables crowdsourced peer review and public dissemination of scientific and academic papers.  It is open source and diamond open access.",
+        image: `${config.host}img/how-it-works/review-example-2.png`,
         twitterHandle: "@peerreviewio",
         type: "website"
     }
