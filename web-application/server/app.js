@@ -21,6 +21,7 @@ const BullQueue = require('bull')
 const path = require('path')
 const fs = require('fs')
 const Uuid = require('uuid')
+const Handlebars = require('handlebars')
 
 const backend = require('@danielbingham/peerreview-backend')
 const ControllerError = require('./errors/ControllerError')
@@ -166,9 +167,22 @@ app.get(/.*\.(svg|pdf|jpg|png)$/, function(request, response) {
 // Everything else goes to the index file.
 app.use('*', function(request,response) {
     debug('request.originalUrl: ' + request.originalUrl)
+
+    const metadata = {
+        url: config.host,
+        applicationName: "Peer Review",
+        title: "Peer Review - A Universal PrePrint+ Platform",
+        description: "Peer Review is an experiment in scholarly publishing. It is a platform that enables crowdsourced peer review and public dissemination of scientific and academic papers. For now, the platform can only handle pre-prints. It is and will remain open source and diamond open access. It is currently being maintained by a single developer as a side project.",
+        image: `${config.host}/img/how-it-works/review-example-2.png`,
+        twitterHandle: "@peerreviewio",
+        type: "website"
+    }
+
     const filepath = path.join(process.cwd(), 'public/dist/index.html')
-    debug('Generated path: ' + filepath)
-    response.sendFile(filepath)
+    const rawTemplate = fs.readFileSync(filepath, 'utf8')
+    const template = Handlebars.compile(rawTemplate)
+    const parsedTemplate = template(metadata)
+    response.send(parsedTemplate)
 })
 
 // error handler

@@ -1,7 +1,8 @@
 .env
 node_modules/
 *.swp
-public/uploads/*
+web-application/public/uploads/*
+web-application/public/dist
 *.tfstate
 *.tfstate.*
 *.tfvars
