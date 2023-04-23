@@ -87,3 +87,9 @@ main {
     background-color: white;
     padding: 20px;
 }
+
+.maintenance-mode {
+    width: 800px;
+    margin: 100px auto;
+    text-align: center;
+}

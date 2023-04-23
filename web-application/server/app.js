@@ -122,7 +122,17 @@ const router = require('./router')(connection, queue, logger, config)
 // Load our router at the ``/api/v0/`` route.  This allows us to version our api. If,
 // in the future, we want to release an updated version of the api, we can load it at
 // ``/api/v1/`` and so on, with out impacting the old versions of the router.
-app.use(config.backend, router)
+console.log(process.env.MAINTENANCE_MODE)
+if( process.env?.MAINTENANCE_MODE === 'true' ) {
+    console.log("maintenance-mode.")
+    app.use(config.backend, function(request, response) {
+        response.json({
+            maintenance_mode: true
+        })
+    })
+} else {
+    app.use(config.backend, router)
+}
 
 app.get('/health', function(request, response) {
     console.log('health probe')
@@ -138,6 +148,7 @@ app.get('/config', function(request, response) {
         backend: config.backend, 
         environment: process.env.NODE_ENV,
         log_level: config.log_level,
+        maintenance_mode: process.env.MAINTENANCE_MODE === 'true' ? true : false,
         orcid: {
             authorization_host: config.orcid.authorization_host,
             client_id: config.orcid.client_id,

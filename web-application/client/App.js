@@ -132,11 +132,13 @@ const App = function(props) {
 
     useEffect(function() {
         if ( configurationRequest && configurationRequest.state == 'fulfilled') {
-            // Logger is a singleton, this will effect all other imports.
-            logger.setLevel(configuration.log_level)
-            setReputationThresholdsRequestId(dispatch(getThresholds()))
-            setFeaturesRequestId(dispatch(getFeatures()))
-            setAuthenticationRequestId(dispatch(getAuthentication()))
+            if ( ! configuration.maintenance_mode ) {
+                // Logger is a singleton, this will effect all other imports.
+                logger.setLevel(configuration.log_level)
+                setReputationThresholdsRequestId(dispatch(getThresholds()))
+                setFeaturesRequestId(dispatch(getFeatures()))
+                setAuthenticationRequestId(dispatch(getAuthentication()))
+            }
         } else if ( configurationRequest && configurationRequest.state == 'failed') {
             if ( retries < 5 ) {
                 setConfigurationRequestId(dispatch(getConfiguration()))
@@ -178,6 +180,15 @@ const App = function(props) {
     }, [ featuresRequestId ])
 
     // ======= Render ===============================================
+
+   if ( configuration?.maintenance_mode ) {
+        return (
+            <div className="maintenance-mode">
+                <h1>Peer Review - Scheduled Maintenance</h1>
+                <p>Peer Review is currently undergoing scheduled maintenance.  Please check back later.</p>
+            </div>
+        )
+   }
 
     if ( ! configurationRequestId || ! authenticationRequestId || ! reputationThresholdsRequestId || ! featuresRequestId) {
         return (
