@@ -129,7 +129,7 @@ module.exports = class JobController {
         // Permissions: 1. User must be logged in.
         if ( ! request.session.user ) {
             throw new ControllerError(401, 'not-authenticated', 
-                `Unauthenticated user attempted to initialize reputation for User(${userId}).`)
+                `Unauthenticated user attempted start a job.`)
         }
 
         let job = null 
