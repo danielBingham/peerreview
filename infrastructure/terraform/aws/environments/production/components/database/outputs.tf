@@ -1,3 +1,7 @@
+output "cluster_primary_instance_id" {
+  value = module.database.cluster_primary_instance_id
+}
+
 /**
  * We'll use this to allow other resources to define their access to the
  * database.

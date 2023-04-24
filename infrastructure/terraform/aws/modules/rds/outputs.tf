@@ -1,3 +1,7 @@
+output "cluster_primary_instance_id" {
+  value = aws_rds_cluster_instance.primary.id
+}
+
 /**
  * We'll use this to allow other resources to define their access to the
  * database.

@@ -1,5 +1,5 @@
 /******************************************************************************
- * Staging Cluster Component
+ * Production Cluster Component
  *
  * This is a component module that only defines the Kubernetes Cluster.  It does
  * not create any of the other infrastructure and depends on a number of other
@@ -19,8 +19,6 @@ module "cluster" {
   vpc_id = var.vpc_id
   private_subnet_ids = var.private_subnet_ids
   public_subnet_ids = var.public_subnet_ids
-
-  alarm_topic_arn = var.alarm_topic_arn
 
   application = "peer-review" 
   environment = "production" 
