@@ -22,8 +22,7 @@ module "rds" {
   vpc_id = var.vpc_id 
   subnet_ids = var.subnet_ids 
 
-  instance_class = "db.t4g.small"
-  allocated_storage = 20
+  instance_class = "db.t4g.medium"
 
   application = "peer-review" 
   environment = "staging" 

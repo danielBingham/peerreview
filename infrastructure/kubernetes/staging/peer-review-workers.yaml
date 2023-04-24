@@ -12,7 +12,7 @@ spec:
       application: peer-review
       function: workers 
       environment: staging
-  replicas: 2
+  replicas: 4
   template: 
     metadata:
       name: peer-review-workers-pod-template
@@ -28,7 +28,7 @@ spec:
           image: ghcr.io/danielbingham/peerreview-worker:latest
           resources:
             requests:
-              cpu: 300m
+              cpu: 100m
           env:
             - name: DEBUG
               value: "peer-review:*"
@@ -113,6 +113,6 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: peer-review-workers-deployment 
-  minReplicas: 2
-  maxReplicas: 20 
-  targetCPUUtilizationPercentage: 70
+  minReplicas: 4
+  maxReplicas: 10 
+  targetCPUUtilizationPercentage: 50

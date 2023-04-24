@@ -192,5 +192,5 @@ spec:
     kind: Deployment
     name: peer-review-app-deployment 
   minReplicas: 4
-  maxReplicas: 30 
+  maxReplicas: 20 
   targetCPUUtilizationPercentage: 70

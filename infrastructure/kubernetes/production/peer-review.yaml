@@ -30,7 +30,7 @@ spec:
             - containerPort: 8080
           resources:
             requests:
-              cpu: 300m
+              cpu: 200m
           lifecycle:
             preStop:
               exec:
@@ -192,5 +192,5 @@ spec:
     kind: Deployment
     name: peer-review-app-deployment 
   minReplicas: 4
-  maxReplicas: 30 
+  maxReplicas: 20 
   targetCPUUtilizationPercentage: 70

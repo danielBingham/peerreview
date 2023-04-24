@@ -6,12 +6,7 @@
  */
 variable "instance_class" {
   description = "The instance class to use with the RDS instance."
-  default = "db.t4g.small"
-}
-
-variable "allocated_storage" {
-  description = "The amount of storage to allocate to the instance, in GB."
-  default = 20
+  default = "db.t4g.medium"
 }
 
 

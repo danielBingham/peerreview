@@ -447,7 +447,7 @@ module "node_group" {
   disk_size = 20
   instance_types = ["t3a.small"]
 
-  desired_size = 2
+  desired_size = 3
   max_size = 10 
   min_size = 2
 

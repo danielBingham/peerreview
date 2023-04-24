@@ -19,25 +19,48 @@ output "vpc_id" {
 // =========== Database Outputs ===========================
 
 /**
+ * We'll use this to allow other resources to define their access to the
+ * database.
+ */
+output "database_cluster_security_group_id" {
+  value = module.database.cluster_security_group_id
+}
+
+/**
  * Necessary to add monitoring to the database.
  */
-output "database_id" {
-  value = module.database.database_id
+output "database_cluster_id" {
+  value = module.database.cluster_id
 }
 
 /**
  * Used to allow the application to connect to the database.
  */
-output "database_host" {
-  value = module.database.database_host 
+output "database_cluster_endpoint" {
+  value = module.database.cluster_endpoint 
+}
+
+/**
+ * Used for read only connections to the database.
+ */
+output "database_cluster_reader_endpoint" {
+  value = module.database.cluster_reader_endpoint
 }
 
 /**
  * Used to allow the application to connect to the database.
  */
-output "database_port" {
-  value = module.database.database_port 
+output "database_cluster_port" {
+  value = module.database.cluster_port 
 }
+
+/**
+ * Get information about the members of the cluster.
+ */
+output "database_cluster_instances" {
+  value = module.database.cluster_instances 
+}
+
 
 // =========== Cache Outputs ==============================
 

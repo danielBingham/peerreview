@@ -22,10 +22,7 @@ module "database" {
   vpc_id = var.vpc_id 
   subnet_ids = var.subnet_ids 
 
-  instance_class = "db.t4g.small"
-  allocated_storage = 20
-
-  alarm_topic_arn = var.alarm_topic_arn
+  instance_class = "db.t4g.medium"
 
   application = "peer-review" 
   environment = "production" 

@@ -68,33 +68,56 @@ resource "aws_db_subnet_group" "this" {
 }
 
 /**
- * Define the database instance itself and associate it with the subnet group
- * and security group defined above.
+ * Create an aurora postgres cluster with a single primary instance.
  */
-resource "aws_db_instance" "this" {
-  identifier             = "${var.application}-${var.environment}-${var.service}-database" 
+resource "aws_rds_cluster" "this" {
+  cluster_identifier      = "${var.application}-${var.environment}-${var.service}-cluster"
+  availability_zones      = [ "us-east-1a", "us-east-1c", "us-east-1d"]
 
-  instance_class         = var.instance_class 
-  allocated_storage      = 20 
-
-  engine                 = "postgres"
+  engine = "aurora-postgresql"
   engine_version         = "14.5"
 
   port                   = 5432 
-  username               = var.username
-  password               = var.password
 
   db_subnet_group_name   = aws_db_subnet_group.this.name
   vpc_security_group_ids = [ aws_security_group.this.id ]
 
-  skip_final_snapshot = true
+  master_username         = var.username 
+  master_password         = var.password 
+
   backup_retention_period = 7
+  preferred_backup_window = "07:00-09:00"
+  
+  skip_final_snapshot = true
 
   tags = merge(
     local.tags,
     {
-      Name = "${var.application}-${var.environment}-${var.service}-db-instance"
-      Resource = "rds.aws_db_instance.this"
+      Name = "${var.application}-${var.environment}-${var.service}-database-cluster"
+      Resource = "rds_cluster.aws_rds_cluster.this"
+    }
+  )
+}
+
+/**
+ * Create our primary instance.
+ */
+resource "aws_rds_cluster_instance" "primary" {
+  cluster_identifier = aws_rds_cluster.this.cluster_identifier
+  identifier             = "${var.application}-${var.environment}-${var.service}" 
+
+  engine = "aurora-postgresql"
+  promotion_tier = 1
+
+  instance_class         = var.instance_class 
+
+  db_subnet_group_name   = aws_db_subnet_group.this.name
+
+  tags = merge(
+    local.tags,
+    {
+      Name = "${var.application}-${var.environment}-${var.service}-database-primary"
+      Resource = "rds_cluster.aws_rds_cluster_instance.primary"
     }
   )
 }

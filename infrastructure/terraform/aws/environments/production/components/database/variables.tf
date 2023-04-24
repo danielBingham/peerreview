@@ -27,6 +27,3 @@ variable "subnet_ids" {
   description = "Subnet ids to launch the database into."
   type = list(any)
 }
-variable "alarm_topic_arn" {
-  description = "The ARN of the SNS topic to send alarms to."
-}

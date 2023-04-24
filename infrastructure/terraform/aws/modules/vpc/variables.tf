@@ -1,7 +1,7 @@
 variable "availability_zones" {
   description = "A list of availability zones that we want to create subnets for.  Must match the region defined in the current provider."
   type = list(any)
-  default = [ "us-east-1a", "us-east-1b" ]
+  default = [ "us-east-1a", "us-east-1b", "us-east-1c" ]
 }
 
 
