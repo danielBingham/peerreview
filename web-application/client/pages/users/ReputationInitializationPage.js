@@ -73,11 +73,11 @@ const ReputationInitializationPage = function(props) {
         if ( getJobRequest?.state == 'fulfilled' ) {
             if ( getJobRequest.result?.progress.step == 'complete' && ! getJobRequest.result?.returnvalue?.error ) {
                 setStep(getJobRequest.result?.progress.step || 'initializing')
-                setStepDescription(getJobRequest.result?.progress.stepDescription || 'Initializing...')
+                setStepDescription(getJobRequest.result?.progress.stepDescription || 'Initializing and waiting for a worker...')
                 setProgress(getJobRequest.result?.progress.progress || 0)
             } else if ( ! getJobRequest.result?.returnvalue?.error ) {
                 setStep(getJobRequest.result?.progress.step || 'initializing')
-                setStepDescription(getJobRequest.result?.progress.stepDescription || 'Initializing...')
+                setStepDescription(getJobRequest.result?.progress.stepDescription || 'Initializing and waiting for a worker...')
                 setProgress(getJobRequest.result?.progress.progress || 0)
 
                 // jobRequestId isn't going to be set by the timeout for 250

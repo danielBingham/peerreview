@@ -114,5 +114,5 @@ spec:
     kind: Deployment
     name: peer-review-workers-deployment 
   minReplicas: 4
-  maxReplicas: 10 
+  maxReplicas: 4 
   targetCPUUtilizationPercentage: 50
