@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react'
 
-import * as PDFLib from 'pdfjs-dist/webpack'
-
 import Spinner from '/components/Spinner'
 
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
@@ -48,21 +46,6 @@ const PDFViewer = function(props) {
     const onLoadSuccess = function({ numPages}) {
         setTotalPages(numPages)
     }
-
-    
-    /**
-     * Once we have the paper and the reviews, load the PDFs so we can display
-     * them.
-     */
-        /*useEffect(function() {
-        const loadingTask = PDFLib.getDocument('http://' + window.location.host + props.filepath)
-        loadingTask.promise.then(function(loadedPdf) {
-            setPdf(loadedPdf)
-        }).catch(function(error) {
-            console.error(error)
-        })
-                <PDFViewerPage key={`page-${pageNumber}`} pageNumber={pageNumber} pdf={pdf} />
-    }, [ props.filepath ]) */
 
     // ================= Render ===============================================
 

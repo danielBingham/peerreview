@@ -127,6 +127,25 @@ const DraftPaperPDFPageView = function(props) {
             props.requestThreadReflow()
         }
     }
+    
+    const whileLoading = useCallback(() => { 
+        return (<Spinner local={true} />)
+    }, [])
+
+    const onClick = useCallback((e) => handleClick(e, props.pageNumber), [ handleClick, props.pageNumber ])
+
+    const onLoadSuccess = useCallback((page) => {
+        setWidth(page.width)
+        setHeight(page.height)
+        setLoaded(true)
+    }, [ setWidth, setHeight, setLoaded ])
+
+    const onRenderSuccess = useCallback(() => {
+        setRendered(true)
+        if ( props.onRenderSuccess ) {
+            props.onRenderSuccess()
+        }
+    }, [ props.onRenderSuccess ])
 
     useEffect(function() {
         if ( postThreadsRequest && postThreadsRequest.state == 'fulfilled') {
@@ -178,20 +197,11 @@ const DraftPaperPDFPageView = function(props) {
             <Page key={`page-${props.pageNumber}`} 
                 canvasRef={canvasRef}
                 pageNumber={props.pageNumber} 
-                loading={<Spinner local={true} />} 
+                loading={whileLoading} 
                 width={800} 
-                onClick={(e) => handleClick(e, props.pageNumber)}
-                onLoadSuccess={(page) => {
-                    setWidth(page.width)
-                    setHeight(page.height)
-                    setLoaded(true)
-                }}
-                onRenderSuccess={() => {
-                    setRendered(true)
-                    if ( props.onRenderSuccess ) {
-                        props.onRenderSuccess()
-                    }
-                }}
+                onClick={onClick}
+                onLoadSuccess={onLoadSuccess}
+                onRenderSuccess={onRenderSuccess}
             /> 
         </div>
     )

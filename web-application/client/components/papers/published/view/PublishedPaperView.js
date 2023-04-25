@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import * as PDFLib from 'pdfjs-dist/webpack'
-
 import { getPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 
 import DateTag from '/components/DateTag'

@@ -37,11 +37,8 @@ const DraftPaperPDFView = function(props) {
     const [ loadedVersion, setLoadedVersion ] = useState(null)
     const [ renderedVersion, setRenderedVersion ] = useState(null)
     const [ threadReflowRequests, setThreadReflowRequests ] = useState(0)
+    const [ renderedPages, setRenderedPages ] = useState(0)
 
-    const renderedPages = useRef(0)
-    if ( renderedPages.current !== 0 && renderedVersion != props.versionNumber ) {
-        renderedPages.current = 0
-    }
 
     // ======= Redux State ==========================================
 
@@ -129,6 +126,24 @@ const DraftPaperPDFView = function(props) {
         }
     }
 
+    const onRenderSuccess = useCallback(function() {
+        setRenderedPages(renderedPages+1)
+    }, [ renderedPages, setRenderedPages ])    
+
+
+    useEffect(function() {
+        if ( renderedPages !== 0 && loadedVersion != props.versionNumber ) {
+            setRenderedPages(0)
+        }
+    }, [ loadedVersion, props.versionNumber ])
+
+    useEffect(function() {
+        setThreadReflowRequests(threadReflowRequests+1)
+        if ( renderedPages == numberOfPages ) {
+            setRenderedVersion(props.versionNumber)
+        }
+    }, [ renderedPages ])
+
     // An effect to trigger when we've successfully loaded and rendered a new
     // PDF.  Does an initial positioning of that PDF's threads.
     useEffect(function() {
@@ -198,14 +213,7 @@ const DraftPaperPDFView = function(props) {
                         paper={paper}
                         versionNumber={props.versionNumber}
                         requestThreadReflow={requestThreadReflow}
-                        onRenderSuccess={function() {
-                            renderedPages.current = renderedPages.current+1
-
-                            setThreadReflowRequests(threadReflowRequests+1)
-                            if ( renderedPages.current == numberOfPages ) {
-                                setRenderedVersion(props.versionNumber)
-                            }
-                        }}
+                        onRenderSuccess={onRenderSuccess}
                     />
                 )
             }
