@@ -63,6 +63,25 @@ const ReviewCommentThreadView = function(props) {
 
     // ======= Effect Handling ======================================
 
+    // Initial positioning.
+    useLayoutEffect(function() {
+        // TECHDEBT - This should probably be in GdocStyleCommentHelper
+        //
+        const documentElement = document.getElementsByClassName(`draft-paper-pdf-document`)[0]
+        const documentRect = documentElement.getBoundingClientRect()
+
+        const pageElement = document.getElementById(`draft-paper-pdf-page-${thread.page}`)
+        const pageRect = pageElement.getBoundingClientRect()
+
+        const top = (pageRect.top - documentRect.top) + pageRect.height*thread.pinY - 50
+        const left = pageRect.width + 5
+        const collapsed = false
+
+        const threadElement = document.getElementById(`thread-${thread.id}-wrapper`)
+        threadElement.style.top = parseInt(top) + 'px'
+        threadElement.style.left = parseInt(left) + 'px'
+    }, [])
+
     useEffect(function() {
         if ( request && request.state == 'fulfilled'  && props.requestThreadReflow) {
             props.requestThreadReflow()

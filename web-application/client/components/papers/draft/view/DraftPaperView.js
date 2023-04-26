@@ -36,14 +36,10 @@ const DraftPaperView = function({ id, versionNumber, tab }) {
     })
     // ================= Redux State ==========================================
 
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[id]
-    })
-    const mostRecentVersion = paper?.versions[0].version
-
     // ======= Effect Handling =====================
    
     const dispatch = useDispatch()
+    
     /**
      * Retrieve the reviews on mount.  Cleanup the request on dismount.
      */
@@ -63,16 +59,11 @@ const DraftPaperView = function({ id, versionNumber, tab }) {
     }, [ reviewsRequestId ])
 
     // ================= Render ===============================================
-    
-    // Error checking.
-    if ( ! paper ) {
-        throw new Error('Missing paper.')
-    } 
 
     if ( reviewsRequest && reviewsRequest.state == 'fulfilled') {
         return (
             <div id={`paper-${id}`} className="draft-paper">
-                <DraftPaperHeader id={id} tab={tab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
+                <DraftPaperHeader id={id} tab={tab} versionNumber={versionNumber} />
                 <ReviewHeaderView paperId={id} versionNumber={versionNumber} />
                 <DraftPaperPDFView paperId={id} versionNumber={versionNumber} />
             </div>

@@ -80,19 +80,19 @@ const DraftPaperPDFView = function(props) {
      *
      * @return {void}
      */
-    const onLoadSuccess = function(pdf) {
+    const onLoadSuccess = useCallback(function(pdf) {
         setNumberOfPages(pdf.numPages)
         setLoadedVersion(props.versionNumber)
-    }
+    }, [ props.versionNumber, setNumberOfPages, setLoadedVersion ])
 
     /**
      * Trigger a reflow of the threads.
      *
      * @return {void}
      */
-    const requestThreadReflow = function() {
+    const requestThreadReflow = useCallback(function() {
         setThreadReflowRequests(threadReflowRequests + 1)
-    }
+    }, [ threadReflowRequests, setThreadReflowRequests ])
 
     const showCollapsed = function(numberOfCollapsedThreads) {
         const collapsedElement = document.getElementById('collapsed-comments')
@@ -262,7 +262,6 @@ const DraftPaperPDFView = function(props) {
                     <div>Not showing <span id="count">0</span> collapsed comments.</div>
                     <div className="instructions">Click here to expand.</div>
                 </div>
-                {threadViews}
                 <Document 
                     className="draft-paper-pdf-document" 
                     file={urlString} 
@@ -273,6 +272,7 @@ const DraftPaperPDFView = function(props) {
                 >
                     { pageViews }
                 </Document>
+                {threadViews}
             </article>
         )
     } else {
