@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react'
+import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
@@ -26,7 +26,7 @@ import './ReviewList.css'
  * reviews for. 
  */
 const ReviewList = function({ paperId, versionNumber }) {
-    
+
     // ================= Request Tracking =====================================
     
     const [ requestId, setRequestId] = useState(null)
@@ -85,6 +85,21 @@ const ReviewList = function({ paperId, versionNumber }) {
             setPostReviewRequestId(dispatch(newReview(paperId, versionNumber, currentUser.id)))
         }
     }
+
+    const loading= useCallback(function() {
+        return (<Spinner />) 
+    }, [])
+
+    const onSourceError = useCallback((error) => console.log(error), [])
+
+    const onLoadError =useCallback((error) => console.log(error), [])
+
+    const onLoadSuccess = useCallback(() => {
+        // Scroll to the hash once the document has loaded.
+        if ( document.location.hash ) {
+            document.querySelector(document.location.hash).scrollIntoView()
+        }
+    }, [ document ])
 
     // ======= Effect Handling ======================================
     
@@ -160,7 +175,6 @@ const ReviewList = function({ paperId, versionNumber }) {
         )
     }
 
-
     let version = paper.versions.find((v) => v.version == versionNumber)
     if ( ! version ) {
         version = paper.versions[0]
@@ -188,15 +202,10 @@ const ReviewList = function({ paperId, versionNumber }) {
             </div>
             <Document 
                 file={url.toString()} 
-                loading={<Spinner />} 
-                onSourceError={(error) => console.log(error)}
-                onLoadError={(error) => console.log(error)}
-                onLoadSuccess={() => {
-                    // Scroll to the hash once the document has loaded.
-                    if ( document.location.hash ) {
-                        document.querySelector(document.location.hash).scrollIntoView()
-                    }
-                }}
+                loading={loading} 
+                onSourceError={onSourceError}
+                onLoadError={onLoadError}
+                onLoadSuccess={onLoadSuccess}
             >
                 { reviewViews }
             </Document>

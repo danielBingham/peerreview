@@ -63,27 +63,8 @@ const ReviewCommentThreadView = function(props) {
 
     // ======= Effect Handling ======================================
 
-    // Initial positioning.
-    useLayoutEffect(function() {
-        // TECHDEBT - This should probably be in GdocStyleCommentHelper
-        //
-        const documentElement = document.getElementsByClassName(`draft-paper-pdf-document`)[0]
-        const documentRect = documentElement.getBoundingClientRect()
-
-        const pageElement = document.getElementById(`draft-paper-pdf-page-${thread.page}`)
-        const pageRect = pageElement.getBoundingClientRect()
-
-        const top = (pageRect.top - documentRect.top) + pageRect.height*thread.pinY - 50
-        const left = pageRect.width + 5
-        const collapsed = false
-
-        const threadElement = document.getElementById(`thread-${thread.id}-wrapper`)
-        threadElement.style.top = parseInt(top) + 'px'
-        threadElement.style.left = parseInt(left) + 'px'
-    }, [])
-
     useEffect(function() {
-        if ( request && request.state == 'fulfilled'  && props.requestThreadReflow) {
+        if ( request && request.state == 'fulfilled' && props.requestThreadReflow) {
             props.requestThreadReflow()
         }
     }, [ request ])
@@ -101,15 +82,38 @@ const ReviewCommentThreadView = function(props) {
 
     let inProgress = false
     const viewOnly = ! props.paper.isDraft
+
     const commentViews = []
+    
     const sortedComments = [ ...thread.comments ]
     sortedComments.sort((a,b) => a.threadOrder - b.threadOrder)
+
+    const focusForm = searchParams.get('thread') == thread.id
+
     for ( const comment of sortedComments) {
         if ( comment.status == 'in-progress' && comment.userId == currentUser.id) {
             inProgress = true
-            commentViews.push(<ReviewCommentForm key={comment.id} paper={props.paper} review={review} thread={thread} comment={comment} requestThreadReflow={props.requestThreadReflow} />)
+            commentViews.push(
+                <ReviewCommentForm 
+                    key={comment.id} 
+                    paper={props.paper} 
+                    review={review} 
+                    thread={thread} 
+                    comment={comment} 
+                    focusForm={focusForm}
+                    requestThreadReflow={props.requestThreadReflow} 
+                />
+            )
         } else if ( comment.status == 'posted' ) {
-            commentViews.push(<ReviewCommentView key={comment.id} paper={props.paper} review={review} thread={thread} comment={comment} />)
+            commentViews.push(
+                <ReviewCommentView 
+                    key={comment.id} 
+                    paper={props.paper} 
+                    review={review} 
+                    thread={thread} 
+                    comment={comment} 
+                />
+            )
         }
     }
 

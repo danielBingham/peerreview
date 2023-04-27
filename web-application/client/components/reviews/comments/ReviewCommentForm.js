@@ -126,7 +126,6 @@ const ReviewCommentForm = function(props) {
                 <div className="content">
                     <textarea 
                         name="content" 
-                        autoFocus
                         onBlur={commit}
                         onChange={(e) => setContent(e.target.value)} 
                         value={content}

@@ -2,14 +2,10 @@ import React, { useState, useRef, useCallback, useLayoutEffect, useEffect } from
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams, useLocation } from 'react-router-dom'
 
-import { newReview, postReviewThreads, cleanupRequest } from '/state/reviews'
-
-import { reflowThreads } from '/helpers/GdocStyleCommentHelper'
-
 import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
 
 import DraftPaperPDFPageView from './DraftPaperPDFPageView'
-import ReviewCommentThreadView from '/components/reviews/comments/ReviewCommentThreadView'
+import ReviewCommentsWrapper from '/components/reviews/comments/ReviewCommentsWrapper'
 import Spinner from '/components/Spinner'
 
 import './DraftPaperPDFView.css'
@@ -36,9 +32,7 @@ const DraftPaperPDFView = function(props) {
     const [ numberOfPages, setNumberOfPages ] = useState(0)
     const [ loadedVersion, setLoadedVersion ] = useState(null)
     const [ renderedVersion, setRenderedVersion ] = useState(null)
-    const [ threadReflowRequests, setThreadReflowRequests ] = useState(0)
     const [ renderedPages, setRenderedPages ] = useState(0)
-
 
     // ======= Redux State ==========================================
 
@@ -50,25 +44,15 @@ const DraftPaperPDFView = function(props) {
         return state.papers.dictionary[props.paperId]
     })
 
-    const threads = useSelector(function(state) {
-        if ( state.reviews.list[props.paperId] ) {
-            const reviews = state.reviews.list[props.paperId][props.versionNumber]
-            const results = []
-            if ( reviews && reviews.length > 0 ) {
-                for (const review of reviews ) {
-                    results.push(...review.threads)
-                }
-            }
-            // We need to sort them in the order they appear on the page in
-            // order for the positioning algorithm to work below.
-            results.sort((a,b) => {
-                return (a.page+a.pinY) - (b.page+b.pinY)
-            })
-            return results
-        } else {
-            return [] 
-        }
-    })
+    // We need this to be a ref because the callback can be called mutliple
+    // times in a single render loop.  When that happens, if we're using state,
+    // it will only record a single page as rendered, even if dozens have
+    // returned rendered.
+    const renderedPagesCount = useRef(0)
+    if ( renderedPagesCount.current !== 0 && loadedVersion !== props.versionNumber ) {
+        renderedPagesCount.current = 0
+    }
+
 
     // ======= Actions and Event Handling ===========================
 
@@ -85,52 +69,14 @@ const DraftPaperPDFView = function(props) {
         setLoadedVersion(props.versionNumber)
     }, [ props.versionNumber, setNumberOfPages, setLoadedVersion ])
 
-    /**
-     * Trigger a reflow of the threads.
-     *
-     * @return {void}
-     */
-    const requestThreadReflow = useCallback(function() {
-        setThreadReflowRequests(threadReflowRequests + 1)
-    }, [ threadReflowRequests, setThreadReflowRequests ])
-
-    const showCollapsed = function(numberOfCollapsedThreads) {
-        const collapsedElement = document.getElementById('collapsed-comments')
-
-        const documentElement = document.getElementsByClassName(`draft-paper-pdf-document`)[0]
-        const documentRect = documentElement.getBoundingClientRect()
-
-        collapsedElement.style.top = -60 + 'px'
-        collapsedElement.style.left = parseInt(documentRect.width + 5) + 'px'
-
-        const countElement = document.getElementById('count')
-        countElement.innerText = numberOfCollapsedThreads 
-
-        collapsedElement.classList.add('show')
-    }
-
-    const resetCollapsedView = function() {
-        const collapsedElement = document.getElementById('collapsed-comments')
-        collapsedElement.classList.remove('show')
-    }
-
-    const reflow = function() {
-        if ( loadedVersion == props.versionNumber ) {
-            resetCollapsedView()
-
-            const centeredThreadId = searchParams.get('thread')
-            const numberOfCollapsedComments = reflowThreads(threads, centeredThreadId) 
-            if ( numberOfCollapsedComments > 0 ) {
-                showCollapsed(numberOfCollapsedComments)
-            }
-        }
-    }
-
     const onRenderSuccess = useCallback(function() {
-        setRenderedPages(renderedPages+1)
+        // TECHDEBT Hack - see comment on ref definition.
+        renderedPagesCount.current += 1
+        setRenderedPages(renderedPagesCount.current)
     }, [ renderedPages, setRenderedPages ])    
 
-
+    // ======= Effect Handling ======================================
+    
     useEffect(function() {
         if ( renderedPages !== 0 && loadedVersion != props.versionNumber ) {
             setRenderedPages(0)
@@ -138,62 +84,10 @@ const DraftPaperPDFView = function(props) {
     }, [ loadedVersion, props.versionNumber ])
 
     useEffect(function() {
-        setThreadReflowRequests(threadReflowRequests+1)
-        if ( renderedPages == numberOfPages ) {
+        if ( renderedPages == numberOfPages && numberOfPages !== 0 ) {
             setRenderedVersion(props.versionNumber)
         }
     }, [ renderedPages ])
-
-    // An effect to trigger when we've successfully loaded and rendered a new
-    // PDF.  Does an initial positioning of that PDF's threads.
-    useEffect(function() {
-        // NOTE: This positioning algorithm assumes that `threads` has been
-        // sorted and the threads are in the order they appear on the document,
-        // from top to bottom.
-        //
-        // On the initial pass we want to spread from the top first, and then
-        // we want to spread from the centered thread.  The algorithm for
-        // spreading from the centered thread assumes the threads have already
-        // been spread from the top.
-        reflow()
-    }, [ loadedVersion, renderedVersion])
-
-    // An effect to trigger whenever searchParams changes - since that likely
-    // means the selected thread has also changed.  Triggers a reflow.
-    useEffect(function() {
-        const centeredThread = searchParams.get('thread')
-        if ( centeredThread !== null ) {
-            reflow()
-        }
-    }, [ searchParams ])
-
-    // The effect that watches the threadReflowRequests and executes the
-    // requested reflow.
-    useEffect(function() {
-        if ( threadReflowRequests > 0 ) {
-            setThreadReflowRequests(0)
-            reflow()
-        }
-    }, [ threadReflowRequests ])
-
-    // If they click off the thread or the pin, then we want to unselect the
-    // thread.
-    useEffect(function() {
-        const onBodyClick = function(event) {
-            if ( ! event.target.matches('.comment-thread-pin') &&  ! event.target.matches('.comment-thread') 
-                && ! event.target.matches('.comment-thread-pin :scope') && ! event.target.matches('.comment-thread :scope') ) 
-            {
-                searchParams.delete('thread')
-                setSearchParams(searchParams)
-            } 
-        }
-        document.body.addEventListener('click', onBodyClick)
-
-        return function cleanup() {
-            document.body.removeEventListener('click', onBodyClick)
-        }
-    }, [ searchParams, props.versionNumber ])
-
 
     // ================= Render ===============================================
 
@@ -210,58 +104,25 @@ const DraftPaperPDFView = function(props) {
                     <DraftPaperPDFPageView 
                         key={`page-${pageNumber}`} 
                         pageNumber={pageNumber}
-                        paper={paper}
+                        paperId={props.paperId}
                         versionNumber={props.versionNumber}
-                        requestThreadReflow={requestThreadReflow}
                         onRenderSuccess={onRenderSuccess}
                     />
                 )
             }
         }
 
-        const selectedThread = searchParams.get('thread')
-        const threadViews = []
-        if ( props.versionNumber == loadedVersion) {
-            for(let thread of threads) {
-                threadViews.push(
-                    <div 
-                        id={`thread-${thread.id}-wrapper`} 
-                        key={thread.id} 
-                        className={`thread-wrapper ${thread.id == selectedThread ? 'selected' : ''} `}
-                        onClick={ (e) => { 
-                            searchParams.set('thread', thread.id)
-                            setSearchParams(searchParams)
-                        }}
-                    >
-                        <ReviewCommentThreadView 
-                            key={thread.id} 
-                            paper={paper} 
-                            versionNumber={props.versionNumber}
-                            reviewId={thread.reviewId}
-                            requestThreadReflow={requestThreadReflow}
-                            id={thread.id}
-                        />
-                    </div>
-                )
-            }
-
-        }
-
         const url = new URL(version.file.filepath, version.file.location)
         const urlString = url.toString()
         return (
             <article id={`paper-${props.paperId}-content`} className="draft-paper-pdf">
-                <div id="collapsed-comments" onClick={(e) => {
-                    searchParams.delete('thread')
-                    setSearchParams(searchParams)
-                    // NOTE: we need to trigger a thread reflow rather than directly calling reflow threads here to avoid
-                    // running the reflow in the middle of Reacts render cycle.  The flow *MUST* be run after React has
-                    // rendered.
-                    requestThreadReflow()
-                }}>
-                    <div>Not showing <span id="count">0</span> collapsed comments.</div>
-                    <div className="instructions">Click here to expand.</div>
-                </div>
+                <ReviewCommentsWrapper 
+                    paperId={props.paperId} 
+                    versionNumber={props.versionNumber} 
+                    loadedVersion={loadedVersion}
+                    renderedPages={renderedPages}
+                    renderedVersion={renderedVersion}
+                />
                 <Document 
                     className="draft-paper-pdf-document" 
                     file={urlString} 
@@ -272,7 +133,6 @@ const DraftPaperPDFView = function(props) {
                 >
                     { pageViews }
                 </Document>
-                {threadViews}
             </article>
         )
     } else {

@@ -39,7 +39,7 @@ const logThreads = function(threads, infoToLog) {
  *
  * @return {int} The number of theads that were collapsed.
  */
-export const reflowThreads = function(threads, centeredThreadId) {
+export const reflowThreads = function(threads, centeredThreadId, shouldFocus) {
     // NOTE: This positioning algorithm assumes that `threads` has been
     // sorted and the threads are in the order they appear on the document,
     // from top to bottom.
@@ -53,7 +53,7 @@ export const reflowThreads = function(threads, centeredThreadId) {
         spreadThreadsFromTop(threads)
     }
 
-    return positionThreads(threads)
+    return positionThreads(threads, shouldFocus)
 }
 
 const populateThreadInfo = function(threads) {
@@ -212,15 +212,18 @@ const spreadThreadsFromThread = function(threads, threadId) {
     }
 }
 
-const positionThreads = function(threads) {
+const positionThreads = function(threads, shouldFocus) {
     let numberOfCollapsedThreads = 0
     for(let index = 0; index < threads.length; index++) {
         const thread = threads[index]
         const info = threadInfo[thread.id]
 
         const threadElement = document.getElementById(`thread-${thread.id}-wrapper`)
-        threadElement.style.top = parseInt(info.rect.top) + 'px'
-        threadElement.style.left = parseInt(info.rect.left) + 'px'
+        const newTop = parseInt(info.rect.top) + 'px'
+        const newLeft = parseInt(info.rect.left) + 'px'
+
+        threadElement.style.top = newTop 
+        threadElement.style.left = newLeft 
 
         if ( info.collapsed ) {
             numberOfCollapsedThreads += 1
@@ -231,6 +234,13 @@ const positionThreads = function(threads) {
 
         if ( info.selected ) {
             threadElement.classList.add('selected')
+            if ( shouldFocus) { 
+                threadElement.addEventListener("transitionend", function() {
+                    // Focus the current form only after the transition has
+                    // completed to ensure we don't bounce the screen around.
+                    threadElement.querySelector(`textarea`)?.focus()
+                }, { once: true })
+            }
         } else {
             threadElement.classList.remove('selected')
         }

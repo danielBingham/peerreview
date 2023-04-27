@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { Page } from 'react-pdf/dist/esm/entry.webpack'
@@ -46,6 +46,12 @@ const CommentThreadView = function({ id, reviewId, paperId, versionNumber }) {
         return state.reviews.dictionary[paperId][reviewId].threads.find((t) => t.id == id)
     })
 
+    const onRenderSuccess = useCallback((page) => {
+        setWidth(page.width)
+        setHeight(page.height)
+        setHiddenCanvasLoaded(true)
+    }, [setWidth, setHeight, setHiddenCanvasLoaded ])
+
     useEffect(function() {
         if ( hiddenCanvasLoaded && canvasRef.current && hiddenCanvasRef.current ) {
             const context = canvasRef.current.getContext("2d")
@@ -88,11 +94,7 @@ const CommentThreadView = function({ id, reviewId, paperId, versionNumber }) {
                     canvasRef={hiddenCanvasRef}
                     pageNumber={thread.page} 
                     width={800} 
-                    onRenderSuccess={(page) => {
-                        setWidth(page.width)
-                        setHeight(page.height)
-                        setHiddenCanvasLoaded(true)
-                    }}
+                    onRenderSuccess={onRenderSuccess}
                 /> 
                 <canvas 
                     id={`review-${review.id}-thread-${thread.id}-canvas`} 

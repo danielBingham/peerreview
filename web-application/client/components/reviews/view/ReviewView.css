@@ -1,6 +1,6 @@
 .review-view {
-    margin: 50px auto;
-    width: 900px;
+    margin: 50px auto 150px auto;
+    width: 1000px;
 }
 .review-view  svg.ellipsis {
     display: block;
@@ -11,7 +11,7 @@
 }
 .review-view .review-summary, .review-view .review-summary-form {
     border: thin solid var(--main-border-color);
-    padding: 20px;
+    padding: 20px 50px;
 }
 
 

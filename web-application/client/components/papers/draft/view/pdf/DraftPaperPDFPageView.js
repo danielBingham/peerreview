@@ -61,18 +61,22 @@ const DraftPaperPDFPageView = function(props) {
         return state.authentication.currentUser
     })
 
+    const paper = useSelector(function(state) {
+        return state.papers.dictionary[props.paperId]
+    })
+
     const reviewInProgress = useSelector(function(state) {
-        if ( ! state.reviews.inProgress[props.paper.id] ) {
+        if ( ! state.reviews.inProgress[props.paperId] ) {
             return null
-        } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
+        } else if ( ! state.reviews.inProgress[props.paperId][props.versionNumber] ) {
             return null
         }
-        return state.reviews.inProgress[props.paper.id][props.versionNumber]
+        return state.reviews.inProgress[props.paperId][props.versionNumber]
     })
 
     const threads = useSelector(function(state) {
-        if ( state.reviews.list[props.paper.id] ) {
-            const reviews = state.reviews.list[props.paper.id][props.versionNumber]
+        if ( state.reviews.list[props.paperId] ) {
+            const reviews = state.reviews.list[props.paperId][props.versionNumber]
             const results = []
             if ( reviews && reviews.length > 0 ) {
                 for (const review of reviews ) {
@@ -97,8 +101,8 @@ const DraftPaperPDFPageView = function(props) {
      * Handle a click event on the page canvas.  If we don't have a review in
      * progress, start one.  Otherwise, start a new thread.
      */
-    const handleClick = function(event, pageNumber) {
-        if ( ! props.paper.isDraft ) {
+    const handleClick = useCallback(function(event) {
+        if ( ! paper.isDraft ) {
             return
         }
 
@@ -111,7 +115,7 @@ const DraftPaperPDFPageView = function(props) {
         if ( canvasRef.current ) {
             const rect = canvasRef.current.getBoundingClientRect()
             const thread = {
-                page: pageNumber,
+                page: props.pageNumber,
                 pinX: ((event.clientX - rect.left)/rect.width).toFixed(20),
                 pinY: ((event.clientY - rect.top)/rect.height).toFixed(20),
                 comments: [{
@@ -123,16 +127,14 @@ const DraftPaperPDFPageView = function(props) {
             }
 
             thread.reviewId = reviewInProgress.id
-            setPostThreadsRequestId(dispatch(postReviewThreads(props.paper.id, reviewInProgress.id, thread)))
-            props.requestThreadReflow()
+            setPostThreadsRequestId(dispatch(postReviewThreads(paper.id, reviewInProgress.id, thread)))
         }
-    }
+    }, [ props.pageNumber, paper, reviewInProgress, postReviewThreads, setPostThreadsRequestId ])
     
     const whileLoading = useCallback(() => { 
         return (<Spinner local={true} />)
     }, [])
 
-    const onClick = useCallback((e) => handleClick(e, props.pageNumber), [ handleClick, props.pageNumber ])
 
     const onLoadSuccess = useCallback((page) => {
         setWidth(page.width)
@@ -181,7 +183,7 @@ const DraftPaperPDFPageView = function(props) {
                 <ReviewCommentThreadPinView
                     key={thread.id}
                     id={thread.id}
-                    paper={props.paper}
+                    paper={paper}
                     reviewId={thread.reviewId}
                     width={width}
                     height={height}
@@ -192,14 +194,17 @@ const DraftPaperPDFPageView = function(props) {
 
 
     return (
-        <div id={`draft-paper-pdf-page-${props.pageNumber}`} className="draft-paper-pdf-page">
+        <div 
+            id={`draft-paper-pdf-page-${props.pageNumber}`} 
+            className="draft-paper-pdf-page"
+            onClick={handleClick}
+        >
             { threadPins }
             <Page key={`page-${props.pageNumber}`} 
                 canvasRef={canvasRef}
                 pageNumber={props.pageNumber} 
                 loading={whileLoading} 
                 width={800} 
-                onClick={onClick}
                 onLoadSuccess={onLoadSuccess}
                 onRenderSuccess={onRenderSuccess}
             /> 

@@ -27,7 +27,8 @@ const ReviewView = function({ id, paperId, versionNumber }) {
 
     const pages = []
     const commentThreadViews = []
-    for(let thread of review.threads ) {
+
+    for(let thread of review.threads) {
         commentThreadViews.push(
             <div key={thread.id}>
                 <EllipsisVerticalIcon className="ellipsis" />
