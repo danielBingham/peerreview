@@ -45,7 +45,6 @@ const ReviewCommentView = function(props) {
 
     const edit = function(event) {
         event.preventDefault()
-        event.stopPropagation()
         
         if ( props.review.status !== 'in-progress') {
             return
