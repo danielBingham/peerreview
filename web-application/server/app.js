@@ -23,9 +23,6 @@ const fs = require('fs')
 const Uuid = require('uuid')
 const Handlebars = require('handlebars')
 
-const backend = require('@danielbingham/peerreview-backend')
-const ControllerError = require('./errors/ControllerError')
-
 // Load our configuration file.  Loads the index.js file from the config/ directory which
 // then uses the NODE_ENV variable to determine what environment we're running in and
 // load the appropriate configuration.  Configuration is a Javascript object containing
@@ -33,6 +30,9 @@ const ControllerError = require('./errors/ControllerError')
 //
 // For sturcture, see config/default.js
 const config = require('./config')
+
+const backend = require('@danielbingham/peerreview-backend')
+const ControllerError = require('./errors/ControllerError')
 
 const logger = new backend.Logger(config.log_level)
 
@@ -59,6 +59,15 @@ const queue = new BullQueue('peer-review', { redis: config.redis })
 
 // Load express.
 const app = express()
+
+if ( config.environment == 'development' ) {
+    const webpack = require('webpack')
+    const webpackMiddleware = require('webpack-dev-middleware')
+    const webpackConfig = require('./webpack.config')
+
+    const compiler = webpack(webpackConfig)
+    app.use('/dist/', webpackMiddleware(compiler, {}))
+}
 
 app.use(cors({
     origin: config.s3.bucket_url,
@@ -161,23 +170,23 @@ app.get('/config', function(request, response) {
 
 // Javascript files go to dist.
 app.get(/.*\.(css|js|js.map)$/, function(request, response) {
-    debug('request.originalUrl: ' + request.originalUrl)
+    logger.debug('request.originalUrl: ' + request.originalUrl)
     const filepath = path.join(process.cwd(), 'public/dist', request.originalUrl)
-    debug('Generated path: ' + filepath)
+    logger.debug('Generated path: ' + filepath)
     response.sendFile(filepath)
 })
 
 // Requests for static files.
 app.get(/.*\.(svg|pdf|jpg|png)$/, function(request, response) {
-    debug('request.originalUrl: ' + request.originalUrl)
+    logger.debug('request.originalUrl: ' + request.originalUrl)
     const filepath = path.join(process.cwd(), 'public', request.originalUrl)
-    debug('Generated path: ' + filepath)
+    logger.debug('Generated path: ' + filepath)
     response.sendFile(filepath)
 })
 
 // Everything else goes to the index file.
 app.use('*', function(request,response) {
-    debug('request.originalUrl: ' + request.originalUrl)
+    logger.debug('request.originalUrl: ' + request.originalUrl)
 
     const metadata = {
         url: config.host,

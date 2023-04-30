@@ -42,6 +42,10 @@ Take the result and copy and paste it into the manifest.  You'll need to do
 this for both the Id and the Key.  The `-n` on `echo` is important, it ensures
 there isn't a newline added to the end of the value.
 
+## Generating a self-signed Cert
+
+Follow the instructions from here: https://stackoverflow.com/questions/21397809/create-a-trusted-self-signed-ssl-cert-for-localhost-for-use-with-express-node
+
 ## Running the Environment
 
 To run the environment, run `minikube start`.  If you're on an `Ubuntu 22.04`

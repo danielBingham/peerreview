@@ -5,9 +5,9 @@ console.log('Beginning server bootstrapping...')
 /**
  * Module dependencies.
  */
-var { app, shutdown } = require('../app');
-var debug = require('debug')('peer-review:server');
-var http = require('http');
+var { app, shutdown } = require('../app')
+var debug = require('debug')('peer-review:server')
+const fs = require('fs')
 
 /**
  * Normalize a port into a number, string, or false.
@@ -32,8 +32,20 @@ function normalizePort(val) {
 /**
  * Create HTTP server.
  */
+let server = null
+if ( process.env.NODE_ENV == 'development') {
+    const https = require('https')
+    const httpsOptions = {
+      key: fs.readFileSync('./security/key.pem'),
+      cert: fs.readFileSync('./security/cert.pem')
+    }
+    server = https.createServer(httpsOptions, app)
+} else {
+    const http = require('http')
+    server = http.createServer(app);
+}
 
-var server = http.createServer(app);
+
 
 
 /**
@@ -83,7 +95,7 @@ server.on('listening', onListening);
  * Get port from environment and store in Express.
  */
 
-var port = normalizePort(process.env.PORT || '8080');
+var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
 console.log(`Starting up server on port ${port}.`)
 
