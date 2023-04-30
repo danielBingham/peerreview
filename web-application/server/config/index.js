@@ -11,7 +11,7 @@ if ( process.env.NODE_ENV == 'development' ) {
 }
 
 module.exports = {
-    host: 'https://localhost:3000/',
+    host: process.env.HOST,
     backend: '/api/0.0.0',
     // Database configuration
     database: {
