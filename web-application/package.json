@@ -19,7 +19,7 @@
     "build": "webpack --mode production",
     "client": "webpack-dev-server --mode development --devtool inline-source-map --no-hot --no-live-reload --https",
     "server": "nodemon ./server/bin/www",
-    "dev": "export NODE_ENV=hot-dev && concurrently \"npm run server\" \"npm run client\"",
+    "dev": "export NODE_ENV=development && npm run server",
     "jest": "jest",
     "test": "jest test"
   },
@@ -86,6 +86,7 @@
     "form-data": "^4.0.0",
     "handlebars-loader": "^1.7.3",
     "html-webpack-plugin": "^5.5.0",
+    "https": "^1.0.0",
     "jest": "^28.0.3",
     "jest-environment-jsdom": "^29.0.3",
     "node-fetch": "^2.6.7",

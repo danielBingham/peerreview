@@ -3,6 +3,7 @@ node_modules/
 *.swp
 web-application/public/uploads/*
 web-application/public/dist
+web-application/security/*
 *.tfstate
 *.tfstate.*
 *.tfvars

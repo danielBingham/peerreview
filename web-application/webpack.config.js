@@ -29,20 +29,5 @@ module.exports = {
             }
         ]
     },
-    devtool: 'source-map',
-    devServer: {
-        port: 3000,
-        open: true,
-        historyApiFallback: true,
-        proxy: {
-            '/config': 'http://localhost:8080',
-            '/api/0.0.0': 'http://localhost:8080',
-        }
-    },
-    plugins: [
-        new HtmlWebpackPlugin({
-            filename: './index.html',
-            template: './server/views/index.html'
-        })
-    ]
+    devtool: 'source-map'
 };

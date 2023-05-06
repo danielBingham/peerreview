@@ -27,7 +27,7 @@ spec:
         - name: peer-review-app-container
           image: ghcr.io/danielbingham/peerreview:latest
           ports:
-            - containerPort: 8080
+            - containerPort: 3000
           resources:
             requests:
               cpu: 300m
@@ -38,13 +38,13 @@ spec:
           startupProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 3000
             periodSeconds: 3 
             failureThreshold: 20
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 3000
             failureThreshold: 1
             periodSeconds: 10
           env:
@@ -52,6 +52,10 @@ spec:
               value: "peer-review:*"
             - name: NODE_ENV
               value: staging
+            - name: HOST
+              value: "https://staging.peer-review.io/"
+            - name: LOG_LEVEL
+              value: debug
             - name: DATABASE_HOST
               valueFrom:
                 secretKeyRef:
@@ -76,12 +80,20 @@ spec:
                   name: peer-review-database-credentials
                   key: password
                   optional: false
+            - name: REDIS_HOST
+              value: peer-review-staging-cache-redis-cluster.sh2hpr.0001.use1.cache.amazonaws.com
+            - name: REDIS_PORT
+              value: '6379'
             - name: SESSION_SECRET
               valueFrom:
                 secretKeyRef:
                   name: peer-review-session-secret
                   key: session_secret
                   optional: false
+            - name: S3_BUCKET_URL
+              value: https://peer-review-staging-storage.s3.amazonaws.com/
+            - name: S3_BUCKET
+              value: peer-review-staging-storage
             - name: S3_ACCESS_ID
               valueFrom:
                 secretKeyRef:
@@ -94,6 +106,10 @@ spec:
                   name: peer-review-s3-credentials
                   key: access_key
                   optional: false
+            - name: ORCID_AUTHORIZATION_HOST
+              value: https://orcid.org
+            - name: ORCID_API_HOST
+              value: https://pub.orcid.org
             - name: ORCID_CLIENT_ID
               valueFrom:
                 secretKeyRef:
@@ -106,16 +122,16 @@ spec:
                   name: peer-review-orcid-secrets
                   key: client_secret
                   optional: false
+            - name: ORCID_AUTHENTICATION_REDIRECT_URI
+              value: https://staging.peer-review.io/orcid/authentication
+            - name: ORCID_CONNECT_REDIRECT_URI
+              value: https://staging.peer-review.io/orcid/connect
             - name: POSTMARK_API_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: peer-review-postmark-secrets
                   key: api_token 
                   optional: false
-            - name: REDIS_HOST
-              value: peer-review-staging-cache-redis-cluster.sh2hpr.0001.use1.cache.amazonaws.com
-            - name: REDIS_PORT
-              value: '6379'
 
 ---
 apiVersion: v1
@@ -126,7 +142,7 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-ssl-cert: arn:aws:acm:us-east-1:843012963492:certificate/9bb78fe6-f9d9-4dcc-9193-e7bc7cd7590d
     alb.ingress.kubernetes.io/healthcheck-interval-seconds: '10'
     alb.ingress.kubernetes.io/healthcheck-path: /health
-    alb.ingress.kubernetes.io/healthcheck-port: '8080'
+    alb.ingress.kubernetes.io/healthcheck-port: '3000'
     alb.ingress.kubernetes.io/healthcheck-timeout-seconds: '5'
     alb.ingress.kubernetes.io/success-codes: '200'
 spec:
@@ -139,11 +155,11 @@ spec:
     - name: http
       protocol: TCP
       port: 80 
-      targetPort: 8080
+      targetPort: 3000
     - name: https
       protocol: TCP
       port: 443 
-      targetPort: 8080
+      targetPort: 3000
 
 ---
 apiVersion: networking.k8s.io/v1
