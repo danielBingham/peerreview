@@ -3,6 +3,7 @@ const FeatureDAO = require('../daos/FeatureDAO')
 
 const ExampleMigration = require('../migrations/ExampleMigration')
 const WIPNoticeMigration = require('../migrations/WIPNoticeMigration')
+const CommentVersionsMigration = require('../migrations/CommentVersionsMigration')
 
 const ServiceError = require('../errors/ServiceError')
 
@@ -38,6 +39,9 @@ module.exports = class FeatureService {
             },
             'wip-notice': {
                 migration: new WIPNoticeMigration(database, logger, config)
+            },
+            'comment-versions': {
+                migration: new CommentVersionsMigration(database, logger, config)
             }
         }
     }
@@ -84,7 +88,28 @@ module.exports = class FeatureService {
 
         await this.updateFeatureStatus(name, 'initializing')
 
-        await this.features[name].migration.initialize()
+        try {
+            await this.features[name].migration.initialize()
+        } catch (error) {
+            // If we get a migration error and the status is 'rolled-back',
+            // that means the migration was safely able to catch its own error
+            // and rollback.  The database is in a known state.
+            //
+            // We want to throw the error to log the bug and we'll need to fix
+            // the bug and redeploy, but we don't need to do database surgery.
+            //
+            // If the error isn't a MigrationError, or the status isn't
+            // 'rolled-back', then the database is in an unknown state.  Leave
+            // it the feature in 'initializing', we're going to need to do
+            // surgery and we can update the status of the feature as part of
+            // that effort.
+            //
+            // Hopefully the latter never happens.
+            if ( error instanceof MigrationError && error.status == 'rolled-back' ) {
+                await this.updateFeatureStatus(name, 'created')
+            }
+            throw error
+        }
 
         await this.updateFeatureStatus(name, 'initialized')
     }

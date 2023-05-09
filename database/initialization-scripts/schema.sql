@@ -269,6 +269,18 @@ CREATE TABLE review_comments (
 CREATE INDEX review_comments__thread_id ON review_comments (thread_id);
 CREATE INDEX review_comments__user_id ON review_comments (user_id);
 
+CREATE TABLE review_comment_versions (
+    comment_id      bigint REFERENCES review_comments(id) ON DELETE CASCADE,
+    version         int NOT NULL DEFAULT 1,
+    content         text,
+    created_date    timestamptz,
+    updated_date    timestamptz
+);
+CREATE INDEX review_comment_versions__comment_id ON review_comment_versions(comment_id);
+CREATE INDEX review_comment_versions__version ON review_comment_versions(version);
+
+
+
 /******************************************************************************
  * Responses 
  *****************************************************************************/
