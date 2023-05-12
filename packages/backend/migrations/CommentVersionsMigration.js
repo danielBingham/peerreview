@@ -61,7 +61,11 @@ CREATE TABLE review_comment_versions (
             DROP TABLE review_comment_versions
         `
 
-        await this.database.query(sql, [])
+        try {
+            await this.database.query(sql, [])
+        } catch (error) {
+            throw new MigrationError('rolled-back', error.message)
+        }
     }
 
     /**
@@ -76,7 +80,16 @@ CREATE TABLE review_comment_versions (
                 SELECT id, content, now(), now() FROM review_comments
         `
 
-        await this.database.query(sql, [])
+        try {
+            await this.database.query(sql, [])
+        } catch (error) {
+            try {
+               await this.database.query('DELETE FROM review_comment_versions', [])
+            } catch (rollbackError) {
+                throw new MigrationError('no-rollback', rollbackError.message)
+            }
+            throw new MigrationError('rolled-back', error.message)
+        }
 
     }
 
@@ -88,6 +101,10 @@ CREATE TABLE review_comment_versions (
             DELETE FROM review_comment_versions
         `
 
-        await this.database.query(sql, [])
+        try {
+            await this.database.query(sql, [])
+        } catch (error) {
+            throw new MigrationError('rolled-back', error.message)
+        }
     }
 }

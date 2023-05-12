@@ -6,6 +6,7 @@ const WIPNoticeMigration = require('../migrations/WIPNoticeMigration')
 const CommentVersionsMigration = require('../migrations/CommentVersionsMigration')
 
 const ServiceError = require('../errors/ServiceError')
+const MigrationError = require('../errors/MigrationError')
 
 
 /**
@@ -122,7 +123,15 @@ module.exports = class FeatureService {
 
         await this.updateFeatureStatus(name, 'migrating')
 
-        await this.features[name].migration.up()
+        try {
+            await this.features[name].migration.up()
+        } catch (error) {
+            // See comment on initialize()
+            if ( error instanceof MigrationError && error.status == 'rolled-back') {
+                await this.updateFeatureStatus(name, 'initialized')
+            }
+            throw error
+        }
 
         await this.updateFeatureStatus(name, 'migrated')
     }
@@ -153,7 +162,15 @@ module.exports = class FeatureService {
 
         await this.updateFeatureStatus(name, 'rolling-back')
 
-        await this.features[name].migration.down()
+        try {
+            await this.features[name].migration.down()
+        } catch (error) {
+            // See comment on initialize()
+            if ( error instanceof MigrationError && error.status == 'rolled-back') {
+                await this.updateFeatureStatus(name, 'disabled')
+            }
+            throw error
+        }
 
         await this.updateFeatureStatus(name, 'rolled-back')
     }
@@ -166,7 +183,15 @@ module.exports = class FeatureService {
 
         await this.updateFeatureStatus(name, 'uninitializing')
 
-        await this.features[name].migration.uninitialize()
+        try {
+            await this.features[name].migration.uninitialize()
+        } catch (error) {
+            // See comment on initialize()
+            if ( error instanceof MigrationError && error.status == 'rolled-back') {
+                await this.updateFeatureStatus(name, 'initialized')
+            }
+            throw error
+        }
 
         await this.updateFeatureStatus(name, 'uninitialized')
     }
