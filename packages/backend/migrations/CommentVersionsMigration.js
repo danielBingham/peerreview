@@ -29,7 +29,9 @@ module.exports = class CommentVersionsMigration {
      * table (to be populated later), create a new ENUM, etc.
      */
     async initialize() {
-        const sql = `
+
+        try {
+            const createTableSql = `
 CREATE TABLE review_comment_versions (
     comment_id      bigint REFERENCES review_comments(id) ON DELETE CASCADE,
     version         int NOT NULL DEFAULT 1,
@@ -37,14 +39,20 @@ CREATE TABLE review_comment_versions (
     created_date    timestamptz,
     updated_date    timestamptz
 )
-        `
+            `
+            const createTableResult = await this.database.query(createTableSql, [])
 
-        try {
-            const result = await this.database.query(sql, [])
+            const alterTableSql = `
+                ALTER TABLE review_comments ADD COLUMN version int NOT NULL DEFAULT 1
+            `
+            const alterTableResult = await this.database.query(alterTableSql, [])
         } catch (error) {
-            const rollbackSql = `DROP TABLE IF EXISTS review_comment_versions`
             try {
-                const rollbackResult = await this.database.query(rollbackSql, [])
+                const dropTableSql = `DROP TABLE IF EXISTS review_comment_versions`
+                const dropTableResult = await this.database.query(dropTableSql, [])
+
+                const dropColumnSql = `ALTER TABLE review_comments DROP COLUMN IF EXISTS version`
+                const dropColumnResult = await this.database.query(dropColumnSql, [])
             } catch (rollbackError) {
                 throw new MigrationError('no-rollback', rollbackError.message)
             }
@@ -57,12 +65,15 @@ CREATE TABLE review_comment_versions (
      * Rollback the setup phase.
      */
     async uninitialize() {
-        const sql = `
-            DROP TABLE review_comment_versions
-        `
 
         try {
-            await this.database.query(sql, [])
+            const dropTableSql = `
+                DROP TABLE review_comment_versions
+            `
+            await this.database.query(dropTableSql, [])
+
+            const alterTableSql = `ALTER TABLE review_comments DROP COLUMN IF EXISTS version`
+            const alterTableResult = await this.database.query(alterTableSql, []) 
         } catch (error) {
             throw new MigrationError('rolled-back', error.message)
         }

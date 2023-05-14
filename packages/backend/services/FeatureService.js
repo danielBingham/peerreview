@@ -41,7 +41,9 @@ module.exports = class FeatureService {
             'wip-notice': {
                 migration: new WIPNoticeMigration(database, logger, config)
             },
-            'comment-versions': {
+
+            // Issue #171 - Comment Versioning and Editing.
+            'review-comment-versions-171': {
                 migration: new CommentVersionsMigration(database, logger, config)
             }
         }

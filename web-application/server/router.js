@@ -362,7 +362,7 @@ module.exports = function(database, queue, logger, config) {
      ******************************************************************************/
 
     const FieldController = require('./controllers/FieldController')
-    const fieldController = new FieldController(database, logger)
+    const fieldController = new FieldController(database, logger, config)
 
     // Get a list of all fields.
     router.get('/fields', function(request, response, next) {
@@ -483,7 +483,7 @@ module.exports = function(database, queue, logger, config) {
      *************************************************************************/
 
     const ReviewController = require('./controllers/ReviewController')
-    const reviewController = new ReviewController(database, logger)
+    const reviewController = new ReviewController(database, logger, config)
 
     router.get('/reviews/count', function(request, response, next) {
         reviewController.countReviews(request, response).catch(function(error) {

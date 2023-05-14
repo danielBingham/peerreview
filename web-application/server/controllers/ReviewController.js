@@ -7,11 +7,11 @@ const ControllerError = require('../errors/ControllerError')
  */
 module.exports = class ReviewController {
 
-    constructor(database, logger) {
+    constructor(database, logger, config) {
         this.database = database
         this.logger = logger
 
-        this.reviewDAO = new backend.ReviewDAO(database)
+        this.reviewDAO = new backend.ReviewDAO(database, logger, config)
         
         this.reputationService = new backend.ReputationGenerationService(database, logger)
         this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
@@ -1098,6 +1098,15 @@ module.exports = class ReviewController {
         // TODO Override threadOrder and number.  Only allow comments to
         // appended to the end of their thread, and enforce that here.
 
+        // TODO Issue #171 -- Consider whether we want to handle versioning at
+        // this level of the request rather than in the DAO.  We might need to
+        // handle it in the DAO for the insert, but for the update we need to
+        // handle it in the controller because we want to do different things
+        // based on new status and current status.  
+        //
+        // But I don't like that split.  I want versioning either entirely
+        // handled in the controller or entirely handled in the DAO.  Think
+        // about this for next time.
         await this.database.query(`BEGIN`)
         try {
             const thread = {
@@ -1283,36 +1292,9 @@ module.exports = class ReviewController {
          *      Execute the PATCH 
          * *****************************************************/
 
-
-        // We'll ignore these fields when assembling the patch SQL.  These are
-        // fields that either need more processing or that we let the database
-        // handle (date fields, id, etc)
-        //
-        // In this case, we're only allowing `content` and `status` to be
-        // PATCHed.
-        const ignoredFields = [ 'id', 'userId', 'threadId', 'number', 'threadOrder', 'createdDate', 'updatedDate' ]
-
-        let sql = 'UPDATE review_comments SET '
-        let params = []
-        let count = 1
-        for(let key in comment) {
-            if (ignoredFields.includes(key)) {
-                continue
-            }
-
-            sql += key + ' = $' + count + ', '
-
-            params.push(comment[key])
-            count = count + 1
-        }
-        sql += 'updated_date = now() WHERE id = $' + count
-        params.push(comment.id)
-
-        const results = await this.database.query(sql, params)
-        if ( results.rowCount == 0 ) {
-            throw new ControllerError(500, 'server-error', 
-                `Failed to update Comment(${commentId}).`)
-        }
+        // TODO Handle patching and versioning here.  We'll need to introduce a
+        // new `revert` status that can allow a PATCH request to rollback to
+        // previous version.
 
         const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
         if ( ! returnReviews || returnReviews.length == 0 ) {
