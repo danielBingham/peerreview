@@ -275,6 +275,7 @@ module.exports = class ReviewDAO {
         comment.id = commentResults.rows[0].id
 
         // Issue #171 - Comment versioning and Editing.
+        // TODO Should we do this here?  There's a bit of a chicken and egg thing going on here. 
         const createVersion = await this.featureService.hasFeature('review-comment-versions-171')
         if ( createVersion ) {
             await this.insertCommentVersion(comment)
