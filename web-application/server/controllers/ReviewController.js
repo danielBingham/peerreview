@@ -1098,23 +1098,17 @@ module.exports = class ReviewController {
         // TODO Override threadOrder and number.  Only allow comments to
         // appended to the end of their thread, and enforce that here.
 
-        // TODO Issue #171 -- Consider whether we want to handle versioning at
-        // this level of the request rather than in the DAO.  We might need to
-        // handle it in the DAO for the insert, but for the update we need to
-        // handle it in the controller because we want to do different things
-        // based on new status and current status.  
-        //
-        // But I don't like that split.  I want versioning either entirely
-        // handled in the controller or entirely handled in the DAO.  Think
-        // about this for next time.
         await this.database.query(`BEGIN`)
         try {
-            const thread = {
-                id: threadId,
-                comments: comments
+            for (const comment of comments ) {
+                // TECHDEBT -- Issue #171 -- ReviewDAO::insertComment handles
+                // the creation of the initial version.  Ideally, we would
+                // handle version creation either entirely in the controller or
+                // entirely in the DAO, but because of the way we create
+                // comments as a subordinate object of threads and reviews,
+                // that's not actually an easy thing to do.
+                await this.reviewDAO.insertComment(comment)
             }
-
-            await this.reviewDAO.insertComments(thread)
         } catch (error) {
             await this.database.query(`ROLLBACK`)
             throw error
@@ -1295,6 +1289,29 @@ module.exports = class ReviewController {
         // TODO Handle patching and versioning here.  We'll need to introduce a
         // new `revert` status that can allow a PATCH request to rollback to
         // previous version.
+
+       
+        // If we're transitioning from 'edit-in-progress' to 'reverted' we need
+        // to replace the comment with the most recent version.
+        if ( existing.comment_status == 'edit-in-progress' && comment.status == 'reverted' ) {
+
+        } else {
+            // Otherwise, we apply the update and sort out the version afterwards.
+            await this.updateComment(comment)
+
+            // We need to create a new version the first time the comment is
+            // transitioned from 'in-progress' to 'posted'. 
+            if ( existing.comment_status == 'in-progress' && comment.status == 'posted') {
+
+            }
+
+            // We need to create a new version every time it's transitioned from
+            // 'edit-in-progress' to 'posted'.
+            if ( existing.comment_status == 'edit-in-progress' && comment.status == 'posted') {
+
+            }
+        }
+
 
         const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
         if ( ! returnReviews || returnReviews.length == 0 ) {

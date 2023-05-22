@@ -46,6 +46,22 @@ CREATE TABLE review_comment_versions (
                 ALTER TABLE review_comments ADD COLUMN version int NOT NULL DEFAULT 1
             `
             const alterTableResult = await this.database.query(alterTableSql, [])
+
+            // TECH DEBT - this isn't going to be rolled back.  The only way to
+            // remove a value from an enum is to drop the whole type which
+            // seems unnecessarily costly.  
+            //
+            // In this case, better to just ignore the value.
+            const alterTypeEditInProgressSql = `
+                ALTER TYPE review_comment_status ADD VALUE IF NOT EXISTS 'edit-in-progress'
+            `
+            const alterTypeEditInProgressResult = await this.database.query(alterTypeEditInProgressSql, [])
+            
+            // TECH DEBT - won't be removed, see comment above.
+            const alterTypeRevertSql = `
+                ALTER TYPE review_comment_status ADD VALUE IF NOT EXISTS 'reverted'
+            `
+            const alterTypeRevertResult = await this.database.query(alterTypeRevertSql, [])
         } catch (error) {
             try {
                 const dropTableSql = `DROP TABLE IF EXISTS review_comment_versions`

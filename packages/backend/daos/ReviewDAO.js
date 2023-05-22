@@ -18,7 +18,7 @@ module.exports = class ReviewDAO {
      *
      * @return {Object[]}   The data parsed into one or more objects.
      */
-    hydrateReviews(rows) {
+    async hydrateReviews(rows) {
         if ( rows.length == 0 ) {
             return null
         }
@@ -133,7 +133,7 @@ module.exports = class ReviewDAO {
 
               review_comments.id as comment_id, review_comments.thread_id as "comment_threadId", 
               review_comments.user_id as "comment_userId", 
-              ${ showVersion ? 'review_comments.version as comment_version, ', '' }
+              ${ showVersion ? 'review_comments.version as comment_version, ' : '' }
               review_comments.thread_order as "comment_threadOrder",  review_comments.status as comment_status, 
               review_comments.content as comment_content, 
               review_comments.created_date as "comment_createdDate", review_comments.updated_date as "comment_updatedDate"
@@ -151,7 +151,7 @@ module.exports = class ReviewDAO {
             return null
         }
 
-        return this.hydrateReviews(results.rows)
+        return await this.hydrateReviews(results.rows)
     }
 
     async countReviews(where, params) {
@@ -258,9 +258,11 @@ module.exports = class ReviewDAO {
 
         return version
     }
-    
+   
+    /**
+     * Creates a new comment and the initial comment version for it.
+     */
     async insertComment(comment) {
-
         const commentSql = `
             INSERT INTO review_comments(thread_id, user_id, thread_order, status, content, created_date, updated_date)
                 VALUES ($1, $2, $3, $4, $5, now(), now()) RETURNING id
