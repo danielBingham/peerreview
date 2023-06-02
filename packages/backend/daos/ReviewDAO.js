@@ -83,6 +83,14 @@ module.exports = class ReviewDAO {
             }
         }
 
+        console.log(`Returning a list of reviews.`)
+        console.log(list)
+
+        if ( list.length > 0 ) {
+            console.log(`threads: `)
+            console.log(list[0].threads)
+        }
+
         return list 
     }
 

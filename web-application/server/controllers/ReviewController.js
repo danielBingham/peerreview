@@ -1191,7 +1191,8 @@ module.exports = class ReviewController {
                 papers.id as paper_id, papers.is_draft as "paper_isDraft",
                 reviews.id as review_id, reviews.user_id as "review_userId", reviews.status as "review_status",
                 review_comment_threads.id as thread_id,
-                review_comments.user_id as "comment_userId", review_comments.status as "comment_status"
+                review_comments.user_id as "comment_userId", review_comments.status as "comment_status",
+                review_comments.version as "comment_version"
             FROM reviews
                 JOIN papers on reviews.paper_id = papers.id
                 JOIN review_comment_threads on review_comment_threads.review_id = reviews.id
@@ -1294,21 +1295,41 @@ module.exports = class ReviewController {
         // If we're transitioning from 'edit-in-progress' to 'reverted' we need
         // to replace the comment with the most recent version.
         if ( existing.comment_status == 'edit-in-progress' && comment.status == 'reverted' ) {
+            // Since we don't update the version until it goes from
+            // 'in-progress' to 'posted', we can just retrieve the content from
+            // the current version in the version table.
+            const previousVersionResult = await this.database.query(`SELECT content FROM review_comment_versions WHERE comment_id = $1 AND verison = $2`, [ commentId, existing.version ])
+
+            if ( previousVersionResult.rows.length <= 0 ) {
+                throw new ControllerError(500, 'no-version',
+                    `Attempt to revert to a previous version (${version}) of Comment(${commentId}), but version doesn't exist!`)
+            } else if ( previousVersionResult.rows.length > 1 ) {
+                this.logger.error(`Found multiple instances of version(${version}) for Comment(${commentId}).`)
+            }
+
+            const newComment = {
+                id: commentId,
+                status: 'posted',
+                content: previousVersionResult.rows[0].content
+            }
+
+            await this.reviewDAO.updateComment(newComment)
 
         } else {
             // Otherwise, we apply the update and sort out the version afterwards.
-            await this.updateComment(comment)
+            await this.reviewDAO.updateComment(comment)
 
             // We need to create a new version the first time the comment is
             // transitioned from 'in-progress' to 'posted'. 
             if ( existing.comment_status == 'in-progress' && comment.status == 'posted') {
+                await this.reviewDAO.insertCommentVersion(comment)
 
             }
 
             // We need to create a new version every time it's transitioned from
             // 'edit-in-progress' to 'posted'.
             if ( existing.comment_status == 'edit-in-progress' && comment.status == 'posted') {
-
+                await this.reviewDAO.insertCommentVersion(comment)
             }
         }
 

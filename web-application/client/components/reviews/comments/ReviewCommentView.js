@@ -52,7 +52,7 @@ const ReviewCommentView = function(props) {
 
         const comment = {
             id: props.comment.id,
-            status: 'in-progress'
+            status: 'edit-in-progress'
         }
         
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))

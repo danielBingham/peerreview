@@ -89,9 +89,10 @@ const ReviewCommentThreadView = function(props) {
     sortedComments.sort((a,b) => a.threadOrder - b.threadOrder)
 
     const focusForm = searchParams.get('thread') == thread.id
+    console.log(sortedComments)
 
     for ( const comment of sortedComments) {
-        if ( comment.status == 'in-progress' && comment.userId == currentUser.id) {
+        if ( ( comment.status == 'in-progress' || comment.status == 'edit-in-progress' ) && comment.userId == currentUser.id) {
             inProgress = true
             commentViews.push(
                 <ReviewCommentForm 

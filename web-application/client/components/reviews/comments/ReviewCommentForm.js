@@ -16,6 +16,7 @@ const ReviewCommentForm = function(props) {
     // ======= Render State =========================================
     
     const [content, setContent] = useState('')
+    const [status, setStatus] = useState('')
 
     // ======= Request Tracking =====================================
    
@@ -56,7 +57,7 @@ const ReviewCommentForm = function(props) {
 
         const comment = {
             id: props.comment.id,
-            status: 'in-progress',
+            status: status,
             content: content
         }
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
@@ -75,13 +76,23 @@ const ReviewCommentForm = function(props) {
 
     const cancelComment = function(event) {
         event.preventDefault()
-        setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
+        if ( status == 'in-progress') {
+            setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
+        } else if ( status == 'edit-in-progress' ) {
+            const comment = {
+                id: props.comment.id,
+                status: 'reverted'
+            }
+            setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
+        }
+
     }
 
     // ======= Effect Handling ======================================
 
     useLayoutEffect(function() {
         setContent(props.comment.content)
+        setStatus(props.comment.status)
     }, [])
 
     useEffect(function() {
