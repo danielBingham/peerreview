@@ -29,5 +29,10 @@ module.exports = {
             }
         ]
     },
+    plugins: [
+        new HtmlWebpackPlugin({
+            template: 'server/views/index.html'
+        })
+    ],
     devtool: 'source-map'
 };
