@@ -76,6 +76,7 @@ const ReviewCommentForm = function(props) {
 
     const cancelComment = function(event) {
         event.preventDefault()
+        
         if ( status == 'in-progress') {
             setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
         } else if ( status == 'edit-in-progress' ) {
@@ -145,7 +146,7 @@ const ReviewCommentForm = function(props) {
                 </div>
             <div className="controls">
                 <button onClick={cancelComment}>Cancel</button>
-                <input type="submit" name="submit" value="Add Comment" />
+                <input type="submit" name="submit" value={ status == 'edit-in-progress' ? 'Edit' : 'Add Comment'} />
             </div>
             </form>
         </section>

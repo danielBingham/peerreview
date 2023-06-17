@@ -195,7 +195,7 @@ module.exports = class ReviewController {
          *      Begin Input Validation 
          ********************************************************/
 
-        // 5. If review.version is provided, it must be the most recent verison for
+        // 5. If review.version is provided, it must be the most recent version for
         //      Paper(:paper_id).
         
         if ( review.version && (review.version < 0 || review.version > existing.paper_currentVersion) ) {
@@ -1291,20 +1291,22 @@ module.exports = class ReviewController {
         // new `revert` status that can allow a PATCH request to rollback to
         // previous version.
 
-       
+      
+        this.logger.debug(comment)
         // If we're transitioning from 'edit-in-progress' to 'reverted' we need
         // to replace the comment with the most recent version.
         if ( existing.comment_status == 'edit-in-progress' && comment.status == 'reverted' ) {
+            this.logger.debug(existing)
             // Since we don't update the version until it goes from
             // 'in-progress' to 'posted', we can just retrieve the content from
             // the current version in the version table.
-            const previousVersionResult = await this.database.query(`SELECT content FROM review_comment_versions WHERE comment_id = $1 AND verison = $2`, [ commentId, existing.version ])
+            const previousVersionResult = await this.database.query(`SELECT content FROM review_comment_versions WHERE comment_id = $1 AND version = $2`, [ commentId, existing.comment_version ])
 
             if ( previousVersionResult.rows.length <= 0 ) {
                 throw new ControllerError(500, 'no-version',
-                    `Attempt to revert to a previous version (${version}) of Comment(${commentId}), but version doesn't exist!`)
+                    `Attempt to revert to a previous version (${existing.comment_version}) of Comment(${commentId}), but version doesn't exist!`)
             } else if ( previousVersionResult.rows.length > 1 ) {
-                this.logger.error(`Found multiple instances of version(${version}) for Comment(${commentId}).`)
+                throw new ControllerError(500, 'multiple-versions', `Found multiple instances of version(${existing.comment_version}) for Comment(${commentId}).`)
             }
 
             const newComment = {
@@ -1316,21 +1318,21 @@ module.exports = class ReviewController {
             await this.reviewDAO.updateComment(newComment)
 
         } else {
-            // Otherwise, we apply the update and sort out the version afterwards.
-            await this.reviewDAO.updateComment(comment)
-
             // We need to create a new version the first time the comment is
             // transitioned from 'in-progress' to 'posted'. 
             if ( existing.comment_status == 'in-progress' && comment.status == 'posted') {
-                await this.reviewDAO.insertCommentVersion(comment)
+                comment.version = await this.reviewDAO.insertCommentVersion(comment, existing.comment_version)
 
             }
 
             // We need to create a new version every time it's transitioned from
             // 'edit-in-progress' to 'posted'.
             if ( existing.comment_status == 'edit-in-progress' && comment.status == 'posted') {
-                await this.reviewDAO.insertCommentVersion(comment)
+                comment.version = await this.reviewDAO.insertCommentVersion(comment, existing.comment_version)
             }
+
+            // Now that we know the version, update the comment. 
+            await this.reviewDAO.updateComment(comment)
         }
 
 

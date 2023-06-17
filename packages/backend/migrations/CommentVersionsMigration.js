@@ -37,13 +37,14 @@ CREATE TABLE review_comment_versions (
     version         int NOT NULL DEFAULT 1,
     content         text,
     created_date    timestamptz,
-    updated_date    timestamptz
+    updated_date    timestamptz,
+    PRIMARY KEY(comment_id, version)
 )
             `
             const createTableResult = await this.database.query(createTableSql, [])
 
             const alterTableSql = `
-                ALTER TABLE review_comments ADD COLUMN version int NOT NULL DEFAULT 1
+                ALTER TABLE review_comments ADD COLUMN version int NOT NULL DEFAULT 0
             `
             const alterTableResult = await this.database.query(alterTableSql, [])
 

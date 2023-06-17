@@ -213,7 +213,11 @@ module.exports = class ReviewDAO {
             if ( results.rowCount == 0 ) {
                 throw new Error('Something went wrong in insertThreads().  No threads inserted.')
             }
+            
             thread.id = results.rows[0].id
+            for (const comment of thread.comments) {
+                comment.threadId = thread.id
+            }
 
             threadIds.push(thread.id)
             await this.insertComments(thread)
@@ -249,12 +253,12 @@ module.exports = class ReviewDAO {
      *
      * @return {int} The version number of the inserted version.
      */
-    async insertCommentVersion(comment) {
+    async insertCommentVersion(comment, existingVersion) {
         const commentVersionSql = `
             INSERT INTO review_comment_versions (comment_id, version, content, created_date, updated_date)
                 VALUES ($1, $2, $3, now(), now()) 
         `
-        const version = comment.version ? comment.version+1 : 1
+        const version = existingVersion ? existingVersion+1 : 1
         const commentVersionResult = await this.database.query(
             commentVersionSql,
             [ comment.id, version, comment.content ]
@@ -283,13 +287,6 @@ module.exports = class ReviewDAO {
         }
 
         comment.id = commentResults.rows[0].id
-
-        // Issue #171 - Comment versioning and Editing.
-        // TODO Should we do this here?  There's a bit of a chicken and egg thing going on here. 
-        const createVersion = await this.featureService.hasFeature('review-comment-versions-171')
-        if ( createVersion ) {
-            await this.insertCommentVersion(comment)
-        }
     }
 
 

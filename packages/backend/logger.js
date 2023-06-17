@@ -13,6 +13,16 @@ module.exports = class Logger  {
         silly: 6
     }
 
+    static levelDescriptions = [
+        'error',
+        'warn',
+        'info',
+        'http',
+        'verbose',
+        'debug',
+        'silly'
+    ]
+
     constructor(level) {
         if (Number.isInteger(level)) {
             this.level = level
@@ -46,11 +56,8 @@ module.exports = class Logger  {
             return
         }
 
-        const now = Date()
-        let logPrefix = `${now}:Session(${this.id}):: `
-        if ( level == Logger.levels.warn ) {
-            logPrefix += 'Warning: '
-        }
+        const now = new Date()
+        let logPrefix = `${now.toISOString()}:Session(${this.id}):${Logger.levelDescriptions[level]}:: `
         if ( typeof message === 'object' ) {
             if ( level == Logger.levels.error) {
                 console.log(logPrefix + 'Error encountered.') 

@@ -45,6 +45,8 @@ const ReviewCommentView = function(props) {
 
     const edit = function(event) {
         event.preventDefault()
+
+        console.log('hi.')
         
         if ( props.review.status !== 'in-progress') {
             return
@@ -85,6 +87,7 @@ const ReviewCommentView = function(props) {
 
     // ======= Render ===============================================
 
+    console.log('Render.')
     return (
         <>
             <AreYouSure 

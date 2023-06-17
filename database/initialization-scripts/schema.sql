@@ -274,10 +274,9 @@ CREATE TABLE review_comment_versions (
     version         int NOT NULL DEFAULT 1,
     content         text,
     created_date    timestamptz,
-    updated_date    timestamptz
+    updated_date    timestamptz,
+    PRIMARY KEY (comment_id, version)
 );
-CREATE INDEX review_comment_versions__comment_id ON review_comment_versions(comment_id);
-CREATE INDEX review_comment_versions__version ON review_comment_versions(version);
 
 
 
