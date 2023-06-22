@@ -7,14 +7,14 @@ const ControllerError = require('../errors/ControllerError')
  */
 module.exports = class ReviewController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
 
-        this.reviewDAO = new backend.ReviewDAO(database, logger, config)
+        this.reviewDAO = new backend.ReviewDAO(core)
         
-        this.reputationService = new backend.ReputationGenerationService(database, logger)
-        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
+        this.reputationService = new backend.ReputationGenerationService(core)
+        this.reputationPermissionService = new backend.ReputationPermissionService(core)
     }
 
     async countReviews(request, response) {

@@ -4,16 +4,16 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class TokenController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
-        this.authenticationService = new backend.AuthenticationService(database, logger)
-        this.emailService = new backend.EmailService(logger, config)
+        this.authenticationService = new backend.AuthenticationService(core)
+        this.emailService = new backend.EmailService(core)
 
-        this.tokenDAO = new backend.TokenDAO(database, logger)
-        this.userDAO = new backend.UserDAO(database, logger)
+        this.tokenDAO = new backend.TokenDAO(core)
+        this.userDAO = new backend.UserDAO(core)
     }
 
     /**

@@ -10,9 +10,9 @@ const TOKEN_TTL = {
 
 module.exports = class TokenDAO {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
     }
 
     createToken(type) {

@@ -7,7 +7,7 @@
  * really ``/api/0.0.0/users``.  This is so that we can load multiple versions
  * of the api as we make changes and leave past versions still accessible.
  **************************************************************************************************/
-module.exports = function(database, queue, logger, config) {
+module.exports = function(core) {
     const express = require('express')
     const multer = require('multer')
     const backend = require('@danielbingham/peerreview-backend')
@@ -20,7 +20,7 @@ module.exports = function(database, queue, logger, config) {
      * Feature Flag Management and Migration Rest Routes
      *****************************************************************************/
     const FeatureController = require('./controllers/FeatureController')
-    const featureController = new FeatureController(database, logger, config)
+    const featureController = new FeatureController(core)
 
     router.get('/features', function(request, response, next) {
         featureController.getFeatures(request, response).catch(function(error) {
@@ -50,7 +50,7 @@ module.exports = function(database, queue, logger, config) {
      * Job REST Routes
      **************************************************************************/
     const JobController = require('./controllers/JobController')
-    const jobController = new JobController(database, queue, logger, config)
+    const jobController = new JobController(core)
 
     router.get('/jobs', function(request, response, next) {
         jobController.getJobs(request, response).catch(function(error) {
@@ -86,7 +86,7 @@ module.exports = function(database, queue, logger, config) {
      *          File REST Routes
      ******************************************************************************/
     const FileController = require('./controllers/FileController')
-    const fileController = new FileController(database, logger, config)
+    const fileController = new FileController(core)
 
     const upload = new multer({ dest: 'public/uploads/tmp' })
 
@@ -107,7 +107,7 @@ module.exports = function(database, queue, logger, config) {
      *          User REST Routes
      ******************************************************************************/
     const UserController = require('./controllers/UserController')
-    const userController = new UserController(database, logger, config)
+    const userController = new UserController(core)
 
     // Get a list of all users.
     router.get('/users', function(request, response, next) {
@@ -156,7 +156,7 @@ module.exports = function(database, queue, logger, config) {
      **************************************************************************/
 
     const ReputationController = require('./controllers/ReputationController')
-    const reputationController = new ReputationController(database, logger, config)
+    const reputationController = new ReputationController(core)
 
     router.get('/reputation/thresholds', function(request, response, next) {
         reputationController.getReputationThresholds(request, response).catch(function(error) {
@@ -207,7 +207,7 @@ module.exports = function(database, queue, logger, config) {
     // admin/development interface only loaded on development and staging
     // environments.)
     const AdminController = require('./controllers/AdminController') 
-    const adminController = new AdminController(database, logger, config)
+    const adminController = new AdminController(core)
     router.get('/admin/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {
         adminController.initializeReputationFromOrcid(request, response).catch(function(error) {
             next(error)
@@ -233,7 +233,7 @@ module.exports = function(database, queue, logger, config) {
      **************************************************************************/
 
     const TestingController = require('./controllers/TestingController')
-    const testingController = new TestingController(database, logger, config)
+    const testingController = new TestingController(core)
 
     router.post('/testing/orcid', function(request, response, next) {
         testingController.postOrcid(request, response).catch(function(error) {
@@ -251,7 +251,7 @@ module.exports = function(database, queue, logger, config) {
      *          User Settings REST Routes
      ******************************************************************************/
     const SettingsController = require('./controllers/SettingsController')
-    const settingsController = new SettingsController(database, logger, config)
+    const settingsController = new SettingsController(core)
 
     // Get a list of all settings.
     router.get('/user/:user_id/settings', function(request, response, next) {
@@ -307,7 +307,7 @@ module.exports = function(database, queue, logger, config) {
      *          Authentication REST Routes
      ******************************************************************************/
     const AuthenticationController = require('./controllers/AuthenticationController')
-    const authenticationController = new AuthenticationController(database, logger, config)
+    const authenticationController = new AuthenticationController(core)
 
     router.post('/authentication', function(request, response, next) {
         authenticationController.postAuthentication(request, response).catch(function(error) {
@@ -342,7 +342,7 @@ module.exports = function(database, queue, logger, config) {
      *      Token Handling REST Routes
      * ************************************************************************/
     const TokenController = require('./controllers/TokenController')
-    const tokenController = new TokenController(database, logger, config)
+    const tokenController = new TokenController(core)
 
     router.get('/token/:token', function(request, response, next) {
         tokenController.getToken(request, response).catch(function(error) {
@@ -362,7 +362,7 @@ module.exports = function(database, queue, logger, config) {
      ******************************************************************************/
 
     const FieldController = require('./controllers/FieldController')
-    const fieldController = new FieldController(database, logger, config)
+    const fieldController = new FieldController(core)
 
     // Get a list of all fields.
     router.get('/fields', function(request, response, next) {
@@ -411,7 +411,7 @@ module.exports = function(database, queue, logger, config) {
      ******************************************************************************/
 
     const PaperController = require('./controllers/PaperController')
-    const paperController = new PaperController(database, logger, config)
+    const paperController = new PaperController(core)
     
     router.get('/papers/count', function(request, response, next) {
         paperController.countPapers(request, response).catch(function(error) {
@@ -483,7 +483,7 @@ module.exports = function(database, queue, logger, config) {
      *************************************************************************/
 
     const ReviewController = require('./controllers/ReviewController')
-    const reviewController = new ReviewController(database, logger, config)
+    const reviewController = new ReviewController(core)
 
     router.get('/reviews/count', function(request, response, next) {
         reviewController.countReviews(request, response).catch(function(error) {
@@ -563,7 +563,7 @@ module.exports = function(database, queue, logger, config) {
      *************************************************************************/
 
     const ResponseController = require('./controllers/ResponseController')
-    const responseController = new ResponseController(database, logger, config)
+    const responseController = new ResponseController(core)
 
     router.get('/responses/count', function(request, response, next) {
         responseController.countResponses(request, response).catch(function(error) {

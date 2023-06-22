@@ -19,9 +19,9 @@ const THRESHOLDS = {
 
 module.exports = class ReputationPermissionService {
 
-    constructor(database, logger)  {
-        this.database = database
-        this.logger = logger
+    constructor(core)  {
+        this.database = core.database
+        this.logger = core.logger
     }
 
     async getVisibleDrafts(userId) {

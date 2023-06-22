@@ -4,11 +4,11 @@ const PAGE_SIZE = 20
 
 module.exports = class ReputationDAO {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
 
-        this.fieldDAO = new FieldDAO(database, logger)
+        this.fieldDAO = new FieldDAO(core)
     }
 
     hydrateReputation(rows) {

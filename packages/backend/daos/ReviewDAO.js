@@ -4,11 +4,11 @@ const FeatureService = require('../services/FeatureService')
 
 module.exports = class ReviewDAO {
     
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.core = core
 
-        this.featureService = new FeatureService(database, logger, config)
+        this.database = core.database
+        this.logger = core.logger
     }
 
     /**
@@ -18,7 +18,7 @@ module.exports = class ReviewDAO {
      *
      * @return {Object[]}   The data parsed into one or more objects.
      */
-    async hydrateReviews(rows) {
+    hydrateReviews(rows) {
         if ( rows.length == 0 ) {
             return null
         }
@@ -73,8 +73,7 @@ module.exports = class ReviewDAO {
                     }
 
                     // Issue #171 - Comment versioning and editing.
-                    const showVersion = await this.featureService.hasFeature('review-comment-versions-171')
-                    if ( showVersion ) {
+                    if ( this.core.features.hasFeature('review-comment-versions-171') ) {
                         comment.version = row.comment_version
                     }
 
@@ -124,7 +123,7 @@ module.exports = class ReviewDAO {
         params = ( params ? params : [])
 
         // Issue #171 - Comment versioning and Editing.
-        const showVersion = await this.featureService.hasFeature('review-comment-versions-171')
+        const showVersion = this.core.features.hasFeature('review-comment-versions-171')
 
         const sql = `
             SELECT

@@ -12,17 +12,18 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class ReputationController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
-        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
-        this.reputationGenerationService = new backend.ReputationGenerationService(database, logger)
-        this.reputationDAO = new backend.ReputationDAO(database, logger)
-        this.userDAO = new backend.UserDAO(database)
-        this.settingsDAO = new backend.SettingsDAO(database, logger)
+        this.reputationPermissionService = new backend.ReputationPermissionService(core)
+        this.reputationGenerationService = new backend.ReputationGenerationService(core)
+        this.reputationDAO = new backend.ReputationDAO(core)
+        this.userDAO = new backend.UserDAO(core)
+        this.settingsDAO = new backend.SettingsDAO(core)
 
+        // TECHDEBT Is this a duplicate of core.queue?
         this.processQueue = new BullQueue('reputation', { redis: config.redis })
     }
 
@@ -99,31 +100,6 @@ module.exports = class ReputationController {
         try {
             const job = await this.processQueue.add('initialize-reputation', { userId: userId })
             return response.status(200).json({ job: { id: job.id } })
-
-
-            /*await this.reputationGenerationService.initializeReputationForUser(userId)
-
-            const users = await this.userDAO.selectUsers('WHERE users.id=$1', [userId])
-            if ( ! users ) {
-                throw new ServiceError('no-user', 'Failed to get full record for authenticated user!')
-            } 
-
-            const settings = await this.settingsDAO.selectSettings(
-                'WHERE user_settings.user_id = $1', 
-                [ userId ]
-            )
-
-            request.session.user = users[0]
-
-            const responseBody = {
-                user: request.session.user,
-                settings: settings[0]
-            }
-
-            console.log('Response body: ')
-            console.log(responseBody) 
-
-            return response.status(200).json({}) */
         } catch (error) {
             if ( error instanceof backend.ServiceError) {
                 // Validation: 2. User must have an ORCID iD attached to their record.

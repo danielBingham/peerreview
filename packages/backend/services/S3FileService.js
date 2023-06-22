@@ -6,14 +6,14 @@ const { PutObjectCommand, DeleteObjectCommand, CopyObjectCommand } = require('@a
 
 module.exports = class S3FileService {
 
-    constructor(config) {
-        this.config = config
+    constructor(core) {
+        this.config = core.config
 
         const s3Config = {
             region: 'us-east-1',
             credentials: {
-                accessKeyId: config.s3.access_id,
-                secretAccessKey: config.s3.access_key
+                accessKeyId: core.config.s3.access_id,
+                secretAccessKey: core.config.s3.access_key
             }
         }
 

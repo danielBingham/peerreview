@@ -10,10 +10,10 @@ const Handlebars = require('handlebars')
  */
 module.exports = class ServerSideRenderingService {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
         this.indexTemplatePath = null
         if ( this.config.environment == 'development' ) {

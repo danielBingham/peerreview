@@ -3,9 +3,9 @@ const PAGE_SIZE = 20
 
 module.exports = class FieldDAO {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
 
         /**
          * SQL used to select a full field object.  Stored as a variable

@@ -4,10 +4,10 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class SettingsController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.settingsDAO = new backend.SettingsDAO(database, logger, config)
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.settingsDAO = new backend.SettingsDAO(core)
     }
 
     /**

@@ -6,11 +6,11 @@ const PAGE_SIZE = 20
 module.exports = class UserDAO {
 
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
 
-        this.fileDAO = new FileDAO(database, logger)
+        this.fileDAO = new FileDAO(core)
 
         this.selectionString = `
             users.id as user_id, users.orcid_id as "user_orcidId", users.file_id as "user_fileId",

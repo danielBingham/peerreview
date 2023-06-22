@@ -2,9 +2,9 @@ const DAOError = require('../errors/DAOError')
 
 module.exports = class ResponseDAO {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
     }
 
     hydrateResponses(rows) {

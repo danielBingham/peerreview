@@ -5,18 +5,18 @@
  */
 module.exports = class PageMetadataService {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
 
         this.baseMetadata = {
-            url: config.host,
+            url: core.config.host,
             applicationName: "Peer Review",
             title: "Peer Review (beta) - A Universal PrePrint+ Platform",
             description: "Peer Review is an experimental scholarly publishing platform. It enables crowdsourced peer review and public dissemination of scientific and academic papers.  It is open source and diamond open access.",
-            image: `${config.host}img/how-it-works/review-example-2.png`,
+            image: `${core.config.host}img/how-it-works/review-example-2.png`,
             twitterHandle: "@peerreviewio",
             type: "website"
         }

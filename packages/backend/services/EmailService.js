@@ -2,11 +2,11 @@ const Postmark = require('postmark')
 
 module.exports = class EmailService {
 
-    constructor(logger, config) {
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.logger = core.logger
+        this.config = core.config
 
-        this.postmarkClient = new Postmark.ServerClient(config.postmark.api_token)
+        this.postmarkClient = new Postmark.ServerClient(core.config.postmark.api_token)
     }
 
     sendEmailConfirmation(user, token) {

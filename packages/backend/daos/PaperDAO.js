@@ -14,12 +14,12 @@ const PAGE_SIZE = 50
 
 module.exports = class PaperDAO {
 
-    constructor(database, config) {
-        this.database = database
-        this.userDAO = new UserDAO(database)
-        this.fileDAO = new FileDAO(database)
-        this.fieldDAO = new FieldDAO(database)
-        this.fileService = new S3FileService(config)
+    constructor(core) {
+        this.database = core.database
+        this.userDAO = new UserDAO(core)
+        this.fileDAO = new FileDAO(core)
+        this.fieldDAO = new FieldDAO(core)
+        this.fileService = new S3FileService(core)
     }
 
     /**

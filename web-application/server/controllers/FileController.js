@@ -7,13 +7,13 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class FileController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
-        this.fileService = new backend.S3FileService(config)
-        this.fileDAO = new backend.FileDAO(this.database, this.logger)
+        this.fileService = new backend.S3FileService(core)
+        this.fileDAO = new backend.FileDAO(core)
     }
 
     /**

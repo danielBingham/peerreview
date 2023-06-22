@@ -5,8 +5,7 @@ console.log('Beginning server bootstrapping...')
 /**
  * Module dependencies.
  */
-var { app, shutdown } = require('../app')
-var debug = require('debug')('peer-review:server')
+var { app, core } = require('../app')
 const fs = require('fs')
 
 /**
@@ -53,7 +52,7 @@ if ( process.env.NODE_ENV == 'development') {
  */
 
 function onError(error) {
-    console.log('ERROR!');
+    core.logger.error('ERROR!');
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -65,11 +64,11 @@ function onError(error) {
   // handle specific listen errors with friendly messages
   switch (error.code) {
     case 'EACCES':
-      console.error(bind + ' requires elevated privileges');
+      core.logger.error(bind + ' requires elevated privileges');
       process.exit(1);
       break;
     case 'EADDRINUSE':
-      console.error(bind + ' is already in use');
+      core.logger.error(bind + ' is already in use');
       process.exit(1);
       break;
     default:
@@ -86,7 +85,7 @@ function onListening() {
   var bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
-  debug('Listening on ' + bind);
+  core.logger.info('Listening on ' + bind);
 }
 server.on('listening', onListening);
 
@@ -97,7 +96,7 @@ server.on('listening', onListening);
 
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
-console.log(`Starting up server on port ${port}.`)
+core.logger.info(`Starting up server on port ${port}.`)
 
 /**
  * Listen on provided port, on all network interfaces.
@@ -105,14 +104,14 @@ console.log(`Starting up server on port ${port}.`)
 server.listen(port);
 
 const shutdownServer = function() {
-    console.log('Attempting a graceful shutdown...')
+    core.logger.info('Attempting a graceful shutdown...')
     // Close the http server so we stop taking new connections before we close
     // down the resources needed to process those connections.
     server.close(async function() {
         // Now close down the resources needed to process the http connections.
-        await shutdown()
+        await core.shutdown()
 
-        console.log('Shutdown complete.')
+        core.logger.info('Shutdown complete.')
         process.exit(0)
     })
 }

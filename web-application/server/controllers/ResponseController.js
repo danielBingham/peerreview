@@ -11,15 +11,15 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class ResponseController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
 
-        this.responseDAO = new backend.ResponseDAO(database, logger)
-        this.paperDAO = new backend.PaperDAO(database, config)
+        this.responseDAO = new backend.ResponseDAO(core)
+        this.paperDAO = new backend.PaperDAO(core)
 
-        this.reputationGenerationService = new backend.ReputationGenerationService(database, logger)
-        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
+        this.reputationGenerationService = new backend.ReputationGenerationService(core)
+        this.reputationPermissionService = new backend.ReputationPermissionService(core)
     }
 
     // TODO Techdebt Need to merge this with getResponses and use the

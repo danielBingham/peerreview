@@ -9,10 +9,10 @@ const MigrationError = require('../errors/MigrationError')
 
 module.exports = class CommentVersionsMigration {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
     }
 
 

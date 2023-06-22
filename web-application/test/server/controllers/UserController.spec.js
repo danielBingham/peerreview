@@ -106,7 +106,6 @@ describe('UserController', function() {
                .mockReturnValueOnce({rowCount: database.users[1].length, rows: database.users[1] }) // selectUsers
                .mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 } ]}) // insertToken
                .mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 } ]}) // initializeSettingsForUser
-               .mockReturnValueOnce({rowCount: 0, rows: []}) // hasFeature() -> getFeature()
                .mockReturnValueOnce({rowCount: 1, rows: database.users[1] })
 
            // Do this so that submittedUsers[0].password doesn't get

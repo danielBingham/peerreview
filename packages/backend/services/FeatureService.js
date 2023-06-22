@@ -19,12 +19,12 @@ const MigrationError = require('../errors/MigrationError')
  */
 module.exports = class FeatureService {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config 
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config 
 
-        this.featureDAO = new FeatureDAO(database, logger, config)
+        this.featureDAO = new FeatureDAO(core)
 
         /**
          * A list of flags by name.
@@ -36,25 +36,52 @@ module.exports = class FeatureService {
          */
         this.features = {
             'example':  {
-                migration: new ExampleMigration(database, logger, config)
+                migration: new ExampleMigration(core)
             },
             'wip-notice': {
-                migration: new WIPNoticeMigration(database, logger, config)
+                migration: new WIPNoticeMigration(core)
             },
 
             // Issue #171 - Comment Versioning and Editing.
             'review-comment-versions-171': {
-                migration: new CommentVersionsMigration(database, logger, config)
+                migration: new CommentVersionsMigration(core)
             }
         }
     }
 
-    async hasFeature(name) {
-        const feature = await this.getFeature(name)
+    /**
+     * Get feature flags for a user.  These are flags that the user has
+     * permission to see and which can be shared with the frontend.
+     *
+     * NOTE: We're skipping the DAO here because we only need the name and the
+     * status and none of the rest of the metadata.  We want to keep this
+     * pretty efficient, since it's called on every request, so we're going
+     * straight to the database and just getting exactly what we need.
+     *
+     * @param {User}    user    An instance of a populated `User` object.
+     */
+    async getEnabledFeatures() {
+        const results = await this.database.query(`
+            SELECT name, status FROM features WHERE status = $1
+        `, [ 'enabled' ])
 
-        return feature && feature.status == 'enabled'
+        const features = {}
+        for (const row of results.rows) {
+            features[row.name] = {
+                name: row.name,
+                status: row.status
+            }
+        }
+
+        return features
     }
 
+    /**
+     * Get a single feature with its current status. Used in contexts where we
+     * need the feature's full metadata.
+     *
+     * @param {string} name The name of the feature we want to get.
+     */
     async getFeature(name) {
         const { dictionary } = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
 
@@ -67,7 +94,7 @@ module.exports = class FeatureService {
             }
         }
 
-        return feature
+        return feature 
     }
 
     async updateFeatureStatus(name, status) {
