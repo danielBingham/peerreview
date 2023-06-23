@@ -87,6 +87,13 @@ app.use(function(request, response, next) {
     next()
 })
 
+app.use(function(request, response, next) {
+    // initialize the settings
+    if ( ! request.session.settings ) {
+        request.session.settings = null 
+    }
+})
+
 // Setup FeatureFlags and make it available through the core.
 app.use(function(request, response, next) {
     const featureService = new FeatureService(core)

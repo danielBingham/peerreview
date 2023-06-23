@@ -267,7 +267,7 @@ module.exports = function(core) {
         })
     })
 
-    // When we don't have a use, just store settings on the session.
+    // When we don't have a user, just store settings on the session.
     router.post('/settings', function(request, response, next) {
         settingsController.postSettings(request, response).catch(function(error) {
             next(error)

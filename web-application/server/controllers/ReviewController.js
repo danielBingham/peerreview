@@ -8,6 +8,8 @@ const ControllerError = require('../errors/ControllerError')
 module.exports = class ReviewController {
 
     constructor(core) {
+        this.core = core
+
         this.database = core.database
         this.logger = core.logger
 
@@ -1192,7 +1194,7 @@ module.exports = class ReviewController {
                 reviews.id as review_id, reviews.user_id as "review_userId", reviews.status as "review_status",
                 review_comment_threads.id as thread_id,
                 review_comments.user_id as "comment_userId", review_comments.status as "comment_status",
-                review_comments.version as "comment_version"
+                ${ this.core.features.hasFeature('review-comment-versions-171') ? 'review_comments.version as "comment_version"' : '' }
             FROM reviews
                 JOIN papers on reviews.paper_id = papers.id
                 JOIN review_comment_threads on review_comment_threads.review_id = reviews.id
@@ -1292,11 +1294,9 @@ module.exports = class ReviewController {
         // previous version.
 
       
-        this.logger.debug(comment)
         // If we're transitioning from 'edit-in-progress' to 'reverted' we need
         // to replace the comment with the most recent version.
-        if ( existing.comment_status == 'edit-in-progress' && comment.status == 'reverted' ) {
-            this.logger.debug(existing)
+        if ( this.core.features.hasFeature('review-comment-versions-171') && existing.comment_status == 'edit-in-progress' && comment.status == 'reverted' ) {
             // Since we don't update the version until it goes from
             // 'in-progress' to 'posted', we can just retrieve the content from
             // the current version in the version table.
@@ -1318,17 +1318,19 @@ module.exports = class ReviewController {
             await this.reviewDAO.updateComment(newComment)
 
         } else {
-            // We need to create a new version the first time the comment is
-            // transitioned from 'in-progress' to 'posted'. 
-            if ( existing.comment_status == 'in-progress' && comment.status == 'posted') {
-                comment.version = await this.reviewDAO.insertCommentVersion(comment, existing.comment_version)
+            if ( this.core.features.hasFeature('review-comment-versions-171') ) {
+                // We need to create a new version the first time the comment is
+                // transitioned from 'in-progress' to 'posted'. 
+                if ( existing.comment_status == 'in-progress' && comment.status == 'posted') {
+                    comment.version = await this.reviewDAO.insertCommentVersion(comment, existing.comment_version)
 
-            }
+                }
 
-            // We need to create a new version every time it's transitioned from
-            // 'edit-in-progress' to 'posted'.
-            if ( existing.comment_status == 'edit-in-progress' && comment.status == 'posted') {
-                comment.version = await this.reviewDAO.insertCommentVersion(comment, existing.comment_version)
+                // We need to create a new version every time it's transitioned from
+                // 'edit-in-progress' to 'posted'.
+                if ( existing.comment_status == 'edit-in-progress' && comment.status == 'posted') {
+                    comment.version = await this.reviewDAO.insertCommentVersion(comment, existing.comment_version)
+                }
             }
 
             // Now that we know the version, update the comment. 

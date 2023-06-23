@@ -45,6 +45,10 @@ const ReviewCommentForm = function(props) {
         return state.authentication.currentUser
     })
 
+    const hasReviewCommentVersions171 = useSelector(function(state) {
+        return state.system.features['review-comment-versions-171'] && state.system.features['review-comment-versions-171'].status == 'enabled'
+    })
+
     // ======= Actions and Event Handling ===========================
 
     const dispatch = useDispatch()
@@ -79,7 +83,7 @@ const ReviewCommentForm = function(props) {
         
         if ( status == 'in-progress') {
             setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
-        } else if ( status == 'edit-in-progress' ) {
+        } else if ( hasReviewCommentVersions171 && status == 'edit-in-progress' ) {
             const comment = {
                 id: props.comment.id,
                 status: 'reverted'

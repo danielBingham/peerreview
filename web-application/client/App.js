@@ -10,10 +10,9 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import logger from '/logger'
 
-import { getConfiguration, cleanupRequest as cleanupSystemRequest } from '/state/system'
+import { getConfiguration, getFeatures, cleanupRequest as cleanupSystemRequest } from '/state/system'
 import { getThresholds, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 import { getAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '/state/authentication'
-import { getFeatures, cleanupRequest as cleanupFeaturesRequest } from '/state/features'
 
 // Admin page for managing features.  Must be logged in and an admin to load it
 // here.
@@ -174,7 +173,7 @@ const App = function(props) {
     useEffect(function() {
         return function cleanup() {
             if ( featuresRequestId ) {
-                dispatch(cleanupFeaturesRequest({ requestId: featuresRequestId }))
+                dispatch(cleanupSystemRequest({ requestId: featuresRequestId }))
             }
         }
     }, [ featuresRequestId ])

@@ -158,7 +158,7 @@ module.exports = class ReviewDAO {
             return null
         }
 
-        return await this.hydrateReviews(results.rows)
+        return this.hydrateReviews(results.rows)
     }
 
     async countReviews(where, params) {
@@ -253,6 +253,10 @@ module.exports = class ReviewDAO {
      * @return {int} The version number of the inserted version.
      */
     async insertCommentVersion(comment, existingVersion) {
+        if ( ! this.core.features.hasFeature('review-comment-versions-171') ) {
+            throw new DAOError(`insertCommentVersion() may only be used behind feature flag 'review-comment-versioning-171'.`)
+        }
+
         const commentVersionSql = `
             INSERT INTO review_comment_versions (comment_id, version, content, created_date, updated_date)
                 VALUES ($1, $2, $3, now(), now()) 

@@ -9,10 +9,14 @@ module.exports = class FeatureFlags {
         /**
          * This will be populated by `FeatureService`.
          */
-        this.features = features 
+        if ( features ) { 
+            this.features = features 
+        } else {
+            this.features = {}
+        }
     }
 
-    hasFeature(feature) {
+    hasFeature(name) {
         const feature = this.features[name]
 
         return feature && feature.status == 'enabled'

@@ -261,7 +261,19 @@ export const makeTrackedRequest = function(dispatch, getState, slice, method, en
         }
     }
 
-    const fullEndpoint = (configuration == null && endpoint == '/config' ? endpoint : configuration.backend + endpoint)
+    let fullEndpoint = ''
+    // System slice requests need to go to the root, rather than the API
+    // backend.  These requests include querying for the configuration that
+    // contains the API backend itself, as well as for feature flags.
+    if ( slice.name == 'system') {
+        fullEndpoint = endpoint
+    } else if (configuration == null ) {
+        // If we're querying from anything other than the system slice before
+        // we've got our configuration, then we have an error.
+        throw new Error('Attempting to query from the API before the configuration is set!')
+    } else {
+        fullEndpoint = configuration.backend + endpoint
+    }
 
     dispatch(slice.actions.makeRequest({requestId: requestId, method: method, endpoint: endpoint}))
     fetch(fullEndpoint, fetchOptions).then(function(response) {

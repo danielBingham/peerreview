@@ -2,6 +2,8 @@ const backend = require('@danielbingham/peerreview-backend')
 const AuthenticationService = backend.AuthenticationService
 const DAOError = backend.DAOError
 
+const FeatureFlags = require('../../../server/features')
+
 const UserController = require('../../../server/controllers/UserController')
 
 const ControllerError = require('../../../server/errors/ControllerError')
@@ -12,23 +14,12 @@ const SubmittedFixtures = require('../fixtures/submitted')
 
 describe('UserController', function() {
     
-    const auth = new AuthenticationService()
-    const logger = new backend.Logger()
-    // Disable logging.
-    logger.level = -1
-
     // ====================== Fixture Data ====================================
 
     const submittedUsers = SubmittedFixtures.users 
     const database = DatabaseFixtures.database 
     const expectedUsers = ExpectedFixtures.users 
     const expectedUncleanUsers = ExpectedFixtures.usersUnclean
-
-    const config = {
-        postmark: {
-            api_token: 'abde-fghi-jklm-nopq'
-        }
-    }
 
     // ====================== Mocks ===========================================
 
@@ -38,25 +29,36 @@ describe('UserController', function() {
         this.send = jest.fn(() => this)
     }
 
-    const connection = {
-        query: jest.fn()
+    const core = {
+        logger: new backend.Logger(),
+        config: {
+            postmark: {
+                api_token: 'abde-fghi-jklm-nopq'
+            }
+        },
+        database: {
+            query: jest.fn()
+        },
+        queue: null,
+        features: new FeatureFlags() 
     }
 
+    const auth = new AuthenticationService(core)
 
     beforeEach(function() {
-        connection.query.mockReset()
+        core.database.query.mockReset()
     })
 
     describe('.getUsers()', function() {
         it('should return 200 and the users', async function() {
-            connection.query
+            core.database.query
                 .mockReturnValueOnce({ rowCount: 1, rows: [ { count: 2 } ] })
                 .mockReturnValueOnce({ 
                     rowCount: database.users[1].length + database.users[2].length, 
                     rows: [ ...database.users[1], ...database.users[2] ] 
                 })
 
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
 
             const request = {
                 query: {}
@@ -78,11 +80,11 @@ describe('UserController', function() {
         })
 
         it('should pass any errors on to the error handler', async function() {
-            connection.query.mockImplementation(function(sql, params) {
+            core.database.query.mockImplementation(function(sql, params) {
                 throw new Error('Something went wrong!')
             })
 
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
 
             const request = {
                 query: {}
@@ -101,7 +103,7 @@ describe('UserController', function() {
 
    describe('.postUsers()', function() {
        it('should hash the password and return 201 with the modified user', async function() {
-           connection.query.mockReturnValueOnce({rowCount: 0, rows: []}) //userExistsResults
+           core.database.query.mockReturnValueOnce({rowCount: 0, rows: []}) //userExistsResults
                .mockReturnValueOnce({rowCount: 1, rows: [ { id: database.users[1].id } ]}) // insertUser
                .mockReturnValueOnce({rowCount: database.users[1].length, rows: database.users[1] }) // selectUsers
                .mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 } ]}) // insertToken
@@ -117,18 +119,18 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger, config)
+           const userController = new UserController(core)
            userController.emailService.sendEmailConfirmation = jest.fn()
            await userController.postUsers(request, response)
 
-           const databaseCall = connection.query.mock.calls[1]
+           const databaseCall = core.database.query.mock.calls[1]
            expect(auth.checkPassword(submittedUsers[0].password, databaseCall[1][4])).toEqual(true)
            expect(response.status.mock.calls[0][0]).toEqual(201)
            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
        })
         
        it('should throw ControllerError(409) when the posted user already exists', async function() {
-           connection.query.mockReturnValueOnce({ rowCount: 1, rows: [ { id: 1, email: 'jwatson@university.edu' } ] })
+           core.database.query.mockReturnValueOnce({ rowCount: 1, rows: [ { id: 1, email: 'jwatson@university.edu' } ] })
            // Do this so that submittedUsers[0].password doesn't get
            // overwritten and we can use it in future tests.
            const submittedUser = {...submittedUsers[0] }
@@ -138,7 +140,7 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger, config)
+           const userController = new UserController(core)
            userController.emailService.sendEmailConfirmation = jest.fn()
 
            try {
@@ -153,7 +155,7 @@ describe('UserController', function() {
        })
 
        it('should throw DAOError if insertion fails', async function() {
-           connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
+           core.database.query.mockReturnValueOnce({rowCount: 0, rows: []})
                .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
            // Do this so that submittedUsers[0].password doesn't get
@@ -165,7 +167,7 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger, config)
+           const userController = new UserController(core)
            userController.emailService.sendEmailConfirmation = jest.fn()
 
            try {
@@ -179,7 +181,7 @@ describe('UserController', function() {
        })
 
        it('should throw ControllerError(500) if we fail to find the posted user after insertion', async function() {
-           connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
+           core.database.query.mockReturnValueOnce({rowCount: 0, rows: []})
                .mockReturnValueOnce({rowCount: 1, rows: [ { id: database.users[1].id } ]})
                .mockReturnValueOnce({rowCount: 0, rows: []  })
 
@@ -192,7 +194,7 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger, config)
+           const userController = new UserController(core)
            userController.emailService.sendEmailConfirmation = jest.fn()
 
            try {
@@ -207,7 +209,7 @@ describe('UserController', function() {
        })
 
        it('should throw DAOError if settings insertion fails', async function() {
-           connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
+           core.database.query.mockReturnValueOnce({rowCount: 0, rows: []})
                .mockReturnValueOnce({ rowCount: 1, rows: [ { id: database.users[1].id } ] })
                .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                .mockReturnValueOnce({ rowCount: 1, rows: [ { id: 1 } ] })
@@ -222,7 +224,7 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger, config)
+           const userController = new UserController(core)
            userController.emailService.sendEmailConfirmation = jest.fn()
 
            try {
@@ -236,7 +238,7 @@ describe('UserController', function() {
        })
 
        it('should pass thrown errors on to the error handler', async function() {
-           connection.query.mockImplementation(function(sql, params) {
+           core.database.query.mockImplementation(function(sql, params) {
                throw new Error('Something went wrong!')
            })
 
@@ -249,7 +251,7 @@ describe('UserController', function() {
            }
 
            const response = new Response()
-           const userController = new UserController(connection, logger, config)
+           const userController = new UserController(core)
            userController.emailService.sendEmailConfirmation = jest.fn()
            try {
                await userController.postUsers(request, response)
@@ -263,7 +265,7 @@ describe('UserController', function() {
 
     describe('.getUser()', function() {
         it('should return 200 and the requested user', async function() {
-            connection.query.mockReturnValueOnce({ 
+            core.database.query.mockReturnValueOnce({ 
                 rowCount: database.users[1].length, 
                 rows: database.users[1] 
             }) 
@@ -275,7 +277,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             await userController.getUser(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
@@ -283,7 +285,7 @@ describe('UserController', function() {
         })
 
         it('should return 404 when the user does not exist', async function() {
-            connection.query.mockReturnValue({rowCount:0, rows: []})
+            core.database.query.mockReturnValue({rowCount:0, rows: []})
 
             const request = {
                 params: {
@@ -292,7 +294,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             try {
                 await userController.getUser(request, response)
             } catch (error) {
@@ -305,7 +307,7 @@ describe('UserController', function() {
         })
 
         it('should pass a thrown error on to the error handler', async function() {
-            connection.query.mockImplementation(function(sql, params) {
+            core.database.query.mockImplementation(function(sql, params) {
                 throw new Error('Something went wrong!')
             })
 
@@ -316,7 +318,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             try {
                 await userController.getUser(request, response)
             } catch (error) {
@@ -336,7 +338,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             try {
                 await userController.putUser(request, response)
             } catch (error) {
@@ -352,7 +354,7 @@ describe('UserController', function() {
 
     describe('patchUser()', function() {
         it('should construct update SQL and respond with status 200 and the updated user', async function() {
-            connection.query
+            core.database.query
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount:1, rows: [] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
@@ -371,13 +373,13 @@ describe('UserController', function() {
             }
             const response = new Response()
 
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             await userController.patchUser(request, response)
 
             const expectedSQL = 'UPDATE users SET bio = $1, updated_date = now() WHERE id = $2'
             const expectedParams = [ request.body.bio, 1 ]
 
-            const databaseCall = connection.query.mock.calls[1]
+            const databaseCall = core.database.query.mock.calls[1]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(databaseCall[1]).toEqual(expectedParams)
 
@@ -385,10 +387,10 @@ describe('UserController', function() {
         })
 
         it('should hash the password', async function() {
-            const auth = new AuthenticationService(connection, logger)
+            const auth = new AuthenticationService(core)
             const oldPassword = 'foobar'
 
-            connection.query
+            core.database.query
                 .mockReturnValueOnce({ rowCount: 1, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [ { id: 1, password: auth.hashPassword(oldPassword) } ] })
                 .mockReturnValueOnce({ rowCount:1, rows: [] })
@@ -414,12 +416,12 @@ describe('UserController', function() {
 
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
 
             await userController.patchUser(request, response)
 
             const expectedSQL = 'UPDATE users SET password = $1, updated_date = now() WHERE id = $2'
-            const databaseCall = connection.query.mock.calls[2]
+            const databaseCall = core.database.query.mock.calls[2]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(await auth.checkPassword(password, databaseCall[1][0])).toEqual(true)
 
@@ -437,7 +439,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             try {
                 await userController.patchUser(request, response)
             } catch (error) {
@@ -463,7 +465,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             try {
                 await userController.patchUser(request, response)
             } catch (error) {
@@ -476,7 +478,7 @@ describe('UserController', function() {
         })
 
         it('should throw DAOEerror if the update attempt fails to modify any rows', async function() {
-            connection.query
+            core.database.query
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount:0, rows: [] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
@@ -494,7 +496,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             try {
                 await userController.patchUser(request, response)
             } catch (error) {
@@ -506,7 +508,7 @@ describe('UserController', function() {
         })
 
         it('should throw ControllerError(500) if no user is found after update', async function() {
-            connection.query.mockReturnValueOnce({ rowCount:1, rows: [] })
+            core.database.query.mockReturnValueOnce({ rowCount:1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
             const request = {
@@ -522,7 +524,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             try {
                 await userController.patchUser(request, response)
             } catch (error) {
@@ -546,7 +548,7 @@ describe('UserController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger, config)
+            const userController = new UserController(core)
             try {
                 await userController.deleteUser(request, response)
             } catch (error) {

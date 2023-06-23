@@ -41,12 +41,18 @@ const ReviewCommentView = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+
+    const hasReviewCommentVersions171 = useSelector(function(state) {
+        return state.system.features['review-comment-versions-171'] && state.system.features['review-comment-versions-171'].status == 'enabled'
+    })
+
+    // ======= Actions and Event Handling ===========================
+    
     const dispatch = useDispatch()
 
     const edit = function(event) {
         event.preventDefault()
-
-        console.log('hi.')
         
         if ( props.review.status !== 'in-progress') {
             return
@@ -54,7 +60,7 @@ const ReviewCommentView = function(props) {
 
         const comment = {
             id: props.comment.id,
-            status: 'edit-in-progress'
+            status: ( hasReviewCommentVersions171 ? 'edit-in-progress' : 'in-progress' )
         }
         
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
@@ -87,7 +93,6 @@ const ReviewCommentView = function(props) {
 
     // ======= Render ===============================================
 
-    console.log('Render.')
     return (
         <>
             <AreYouSure 

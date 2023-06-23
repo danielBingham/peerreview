@@ -1,14 +1,22 @@
 const backend = require('@danielbingham/peerreview-backend')
 const AuthenticationService = backend.AuthenticationService
 
+const FeatureFlags = require('../../../server/features')
 const AuthenticationController = require('../../../server/controllers/AuthenticationController')
 
+/*************
+ * TECHDEBT
+ *
+ * This whole spec is xed out because the settings portion of it is undone
+ * which causes the tests to fail.  I'm currently pondering ripping out the
+ * settings entirely.  We aren't using any of the notices.  The ignore/isolate
+ * field system is broken and I'm contemplating replacing it with a "filters"
+ * system.
+ *
+ * We might just rip out the settings system entirely.  It probably needs to
+ * be redone anyway.
+ */
 describe('AuthenticationController', function() {
-    
-    const auth = new AuthenticationService()
-    const logger = new backend.Logger()
-    // Disable logging.
-    logger.level = -1
 
     // ====================== Fixture Data ====================================
 
@@ -67,14 +75,34 @@ describe('AuthenticationController', function() {
         this.send = jest.fn(() => this)
     }
 
-    const connection = {
-        query: jest.fn()
+    const core = {
+        logger: new backend.Logger(),
+        database: {
+            query: jest.fn()
+        },
+        queue: null,
+        features: new FeatureFlags() 
     }
+
+    // Disable logging.
+    core.logger.level = -1
+
+    const auth = new AuthenticationService(core)
 
     class SessionReturnsUser {
 
         get user() {
             return expectedUsers[0]
+        }
+
+        get settings() {
+            return {
+                userId: expectedUsers[0].id,
+                welcomeDismissed: false,
+                fundingDismissed: false,
+                wipDismissed: false,
+                fields: []
+            }
         }
     }
 
@@ -82,6 +110,10 @@ describe('AuthenticationController', function() {
 
         get user() {
             return undefined 
+        }
+
+        get settings() {
+            return null 
         }
     }
 
@@ -93,22 +125,25 @@ describe('AuthenticationController', function() {
     }
 
     beforeEach(function() {
-        connection.query.mockReset()
+        core.database.query.mockReset()
     })
 
     xdescribe('.getAuthentication()', function() {
-        it('should return 204 and null when no user is in the session', async function() {
+        it('should return 200 and an object with nulls when no user is in the session', async function() {
             const request = {
                 session: new SessionReturnsUndefined() 
             }
 
-            const authenticationController = new AuthenticationController(connection, logger)
+            const authenticationController = new AuthenticationController(core)
 
             const response = new Response()
             await authenticationController.getAuthentication(request, response)
 
-            expect(response.status.mock.calls[0][0]).toEqual(204)
-            expect(response.json.mock.calls[0][0]).toEqual(null)
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+            expect(response.json.mock.calls[0][0]).toEqual({
+                user: null,
+                settings: null 
+            })
         })
 
         it('should return 200 and the user when the session is populated', async function() {
@@ -116,13 +151,22 @@ describe('AuthenticationController', function() {
                 session: new SessionReturnsUser() 
             }
 
-            const authenticationController = new AuthenticationController(connection, logger)
+            const authenticationController = new AuthenticationController(core)
 
             const response = new Response()
             await authenticationController.getAuthentication(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
+            expect(response.json.mock.calls[0][0]).toEqual({
+                user: expectedUsers[0],
+                settings: {
+                    userId: expectedUsers[0].id,
+                    welcomeDismissed: false,
+                    fundingDismissed: false,
+                    wipDismissed: false,
+                    fields: []
+                }
+            })
         })
 
         it('should handle a thrown error by returning 500 and an "unknown" error', async function() {
@@ -130,7 +174,7 @@ describe('AuthenticationController', function() {
                 session: new SessionThrows()
             }
 
-            const authenticationController = new AuthenticationController(connection, logger)
+            const authenticationController = new AuthenticationController(core)
 
             const response = new Response()
             await authenticationController.getAuthentication(request, response)
@@ -142,7 +186,7 @@ describe('AuthenticationController', function() {
 
     xdescribe('.postAuthentication()', function() {
         it('should hash the password and return 201 with the modified user', async function() {
-            connection.query.mockReturnValueOnce({rowCount: 0, rows: []})
+            core.database.query.mockReturnValueOnce({rowCount: 0, rows: []})
                 .mockReturnValue({rowCount:1, rows: [ { id: database[0].id } ]})
                 .mockReturnValue({rowCount:1, rows: [ database[0] ] })
 
@@ -154,17 +198,17 @@ describe('AuthenticationController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(core)
             await userController.postUsers(request, response)
 
-            const databaseCall = connection.query.mock.calls[1]
+            const databaseCall = core.database.query.mock.calls[1]
             expect(auth.checkPassword(submittedUsers[0].password, databaseCall[1][2])).toEqual(true)
             expect(response.status.mock.calls[0][0]).toEqual(201)
             expect(response.json.mock.calls[0][0]).toEqual(expectedUsers[0])
         })
 
         it('should handle a thrown error by returning 500 and an "unknown" error', async function() {
-            connection.query.mockImplementation(function(sql, params) {
+            core.database.query.mockImplementation(function(sql, params) {
                 throw new Error('Something went wrong!')
             })
 
@@ -176,7 +220,7 @@ describe('AuthenticationController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(core)
             await userController.postUsers(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(500)
@@ -186,7 +230,7 @@ describe('AuthenticationController', function() {
 
     xdescribe('.deleteAuthentication()', function() {
         it('should return 200 and the requested user', async function() {
-            connection.query.mockReturnValue({rowCount:1, rows: [database[0]]})
+            core.database.query.mockReturnValue({rowCount:1, rows: [database[0]]})
             const request = {
                 params: {
                     id: 1
@@ -194,7 +238,7 @@ describe('AuthenticationController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(core)
             await userController.getUser(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
@@ -202,7 +246,7 @@ describe('AuthenticationController', function() {
         })
 
         it('should return 404 when the user does not exist', async function() {
-            connection.query.mockReturnValue({rowCount:0, rows: []})
+            core.database.query.mockReturnValue({rowCount:0, rows: []})
             const request = {
                 params: {
                     id: 3
@@ -210,7 +254,7 @@ describe('AuthenticationController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(core)
             await userController.getUser(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(404)
@@ -218,7 +262,7 @@ describe('AuthenticationController', function() {
         })
 
         it('should handle a thrown error by returning 500 and an "unknown" error', async function() {
-            connection.query.mockImplementation(function(sql, params) {
+            core.database.query.mockImplementation(function(sql, params) {
                 throw new Error('Something went wrong!')
             })
 
@@ -229,7 +273,7 @@ describe('AuthenticationController', function() {
             }
 
             const response = new Response()
-            const userController = new UserController(connection, logger)
+            const userController = new UserController(core)
             await userController.getUser(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(500)
