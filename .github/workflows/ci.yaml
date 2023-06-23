@@ -21,7 +21,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      # Build and publish @danielbingham/peerreview-backend
+      # Test @danielbingham/peerreview-backend
       - name: Install Backend NPM Modules
         working-directory: ./packages/backend
         run: |
@@ -30,52 +30,10 @@ jobs:
         working-directory: ./packages/backend
         run: |
           npm run test
-      - name: Version the Backend Package
-        working-directory: ./packages/backend
-        run: |
-          npm version prerelease
-      - name: Commit Backend version changes
-        run: |
-          NAME=$( git log --format="%an" ${{ github.sha }}^! )
-          EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
-          git config --global user.name $NAME
-          git config --global user.email $EMAIL
-          git commit -am 'Automated backend verison increments'
-          git push
-      - name: Publish to Github Packages
-        working-directory: ./packages/backend
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm publish
 
-      # Build the worker Docker container and push it to
-      # the Github Container registry
-      - name: Version the Worker Package
-        working-directory: ./worker
-        run: |
-          npm version prerelease
-      - name: Commit Worker version changes
-        run: |
-          NAME=$( git log --format="%an" ${{ github.sha }}^! )
-          EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
-          git config --global user.name $NAME
-          git config --global user.email $EMAIL
-          git commit -am 'Automated worker verison increments'
-          git push
-      - name: Build the Worker Docker Container
-        working-directory: ./worker
-        run: |
-           docker build --build-arg TOKEN=${{ secrets.GITHUB_TOKEN }} -t ghcr.io/danielbingham/peerreview-worker:latest .
-      - name: Login to Github Container Repository
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
-      - name: Push the newly built container to the Repostory under the latest tag
-        run: |
-          docker push ghcr.io/danielbingham/peerreview-worker:latest
+      # Test the worker.
       
-      # Test web-application, then build the docker container and push it to
-      # the Github Container registry
+      # Test web-application.
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
         env:
@@ -86,26 +44,4 @@ jobs:
         working-directory: ./web-application
         run: | 
           npm run test
-      - name: Version the Web Application Package
-        working-directory: ./web-application
-        run: |
-          npm version prerelease
-      - name: Commit Web Application version changes
-        run: |
-          NAME=$( git log --format="%an" ${{ github.sha }}^! )
-          EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
-          git config --global user.name $NAME
-          git config --global user.email $EMAIL
-          git commit -am 'Automated web application verison increments'
-          git push
-      - name: Build the  Web Application Docker Container
-        working-directory: ./web-application
-        run: |
-           docker build --build-arg TOKEN=${{ secrets.GITHUB_TOKEN }} -t ghcr.io/danielbingham/peerreview:latest .
-      - name: Login to Github Container Repository
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
-      - name: Push the newly built container to the Repostory under the latest tag
-        run: |
-          docker push ghcr.io/danielbingham/peerreview:latest
 
