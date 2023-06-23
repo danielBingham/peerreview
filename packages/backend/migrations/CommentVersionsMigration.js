@@ -103,13 +103,23 @@ CREATE TABLE review_comment_versions (
      * Migrations always need to be non-destructive and rollbackable.  
      */
     async up(targets) { 
-        const sql = `
-            INSERT INTO review_comment_versions (comment_id, content, created_date, updated_date)
-                SELECT id, content, now(), now() FROM review_comments
-        `
-
         try {
-            await this.database.query(sql, [])
+
+            // Add version rows for every comment.
+            const insertVersionSQL= `
+                INSERT INTO review_comment_versions (comment_id, content, created_date, updated_date)
+                    SELECT id, content, now(), now() FROM review_comments
+            `
+            await this.database.query(insertVersionSQL, [])
+
+            // Update the review_comment.version to verison 1.
+            const updateCommentVersionSQL = `
+                UPDATE review_comments set version = review_comment_versions.version
+                    FROM (SELECT comment_id, version FROM review_comment_versions) as review_comment_versions
+                    WHERE review_comments.id = review_comment_versions.comment_id
+            `
+            await this.database.query(updateCommentVersionSQL, [])
+
         } catch (error) {
             try {
                await this.database.query('DELETE FROM review_comment_versions', [])

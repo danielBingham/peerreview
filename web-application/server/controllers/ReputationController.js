@@ -24,7 +24,7 @@ module.exports = class ReputationController {
         this.settingsDAO = new backend.SettingsDAO(core)
 
         // TECHDEBT Is this a duplicate of core.queue?
-        this.processQueue = new BullQueue('reputation', { redis: config.redis })
+        this.processQueue = new BullQueue('reputation', { redis: this.config.redis })
     }
 
     /**

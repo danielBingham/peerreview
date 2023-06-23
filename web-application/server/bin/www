@@ -52,7 +52,7 @@ if ( process.env.NODE_ENV == 'development') {
  */
 
 function onError(error) {
-    core.logger.error('ERROR!');
+  core.logger.error('ERROR.')
   if (error.syscall !== 'listen') {
     throw error;
   }
@@ -72,6 +72,7 @@ function onError(error) {
       process.exit(1);
       break;
     default:
+      core.logger.error(error)
       throw error;
   }
 }

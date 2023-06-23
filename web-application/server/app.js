@@ -26,7 +26,9 @@ const Uuid = require('uuid')
 const backend = require('@danielbingham/peerreview-backend')
 const ControllerError = require('./errors/ControllerError')
 
-const core = require('./core')
+const Core = require('./core')
+
+const core = new Core()
 core.initialize()
 
 // Load express.
@@ -92,11 +94,14 @@ app.use(function(request, response, next) {
     if ( ! request.session.settings ) {
         request.session.settings = null 
     }
+    next()
 })
 
+
+const FeatureFlags = require('./features')
 // Setup FeatureFlags and make it available through the core.
 app.use(function(request, response, next) {
-    const featureService = new FeatureService(core)
+    const featureService = new backend.FeatureService(core)
     featureService.getEnabledFeatures().then(function(features) {
         core.features = new FeatureFlags(features)
         next()
@@ -197,7 +202,7 @@ if ( core.config.environment == 'development' ) {
     }))
 
     app.use(function(request, response) {
-        logger.debug(`Index File Request with webpack-dev-middleware server side rendering.`)
+        core.logger.debug(`Index File Request with webpack-dev-middleware server side rendering.`)
         const { devMiddleware } = response.locals.webpack
         const { assetsByChunkName, outputPath } = devMiddleware.stats.toJson() 
      

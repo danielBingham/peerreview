@@ -44,6 +44,8 @@ module.exports = class Core {
          */
         this.features = null
 
+        this.shutdownInProgress = false
+
     }
 
     /**
@@ -93,6 +95,14 @@ module.exports = class Core {
     }
 
     async shutdown() {
+        if ( this.shutdownInProgress ) {
+            this.logger.info('Shutdown called again while already in progress.')
+            console.error(new Error('Shutdown called a second time.'))
+            return
+        }
+        this.logger.info('Beginning shutdown of core dependencies...')
+        this.shutdownInProgress = true
+
         this.logger.info('Closing the connection pool.')
         await this.database.end()
         this.database = null

@@ -206,7 +206,7 @@ const App = function(props) {
             return (<div className="error">Authentication request failed with error: {authenticationRequest.error}.</div>)
         } else if (reputationThresholdsRequest && reputationThresholdsRequest.state == 'failed' ) {
             return (<div className="error">Attempt to retrieve reputation thresholds failed with error: {reputationThresholdsRequest.error}.</div>)
-        } else if ( featuresRequest & featuresRequest.state == 'failed' ) {
+        } else if ( featuresRequest && featuresRequest.state == 'failed' ) {
             return (<div className="error">Attempt to retrieve feature list failed with error: { featuresRequest.error}</div> )
         }
 

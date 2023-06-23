@@ -1193,8 +1193,8 @@ module.exports = class ReviewController {
                 papers.id as paper_id, papers.is_draft as "paper_isDraft",
                 reviews.id as review_id, reviews.user_id as "review_userId", reviews.status as "review_status",
                 review_comment_threads.id as thread_id,
-                review_comments.user_id as "comment_userId", review_comments.status as "comment_status",
-                ${ this.core.features.hasFeature('review-comment-versions-171') ? 'review_comments.version as "comment_version"' : '' }
+                review_comments.user_id as "comment_userId", review_comments.status as "comment_status"
+                ${ this.core.features.hasFeature('review-comment-versions-171') ? ', review_comments.version as "comment_version"' : '' }
             FROM reviews
                 JOIN papers on reviews.paper_id = papers.id
                 JOIN review_comment_threads on review_comment_threads.review_id = reviews.id
@@ -1292,7 +1292,6 @@ module.exports = class ReviewController {
         // TODO Handle patching and versioning here.  We'll need to introduce a
         // new `revert` status that can allow a PATCH request to rollback to
         // previous version.
-
       
         // If we're transitioning from 'edit-in-progress' to 'reverted' we need
         // to replace the comment with the most recent version.

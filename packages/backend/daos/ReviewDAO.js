@@ -82,14 +82,6 @@ module.exports = class ReviewDAO {
             }
         }
 
-        console.log(`Returning a list of reviews.`)
-        console.log(list)
-
-        if ( list.length > 0 ) {
-            console.log(`threads: `)
-            console.log(list[0].threads)
-        }
-
         return list 
     }
 
@@ -253,6 +245,9 @@ module.exports = class ReviewDAO {
      * @return {int} The version number of the inserted version.
      */
     async insertCommentVersion(comment, existingVersion) {
+        this.logger.debug(`Creating a comment version for Comment(${comment.id}) with verison ${existingVersion}`)
+        this.logger.debug(comment)
+
         if ( ! this.core.features.hasFeature('review-comment-versions-171') ) {
             throw new DAOError(`insertCommentVersion() may only be used behind feature flag 'review-comment-versioning-171'.`)
         }
