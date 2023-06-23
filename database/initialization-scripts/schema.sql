@@ -254,7 +254,7 @@ CREATE TABLE review_comment_threads (
 );
 CREATE INDEX review_comment_threads__review_id ON review_comment_threads (review_id);
 
-CREATE TYPE review_comment_status as ENUM('in-progress', 'posted');
+CREATE TYPE review_comment_status as ENUM('in-progress', 'posted', 'edit-in-progress', 'reverted');
 CREATE TABLE review_comments (
     id          bigserial PRIMARY KEY,
     thread_id   bigint REFERENCES review_comment_threads(id) ON DELETE CASCADE, 
@@ -268,6 +268,17 @@ CREATE TABLE review_comments (
 );
 CREATE INDEX review_comments__thread_id ON review_comments (thread_id);
 CREATE INDEX review_comments__user_id ON review_comments (user_id);
+
+CREATE TABLE review_comment_versions (
+    comment_id      bigint REFERENCES review_comments(id) ON DELETE CASCADE,
+    version         int NOT NULL DEFAULT 1,
+    content         text,
+    created_date    timestamptz,
+    updated_date    timestamptz,
+    PRIMARY KEY (comment_id, version)
+);
+
+
 
 /******************************************************************************
  * Responses 

@@ -3,8 +3,10 @@ const FeatureDAO = require('../daos/FeatureDAO')
 
 const ExampleMigration = require('../migrations/ExampleMigration')
 const WIPNoticeMigration = require('../migrations/WIPNoticeMigration')
+const CommentVersionsMigration = require('../migrations/CommentVersionsMigration')
 
 const ServiceError = require('../errors/ServiceError')
+const MigrationError = require('../errors/MigrationError')
 
 
 /**
@@ -17,12 +19,12 @@ const ServiceError = require('../errors/ServiceError')
  */
 module.exports = class FeatureService {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config 
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config 
 
-        this.featureDAO = new FeatureDAO(database, logger, config)
+        this.featureDAO = new FeatureDAO(core)
 
         /**
          * A list of flags by name.
@@ -34,20 +36,52 @@ module.exports = class FeatureService {
          */
         this.features = {
             'example':  {
-                migration: new ExampleMigration(database, logger, config)
+                migration: new ExampleMigration(core)
             },
             'wip-notice': {
-                migration: new WIPNoticeMigration(database, logger, config)
+                migration: new WIPNoticeMigration(core)
+            },
+
+            // Issue #171 - Comment Versioning and Editing.
+            'review-comment-versions-171': {
+                migration: new CommentVersionsMigration(core)
             }
         }
     }
 
-    async hasFeature(name) {
-        const feature = await this.getFeature(name)
+    /**
+     * Get feature flags for a user.  These are flags that the user has
+     * permission to see and which can be shared with the frontend.
+     *
+     * NOTE: We're skipping the DAO here because we only need the name and the
+     * status and none of the rest of the metadata.  We want to keep this
+     * pretty efficient, since it's called on every request, so we're going
+     * straight to the database and just getting exactly what we need.
+     *
+     * @param {User}    user    An instance of a populated `User` object.
+     */
+    async getEnabledFeatures() {
+        const results = await this.database.query(`
+            SELECT name, status FROM features WHERE status = $1
+        `, [ 'enabled' ])
 
-        return feature && feature.status == 'enabled'
+        const features = {}
+        for (const row of results.rows) {
+            features[row.name] = {
+                name: row.name,
+                status: row.status
+            }
+        }
+
+        return features
     }
 
+    /**
+     * Get a single feature with its current status. Used in contexts where we
+     * need the feature's full metadata.
+     *
+     * @param {string} name The name of the feature we want to get.
+     */
     async getFeature(name) {
         const { dictionary } = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
 
@@ -60,7 +94,7 @@ module.exports = class FeatureService {
             }
         }
 
-        return feature
+        return feature 
     }
 
     async updateFeatureStatus(name, status) {
@@ -84,7 +118,28 @@ module.exports = class FeatureService {
 
         await this.updateFeatureStatus(name, 'initializing')
 
-        await this.features[name].migration.initialize()
+        try {
+            await this.features[name].migration.initialize()
+        } catch (error) {
+            // If we get a migration error and the status is 'rolled-back',
+            // that means the migration was safely able to catch its own error
+            // and rollback.  The database is in a known state.
+            //
+            // We want to throw the error to log the bug and we'll need to fix
+            // the bug and redeploy, but we don't need to do database surgery.
+            //
+            // If the error isn't a MigrationError, or the status isn't
+            // 'rolled-back', then the database is in an unknown state.  Leave
+            // it the feature in 'initializing', we're going to need to do
+            // surgery and we can update the status of the feature as part of
+            // that effort.
+            //
+            // Hopefully the latter never happens.
+            if ( error instanceof MigrationError && error.status == 'rolled-back' ) {
+                await this.updateFeatureStatus(name, 'created')
+            }
+            throw error
+        }
 
         await this.updateFeatureStatus(name, 'initialized')
     }
@@ -97,7 +152,15 @@ module.exports = class FeatureService {
 
         await this.updateFeatureStatus(name, 'migrating')
 
-        await this.features[name].migration.up()
+        try {
+            await this.features[name].migration.up()
+        } catch (error) {
+            // See comment on initialize()
+            if ( error instanceof MigrationError && error.status == 'rolled-back') {
+                await this.updateFeatureStatus(name, 'initialized')
+            }
+            throw error
+        }
 
         await this.updateFeatureStatus(name, 'migrated')
     }
@@ -128,7 +191,15 @@ module.exports = class FeatureService {
 
         await this.updateFeatureStatus(name, 'rolling-back')
 
-        await this.features[name].migration.down()
+        try {
+            await this.features[name].migration.down()
+        } catch (error) {
+            // See comment on initialize()
+            if ( error instanceof MigrationError && error.status == 'rolled-back') {
+                await this.updateFeatureStatus(name, 'disabled')
+            }
+            throw error
+        }
 
         await this.updateFeatureStatus(name, 'rolled-back')
     }
@@ -141,7 +212,15 @@ module.exports = class FeatureService {
 
         await this.updateFeatureStatus(name, 'uninitializing')
 
-        await this.features[name].migration.uninitialize()
+        try {
+            await this.features[name].migration.uninitialize()
+        } catch (error) {
+            // See comment on initialize()
+            if ( error instanceof MigrationError && error.status == 'rolled-back') {
+                await this.updateFeatureStatus(name, 'initialized')
+            }
+            throw error
+        }
 
         await this.updateFeatureStatus(name, 'uninitialized')
     }

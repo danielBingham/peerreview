@@ -4,12 +4,12 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class AdminController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
-        this.reputationService = new backend.ReputationGenerationService(database, logger)
+        this.reputationService = new backend.ReputationGenerationService(core)
     }
 
    async initializeReputationFromOrcid(request, response) {

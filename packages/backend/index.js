@@ -23,5 +23,7 @@ exports.OpenAlexService = require('./services/OpenAlexService')
 exports.ReputationGenerationService = require('./services/ReputationGenerationService')
 exports.ReputationPermissionService = require('./services/ReputationPermissionService')
 exports.S3FileService = require('./services/S3FileService')
+exports.PageMetadataService = require('./services/PageMetadataService')
+exports.ServerSideRenderingService = require('./services/ServerSideRenderingService')
 
 exports.Logger = require('./logger.js')

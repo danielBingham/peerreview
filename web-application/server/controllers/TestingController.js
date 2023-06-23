@@ -4,15 +4,15 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class TestingController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
-        this.auth = new backend.AuthenticationService(database, logger)
-        this.reputationGenerationService = new backend.ReputationGenerationService(database, logger)
-        this.userDAO = new backend.UserDAO(database)
-        this.settingsDAO = new backend.SettingsDAO(database, logger)
+        this.auth = new backend.AuthenticationService(core)
+        this.reputationGenerationService = new backend.ReputationGenerationService(core)
+        this.userDAO = new backend.UserDAO(core)
+        this.settingsDAO = new backend.SettingsDAO(core)
     }
 
     async postOrcid(request, response) {

@@ -1,6 +1,8 @@
 const backend = require('@danielbingham/peerreview-backend')
 const DAOError = backend.DAOError
 
+const FeatureFlags = require('../../../server/features')
+
 const PaperController = require('../../../server/controllers/PaperController')
 
 const ControllerError = require('../../../server/errors/ControllerError')
@@ -13,24 +15,12 @@ const fs = require('fs')
 
 describe('PaperController', function() {
 
-    const logger = new backend.Logger()
-    // Disable logging.
-    logger.level = -1 
-
     // ====================== Fixture Data ====================================
 
     const submittedPapers = SubmittedFixtures.papers
     const database = DatabaseFixtures.database
     const expectedPapers = ExpectedFixtures.papers
 
-    const config = {
-        s3: {
-            bucket_url: '',
-            access_id: '',
-            access_key: '',
-            bucket: ''
-        },
-    }
     // ====================== Mocks ===========================================
 
     const Response = function() {
@@ -39,24 +29,39 @@ describe('PaperController', function() {
         this.send = jest.fn(() => this)
     }
 
-    const connection = {
-        query: jest.fn()
+    const core = {
+        logger: new backend.Logger(),
+        config: {
+            s3: {
+                bucket_url: '',
+                access_id: '',
+                access_key: '',
+                bucket: ''
+            },
+        },
+        database: {
+            query: jest.fn()
+        },
+        queue: null,
+        features: new FeatureFlags() 
     }
 
+    // Disable logging.
+    core.logger.level = -1
 
     beforeEach(function() {
-        connection.query.mockReset()
-        logger.level = -1 
+        core.database.query.mockReset()
+        core.logger.level = -1 
     })
 
     describe('.getPapers()', function() {
         it('should return 200 and the papers', async function() {
-            connection.query.mockReturnValue([]).mockReturnValueOnce({ rowCount: 8, rows: database.papers[1]}) 
+            core.database.query.mockReturnValue([]).mockReturnValueOnce({ rowCount: 8, rows: database.papers[1]}) 
                 .mockReturnValueOnce({ rowCount: 2, rows: database.users[1]})
                 .mockReturnValueOnce({ rowCount: 2, rows: database.users[2]})
 
 
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
 
             const request = {
                 session: {},
@@ -78,11 +83,11 @@ describe('PaperController', function() {
         xit('should only return the papers a user has permission to see', async function() {})
 
         it('should pass any errors on to the error handler', async function() {
-            connection.query.mockImplementation(function(sql, params) {
+            core.database.query.mockImplementation(function(sql, params) {
                 throw new Error('This is a test error!')
             })
 
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
 
             const request = {
                 session: {},
@@ -122,7 +127,7 @@ describe('PaperController', function() {
 
             it('should return 201 with the submitted paper', async function() {
 
-                connection.query.mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 }]}) // insertPaper
+                core.database.query.mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 }]}) // insertPaper
                     .mockReturnValueOnce({rowCount:2, rows: [ ]}) // insertAuthors
                     .mockReturnValueOnce({rowCount:2, rows: [ ]}) // insertFields
                 // insertVersion (1)
@@ -151,7 +156,7 @@ describe('PaperController', function() {
                 }
 
                 const response = new Response()
-                const paperController = new PaperController(connection, logger, config)
+                const paperController = new PaperController(core)
                 paperController.paperDAO.fileService.base = '/test/server/files/' + paperController.paperDAO.fileService.base
 
                 // Silence logging to supress a bunch of PDF.js warnings.
@@ -173,7 +178,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.postPapers(request, response)
             } catch (error ) {
@@ -197,7 +202,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.postPapers(request, response)
             } catch (error ) {
@@ -210,7 +215,7 @@ describe('PaperController', function() {
         })
 
         it('should throw a DAOError if database returns rowCount=0 on insert', async function() {
-            connection.query.mockReturnValueOnce({rowCount: 0, rows: [] })
+            core.database.query.mockReturnValueOnce({rowCount: 0, rows: [] })
 
             const request = {
                 body: submittedPapers[0],
@@ -222,7 +227,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.postPapers(request, response)
             } catch (error ) {
@@ -234,7 +239,7 @@ describe('PaperController', function() {
         })
 
         it('should pass thrown errors on to the error handler', async function() {
-            connection.query.mockImplementation(function(sql, params) {
+            core.database.query.mockImplementation(function(sql, params) {
                 throw new Error('This is a test error!')
             })
 
@@ -248,7 +253,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.postPapers(request, response)
             } catch (error) {
@@ -262,7 +267,7 @@ describe('PaperController', function() {
 
     describe('.getPaper()', function() {
         it('should return 200 and the requested paper', async function() {
-            connection.query.mockReturnValueOnce({rowCount:8, rows: database.papers[1]})
+            core.database.query.mockReturnValueOnce({rowCount:8, rows: database.papers[1]})
                 .mockReturnValueOnce({rowCount: 2, rows: database.users[1]})
                 .mockReturnValueOnce({rowCount: 2, rows: database.users[2]})
 
@@ -274,7 +279,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             await paperController.getPaper(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
@@ -282,7 +287,7 @@ describe('PaperController', function() {
         })
 
         it('should throw a ControllerError with 404 when the paper does not exist', async function() {
-            connection.query.mockReturnValue({rowCount:0, rows: []})
+            core.database.query.mockReturnValue({rowCount:0, rows: []})
             const request = {
                 params: {
                     id: 3
@@ -291,7 +296,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.getPaper(request, response)
             } catch (error) {
@@ -304,7 +309,7 @@ describe('PaperController', function() {
         })
 
         it('should pass a thrown error on to the error handler', async function() {
-            connection.query.mockImplementation(function(sql, params) {
+            core.database.query.mockImplementation(function(sql, params) {
                 throw new Error('Something went wrong!')
             })
 
@@ -315,7 +320,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.getPaper(request, response)
             } catch(error) {
@@ -336,7 +341,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.putPaper(request, response)
             } catch(error) {
@@ -354,7 +359,7 @@ describe('PaperController', function() {
 
     describe('patchPaper()', function() {
         it('should construct update SQL and respond with 200 and the patched paper', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
+            core.database.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
@@ -378,13 +383,13 @@ describe('PaperController', function() {
             }
             const response = new Response()
 
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             await paperController.patchPaper(request, response)
 
             const expectedSQL = 'UPDATE papers SET is_draft = $1, updated_date = now() WHERE id = $2'
             const expectedParams = [ false, 2 ]
 
-            const databaseCall = connection.query.mock.calls[3]
+            const databaseCall = core.database.query.mock.calls[3]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(databaseCall[1]).toEqual(expectedParams)
 
@@ -394,7 +399,7 @@ describe('PaperController', function() {
         })
 
         it('should ignore the id in the body and use the id in request.params', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
+            core.database.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
@@ -418,13 +423,13 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             await paperController.patchPaper(request, response)
 
             const expectedSQL = 'UPDATE papers SET is_draft = $1, updated_date = now() WHERE id = $2'
             const expectedParams = [ false, 2 ]
 
-            const databaseCall = connection.query.mock.calls[3]
+            const databaseCall = core.database.query.mock.calls[3]
             expect(databaseCall[0]).toEqual(expectedSQL)
             expect(databaseCall[1]).toEqual(expectedParams)
 
@@ -434,7 +439,7 @@ describe('PaperController', function() {
         })
 
         it('should throw ControllerError(401) if no user is authenticated', async function() {
-            connection.query.mockReturnValue({ rowCount: 0, rows: [] })
+            core.database.query.mockReturnValue({ rowCount: 0, rows: [] })
 
             const request = {
                 body: {
@@ -448,7 +453,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.patchPaper(request, response)
             } catch (error) {
@@ -460,7 +465,7 @@ describe('PaperController', function() {
         })
 
         it('should throw ControllerError(404) if the paper we are attempting to patch is not found', async function() {
-            connection.query.mockReturnValue({ rowCount: 0, rows: [] })
+            core.database.query.mockReturnValue({ rowCount: 0, rows: [] })
 
             const request = {
                 body: {
@@ -478,7 +483,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.patchPaper(request, response)
             } catch (error) {
@@ -490,7 +495,7 @@ describe('PaperController', function() {
         })
 
         it('should throw ControllerError(403) if the patching user is not an owner', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
+            core.database.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
 
@@ -510,7 +515,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.patchPaper(request, response)
             } catch (error) {
@@ -522,7 +527,7 @@ describe('PaperController', function() {
         })
 
         it('should throw ControllerError(403) if paper being patched is not a draft', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
+            core.database.query.mockReturnValueOnce({ rowCount: database.papers[1].length, rows: database.papers[1] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
 
@@ -542,7 +547,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.patchPaper(request, response)
             } catch (error) {
@@ -554,7 +559,7 @@ describe('PaperController', function() {
         })
 
         it('should throw DAOError if the update attempt failed', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
+            core.database.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
@@ -575,7 +580,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.patchPaper(request, response)
             } catch (error) {
@@ -586,7 +591,7 @@ describe('PaperController', function() {
         })
 
         it('should throw ControllerError(500) if the patched paper is not found after patching', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
+            core.database.query.mockReturnValueOnce({ rowCount: database.papers[2].length, rows: database.papers[2] })
                 .mockReturnValueOnce({ rowCount: database.users[1].length, rows: database.users[1] })
                 .mockReturnValueOnce({ rowCount: database.users[2].length, rows: database.users[2] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
@@ -608,7 +613,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.patchPaper(request, response)
             } catch (error) {
@@ -620,7 +625,7 @@ describe('PaperController', function() {
         })
 
         it('should pass thrown errors on to the error handler', async function() {
-            connection.query.mockImplementation(function(sql, params) {
+            core.database.query.mockImplementation(function(sql, params) {
                 throw new Error('This is a test error!')
             })
 
@@ -634,7 +639,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.patchPaper(request, response)
             } catch (error) {
@@ -648,7 +653,7 @@ describe('PaperController', function() {
 
     xdescribe('deletePaper()', function() {
         it('return `200` and the id of the deleted paper on success', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: 1, rows: [{ user_id: 1, owner: true }] })
+            core.database.query.mockReturnValueOnce({ rowCount: 1, rows: [{ user_id: 1, owner: true }] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
             const request = {
@@ -664,7 +669,7 @@ describe('PaperController', function() {
 
             const response = new Response()
 
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             await paperController.deletePaper(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
@@ -681,7 +686,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.deletePaper(request, response)
             } catch (error) {
@@ -693,7 +698,7 @@ describe('PaperController', function() {
         })
 
         it('should throw ControllerError(403) if authenticated user is not owner', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: 0, rows: []  })
+            core.database.query.mockReturnValueOnce({ rowCount: 0, rows: []  })
 
             const request = {
                 params: {
@@ -707,7 +712,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.deletePaper(request, response)
             } catch (error) {
@@ -719,7 +724,7 @@ describe('PaperController', function() {
         })
 
         it('should throw DAOError if delete returns no modified rows', async function() {
-            connection.query.mockReturnValueOnce({ rowCount: 1, rows: [{ user_id: 1, owner: true }] })
+            core.database.query.mockReturnValueOnce({ rowCount: 1, rows: [{ user_id: 1, owner: true }] })
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
             const request = {
@@ -734,7 +739,7 @@ describe('PaperController', function() {
             }
 
             const response = new Response()
-            const paperController = new PaperController(connection, logger, config)
+            const paperController = new PaperController(core)
             try {
                 await paperController.deletePaper(request, response)
             } catch (error) {

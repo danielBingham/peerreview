@@ -7,12 +7,12 @@ const SettingsDAO = require('../daos/SettingsDAO')
 
 module.exports = class AuthenticationService {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
 
-        this.userDAO = new UserDAO(database, logger)
-        this.settingsDAO = new SettingsDAO(database, logger)
+        this.userDAO = new UserDAO(core)
+        this.settingsDAO = new SettingsDAO(core)
     }
 
     /**

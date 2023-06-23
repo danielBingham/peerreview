@@ -4,11 +4,11 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class JobController {
 
-    constructor(database, queue, logger, config) {
-        this.database = database
-        this.queue = queue 
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.queue = core.queue 
+        this.logger = core.logger
+        this.config = core.config
     }
 
     async getJobs(request, response) {

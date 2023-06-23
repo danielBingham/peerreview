@@ -152,7 +152,7 @@ const ReviewCommentsWrapper = function(props) {
     }, [ searchParams, props.versionNumber ])
     
     // ======= Render =========================================================
-        
+
     const selectedThread = searchParams.get('thread')
     const threadViews = []
     if ( props.versionNumber == props.loadedVersion) {

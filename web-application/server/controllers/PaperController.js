@@ -14,12 +14,12 @@ const ControllerError = require('../errors/ControllerError')
  */
 module.exports = class PaperController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.paperDAO = new backend.PaperDAO(database, config)
-        this.fieldDAO = new backend.FieldDAO(database)
-        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.paperDAO = new backend.PaperDAO(core)
+        this.fieldDAO = new backend.FieldDAO(core)
+        this.reputationPermissionService = new backend.ReputationPermissionService(core)
     }
 
     /**

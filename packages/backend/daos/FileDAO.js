@@ -3,9 +3,9 @@ const DAOError = require('../errors/DAOError')
 
 module.exports = class FilesDAO {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
     }
 
     hydrateFile(row) {

@@ -7,8 +7,8 @@ const WORKS = 'https://api.openalex.org/works'
 
 module.exports = class OpenAlexService {
 
-    constructor(logger) {
-        this.logger = logger
+    constructor(core) {
+        this.logger = core.logger
     }
 
     /**

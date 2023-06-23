@@ -2,7 +2,7 @@ const fs = require('fs')
 
 module.exports = class FileService {
 
-    constructor(logger) {
+    constructor(core) {
         this.base = '/public'
     }
 

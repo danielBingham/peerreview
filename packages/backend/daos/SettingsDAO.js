@@ -4,11 +4,10 @@ const DAOError = require('../errors/DAOError')
 
 module.exports = class SettingsDAO {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-
-        this.featureService = new FeatureService(database, logger, config)
+    constructor(core) {
+        this.core = core
+        this.database = core.database
+        this.logger = core.logger
 
         this.selectionString = `
             user_settings.id as setting_id, user_settings.user_id as "setting_userId", 
@@ -30,7 +29,7 @@ module.exports = class SettingsDAO {
         await this.insertSetting(setting)
     }
 
-    async hydrateSettings(rows) {
+    hydrateSettings(rows) {
         const settings = {}
         const list = []
         for(const row of rows) {
@@ -45,8 +44,7 @@ module.exports = class SettingsDAO {
             }
 
             // Feature Flag: wip-notice
-            const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
-            if ( haveWIPNotice ) {
+            if ( this.core.features.hasFeature('wip-notice')) {
                 setting.wipDismissed = row.setting_wipDismissed
             }
 
@@ -78,7 +76,7 @@ module.exports = class SettingsDAO {
         }
 
         // Feature Flag: wip-notice
-        const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
+        const haveWIPNotice = this.core.features.hasFeature('wip-notice')
         const wipString = haveWIPNotice ? `, user_settings.wip_dismissed as "setting_wipDismissed"` : ''
 
         const sql = `
@@ -94,7 +92,7 @@ module.exports = class SettingsDAO {
         if ( results.rows.length == 0) {
             return [] 
         }
-        return await this.hydrateSettings(results.rows)
+        return this.hydrateSettings(results.rows)
     }
 
     /**
@@ -131,8 +129,7 @@ module.exports = class SettingsDAO {
         setting.id = results.rows[0].id
 
         // Feature Flag: wip-notice
-        const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
-        if ( haveWIPNotice ) {
+        if (this.core.features.hasFeature('wip-notice')) {
             const updateResults = await this.database.query(`
                 UPDATE user_settings SET wip_dismissed = $1 WHERE id = $2
             `, [ setting.wipDismissed, setting.id ])
@@ -171,8 +168,7 @@ module.exports = class SettingsDAO {
         }
 
         // Feature Flag: wip-notice
-        const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
-        if ( haveWIPNotice ) {
+        if ( this.core.features.hasFeature('wip-notice')) {
             const updateResults = await this.database.query(`
                 UPDATE user_settings SET wip_dismissed = $1 WHERE id = $2
             `, [ setting.wipDismissed, setting.id ])
@@ -208,7 +204,7 @@ module.exports = class SettingsDAO {
             throw new Error(`Can't update a setting with out an Id.`)
         }
 
-        const haveWIPNotice = await this.featureService.hasFeature('wip-notice')
+        const haveWIPNotice = this.core.features.hasFeature('wip-notice')
 
         let sql = 'UPDATE user_settings SET '
         let params = []

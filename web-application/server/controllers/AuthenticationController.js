@@ -17,14 +17,14 @@ const ControllerError = require('../errors/ControllerError')
  */
 module.exports = class AuthenticationController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
-        this.auth = new backend.AuthenticationService(database, logger)
-        this.userDAO = new backend.UserDAO(database)
-        this.settingsDAO = new backend.SettingsDAO(database)
+        this.auth = new backend.AuthenticationService(core)
+        this.userDAO = new backend.UserDAO(core)
+        this.settingsDAO = new backend.SettingsDAO(core)
     }
 
 

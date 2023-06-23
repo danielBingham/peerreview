@@ -13,7 +13,7 @@
   },
   "scripts": {
     "start": "node ./index.js",
-    "dev": "export NODE_ENV=hot-dev && node ./index.js"
+    "dev": "export NODE_ENV=development && node ./index.js"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.294.0",

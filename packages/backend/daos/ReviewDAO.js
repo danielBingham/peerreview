@@ -1,7 +1,14 @@
+const DAOError = require('../errors/DAOError')
+
+const FeatureService = require('../services/FeatureService')
+
 module.exports = class ReviewDAO {
     
-    constructor(database) {
-        this.database = database
+    constructor(core) {
+        this.core = core
+
+        this.database = core.database
+        this.logger = core.logger
     }
 
     /**
@@ -15,6 +22,7 @@ module.exports = class ReviewDAO {
         if ( rows.length == 0 ) {
             return null
         }
+
 
         const reviews = {}
         const list = []
@@ -63,6 +71,12 @@ module.exports = class ReviewDAO {
                         createdDate: row.comment_createdDate,
                         updatedDate: row.comment_updatedDate
                     }
+
+                    // Issue #171 - Comment versioning and editing.
+                    if ( this.core.features.hasFeature('review-comment-versions-171') ) {
+                        comment.version = row.comment_version
+                    }
+
                     thread.comments.push(comment)
                 }
             }
@@ -100,11 +114,29 @@ module.exports = class ReviewDAO {
         where = ( where ? where : '' )
         params = ( params ? params : [])
 
+        // Issue #171 - Comment versioning and Editing.
+        const showVersion = this.core.features.hasFeature('review-comment-versions-171')
+
         const sql = `
             SELECT
-              reviews.id as review_id, reviews.paper_id as "review_paperId", reviews.version as review_version, reviews.user_id as "review_userId", reviews.summary as review_summary, reviews.recommendation as review_recommendation, reviews.status as review_status, reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
-              review_comment_threads.id as thread_id, review_comment_threads.review_id as "thread_reviewId", review_comment_threads.page as thread_page, review_comment_threads.pin_x as "thread_pinX", review_comment_threads.pin_y as "thread_pinY",  
-              review_comments.id as comment_id, review_comments.thread_id as "comment_threadId", review_comments.user_id as "comment_userId", review_comments.thread_order as "comment_threadOrder", review_comments.status as comment_status, review_comments.content as comment_content, review_comments.created_date as "comment_createdDate", review_comments.updated_date as "comment_updatedDate"
+
+              reviews.id as review_id, reviews.paper_id as "review_paperId", 
+              reviews.version as review_version, reviews.user_id as "review_userId", 
+              reviews.summary as review_summary, 
+              reviews.recommendation as review_recommendation, reviews.status as review_status, 
+              reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
+
+              review_comment_threads.id as thread_id, review_comment_threads.review_id as "thread_reviewId", 
+              review_comment_threads.page as thread_page, 
+              review_comment_threads.pin_x as "thread_pinX", review_comment_threads.pin_y as "thread_pinY",  
+
+              review_comments.id as comment_id, review_comments.thread_id as "comment_threadId", 
+              review_comments.user_id as "comment_userId", 
+              ${ showVersion ? 'review_comments.version as comment_version, ' : '' }
+              review_comments.thread_order as "comment_threadOrder",  review_comments.status as comment_status, 
+              review_comments.content as comment_content, 
+              review_comments.created_date as "comment_createdDate", review_comments.updated_date as "comment_updatedDate"
+
             FROM reviews
                 LEFT OUTER JOIN review_comment_threads on reviews.id = review_comment_threads.review_id
                 LEFT OUTER JOIN review_comments on review_comment_threads.id = review_comments.thread_id
@@ -172,7 +204,11 @@ module.exports = class ReviewDAO {
             if ( results.rowCount == 0 ) {
                 throw new Error('Something went wrong in insertThreads().  No threads inserted.')
             }
+            
             thread.id = results.rows[0].id
+            for (const comment of thread.comments) {
+                comment.threadId = thread.id
+            }
 
             threadIds.push(thread.id)
             await this.insertComments(thread)
@@ -191,25 +227,104 @@ module.exports = class ReviewDAO {
             return
         }
 
-        let sql = `INSERT INTO review_comments (thread_id, user_id, thread_order, status, content, created_date, updated_date) VALUES `
-        const params = []
-
-        let count = 1
-        let commentCount = 1
-
-        for( const comment of thread.comments ) {
-            sql += `($${count}, $${count+1}, $${count+2}, $${count+3}, $${count+4}, now(), now())` + (commentCount < thread.comments.length ? ', ' : '')
-
-            params.push(thread.id, comment.userId, comment.threadOrder, comment.status, comment.content) 
-            count = count + 5
-            commentCount++
-        }
-
-        const results = await this.database.query(sql, params)
-
-        if ( results.rowCount == 0 ) {
-            throw new Error('Something went wrong in insertComments().  No comments were inserted.')
+        for ( const comment of thread.comments ) {
+            await this.insertComment(comment)
         }
     }
+
+    /**
+     * Insert new Comment Version
+     *
+     * Create a new version of a comment.  If there is no version set on the
+     * comment body, we assume this is the first version.  Otherwise, we assume
+     * this is the next version and increment the version before insertion.  We
+     * return the inserted version.
+     *
+     * @param {Object} comment  The comment we want to insert a version for.
+     *
+     * @return {int} The version number of the inserted version.
+     */
+    async insertCommentVersion(comment, existingVersion) {
+        this.logger.debug(`Creating a comment version for Comment(${comment.id}) with verison ${existingVersion}`)
+        this.logger.debug(comment)
+
+        if ( ! this.core.features.hasFeature('review-comment-versions-171') ) {
+            throw new DAOError(`insertCommentVersion() may only be used behind feature flag 'review-comment-versioning-171'.`)
+        }
+
+        const commentVersionSql = `
+            INSERT INTO review_comment_versions (comment_id, version, content, created_date, updated_date)
+                VALUES ($1, $2, $3, now(), now()) 
+        `
+        const version = existingVersion ? existingVersion+1 : 1
+        const commentVersionResult = await this.database.query(
+            commentVersionSql,
+            [ comment.id, version, comment.content ]
+        )
+
+        if ( commentVersionResult.rowCount == 0 ) {
+            throw new DAOError('version-insert-failed', `Failed to insert CommentVersion for Comment(${id}).`)
+        }
+
+        return version
+    }
+   
+    /**
+     * Creates a new comment and the initial comment version for it.
+     */
+    async insertComment(comment) {
+        const commentSql = `
+            INSERT INTO review_comments(thread_id, user_id, thread_order, status, content, created_date, updated_date)
+                VALUES ($1, $2, $3, $4, $5, now(), now()) RETURNING id
+        `
+        const commentParams = [ comment.threadId, comment.userId, comment.threadOrder, comment.status, comment.content ]
+        const commentResults = await this.database.query(commentSql, commentParams)
+
+        if ( commentResults.rowCount == 0 ) {
+            throw new DAOError('insert-failed', `Failed to insert Comment in Thread(${comment.threadId}).`)
+        }
+
+        comment.id = commentResults.rows[0].id
+    }
+
+
+    /**
+     * Performs a raw update of the comment.  Only updates the content,
+     * version, and/or status fields.  
+     *
+     * DOES NOT HANDLE VERSIONING.  It is up to the caller to check the current
+     * status and commit new versions at appropriate times.
+     *
+     * @param {Object} comment  The comment to be updated (with updated content).
+     */
+    async updateComment(comment) {
+        // We're only allowing `content` and `status` to be updated.  We're
+        // also recording all updates that change `status` as versions.
+        const ignoredFields = [ 'id', 'userId', 'threadId', 'number', 'threadOrder', 'createdDate', 'updatedDate' ]
+
+        let sql = 'UPDATE review_comments SET '
+        let params = []
+        let count = 1
+        for(let key in comment) {
+            if (ignoredFields.includes(key)) {
+                continue
+            }
+
+            sql += key + ' = $' + count + ', '
+
+            params.push(comment[key])
+            count = count + 1
+        }
+        sql += 'updated_date = now() WHERE id = $' + count
+        params.push(comment.id)
+
+        const results = await this.database.query(sql, params)
+        if ( results.rowCount == 0 ) {
+            throw new DAOError('update-failed', 
+                `Failed to update Comment(${commentId}).`)
+        }
+    }
+
+
 
 }

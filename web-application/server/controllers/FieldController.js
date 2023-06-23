@@ -11,10 +11,10 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class FieldController {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
-        this.fieldDAO = new backend.FieldDAO(database, logger)
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.fieldDAO = new backend.FieldDAO(core)
     }
 
     /**

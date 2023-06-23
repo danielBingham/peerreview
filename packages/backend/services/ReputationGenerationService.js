@@ -12,14 +12,14 @@ const ServiceError = require('../errors/ServiceError')
 
 module.exports = class ReputationGenerationService {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
 
-        this.fieldDAO = new FieldDAO(database, logger)
-        this.userDAO = new UserDAO(database, logger)
+        this.fieldDAO = new FieldDAO(core)
+        this.userDAO = new UserDAO(core)
 
-        this.openAlexService = new OpenAlexService(logger)
+        this.openAlexService = new OpenAlexService(core)
     }
 
 

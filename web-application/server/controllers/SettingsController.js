@@ -4,10 +4,10 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class SettingsController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.settingsDAO = new backend.SettingsDAO(database, logger, config)
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.settingsDAO = new backend.SettingsDAO(core)
     }
 
     /**
@@ -111,7 +111,7 @@ module.exports = class SettingsController {
             }
             await this.database.query(`COMMIT`)
 
-            const resultSettings= await this.settingsDAO.selectSettings('WHERE user_settings.id = $1', [ setting.id ])
+            const resultSettings = await this.settingsDAO.selectSettings('WHERE user_settings.id = $1', [ setting.id ])
             if ( resultSettings.length <= 0) {
                 throw new ControllerError(500, 'server-error', 
                     `Failed to find setting ${setting.id} after insertion!`)

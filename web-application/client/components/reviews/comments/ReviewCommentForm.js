@@ -16,6 +16,7 @@ const ReviewCommentForm = function(props) {
     // ======= Render State =========================================
     
     const [content, setContent] = useState('')
+    const [status, setStatus] = useState('')
 
     // ======= Request Tracking =====================================
    
@@ -44,6 +45,10 @@ const ReviewCommentForm = function(props) {
         return state.authentication.currentUser
     })
 
+    const hasReviewCommentVersions171 = useSelector(function(state) {
+        return state.system.features['review-comment-versions-171'] && state.system.features['review-comment-versions-171'].status == 'enabled'
+    })
+
     // ======= Actions and Event Handling ===========================
 
     const dispatch = useDispatch()
@@ -56,7 +61,7 @@ const ReviewCommentForm = function(props) {
 
         const comment = {
             id: props.comment.id,
-            status: 'in-progress',
+            status: status,
             content: content
         }
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
@@ -75,13 +80,24 @@ const ReviewCommentForm = function(props) {
 
     const cancelComment = function(event) {
         event.preventDefault()
-        setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
+        
+        if ( status == 'in-progress') {
+            setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
+        } else if ( hasReviewCommentVersions171 && status == 'edit-in-progress' ) {
+            const comment = {
+                id: props.comment.id,
+                status: 'reverted'
+            }
+            setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
+        }
+
     }
 
     // ======= Effect Handling ======================================
 
     useLayoutEffect(function() {
         setContent(props.comment.content)
+        setStatus(props.comment.status)
     }, [])
 
     useEffect(function() {
@@ -134,7 +150,7 @@ const ReviewCommentForm = function(props) {
                 </div>
             <div className="controls">
                 <button onClick={cancelComment}>Cancel</button>
-                <input type="submit" name="submit" value="Add Comment" />
+                <input type="submit" name="submit" value={ status == 'edit-in-progress' ? 'Edit' : 'Add Comment'} />
             </div>
             </form>
         </section>

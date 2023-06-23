@@ -10,17 +10,17 @@ const ControllerError = require('../errors/ControllerError')
 
 module.exports = class UserController {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
-        this.auth = new backend.AuthenticationService(database, logger)
-        this.emailService = new backend.EmailService(logger, config)
+        this.auth = new backend.AuthenticationService(core)
+        this.emailService = new backend.EmailService(core)
 
-        this.userDAO = new backend.UserDAO(database)
-        this.settingsDAO = new backend.SettingsDAO(database, logger)
-        this.tokenDAO = new backend.TokenDAO(database, logger)
+        this.userDAO = new backend.UserDAO(core)
+        this.settingsDAO = new backend.SettingsDAO(core)
+        this.tokenDAO = new backend.TokenDAO(core)
     }
 
     /**

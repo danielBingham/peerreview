@@ -7,14 +7,16 @@ const ControllerError = require('../errors/ControllerError')
  */
 module.exports = class ReviewController {
 
-    constructor(database, logger) {
-        this.database = database
-        this.logger = logger
+    constructor(core) {
+        this.core = core
 
-        this.reviewDAO = new backend.ReviewDAO(database)
+        this.database = core.database
+        this.logger = core.logger
+
+        this.reviewDAO = new backend.ReviewDAO(core)
         
-        this.reputationService = new backend.ReputationGenerationService(database, logger)
-        this.reputationPermissionService = new backend.ReputationPermissionService(database, logger)
+        this.reputationService = new backend.ReputationGenerationService(core)
+        this.reputationPermissionService = new backend.ReputationPermissionService(core)
     }
 
     async countReviews(request, response) {
@@ -195,7 +197,7 @@ module.exports = class ReviewController {
          *      Begin Input Validation 
          ********************************************************/
 
-        // 5. If review.version is provided, it must be the most recent verison for
+        // 5. If review.version is provided, it must be the most recent version for
         //      Paper(:paper_id).
         
         if ( review.version && (review.version < 0 || review.version > existing.paper_currentVersion) ) {
@@ -1100,12 +1102,15 @@ module.exports = class ReviewController {
 
         await this.database.query(`BEGIN`)
         try {
-            const thread = {
-                id: threadId,
-                comments: comments
+            for (const comment of comments ) {
+                // TECHDEBT -- Issue #171 -- ReviewDAO::insertComment handles
+                // the creation of the initial version.  Ideally, we would
+                // handle version creation either entirely in the controller or
+                // entirely in the DAO, but because of the way we create
+                // comments as a subordinate object of threads and reviews,
+                // that's not actually an easy thing to do.
+                await this.reviewDAO.insertComment(comment)
             }
-
-            await this.reviewDAO.insertComments(thread)
         } catch (error) {
             await this.database.query(`ROLLBACK`)
             throw error
@@ -1189,6 +1194,7 @@ module.exports = class ReviewController {
                 reviews.id as review_id, reviews.user_id as "review_userId", reviews.status as "review_status",
                 review_comment_threads.id as thread_id,
                 review_comments.user_id as "comment_userId", review_comments.status as "comment_status"
+                ${ this.core.features.hasFeature('review-comment-versions-171') ? ', review_comments.version as "comment_version"' : '' }
             FROM reviews
                 JOIN papers on reviews.paper_id = papers.id
                 JOIN review_comment_threads on review_comment_threads.review_id = reviews.id
@@ -1283,36 +1289,53 @@ module.exports = class ReviewController {
          *      Execute the PATCH 
          * *****************************************************/
 
+        // TODO Handle patching and versioning here.  We'll need to introduce a
+        // new `revert` status that can allow a PATCH request to rollback to
+        // previous version.
+      
+        // If we're transitioning from 'edit-in-progress' to 'reverted' we need
+        // to replace the comment with the most recent version.
+        if ( this.core.features.hasFeature('review-comment-versions-171') && existing.comment_status == 'edit-in-progress' && comment.status == 'reverted' ) {
+            // Since we don't update the version until it goes from
+            // 'in-progress' to 'posted', we can just retrieve the content from
+            // the current version in the version table.
+            const previousVersionResult = await this.database.query(`SELECT content FROM review_comment_versions WHERE comment_id = $1 AND version = $2`, [ commentId, existing.comment_version ])
 
-        // We'll ignore these fields when assembling the patch SQL.  These are
-        // fields that either need more processing or that we let the database
-        // handle (date fields, id, etc)
-        //
-        // In this case, we're only allowing `content` and `status` to be
-        // PATCHed.
-        const ignoredFields = [ 'id', 'userId', 'threadId', 'number', 'threadOrder', 'createdDate', 'updatedDate' ]
-
-        let sql = 'UPDATE review_comments SET '
-        let params = []
-        let count = 1
-        for(let key in comment) {
-            if (ignoredFields.includes(key)) {
-                continue
+            if ( previousVersionResult.rows.length <= 0 ) {
+                throw new ControllerError(500, 'no-version',
+                    `Attempt to revert to a previous version (${existing.comment_version}) of Comment(${commentId}), but version doesn't exist!`)
+            } else if ( previousVersionResult.rows.length > 1 ) {
+                throw new ControllerError(500, 'multiple-versions', `Found multiple instances of version(${existing.comment_version}) for Comment(${commentId}).`)
             }
 
-            sql += key + ' = $' + count + ', '
+            const newComment = {
+                id: commentId,
+                status: 'posted',
+                content: previousVersionResult.rows[0].content
+            }
 
-            params.push(comment[key])
-            count = count + 1
-        }
-        sql += 'updated_date = now() WHERE id = $' + count
-        params.push(comment.id)
+            await this.reviewDAO.updateComment(newComment)
 
-        const results = await this.database.query(sql, params)
-        if ( results.rowCount == 0 ) {
-            throw new ControllerError(500, 'server-error', 
-                `Failed to update Comment(${commentId}).`)
+        } else {
+            if ( this.core.features.hasFeature('review-comment-versions-171') ) {
+                // We need to create a new version the first time the comment is
+                // transitioned from 'in-progress' to 'posted'. 
+                if ( existing.comment_status == 'in-progress' && comment.status == 'posted') {
+                    comment.version = await this.reviewDAO.insertCommentVersion(comment, existing.comment_version)
+
+                }
+
+                // We need to create a new version every time it's transitioned from
+                // 'edit-in-progress' to 'posted'.
+                if ( existing.comment_status == 'edit-in-progress' && comment.status == 'posted') {
+                    comment.version = await this.reviewDAO.insertCommentVersion(comment, existing.comment_version)
+                }
+            }
+
+            // Now that we know the version, update the comment. 
+            await this.reviewDAO.updateComment(comment)
         }
+
 
         const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
         if ( ! returnReviews || returnReviews.length == 0 ) {

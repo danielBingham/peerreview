@@ -1,9 +1,9 @@
 module.exports = class FeatureDAO {
 
-    constructor(database, logger, config) {
-        this.database = database
-        this.logger = logger
-        this.config = config
+    constructor(core) {
+        this.database = core.database
+        this.logger = core.logger
+        this.config = core.config
 
         this.selectionString = `
             features.name as feature_name, features.status as feature_status, 
