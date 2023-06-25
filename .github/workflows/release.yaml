@@ -47,10 +47,14 @@ jobs:
       # registry
       - name: Install Worker NPM Modules
         working-directory: ./worker
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
       - name: Install updated backend version
         working-directory: ./worker
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install @danielbingham/peerreview-backend@${{ github.event.inputs.version }}
       - name: Version the worker package
@@ -72,10 +76,14 @@ jobs:
       # the Github Container registry
       - name: Install Web Application NPM Modules
         working-directory: ./web-application
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
       - name: Install updated backend version
         working-directory: ./web-application
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install @danielbingham/peerreview-backend@${{ github.event.inputs.version }}
       - name: Run Web Application Unit Tests
