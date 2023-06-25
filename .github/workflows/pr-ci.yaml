@@ -36,10 +36,9 @@ jobs:
         run: |
           npm ci 
       - name: Link the backend package for testing
-        working-directory: ./web-application
         run: |
-          rm -r node_modules/@danielbingham/peerreview-backend
-          ln -s ../../../packages/backend node_modules/@danielbingham/peerreview-backend
+          rm -r web-application/node_modules/@danielbingham/peerreview-backend
+          ln -s packages/backend web-application/node_modules/@danielbingham/peerreview-backend
       - name: Run Web Application Unit Tests
         working-directory: ./web-application
         run: | 
