@@ -101,10 +101,12 @@ jobs:
       - name: Login to Github Container Repository
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
-      - name: Push the newly built container to the Repostory under the ${{ github.event.input.version }} tag
+      - name: Push the newly built container to the Repostory under the ${{ github.event.inputs.version }} tag
         run: |
-          docker push ghcr.io/danielbingham/peerreview:${{ github.event.input.version }}
+          docker push ghcr.io/danielbingham/peerreview:${{ github.event.inputs.version }}
 
+      # Commit the changes to the package.json package-lock.json files that
+      # were made during versioning.
       - name: Commit the version changes
         run: |
           NAME=$( git log --format="%an" ${{ github.sha }}^! )
