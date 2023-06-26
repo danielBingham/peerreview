@@ -113,7 +113,7 @@ jobs:
           EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
           git config --global user.name $NAME
           git config --global user.email $EMAIL
-          git commit -am 'Version ${{ github.event.input.version }}'
+          git commit -am 'Version ${{ github.event.inputs.version }}'
           git push origin 
       - name: Tag the version
         run: |
@@ -121,6 +121,6 @@ jobs:
           EMAIL=$( git log --format="%ae" ${{ github.sha }}^! )
           git config --global user.name $NAME
           git config --global user.email $EMAIL
-          git tag ${{ github.event.input.version }}
+          git tag ${{ github.event.inputs.version }}
           git push origin --tags
           
