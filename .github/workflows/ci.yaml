@@ -4,6 +4,10 @@ on:
   push:
     branches: 
       - main 
+  pull_request:
+    branches:
+      - main
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -11,7 +15,7 @@ jobs:
       matrix:
         node-version: [ 18.x ]
     permissions:
-      contents: write 
+      contents: read 
       packages: write
     steps:
       - name: Checkout Repo 
@@ -40,7 +44,7 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
-      - name: Link the backend package for testing
+      - name: Copy the backend package for testing
         run: |
           rm -r ./web-application/node_modules/@danielbingham/peerreview-backend
           cp -r ./packages/backend ./web-application/node_modules/@danielbingham/peerreview-backend
