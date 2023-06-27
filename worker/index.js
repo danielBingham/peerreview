@@ -2,46 +2,19 @@ const BullQueue = require('bull')
 
 const { Client, Pool } = require('pg')
 
-const backend = require('@danielbingham/peerreview-backend')
+const { Core, ReputationGenerationService, ServiceError } = require('@danielbingham/peerreview-backend')
 
-// Load our configuration file.  Loads the index.js file from the config/ directory which
-// then uses the NODE_ENV variable to determine what environment we're running in and
-// load the appropriate configuration.  Configuration is a Javascript object containing
-// the configuration values.
-//
-// For sturcture, see config/default.js
 const config = require('./config')
 
-const logger = new backend.Logger(config.log_level)
-logger.setId('Worker')
-logger.info(`Starting up as ${process.env.NODE_ENV}...`)
-logger.debug(`Using debug logging.`)
+const core = new Core('worker', config)
+core.initialize()
 
-const databaseConfig = {
-    host: config.database.host,
-    user: config.database.user,
-    password: config.database.password,
-    database: config.database.name,
-    port: config.database.port 
-}
+const reputationGenerationService = new ReputationGenerationService(core)
+core.logger.info(`Initializing 'initialize-reputation' job.`)
 
-if ( config.database.certificate ) {
-    databaseConfig.ssl = {
-        rejectUnauthorized: false,
-        cert: fs.readFileSync(config.database.certificate).toString()
-    }
-}
-
-const connection = new Pool(databaseConfig)
-
-logger.debug(`Connecting to redis ${config.redis.host}:${config.redis.port}.`)
-const queue = new BullQueue('peer-review', { redis: config.redis }) 
-
-const reputationGenerationService = new backend.ReputationGenerationService(connection, logger)
-logger.info(`Initializing 'initialize-reputation' job.`)
-queue.process('initialize-reputation', async function(job, done) {
-    logger.setId(`Reputation job: ${job.id}`)
-    logger.debug(`Beginning job 'reputation-initialization' for user ${job.data.userId}.`)
+core.queue.process('initialize-reputation', async function(job, done) {
+    core.logger.setId(`Reputation job: ${job.id}`)
+    core.logger.debug(`Beginning job 'reputation-initialization' for user ${job.data.userId}.`)
 
     const result = {
         error: null
@@ -52,8 +25,7 @@ queue.process('initialize-reputation', async function(job, done) {
     try {
         await reputationGenerationService.initializeReputationForUser(job.data.userId, job)
     } catch (error) {
-        console.error(error)
-        if ( error instanceof backend.ServiceError) {
+        if ( error instanceof ServiceError) {
             // Validation: 2. User must have an ORCID iD attached to their record.
             // We checked this in ReputationGenerationService::initializeReputationForUser()
             if (error.type == 'no-orcid') {
@@ -66,31 +38,25 @@ queue.process('initialize-reputation', async function(job, done) {
                 result.error = 'multiple-openalex-record'
             }  else {
                 result.error = 'unknown-error'
-                logger.error(error)
+                core.logger.error(error)
             }
         } else {
             result.error = 'unknown-error'
-            logger.error(error)
+            core.logger.error(error)
         }
     }
 
     job.progress({ step: 'complete', stepDescription: `Complete!`, progress: 100 })
 
-    logger.debug(`Finished job 'reputation-initialization' for user ${job.data.userId}.`)
+    core.logger.debug(`Finished job 'reputation-initialization' for user ${job.data.userId}.`)
     done(null, result)
 })
 
-logger.info('Initialized and listening...')
+core.logger.info('Initialized and listening...')
 
 const shutdown = async function() {
     logger.info('Attempting a graceful shutdown...')
-    logger.info('Closing queue.')
-    await queue.close()
-    logger.info('Queue closed.')
-    logger.info('Ending connection pool.')
-    await connection.end()
-    logger.info('Pool closed.  Ready for shutdown.')
-
+    await core.shutdown() 
     process.exit(0)
 }
 

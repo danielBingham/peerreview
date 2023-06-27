@@ -68,6 +68,11 @@ There are three primary ways to report bugs:
 
 Documentation is partial and incomplete, but will be fleshed out over time.
 
+You can find further documentation in the [Documentation](./documentation)
+directory.
+
+Some partially complete documents:
+
 - [Running Locally](./documentation/running-locally.md)
 - [API](./documentation/api/)
 - [Planning](./documentation/planning)

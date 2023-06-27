@@ -26,4 +26,5 @@ exports.S3FileService = require('./services/S3FileService')
 exports.PageMetadataService = require('./services/PageMetadataService')
 exports.ServerSideRenderingService = require('./services/ServerSideRenderingService')
 
-exports.Logger = require('./logger.js')
+exports.Logger = require('./logger')
+exports.Core = require('./core')

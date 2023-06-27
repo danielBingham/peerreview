@@ -12,6 +12,7 @@ if ( process.env.NODE_ENV == 'development' ) {
 
 module.exports = {
     host: process.env.HOST,
+    environment: process.env.NODE_ENV,
     backend: '/api/0.0.0',
     // Database configuration
     database: {

@@ -38,8 +38,9 @@ const UserAccountPage = function(props) {
     const selectedTab = ( tab ? tab : 'profile')
 
     const showTest = ( 
-        configuration.environment != "production" 
-            || (currentUser && (currentUser.permissions == 'admin' || currentUser.permissions == 'superadmin'))
+        configuration.environment != "production" || 
+            (currentUser && 
+                (currentUser.permissions == 'admin' || currentUser.permissions == 'superadmin'))
     )
 
     let content = ( <Spinner local={true} /> )

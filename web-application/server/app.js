@@ -22,13 +22,15 @@ const path = require('path')
 const fs = require('fs')
 const Uuid = require('uuid')
 
-
-const backend = require('@danielbingham/peerreview-backend')
+const { Core, FeatureService, ServerSideRenderingService, PageMetadataService } = require('@danielbingham/peerreview-backend')
 const ControllerError = require('./errors/ControllerError')
 
-const Core = require('./core')
+/**********************************************************************
+ * Load Configuration
+ **********************************************************************/
+const config = require('./config') 
 
-const core = new Core()
+const core = new Core('web-application', config)
 core.initialize()
 
 // Load express.
@@ -101,7 +103,7 @@ app.use(function(request, response, next) {
 const FeatureFlags = require('./features')
 // Setup FeatureFlags and make it available through the core.
 app.use(function(request, response, next) {
-    const featureService = new backend.FeatureService(core)
+    const featureService = new FeatureService(core)
     featureService.getEnabledFeatures().then(function(features) {
         core.features = new FeatureFlags(features)
         next()
@@ -185,8 +187,8 @@ app.get(/.*\.(svg|pdf|jpg|png)$/, function(request, response) {
  * TECHDEBT the webpack-dev-middleware server side rendering logic is
  * experimental, it may break on us in future versions.
  */
-const serverSideRenderingService = new backend.ServerSideRenderingService(core)
-const pageMetadataService = new backend.PageMetadataService(core)
+const serverSideRenderingService = new ServerSideRenderingService(core)
+const pageMetadataService = new PageMetadataService(core)
 if ( core.config.environment == 'development' ) {
     const webpack = require('webpack')
     const webpackMiddleware = require('webpack-dev-middleware')

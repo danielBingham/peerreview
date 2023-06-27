@@ -1,9 +1,7 @@
 const { Client, Pool } = require('pg')
 const BullQueue = require('bull')
 
-const backend = require('@danielbingham/peerreview-backend')
-
-const ControllerError = require('./errors/ControllerError')
+const Logger = require('./logger')
 
 /***
  * A wrapper around our core dependencies that will be used by most of our
@@ -11,7 +9,14 @@ const ControllerError = require('./errors/ControllerError')
  */
 module.exports = class Core {
 
-    constructor() {
+    constructor(context, config) {
+
+        /**
+         * The context in which we are running the core. One of
+         * 'web-application' or 'worker'.
+         */
+        this.context = context
+
         /**
          * An instance of backend.Logger that we'll use to write to the logs.
          */
@@ -33,8 +38,9 @@ module.exports = class Core {
          * Our configuration values.  
          *
          * @see web-application/server/config/index.js
+         * @see worker/config/index.js
          */
-        this.config = null
+        this.config = config 
 
         /**
          * An instance of FeatureFlags, initialized with information on what
@@ -54,15 +60,10 @@ module.exports = class Core {
     initialize() {
 
         /**********************************************************************
-         * Load Configuration
-         **********************************************************************/
-        this.config = require('./config') 
-
-        /**********************************************************************
          * Logger Initialization
          **********************************************************************/
-        this.logger = new backend.Logger(this.config.log_level)
-        this.logger.info(`Starting ${this.config.environment} backend...`)
+        this.logger = new Logger(this.config.log_level)
+        this.logger.info(`Starting ${this.config.environment} ${this.context}...`)
 
         /**********************************************************************
          * Database Connection Initialization
