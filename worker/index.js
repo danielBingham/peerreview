@@ -55,7 +55,7 @@ core.queue.process('initialize-reputation', async function(job, done) {
 core.logger.info('Initialized and listening...')
 
 const shutdown = async function() {
-    logger.info('Attempting a graceful shutdown...')
+    core.logger.info('Attempting a graceful shutdown...')
     await core.shutdown() 
     process.exit(0)
 }
