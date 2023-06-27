@@ -4,8 +4,8 @@ This directory contains code, infrastructure, and development documentation for 
 
 Legend:
 
-TODO: Not written yet, but intended.
-WIP: Partially in progress.
+- **TODO**: Not written yet, but intended.
+- **WIP**: Partially in progress.
 
 ## Documentation
 
@@ -16,7 +16,8 @@ WIP: Partially in progress.
 1. Architecture [TODO]
 1. [API Documentation](./api) [WIP]
 1. Infrastructure [TODO]
-1. Testing [WIP]
+1. [Testing](./testing) [WIP]
+1. [Processes](./process) [WIP]
 
 ## Working Documents
 
