@@ -76,18 +76,6 @@ spec:
                   name: peer-review-s3-credentials
                   key: access_key
                   optional: false
-            - name: ORCID_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: peer-review-orcid-secrets
-                  key: client_id
-                  optional: false
-            - name: ORCID_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: peer-review-orcid-secrets
-                  key: client_secret
-                  optional: false
             - name: POSTMARK_API_TOKEN
               valueFrom:
                 secretKeyRef:

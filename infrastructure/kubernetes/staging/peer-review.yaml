@@ -107,9 +107,9 @@ spec:
                   key: access_key
                   optional: false
             - name: ORCID_AUTHORIZATION_HOST
-              value: https://orcid.org
+              value: https://sandbox.orcid.org
             - name: ORCID_API_HOST
-              value: https://pub.orcid.org
+              value: https://pub.sandbox.orcid.org
             - name: ORCID_CLIENT_ID
               valueFrom:
                 secretKeyRef:

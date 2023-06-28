@@ -37,14 +37,7 @@ module.exports = {
         access_id: process.env.S3_ACCESS_ID,
         access_key: process.env.S3_ACCESS_KEY
     },
-    orcid: {
-        authorization_host: process.env.ORCID_AUTHORIZATION_HOST,
-        api_host: process.env.ORCID_API_HOST,
-        client_id: process.env.ORCID_CLIENT_ID,
-        client_secret: process.env.ORCID_CLIENT_SECRET,
-        authentication_redirect_uri: process.env.ORCID_AUTHENTICATION_REDIRECT_URI,
-        connect_redirect_uri: process.env.ORCID_CONNECT_REDIRECT_URI 
-    },
+    // ORCID Credentials not provided to worker.
     postmark: {
         api_token: process.env.POSTMARK_API_TOKEN
     },
