@@ -25,7 +25,7 @@ spec:
       terminationGracePeriodSeconds: 600 
       containers:
         - name: peer-review-workers-container
-          image: ghcr.io/danielbingham/peerreview-worker:latest
+          image: ghcr.io/danielbingham/peerreview-worker:0.1.0
           resources:
             requests:
               cpu: 100m
@@ -34,6 +34,8 @@ spec:
               value: "peer-review:*"
             - name: NODE_ENV
               value: production
+            - name: LOG_LEVEL
+              value: info
             - name: DATABASE_HOST
               valueFrom:
                 secretKeyRef:
@@ -75,18 +77,6 @@ spec:
                 secretKeyRef:
                   name: peer-review-s3-credentials
                   key: access_key
-                  optional: false
-            - name: ORCID_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: peer-review-orcid-secrets
-                  key: client_id
-                  optional: false
-            - name: ORCID_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: peer-review-orcid-secrets
-                  key: client_secret
                   optional: false
             - name: POSTMARK_API_TOKEN
               valueFrom:

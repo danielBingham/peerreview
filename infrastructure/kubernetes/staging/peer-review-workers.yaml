@@ -34,6 +34,8 @@ spec:
               value: "peer-review:*"
             - name: NODE_ENV
               value: staging
+            - name: LOG_LEVEL
+              value: debug 
             - name: DATABASE_HOST
               valueFrom:
                 secretKeyRef:
