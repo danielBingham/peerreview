@@ -4,11 +4,12 @@ import { combineReducers } from 'redux'
 import systemReducer from './system'
 import featuresReducer from './features'
 import jobsReducer from './jobs'
-import reputationReducer from './reputation'
 import authenticationReducer from './authentication'
+import reputationReducer from './reputation'
 import usersReducer from './users'
 import papersReducer from './papers'
 import reviewsReducer from './reviews'
+import journalsReducer from './journals'
 import fieldsReducer from './fields'
 import settingsReducer from './settings'
 import filesReducer from './files'
@@ -25,6 +26,7 @@ const reducers = combineReducers({
     users: usersReducer,
     papers: papersReducer,
     reviews: reviewsReducer,
+    journals: journalsReducer,
     fields: fieldsReducer,
     settings: settingsReducer,
     files: filesReducer,

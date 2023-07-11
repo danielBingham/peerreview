@@ -47,6 +47,37 @@ const settings = {
     }
 }
 
+const journals = {
+    1: {
+        id: 1,
+        name: 'Journal One',
+        description: 'A test journal.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        users: [
+            {
+                userId: 1,
+                permissions: 'owner'
+            }
+        ]
+    },
+    2: {
+        id: 2,
+        name: 'Journal Two',
+        description: 'A second test journal.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        users: [
+            {
+                userId: 2,
+                permissions: 'owner'
+            }
+        ]
+    }
+}
+
+
+
 export const backend = {
     users: {
         dictionary: users,
@@ -55,6 +86,10 @@ export const backend = {
     settings: {
         dictionary: settings,
         list: Object.values(settings)
+    },
+    journals: {
+        dictionary: journals,
+        list: Object.values(journals)
     }
 }
 
