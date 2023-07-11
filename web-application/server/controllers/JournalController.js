@@ -193,15 +193,15 @@ module.exports = class JournalController {
          * **********************************************************/
         // 1. User must be logged in.
         if ( ! request.session.user ) {
-            throw new ControllerError(401, 'not-authenticated', `Unauthenticated user attempting to patch Journal(${journal.id}).`)
+            throw new ControllerError(401, 'not-authenticated', `Unauthenticated user attempting to patch Journal(${request.params.id}).`)
         }
 
         const user = request.session.user
 
-        const existingJournals = await this.journalDAO.selectJournals('WHERE journals.id = $1', [ journal.id ])
+        const existingJournals = await this.journalDAO.selectJournals('WHERE journals.id = $1', [ request.params.id ])
 
         if ( existingJournals.list.length <= 0 ) {
-            throw new ControllerError(404, 'not-found', `Attempt to patch a Journal(${journal.id}) that doesn't exist!`)
+            throw new ControllerError(404, 'not-found', `Attempt to patch a Journal(${request.params.id}) that doesn't exist!`)
         }
 
         const existingJournal = existingJournals.dictionary[request.params.id]

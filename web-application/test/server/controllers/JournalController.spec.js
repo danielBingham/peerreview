@@ -403,16 +403,114 @@ describe('JournalController', function() {
 
     describe('.deleteJournal()', function() {
         
-        xit('should throw 401 not-authenticated if no user is logged in.', async function() {
+        it('should throw 401 not-authenticated if no user is logged in.', async function() {
+            const journalController = new JournalController(core)
 
+            const request = {
+                session: {},
+                params: {
+                    id: 1
+                }
+            }
+
+            const response = new Response()
+            try {
+                await journalController.deleteJournal(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(401)
+                expect(error.type).toBe('not-authenticated')
+            }
+
+            expect.hasAssertions()
         })
 
-        xit('should throw 403 not-authorized if the user logged in is not an owner of the journal', async function() {
+        it('should return 404 when the requested journal does not exist', async function() {
+            core.database.query.mockReturnValue(undefined)
+                .mockReturnValueOnce({ rowCount: 0, rows:[] }) 
 
+            const journalController = new JournalController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 1
+                    }
+                },
+                params: {
+                    id: 1
+                },
+                body: {},
+                query: {}
+            }
+
+            const response = new Response()
+            try {
+                await journalController.deleteJournal(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(404)
+                expect(error.type).toBe('not-found')
+            }
+
+            expect.hasAssertions()
         })
 
-        xit('should return 200 when the journal was successfully deleted', async function() {
+        it('should throw 403 not-authorized if the user logged in is not an owner of the journal', async function() {
+            core.database.query.mockReturnValue(undefined)
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
 
+            const journalController = new JournalController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 2
+                    }
+                },
+                params: {
+                    id: 1
+                },
+                body: {},
+                query: {}
+            }
+
+            const response = new Response()
+            try {
+                await journalController.deleteJournal(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(403)
+                expect(error.type).toBe('not-authorized:not-owner')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return 200 when the journal was successfully deleted', async function() {
+            core.database.query.mockReturnValue(undefined)
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+
+            const journalController = new JournalController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 1
+                    }
+                },
+                params: {
+                    id: 1
+                },
+                body: {},
+                query: {}
+            }
+
+            const response = new Response()
+            await journalController.deleteJournal(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(200)
         })
     })
 
