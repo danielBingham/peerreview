@@ -611,6 +611,49 @@ module.exports = function(core) {
     })
 
     /**************************************************************************
+     *      Journal REST Routes
+     *************************************************************************/
+
+    const JournalController = require('./controllers/JournalController')
+    const journalController = new JournalController(core)
+
+    router.get('/journals', function(request, response, next) {
+        journalController.getJournals(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/journals', function(request, response, next) {
+        journalController.postJournals(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/journal/:id', function(request, response, next) {
+        journalController.getJournal(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/journal/:id', function(request, response, next) {
+        journalController.patchJournal(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.put('/journal/:id', function(request, response, next) {
+        journalController.putJournal(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.delete('/journal/:id', function(request, response, next) {
+        journalController.deleteJournal(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    /**************************************************************************
      *      API 404 
      *************************************************************************/
 

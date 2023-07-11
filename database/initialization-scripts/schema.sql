@@ -145,10 +145,13 @@ CREATE TABLE user_field_settings (
  * Papers
  *****************************************************************************/
 
+CREATE TYPE paper_status AS ENUM('draft', 'submission', 'published')
 CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
     title   varchar(1024) NOT NULL,
     searchable_title tsvector GENERATED ALWAYS AS (to_tsvector('english', title)) STORED,
+    paper_status paper_status DEFAULT 'draft',
+    show_preprint boolean DEFAULT false,
     is_draft   boolean DEFAULT true,
     score   int NOT NULL DEFAULT 0,
     created_date    timestamptz,
@@ -182,6 +185,59 @@ CREATE TABLE paper_fields (
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
     field_id    bigint REFERENCES fields(id) ON DELETE CASCADE,
     PRIMARY KEY (paper_id, field_id)
+);
+
+/******************************************************************************
+ * Journals
+ ******************************************************************************/
+
+CREATE TABLE journals (
+    id      bigserial PRIMARY KEY,
+    name    varchar(1024) NOT NULL,
+    description text,
+    created_date    timestamptz,
+    updated_date    timestamptz
+);
+
+CREATE TYPE journal_users_permissions AS ENUM('owner', 'editor', 'reviewer');
+CREATE TABLE journal_users (
+    journal_id  bigint REFERENCES journals(id) ON DELETE CASCADE,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    permissions journal_users_permissions DEFAULT 'reviewer',
+    created_date    timestamptz,
+    updated_date    timestamptz
+);
+
+CREATE TABLE journal_teams (
+    id bigserial PRIMARY KEY,
+    journal_id  bigint REFERENCES journals(id) ON DELETE CASCADE,
+    name varchar(1024) NOT NULL,
+    description text,
+    created_date    timestamptz,
+    updated_date    timestamptz
+);
+
+CREATE TABLE journal_team_fields (
+    journal_team_id bigint REFERENCES journal_teams(id) ON DELETE CASCADE,
+    field_id bigint REFERENCES fields(id) ON DELETE CASCADE,
+    PRIMARY KEY (journal_team_id, field_id)
+);
+
+CREATE TABLE journal_team_users (
+    journal_team_id bigint REFERENCES journal_teams(id) ON DELETE CASCADE,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    PRIMARY KEY (journal_team_id, user_id)
+);
+
+CREATE TABLE journal_submission (
+    id bigserial PRIMARY KEY,
+    journal_id bigint REFERENCES journals(id) ON DELETE CASCADE,
+    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+);
+
+CREATE TABLE journal_submission_teams (
+    submission_id bigint REFERENCES journal_submissions(id) ON DELETE CASCADE,
+    team_id bigint REFERENCES journal_teams (id) ON DELETE CASCADE
 );
 
 /******************************************************************************

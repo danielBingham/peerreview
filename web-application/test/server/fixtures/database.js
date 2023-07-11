@@ -148,6 +148,35 @@ const user_field_reputation = [
     }
 ]
 
+const journals = [
+    {
+        journal_id: 1,
+        journal_name: 'Journal One', 
+        journal_description: 'A first test journal.',
+        journal_createdDate: 'TIMESTAMP',
+        journal_updatedDate: 'TIMESTAMP'
+    },
+    {
+        journal_id: 2,
+        journal_name: 'Journal Two', 
+        journal_description: 'A second test journal.',
+        journal_createdDate: 'TIMESTAMP',
+        journal_updatedDate: 'TIMESTAMP'
+
+    }
+]
+
+const journal_users = [
+    {
+        user_id: 1,
+        user_permissions: 'owner'
+    },
+    {
+        user_id: 2,
+        user_permissions: 'owner'
+    }
+]
+
 
 const database = { 
     papers: {
@@ -181,6 +210,14 @@ const database = {
         ]
 
     } ,
+    journals: {
+        1: [
+            { ...journals[0], ...journal_users[0] }
+        ],
+        2: [
+            { ...journals[1], ...journal_users[1] }
+        ]
+    },
     users: {
         1: [
             { ...users[0], ...user_field_reputation[0], ...fields[0] },

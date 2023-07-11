@@ -183,9 +183,40 @@ const papers = [
     }
 ]
 
+const journals = [
+    {
+        id: 1,
+        name: 'Journal One',
+        description: 'A first test journal.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        users: [
+            {
+                userId: 1,
+                permissions: 'owner'
+            }
+        ]
+    },
+    {
+        id: 2,
+        name: 'Journal Two',
+        description: 'A second test journal.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        users: [
+            {
+                userId: 2,
+                permissions: 'owner'
+            }
+        ]
+    }
+]
+
+
 module.exports = {
     fields: fields,
     users: usersCleaned,
     usersUnclean: usersUnclean,
-    papers: papers
+    papers: papers,
+    journals: journals
 }

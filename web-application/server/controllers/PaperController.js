@@ -469,17 +469,17 @@ module.exports = class PaperController {
          *       Execute the POST
          ********************************************************/
 
-        await this.database.query(`BEGIN`)
+        // TODO TECHDEBT Proper transactions: https://node-postgres.com/features/transactions
+        //
+        // See the note in the documentation above.
         try {
             paper.id = await this.paperDAO.insertPaper(paper) 
             await this.paperDAO.insertAuthors(paper) 
             await this.paperDAO.insertFields(paper)
             await this.paperDAO.insertVersions(paper)
         } catch (error) {
-            await this.database.query('ROLLBACK')
             throw error
         }
-        await this.database.query('COMMIT')
 
         const returnPapers = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
         if ( returnPapers.length > 0 ) {

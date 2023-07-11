@@ -1,6 +1,7 @@
 exports.FeatureDAO = require('./daos/FeatureDAO') 
 exports.FieldDAO = require('./daos/FieldDAO')
 exports.FileDAO = require('./daos/FileDAO')
+exports.JournalDAO = require('./daos/JournalDAO')
 exports.PaperDAO = require('./daos/PaperDAO')
 exports.ReputationDAO = require('./daos/ReputationDAO')
 exports.ResponseDAO = require('./daos/ResponseDAO')
