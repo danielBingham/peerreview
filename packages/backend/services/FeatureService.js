@@ -4,6 +4,7 @@ const FeatureDAO = require('../daos/FeatureDAO')
 const ExampleMigration = require('../migrations/ExampleMigration')
 const WIPNoticeMigration = require('../migrations/WIPNoticeMigration')
 const CommentVersionsMigration = require('../migrations/CommentVersionsMigration')
+const JournalsMigration = require('../migrations/JournalsMigration')
 
 const ServiceError = require('../errors/ServiceError')
 const MigrationError = require('../errors/MigrationError')
@@ -45,6 +46,11 @@ module.exports = class FeatureService {
             // Issue #171 - Comment Versioning and Editing.
             'review-comment-versions-171': {
                 migration: new CommentVersionsMigration(core)
+            },
+
+            // Issue #79 - Journals
+            'journals-79': {
+                migration: new JournalsMigration(core)
             }
         }
     }
