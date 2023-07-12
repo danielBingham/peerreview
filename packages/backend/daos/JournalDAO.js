@@ -27,7 +27,7 @@ module.exports = class JournalDAO {
                 description: row.journal_description,
                 createdDate: row.journal_createdDate,
                 updatedDate: row.journal_updatedDate,
-                users: []
+                editors: []
             }
 
             if ( ! dictionary[journal.id] ) {
@@ -35,13 +35,13 @@ module.exports = class JournalDAO {
                 list.push(journal)
             }
 
-            const user = {
+            const editor = {
                 userId: row.user_id,
                 permissions: row.user_permissions
             }
 
-            if ( ! dictionary[journal.id].users.find((user) => user.id == row.user_id) ) {
-                dictionary[journal.id].users.push(user)
+            if ( ! dictionary[journal.id].editors.find((editor) => editor.userId == row.user_id) ) {
+                dictionary[journal.id].editors.push(editor)
             }
         }
 
@@ -49,17 +49,19 @@ module.exports = class JournalDAO {
     }
 
     async selectJournals(where, params) {
+        where = where || ''
+
         const sql = `
             SELECT 
                 journals.id as journal_id, journals.name as journal_name, journals.description as journal_description,
                 journals.created_date as "journal_createdDate", journals.updated_date as "journal_updatedDate",
 
-                journal_users.user_id as user_id, journal_users.permissions as user_permissions,
+                journal_users.user_id as user_id, journal_users.permissions as user_permissions
 
             FROM journals
-                LEFT OUTER JOIN journal_users_permissions ON journals.id = journal_users_permissions.journal_id
+                LEFT OUTER JOIN journal_users ON journals.id = journal_users.journal_id
 
-            WHERE ${where}
+            ${where}
         `
 
         const results = await this.database.query(sql, params)

@@ -190,10 +190,14 @@ const journals = [
         description: 'A first test journal.',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP',
-        users: [
+        editors: [
             {
                 userId: 1,
                 permissions: 'owner'
+            },
+            {
+                userId: 2,
+                permissions: 'editor'
             }
         ]
     },
@@ -203,11 +207,16 @@ const journals = [
         description: 'A second test journal.',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP',
-        users: [
+        editors: [
             {
                 userId: 2,
                 permissions: 'owner'
+            },
+            {
+                userId: 1,
+                permissions: 'editor'
             }
+
         ]
     }
 ]

@@ -1,0 +1,33 @@
+.select-coeditors-widget .selected-editor {
+    padding: 10px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.select-coeditors-widget .selected-editor .left {
+    grid-column: 1 / 2;
+    text-align: left;
+}
+.select-coeditors-widget .selected-editor .left svg {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    margin-bottom: -4px;
+}
+.select-coeditors-widget .selected-editor .left .order {
+    margin: 0 10px;
+}
+.select-coeditors-widget .selected-editor .right {
+    grid-column: 2 / 3;
+    text-align: right;
+}
+.select-coeditors-widget .selected-editor .right svg {
+    width: 20px;
+    height: 20px;
+    margin-left: 20px;
+    margin-bottom: -4px;
+    color: red;
+}
+
+
+
+

@@ -1,0 +1,18 @@
+.users-input .user-suggestions {
+    position: relative;
+    padding: 10px;
+    border: thin solid var(--main-border-color);
+    box-shadow: 2px 2px 2px #666;
+}
+.users-input .users {
+    padding: 10px 0;
+}
+.users-input .user-suggestions .user-suggestion {
+    padding: 10px;
+}
+.users-input .user-suggestions .user-suggestion:hover, .users-input .user-suggestions .user-suggestion.highlighted {
+    background-color: #dfdfdf;
+}
+.users-input .error {
+    padding: 10px;
+}

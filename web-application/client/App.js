@@ -55,6 +55,10 @@ import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
 import PublishedPaperPage from '/pages/papers/PublishedPaperPage'
 import PaperSearchPage from '/pages/papers/PaperSearchPage'
 
+import JournalsListPage from '/pages/journals/JournalsListPage'
+import CreateJournalPage from '/pages/journals/CreateJournalPage'
+import JournalPage from '/pages/journals/JournalPage'
+
 import ErrorBoundary from '/errors/ErrorBoundary'
 import Spinner from '/components/Spinner'
 
@@ -284,6 +288,11 @@ const App = function(props) {
                         <Route path="/paper/:id/version/:versionNumber" element={ <PublishedPaperPage tab="drafts" /> } />
                         <Route path="/paper/:id/version/:versionNumber/reviews" element={ <PublishedPaperPage tab="reviews" /> } />
                         <Route path="/paper/:id/version/:versionNumber/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
+
+                        { /* ========= Journals ============================= */ }
+                        <Route path="/journals" element={ <JournalsListPage /> } />
+                        <Route path="/create" element={ <CreateJournalPage /> } />
+                        <Route path="/journal/:id" element={ <JournalPage /> } />
                     </Routes>
                 </main>
                 <Footer />

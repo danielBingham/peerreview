@@ -174,6 +174,14 @@ const journal_users = [
     {
         user_id: 2,
         user_permissions: 'owner'
+    },
+    {
+        user_id: 1,
+        user_permissions: 'editor',
+    },
+    {
+        user_id: 2,
+        user_permissions: 'editor',
     }
 ]
 
@@ -212,10 +220,12 @@ const database = {
     } ,
     journals: {
         1: [
-            { ...journals[0], ...journal_users[0] }
+            { ...journals[0], ...journal_users[0] },
+            { ...journals[0], ...journal_users[3] }
         ],
         2: [
-            { ...journals[1], ...journal_users[1] }
+            { ...journals[1], ...journal_users[1] },
+            { ...journals[1], ...journal_users[2] }
         ]
     },
     users: {

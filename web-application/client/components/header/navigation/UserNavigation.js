@@ -16,6 +16,7 @@ const UserNavigation = function(props) {
         <div id="user-navigation" className="navigation-block">
             <Link to="/review">review</Link>
             <Link to="/submit">submit</Link>
+            <Link to="/create">create</Link>
         </div>
     )
 

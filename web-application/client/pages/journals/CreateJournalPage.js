@@ -1,14 +1,15 @@
+
 import React from 'react'
 import { useSelector } from 'react-redux'
 import { Link, useParams } from 'react-router-dom'
 
-import SubmitDraftForm from '/components/papers/draft/submit/SubmitDraftForm'
+import CreateJournalForm from '/components/journals/CreateJournalForm'
 
 import Spinner from '/components/Spinner'
 
-import './SubmitPage.css'
+import './CreateJournalPage.css'
 
-const SubmitPage = function(props) {
+const CreateJournalPage = function(props) {
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
@@ -19,22 +20,22 @@ const SubmitPage = function(props) {
     if ( ! currentUser ) {
         content = ( 
             <div className="login-notice">
-                <p>You must be logged in to submit a paper for publication.</p>
+                <p>You must be logged in to create a new journal.</p>
                 <p>Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</p>
             </div>
         )
     }
 
     else {
-        content = ( <SubmitDraftForm /> )
+        content = ( <CreateJournalForm /> )
     }
 
 
     return (
-        <div id="publish-page" className="page">
+        <div id="create-journal-page" className="page">
             { content }
         </div>
     )
 }
 
-export default SubmitPage 
+export default CreateJournalPage 

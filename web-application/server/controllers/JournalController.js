@@ -58,7 +58,7 @@ module.exports = class JournalController {
 
         // 2. Logged in user must be JournalUser with 'owner' permissions.
         // 3. Journal has at least 1 valid user.
-        if ( ! journal.users.find((u) => u.userId == user.id && u.permissions == 'owner' )) {
+        if ( ! journal.editors.find((e) => e.userId == user.id && e.permissions == 'owner' )) {
             throw new ControllerError(403, 'not-authorized:not-owner',
                 `User(${user.id}) attempted to create a journal without being the owning user!`)
         }
@@ -67,13 +67,13 @@ module.exports = class JournalController {
          * Permission Checks and Validation Complete
          *       Execute the POST
          ********************************************************/
-        const client = this.core.database.connect()
+        const client = await this.core.database.connect()
         const journalTransactionDAO = new JournalDAO(this.core, client)
         client.query(`BEGIN`)
         try {
             journal.id = await journalTransactionDAO.insertJournal(journal)
 
-            for(const journalUser of journal.users) {
+            for(const journalUser of journal.editors) {
                 await journalTransactionDAO.insertJournalUser(journal, journalUser)
             }
            
@@ -159,7 +159,7 @@ module.exports = class JournalController {
             throw new ControllerError(404, 'not-found', `Attempt to patch a Journal(${journal.id}) that doesn't exist!`)
         }
 
-        const owningUser = existingJournal.dictionary[request.params.id].users.find((u) => u.userId == user.id && u.permissions == 'owner')
+        const owningUser = existingJournal.dictionary[request.params.id].editors.find((e) => e.userId == user.id && e.permissions == 'owner')
         if ( ! owningUser ) {
             throw new ControllerError(403, 'not-authorized:not-owner', 
                 `User(${user.id}) attempted to patch a journal they do not own.`)
@@ -206,7 +206,7 @@ module.exports = class JournalController {
 
         const existingJournal = existingJournals.dictionary[request.params.id]
 
-        const owningUser = existingJournal.users.find((u) => u.userId == user.id && u.permissions == 'owner')
+        const owningUser = existingJournal.editors.find((e) => e.userId == user.id && e.permissions == 'owner')
         if ( ! owningUser ) {
             throw new ControllerError(403, 'not-authorized:not-owner', 
                 `User(${user.id}) attempted to patch a journal they do not own.`)

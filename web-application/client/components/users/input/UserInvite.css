@@ -1,0 +1,20 @@
+.user-invite {
+    padding: 10px;
+}
+.field-wrapper .user-invite input[type=text], .user-invite input[type=text] {
+    display: inline-block;
+    width: 300px;
+    margin: 0 10px;
+}
+.field-wrapper .user-invite label, .user-invite label {
+    display: inline-block;
+    width: 100px;
+    margin: 0 10px;
+}
+.user-invite .form-buttons {
+    padding: 10px 20px;
+    text-align: right;
+}
+.user-invite .form-buttons button {
+    margin: 0 5px;
+}

@@ -1,0 +1,59 @@
+.create-journal-form {
+    border: thin solid var(--main-border-color);
+    margin: 50px auto;
+    padding: 20px;
+    width: 1000px;
+    background-color: white;
+}
+.create-journal-form h2 {
+    text-align: center;
+}
+.create-journal-form .field-wrapper {
+    padding: 20px;
+}
+.create-journal-form .field-wrapper .explanation {
+    padding: 5px 0;
+}
+.create-journal-form label {
+    display: block;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+}
+.create-journal-form input[type=text] {
+    width: 948px;
+    padding: 5px;
+    border: thin solid var(--input-border-color);
+}
+
+.create-journal-form textarea {
+    width: 948px;
+    height: 100px;
+    padding: 5px;
+    border: thin solid var(--input-border-color);
+}
+
+.create-journal-form .submit {
+    text-align: center;
+}
+.create-journal-form .error {
+    color: red;
+    text-align: center;
+}
+.create-journal-form .overall-error {
+    position:relative;
+    border: thin solid red;
+    margin: 30px auto;
+    padding: 50px;
+    width: 800px;
+}
+.create-journal-form .overall-error svg {
+    position: absolute;
+    top: 5px;
+    left: 5px;
+    width: 24px;
+    height: 24px;
+    color: red;
+}
+
+
