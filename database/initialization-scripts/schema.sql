@@ -199,45 +199,28 @@ CREATE TABLE journals (
     updated_date    timestamptz
 );
 
-CREATE TYPE journal_users_permissions AS ENUM('owner', 'editor', 'reviewer');
+CREATE TYPE journal_user_permissions AS ENUM('owner', 'editor', 'reviewer');
 CREATE TABLE journal_users (
     journal_id  bigint REFERENCES journals(id) ON DELETE CASCADE,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
-    permissions journal_users_permissions DEFAULT 'reviewer',
+    permissions journal_user_permissions DEFAULT 'editor',
     created_date    timestamptz,
     updated_date    timestamptz
-);
-
-CREATE TABLE journal_teams (
-    id bigserial PRIMARY KEY,
-    journal_id  bigint REFERENCES journals(id) ON DELETE CASCADE,
-    name varchar(1024) NOT NULL,
-    description text,
-    created_date    timestamptz,
-    updated_date    timestamptz
-);
-
-CREATE TABLE journal_team_fields (
-    journal_team_id bigint REFERENCES journal_teams(id) ON DELETE CASCADE,
-    field_id bigint REFERENCES fields(id) ON DELETE CASCADE,
-    PRIMARY KEY (journal_team_id, field_id)
-);
-
-CREATE TABLE journal_team_users (
-    journal_team_id bigint REFERENCES journal_teams(id) ON DELETE CASCADE,
-    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
-    PRIMARY KEY (journal_team_id, user_id)
 );
 
 CREATE TABLE journal_submission (
     id bigserial PRIMARY KEY,
     journal_id bigint REFERENCES journals(id) ON DELETE CASCADE,
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+    created_date timestamptz,
+    updated_date timestamptz
 );
 
-CREATE TABLE journal_submission_teams (
+CREATE TABLE journal_submission_users (
     submission_id bigint REFERENCES journal_submissions(id) ON DELETE CASCADE,
-    team_id bigint REFERENCES journal_teams (id) ON DELETE CASCADE
+    user_id bigint REFERENCES journal_teams (id) ON DELETE CASCADE
+    created_date timestamptz,
+    updated_date timestamptz
 );
 
 /******************************************************************************

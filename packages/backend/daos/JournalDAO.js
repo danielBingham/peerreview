@@ -27,7 +27,7 @@ module.exports = class JournalDAO {
                 description: row.journal_description,
                 createdDate: row.journal_createdDate,
                 updatedDate: row.journal_updatedDate,
-                editors: []
+                members: []
             }
 
             if ( ! dictionary[journal.id] ) {
@@ -35,13 +35,13 @@ module.exports = class JournalDAO {
                 list.push(journal)
             }
 
-            const editor = {
-                userId: row.user_id,
-                permissions: row.user_permissions
+            const member = {
+                userId: row.member_userId,
+                permissions: row.member_permissions
             }
 
-            if ( ! dictionary[journal.id].editors.find((editor) => editor.userId == row.user_id) ) {
-                dictionary[journal.id].editors.push(editor)
+            if ( ! dictionary[journal.id].members.find((member) => member.userId == row.user_id) ) {
+                dictionary[journal.id].members.push(member)
             }
         }
 
@@ -56,10 +56,10 @@ module.exports = class JournalDAO {
                 journals.id as journal_id, journals.name as journal_name, journals.description as journal_description,
                 journals.created_date as "journal_createdDate", journals.updated_date as "journal_updatedDate",
 
-                journal_users.user_id as user_id, journal_users.permissions as user_permissions
+                journal_members.user_id as "member_userId", journal_members.permissions as member_permissions
 
             FROM journals
-                LEFT OUTER JOIN journal_users ON journals.id = journal_users.journal_id
+                LEFT OUTER JOIN journal_members ON journals.id = journal_members.journal_id
 
             ${where}
         `
@@ -89,12 +89,12 @@ module.exports = class JournalDAO {
         return results.rows[0].id
     }
 
-    async insertJournalUser(journal, journalUser) {
+    async insertJournalMember(journal, member) {
         const results = await this.database.query(`
-            INSERT INTO journal_users (journal_id, user_id, permissions, created_date, updated_date)
+            INSERT INTO journal_members (journal_id, user_id, permissions, created_date, updated_date)
                 VALUES ($1, $2, $3, now(), now())
             `, 
-            [ journal.id, journalUser.userId, journalUser.permissions ]
+            [ journal.id, member.userId, member.permissions ]
         )
 
 

@@ -33,7 +33,8 @@ module.exports = class JournalsMigration {
     async initialize() {
 
         try {
-            const createJournalsTableSql = `
+             
+            await this.database.query(`
                 CREATE TABLE journals (
                     id      bigserial PRIMARY KEY,
                     name    varchar(1024) NOT NULL,
@@ -41,36 +42,58 @@ module.exports = class JournalsMigration {
                     created_date    timestamptz,
                     updated_date    timestamptz
                 )
-            `
-            const createJournalsTableResult = await this.database.query(createJournalsTableSql, [])
+            `, [])
 
-            const createJournalUsersPermissionsTypeSql = `
-                CREATE TYPE journal_users_permissions AS ENUM('owner', 'editor', 'reviewer')
-            `
-            const createJournalUsersPermissionsTypeResult = await this.database.query(createJournalUsersPermissionsTypeSql, [])
+             
+            await this.database.query(`
+                CREATE TYPE journal_member_permissions AS ENUM('owner', 'editor', 'reviewer')
+            `, [])
 
-            const createJournalUsersTableSql = `
-                CREATE TABLE journal_users (
+             
+            await this.database.query(`
+                CREATE TABLE journal_members (
                     journal_id  bigint REFERENCES journals(id) ON DELETE CASCADE,
                     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
-                    permissions journal_users_permissions DEFAULT 'reviewer',
+                    permissions journal_member_permissions DEFAULT 'reviewer',
                     created_date    timestamptz,
                     updated_date    timestamptz
                 )
-            `
-            const createJournalUsersTableResult = await this.database.query(createJournalUsersTableSql, [])
+            `, [])
+
+            await this.database.query(`
+                CREATE TABLE journal_submission (
+                    id bigserial PRIMARY KEY,
+                    journal_id bigint REFERENCES journals(id) ON DELETE CASCADE,
+                    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+                    created_date timestamptz,
+                    updated_date timestamptz
+
+                )
+            `, [])
+
+            await this.database.query(`
+                CREATE TABLE journal_submission_users (
+                    submission_id bigint REFERENCES journal_submissions(id) ON DELETE CASCADE,
+                    user_id bigint REFERENCES users (id) ON DELETE CASCADE,
+                    created_date timestamptz,
+                    updated_date timestamptz
+                )
+            `, [])
 
 
         } catch (error) {
             try {
-                const dropJournalsTableSql = `DROP TABLE IF EXISTS journals`
-                const dropJournalsTableResult = await this.database.query(dropJournalsTableSql, [])
+                await this.database.query(`DROP TABLE IF EXISTS journal_submission_users`, [])
 
-                const dropJournalUsersPermissionsTypeSql = `DROP TYPE IF EXISTS journal_users_permissions`
-                const dropJournalUsersPermissionsTypeResult = await this.database.query(dropJournalUsersPermissionsTypeSql, [])
+                await this.database.query(`DROP TABLE IF EXISTS journal_submission`, [])
 
-                const dropJournalUsersTableSql = `DROP TABLE IF EXISTS journal_users`
-                const dropJournalUsersTableResult = await this.database.query(dropJournalUsersTableSql, [])
+                await this.database.query(`DROP TABLE IF EXISTS journal_members`, [])
+
+                await this.database.query(`DROP TYPE IF EXISTS journal_member_permissions`, [])
+
+                await this.database.query(`DROP TABLE IF EXISTS journals`, [])
+
+
 
             } catch (rollbackError) {
                 throw new MigrationError('no-rollback', rollbackError.message)
@@ -86,14 +109,15 @@ module.exports = class JournalsMigration {
     async uninitialize() {
 
         try {
-            const dropJournalsTableSql = `DROP TABLE IF EXISTS journals`
-            const dropJournalsTableResult = await this.database.query(dropJournalsTableSql, [])
+                await this.database.query(`DROP TABLE IF EXISTS journal_submission_users`, [])
 
-            const dropJournalUsersPermissionsTypeSql = `DROP TYPE IF EXISTS journal_users_permissions`
-            const dropJournalUsersPermissionsTypeResult = await this.database.query(dropJournalUsersPermissionsTypeSql, [])
+                await this.database.query(`DROP TABLE IF EXISTS journal_submission`, [])
 
-            const dropJournalUsersTableSql = `DROP TABLE IF EXISTS journal_users`
-            const dropJournalUsersTableResult = await this.database.query(dropJournalUsersTableSql, [])
+                await this.database.query(`DROP TABLE IF EXISTS journal_members`, [])
+
+                await this.database.query(`DROP TYPE IF EXISTS journal_member_permissions`, [])
+
+                await this.database.query(`DROP TABLE IF EXISTS journals`, [])
         } catch (error) {
             throw new MigrationError('no-rollback', error.message)
         }

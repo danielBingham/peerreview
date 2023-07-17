@@ -166,22 +166,22 @@ const journals = [
     }
 ]
 
-const journal_users = [
+const journal_members = [
     {
-        user_id: 1,
-        user_permissions: 'owner'
+        member_userId: 1,
+        member_permissions: 'owner'
     },
     {
-        user_id: 2,
-        user_permissions: 'owner'
+        member_userId: 2,
+        member_permissions: 'owner'
     },
     {
-        user_id: 1,
-        user_permissions: 'editor',
+        member_userId: 1,
+        member_permissions: 'editor',
     },
     {
-        user_id: 2,
-        user_permissions: 'editor',
+        member_userId: 2,
+        member_permissions: 'editor',
     }
 ]
 
@@ -220,12 +220,12 @@ const database = {
     } ,
     journals: {
         1: [
-            { ...journals[0], ...journal_users[0] },
-            { ...journals[0], ...journal_users[3] }
+            { ...journals[0], ...journal_members[0] },
+            { ...journals[0], ...journal_members[3] }
         ],
         2: [
-            { ...journals[1], ...journal_users[1] },
-            { ...journals[1], ...journal_users[2] }
+            { ...journals[1], ...journal_members[1] },
+            { ...journals[1], ...journal_members[2] }
         ]
     },
     users: {

@@ -131,7 +131,7 @@ describe('JournalController', function() {
                 body: {
                     name: 'Journal One',
                     description: 'A test journal.',
-                    editors: [
+                    members: [
                         {
                             userId: 1,
                             permissions: 'owner'
@@ -183,7 +183,7 @@ describe('JournalController', function() {
                 body: {
                     name: 'Journal One',
                     description: 'A test journal',
-                    editors: [
+                    members: [
                         {
                             userId: 1,
                             permissions: 'owner'
