@@ -617,6 +617,9 @@ module.exports = function(core) {
     const JournalController = require('./controllers/JournalController')
     const journalController = new JournalController(core)
 
+
+    // ======= Journals =======================================================
+    
     router.get('/journals', function(request, response, next) {
         journalController.getJournals(request, response).catch(function(error) {
             next(error)
@@ -653,11 +656,128 @@ module.exports = function(core) {
         })
     })
 
+    // ======= Journal Members =================================================
+
+    router.get('/journal/:journalId/members', function(request, response, next) {
+        journalController.getJournalMembers(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/journal/:journalId/members', function(request, response, next) {
+        journalController.postJournalMembers(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/journal/:journalId/member/:id', function(request, response, next) {
+        journalController.getJournalMember(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.put('/journal/:journalId/member/:id', function(request, response, next) {
+        journalController.putJournalMember(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/journal/:journalId/member/:id', function(request, response, next) {
+        journalController.patchJournalMember(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.delete('/journal/:journalId/member/:id', function(request, response, next) {
+        journalController.deleteJournalMember(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
     /**************************************************************************
-     *      Journal REST Routes
+     *      Journal Submission REST Routes
      *************************************************************************/
 
+    const JournalSubmissionController = require('./controllers/JournalSubmissionController')
+    const journalSubmissionController = new JournalSubmissionController(core)
 
+    // ======= Journal Submissions =============================================
+    // These are the papers submitted to the journal.
+
+    router.get('/journal/:journalId/submissions', function(request, response, next) {
+        journalSubmissionController.getSubmissions(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/journal/:journalId/submissions', function(request, response, next) {
+        journalSubmissionController.postSubmissions(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/journal/:journalId/submission/:id', function(request, response, next) {
+        journalSubmissionController.getSubmission(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.put('/journal/:journalId/submission/:id', function(request, response, next) {
+        journalSubmissionController.putSubmission(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/journal/:journalId/submission/:id', function(request, response, next) {
+        journalSubmissionController.patchSubmission(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.delete('/journal/:journalId/submission/:id', function(request, response, next) {
+        journalSubmissionController.deleteSubmission(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    // ======= Journal Submission Reviewers ====================================
+    // These are the submission reviewer assignees.
+
+    router.get('/journal/:journalId/submission/:submissionId/reviewers', function(request, response, next) {
+        journalSubmissionController.getReviewers(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.post('/journal/:journalId/submission/:submissionId/reviewers', function(request, response, next) {
+        journalSubmissionController.postReviewers(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/journal/:journalId/submission/:submissionId/reviewers/:userId', function(request, response, next) {
+        journalSubmissionController.getReviewer(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.put('/journal/:journalId/submission/:submissionId/reviewers/:userId', function(request, response, next) {
+        journalSubmissionController.putReviewer(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/journal/:journalId/submission/:submissionId/reviewers/:userId', function(request, response, next) {
+        journalSubmissionController.patchReviewer(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.delete('/journal/:journalId/submission/:submissionId/reviewers/:userId', function(request, response, next) {
+        journalSubmissionController.deleteReviewer(request, response).catch(function(error) {
+            next(error)
+        })
+    })
 
     /**************************************************************************
      *      API 404 

@@ -50,6 +50,7 @@ module.exports = class JournalDAO {
 
     async selectJournals(where, params) {
         where = where || ''
+        params = params || []
 
         const sql = `
             SELECT 
@@ -89,19 +90,8 @@ module.exports = class JournalDAO {
         return results.rows[0].id
     }
 
-    async insertJournalMember(journal, member) {
-        const results = await this.database.query(`
-            INSERT INTO journal_members (journal_id, user_id, permissions, created_date, updated_date)
-                VALUES ($1, $2, $3, now(), now())
-            `, 
-            [ journal.id, member.userId, member.permissions ]
-        )
-
-
-        if ( results.rowCount <= 0 ) {
-            throw new DAOError('failed-insertion', `Failed to insert JournalUser(${journalUser.userId}).`)
-        }
-
+    async updateJournal(journal) {
+        throw new DAOError('not-implemented', `Attempt to call updateJournal, which hasn't been implemented.`)
     }
 
     async updatePartialJournal(journal) {
@@ -115,7 +105,7 @@ module.exports = class JournalDAO {
                 continue
             }
 
-            sql += `${key} = $${count}`
+            sql += `${key} = $${count}, `
             
             params.push(journal[key])
             count = count + 1
@@ -140,6 +130,49 @@ module.exports = class JournalDAO {
         if ( results.rowCount <= 0 ) {
             throw new DAOError('failed-deletion', `Failed to delete Journal(${journal.id}).`)
         }
+    }
+
+    // ======= Journal Members ================================================
+
+    async insertJournalMember(journal, member) {
+        const results = await this.database.query(`
+            INSERT INTO journal_members (journal_id, user_id, permissions, created_date, updated_date)
+                VALUES ($1, $2, $3, now(), now())
+            `, 
+            [ journal.id, member.userId, member.permissions ]
+        )
+
+        if ( results.rowCount <= 0 ) {
+            throw new DAOError('failed-insertion', `Failed to insert JournalUser(${journalUser.userId}).`)
+        }
+    }
+
+    async updateJournalMember(journal, member) {
+        const results = await this.database.query(`
+            UPDATE journal_members SET permissions = $1, updated_date = now()
+                WHERE journal_id = $2 AND user_id = $3
+        `, [ member.permissions, journal.id, member.userId ])
+
+        if ( results.rowCount <= 0 ) {
+            throw new DAOError('failed-update', `Failed to update Member(${member.userId}) of Journal(${journal.id}).`)
+        }
+
+    }
+
+    async updatePartialJournalMember(journal, member) {
+        throw new DAOError('not-implemented', `Attempt to call updatePartialJournalMember() which isn't implemented.`)
+    }
+
+    async deleteJournalMember(journal, member) {
+        const results = await this.database.query(`
+            DELETE FROM journal_users WHERE journal_id = $1 AND user_id = $2
+        `, [ journal.id, member.userId ])
+
+        if ( results.rowCount <= 0 ) {
+            throw new DAOError('failed-deletion', 
+                `Failed to delete Member(${member.userId}) from Journal(${journal.id}).`)
+        }
+
     }
 
 }

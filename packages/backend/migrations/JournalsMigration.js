@@ -61,13 +61,17 @@ module.exports = class JournalsMigration {
             `, [])
 
             await this.database.query(`
+                CREATE TYPE journal_submission_status AS ENUM('submitted', 'in-review', 'proofing')
+            `, [])
+
+            await this.database.query(`
                 CREATE TABLE journal_submission (
                     id bigserial PRIMARY KEY,
                     journal_id bigint REFERENCES journals(id) ON DELETE CASCADE,
                     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+                    status journal_submission_status DEFAULT 'submitted',
                     created_date timestamptz,
                     updated_date timestamptz
-
                 )
             `, [])
 
@@ -76,7 +80,8 @@ module.exports = class JournalsMigration {
                     submission_id bigint REFERENCES journal_submissions(id) ON DELETE CASCADE,
                     user_id bigint REFERENCES users (id) ON DELETE CASCADE,
                     created_date timestamptz,
-                    updated_date timestamptz
+                    updated_date timestamptz,
+                    PRIMARY KEY (submission_id, user_id)
                 )
             `, [])
 
@@ -84,16 +89,12 @@ module.exports = class JournalsMigration {
         } catch (error) {
             try {
                 await this.database.query(`DROP TABLE IF EXISTS journal_submission_users`, [])
-
                 await this.database.query(`DROP TABLE IF EXISTS journal_submission`, [])
+                await this.database.query(`DROP TYPE IF EXISTS journal_submission_status`, [])
 
                 await this.database.query(`DROP TABLE IF EXISTS journal_members`, [])
-
                 await this.database.query(`DROP TYPE IF EXISTS journal_member_permissions`, [])
-
                 await this.database.query(`DROP TABLE IF EXISTS journals`, [])
-
-
 
             } catch (rollbackError) {
                 throw new MigrationError('no-rollback', rollbackError.message)
@@ -110,13 +111,11 @@ module.exports = class JournalsMigration {
 
         try {
                 await this.database.query(`DROP TABLE IF EXISTS journal_submission_users`, [])
-
                 await this.database.query(`DROP TABLE IF EXISTS journal_submission`, [])
+                await this.database.query(`DROP TYPE IF EXISTS journal_submission_status`, [])
 
                 await this.database.query(`DROP TABLE IF EXISTS journal_members`, [])
-
                 await this.database.query(`DROP TYPE IF EXISTS journal_member_permissions`, [])
-
                 await this.database.query(`DROP TABLE IF EXISTS journals`, [])
         } catch (error) {
             throw new MigrationError('no-rollback', error.message)

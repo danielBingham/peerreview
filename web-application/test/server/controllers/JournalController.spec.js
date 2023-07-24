@@ -55,7 +55,7 @@ describe('JournalController', function() {
 
         it('should return 200 and the list of journals', async function() {
             core.database.query.mockReturnValue(undefined)
-                .mockReturnValueOnce({ rowCount: 2, rows: [ ...database.journals[1], ...database.journals[2] ]}) 
+                .mockReturnValueOnce({ rowCount: 8, rows: [ ...database.journals[1], ...database.journals[2], ...database.journals[3] ]}) 
 
 
             const journalController = new JournalController(core)

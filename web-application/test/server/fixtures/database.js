@@ -163,25 +163,86 @@ const journals = [
         journal_createdDate: 'TIMESTAMP',
         journal_updatedDate: 'TIMESTAMP'
 
+    },
+    {
+        journal_id: 3,
+        journal_name: 'Journal Three',
+        journal_description: 'A third test journal.',
+        journal_createdDate: 'TIMESTAMP',
+        journal_updatedDate: 'TIMESTAMP'
     }
 ]
 
 const journal_members = [
+    // 0
     {
         member_userId: 1,
         member_permissions: 'owner'
     },
+    // 1
     {
         member_userId: 2,
         member_permissions: 'owner'
     },
+    // 2
     {
         member_userId: 1,
         member_permissions: 'editor',
     },
+    // 3
     {
         member_userId: 2,
         member_permissions: 'editor',
+    },
+    // 4
+    {
+        member_userId: 1,
+        member_permissions: 'reviewer'
+    },
+    // 5
+    {
+        member_userId: 2,
+        member_permissions: 'reviewer'
+    },
+    // 6
+    {
+        member_userId: 3,
+        member_permissions: 'reviewer'
+    }
+
+]
+
+const journal_submissions = [
+    {
+        submission_id: 1,
+        submission_journalId: 1,
+        submission_paperId: 1,
+        submission_status: 'submitted',
+        submission_createdDate: 'TIMESTAMP',
+        submission_updatedDate: 'TIMESTAMP'
+    },
+    {
+        submission_id: 2,
+        submission_journalId: 2,
+        submission_paperId: 2,
+        submission_status: 'in-review',
+        submission_createdDate: 'TIMESTAMP',
+        submission_updatedDate: 'TIMESTAMP'
+    }
+]
+
+const journal_submission_users = [
+    {
+        reviewer_userId: null,
+        reviewer_assignedDate: null
+    },
+    {
+        reviewer_userId: 1,
+        reviewer_assignedDate: 'TIMESTAMP'
+    },
+    {
+        reviewer_userId: 2,
+        reviewer_assignedDate: 'TIMESTAMP'
     }
 ]
 
@@ -221,11 +282,26 @@ const database = {
     journals: {
         1: [
             { ...journals[0], ...journal_members[0] },
-            { ...journals[0], ...journal_members[3] }
+            { ...journals[0], ...journal_members[3] },
+            { ...journals[0], ...journal_members[6] }
         ],
         2: [
             { ...journals[1], ...journal_members[1] },
-            { ...journals[1], ...journal_members[2] }
+            { ...journals[1], ...journal_members[2] },
+            { ...journals[1], ...journal_members[6] }
+        ],
+        3: [
+            { ...journals[2], ...journal_members[0] },
+            { ...journals[2], ...journal_members[6] }
+        ]
+    },
+    journalSubmissions: {
+        1: [
+            { ...journal_submissions[0], ...journal_submission_users[0] },
+        ],
+        2: [
+            { ...journal_submissions[1], ...journal_submission_users[1] },
+            { ...journal_submissions[1], ...journal_submission_users[2] }
         ]
     },
     users: {

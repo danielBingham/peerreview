@@ -17,6 +17,17 @@ module.exports = class JournalController {
         this.journalDAO = new JournalDAO(this.core)
     }
 
+    /**
+     * GET /journals
+     *
+     * Get a list of journals. 
+     *
+     * @param {Object} request  Standard Express request object.
+     * @param {Object} request.body Must be a valid `journal` object.
+     * @param {Object} response Standard Express response object.
+     *
+     * @returns {Promise}   Resolves to void.
+     */
     async getJournals(request, response) {
         const { dictionary, list } = await this.journalDAO.selectJournals()
         return response.status(200).json(list)
@@ -220,5 +231,31 @@ module.exports = class JournalController {
         await this.journalDAO.deleteJournal(existingJournal)
 
         return response.status(200).send()
+    }
+
+    // ======= Journal Members ================================================
+
+    async getJournalMembers(request, response) {
+
+    }
+
+    async postJournalMembers(request, response) {
+
+    }
+
+    async getJournalMember(request, response) {
+
+    }
+
+    async putJournalMember(request, response) {
+
+    }
+
+    async patchJournalMember(request, response) {
+
+    }
+
+    async deleteJournalMember(request, response) {
+
     }
 }

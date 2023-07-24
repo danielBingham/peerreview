@@ -208,17 +208,20 @@ CREATE TABLE journal_users (
     updated_date    timestamptz
 );
 
-CREATE TABLE journal_submission (
+CREATE TYPE journal_submission_status AS ENUM('submitted', 'in-review', 'proofing')
+CREATE TABLE journal_submissions (
     id bigserial PRIMARY KEY,
     journal_id bigint REFERENCES journals(id) ON DELETE CASCADE,
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+    status journal_submission_status,
     created_date timestamptz,
     updated_date timestamptz
 );
 
+/* These are the reviewers assigned to review a submission. */
 CREATE TABLE journal_submission_users (
     submission_id bigint REFERENCES journal_submissions(id) ON DELETE CASCADE,
-    user_id bigint REFERENCES journal_teams (id) ON DELETE CASCADE
+    user_id bigint REFERENCES journal_teams (id) ON DELETE CASCADE,
     created_date timestamptz,
     updated_date timestamptz
 );

@@ -198,6 +198,10 @@ const journals = [
             {
                 userId: 2,
                 permissions: 'editor'
+            },
+            {
+                userId: 3,
+                permissions: 'reviewer'
             }
         ]
     },
@@ -215,8 +219,58 @@ const journals = [
             {
                 userId: 1,
                 permissions: 'editor'
+            },
+            { 
+                userId: 3,
+                permissions: 'reviewer'
             }
+        ]
+    },
+    {
+        id: 3,
+        name: 'Journal Three',
+        description: 'A third test journal.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        members: [
+            {
+                userId: 1,
+                permissions: 'owner'
+            },
+            {
+                userId: 3,
+                permissions: 'reviewer'
+            }
+        ]
+    }
+]
 
+const journalSubmissions = [
+    {
+        id: 1,
+        journalId: 1,
+        paperId: 1,
+        status: 'submitted',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        reviewers: []
+    },
+    {
+        id: 2,
+        journalId: 2,
+        paperId: 2,
+        status: 'in-review',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        reviewers: [
+            {
+                userId: 1,
+                assignedDate: 'TIMESTAMP'
+            },
+            {
+                userId: 2,
+                assignedDate: 'TIMESTAMP'
+            }
         ]
     }
 ]
@@ -227,5 +281,6 @@ module.exports = {
     users: usersCleaned,
     usersUnclean: usersUnclean,
     papers: papers,
-    journals: journals
+    journals: journals,
+    journalSubmissions: journalSubmissions
 }
