@@ -333,7 +333,7 @@ module.exports = class JournalSubmissionController {
         const member = journal.members.find((m) => m.userId == user.id)
         if ( ! member ) {
             throw new ControllerError(403, 'not-authorized',
-                `User(${user.id}) attempted to view submissions for Journal(${journalId}) of which they are not a member.`)
+                `User(${user.id}) attempted to patch Submission(${id}) for Journal(${journalId}) of which they are not a member.`)
         }
 
         if ( member.permissions !== 'editor' && member.permissions != 'owner' ) {
@@ -364,7 +364,7 @@ module.exports = class JournalSubmissionController {
         return response.status(201).json(list[0])
     }
 
-    async deleteSubmissions(request, response) {
+    async deleteSubmission(request, response) {
         /*************************************************************
          * Permissions Checking and Input Validation
          *
@@ -374,7 +374,46 @@ module.exports = class JournalSubmissionController {
          * 4. Logged in User must be journal member and editor or owner.
          * TECHDEBT Allow authors to delete (withdraw)?
          * **********************************************************/
+        const journalId = request.params.journalId
+        const id = request.params.id
 
+        // 1. User is logged in.
+        if ( ! request.session || ! request.session.user ) {
+            throw new ControllerError(401, 'not-authenticated', 
+                `User must be authenticated to create a journal!`)
+        }
+
+        const user = request.session.user
+
+        const journalResults = await this.journalDAO.selectJournals('WHERE id = $1', [ journalId])
+        const journal = journalResults.dictionary[journalId]
+
+        // 2. Journal must exist.
+        if ( ! journal ) {
+            throw new ControllerError(404, 'not-found',
+                `Journal(${journalId}) not found.`)
+        }
+
+        // 3. Logged in User must be journal member.
+        const member = journal.members.find((m) => m.userId == user.id)
+        if ( ! member ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${user.id}) attempted to delete Submission(${id}) for Journal(${journalId}) of which they are not a member.`)
+        }
+
+        if ( member.permissions !== 'editor' && member.permissions != 'owner' ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${user.id}) attempted to delete a submission for Journal(${journalId}) of which they are neither editor nor owner.`)
+        }
+
+        /**********************************************************************
+         * Permission Checks and Validation Complete
+         *       Execute the DELETE 
+         **********************************************************************/
+        
+        await this.journalSubmissionDAO.deleteSubmission(id)
+
+        return response.status(200).json({ submissionId: id })
     }
 
     // ======= Submission Reviewers ===========================================
@@ -385,7 +424,87 @@ module.exports = class JournalSubmissionController {
     }
 
     async postReviewers(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User is logged in.
+         * 2. Journal(journalId) must exist.
+         * 3. Submission(SubmissionId) must exist and belong to Journal(journalId).
+         * 4. Logged in User must be Journal(journalId) member.
+         * 5. IF Logged In User is owner or editor, may assign anyone.
+         * 5a. IF Logged in User is reviewer, may only assign themselves.
+         * 6. Assigned reviewer must be a journal member.
+         * **********************************************************/
+        const journalId = request.params.journalId
+        const submissionId = request.params.submissionId
 
+        const reviewer = request.body
+        reviewer.submissionId = submissionId
+
+        // 1. User is logged in.
+        if ( ! request.session || ! request.session.user ) {
+            throw new ControllerError(401, 'not-authenticated', 
+                `User must be authenticated to create a journal!`)
+        }
+
+        const user = request.session.user
+
+        const journalResults = await this.journalDAO.selectJournals('WHERE id = $1', [ journalId])
+        const journal = journalResults.dictionary[journalId]
+
+        // 2. Journal must exist.
+        if ( ! journal ) {
+            throw new ControllerError(404, 'not-found',
+                `Journal(${journalId}) not found.`)
+        }
+
+        // 4. Logged in User must be journal member.
+        const member = journal.members.find((m) => m.userId == user.id)
+        if ( ! member ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${user.id}) attempted to delete Submission(${id}) for Journal(${journalId}) of which they are not a member.`)
+        }
+
+        // 5. IF Logged In User is owner or editor, may assign anyone.
+        // 5a. IF Logged in User is reviewer, may only assign themselves.
+        if ( reviewer.userId !== user.id && member.permissions !== 'editor' && member.permissions != 'owner' ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${user.id}) attempted to delete a submission for Journal(${journalId}) of which they are neither editor nor owner.`)
+        }
+
+        // Possible TECHDEBT: We're using this as the user existence check to
+        // save ourselves a database call.  This will fail if we don't check
+        // user existence when we add a member to a journal or if the journal
+        // members data gets corrupted in any way.
+        //
+        // 6. Assigned reviewer must be a journal member.
+        const reviewerMember = journal.members.find((m) => m.userId == reviewer.user)
+        if ( ! reviewerMember ) {
+            throw new ControllerError(400, 'not-member',
+                `User(${user.id}) attempted to assign a reviewer who is not a member of Journal(${journalId}).`)
+        }
+
+        // TODO 3. Submission must exist
+        
+        /**********************************************************************
+         * Permission Checks and Validation Complete
+         *       Execute the POST 
+         **********************************************************************/
+
+        await this.journalSubmissionsDAO.insertJournalSubmissionReviewer(reviewer)
+
+
+        const { dictionary, list } = this.journalSubmissionDAO.selectJournalSubmissions(
+            'WHERE journal_submissions.id = $1', 
+            [ submissionId ]
+        )
+
+        if ( ! dictionary[submissionId] ) {
+            throw new ControllerError(500, 'server-error',
+                `Unable to find Submission(${submissionId}) after assigning Reviewer(${reviewer.userId}).`)
+        }
+
+        return response.status(200).json(dictionary[submissionId])
     }
 
     async getReviewer(request, response) {

@@ -125,6 +125,17 @@ module.exports = class JournalSubmissionDAO {
         }
     }
 
+    async deleteSubmission(id) {
+        const results = await this.database.query(`
+            DELETE FROM journal_submissions WHERE id = $1
+        `, [ id ])
+
+        if ( results.rowCount <= 0 ) {
+            throw new DAOError('failed-deletion',
+                `Attempt to delete Submission(${submission.id}) failed.`)
+        }
+    }
+
     // ======= Submission Reviewer ============================================
 
     async insertJournalSubmissionReviewer(reviewer) {

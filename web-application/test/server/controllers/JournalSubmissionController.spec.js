@@ -52,7 +52,6 @@ describe('JournalSubmissionController', function() {
     })
 
     describe('.getSubmissions()', function() {
-
         it('should return a 401 for non-authenticated users', async function() {
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -160,11 +159,9 @@ describe('JournalSubmissionController', function() {
 
             expect.hasAssertions()
         })
-
     })
 
     describe('.postSubmissions()', function() {
-
         it('should return a 401 for non-authenticated users', async function() {
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -378,8 +375,7 @@ describe('JournalSubmissionController', function() {
         })
     })
 
-    describe('.getSubmission', function() {
-
+    describe('.getSubmission()', function() {
         it('should return a 401 for non-authenticated users', async function() {
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -552,12 +548,9 @@ describe('JournalSubmissionController', function() {
             expect(response.status.mock.calls[0][0]).toEqual(200)
             expect(response.json.mock.calls[0][0]).toEqual(expected)
         })
-
-
     })
 
     describe('.putSubmission()', function() {
-
         it('should return 501 not implemented', async function() {
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -580,11 +573,9 @@ describe('JournalSubmissionController', function() {
 
             expect.hasAssertions()
         })
-        
     })
 
     describe('.patchSubmission()', function() {
-
         it('should return a 401 for non-authenticated users', async function() {
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -741,24 +732,24 @@ describe('JournalSubmissionController', function() {
             expect(response.status.mock.calls[0][0]).toEqual(201)
             expect(response.json.mock.calls[0][0]).toEqual(expectedSubmissions[0])
         })
-
     })
 
-    xdescribe('.deleteSubmission()', function() {
-        
-        it('should throw 401 not-authenticated if no user is logged in.', async function() {
-            const journalController = new JournalController(core)
+    describe('.deleteSubmission()', function() {
+
+        it('should return a 401 for non-authenticated users', async function() {
+            const journalSubmissionController = new JournalSubmissionController(core)
 
             const request = {
                 session: {},
                 params: {
+                    journalId: 1,
                     id: 1
                 }
             }
 
             const response = new Response()
             try {
-                await journalController.deleteJournal(request, response)
+                await journalSubmissionController.deleteSubmission(request, response)
             } catch (error) {
                 expect(error).toBeInstanceOf(ControllerError)
                 expect(error.status).toBe(401)
@@ -768,11 +759,42 @@ describe('JournalSubmissionController', function() {
             expect.hasAssertions()
         })
 
+        it('should return a 403 for non-member users', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 4
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    id: 1
+                }
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.deleteSubmission(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(403)
+                expect(error.type).toBe('not-authorized')
+            }
+
+            expect.hasAssertions()
+        })
+
         it('should return 404 when the requested journal does not exist', async function() {
             core.database.query.mockReturnValue(undefined)
-                .mockReturnValueOnce({ rowCount: 0, rows:[] }) 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] }) // journalDAO.selectJournals
 
-            const journalController = new JournalController(core)
+            const journalSubmissionController = new JournalSubmissionController(core)
 
             const request = {
                 session: {
@@ -781,15 +803,15 @@ describe('JournalSubmissionController', function() {
                     }
                 },
                 params: {
+                    journalId: 1,
                     id: 1
-                },
-                body: {},
-                query: {}
+                }
+                
             }
 
             const response = new Response()
             try {
-                await journalController.deleteJournal(request, response)
+                await journalSubmissionController.deleteSubmission(request, response)
             } catch (error) {
                 expect(error).toBeInstanceOf(ControllerError)
                 expect(error.status).toBe(404)
@@ -799,32 +821,33 @@ describe('JournalSubmissionController', function() {
             expect.hasAssertions()
         })
 
-        it('should throw 403 not-authorized if the user logged in is not an owner of the journal', async function() {
+        it('should return 403 for reviewers', async function() {
             core.database.query.mockReturnValue(undefined)
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1]  }) // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: 1, rows: [] }) // journalSubmissionDAO.deleteSubmission()
 
-            const journalController = new JournalController(core)
+
+            const journalSubmissionController = new JournalSubmissionController(core)
 
             const request = {
                 session: {
                     user: {
-                        id: 2
+                        id: 3
                     }
                 },
                 params: {
+                    journalId: 1,
                     id: 1
-                },
-                body: {},
-                query: {}
+                }
             }
 
             const response = new Response()
             try {
-                await journalController.deleteJournal(request, response)
+                await journalSubmissionController.deleteSubmission(request, response)
             } catch (error) {
                 expect(error).toBeInstanceOf(ControllerError)
                 expect(error.status).toBe(403)
-                expect(error.type).toBe('not-authorized:not-owner')
+                expect(error.type).toBe('not-authorized')
             }
 
             expect.hasAssertions()
@@ -832,10 +855,10 @@ describe('JournalSubmissionController', function() {
 
         it('should return 200 when the journal was successfully deleted', async function() {
             core.database.query.mockReturnValue(undefined)
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1]  }) // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: 1, rows: [] }) // journalSubmissionDAO.deleteSubmission()
 
-            const journalController = new JournalController(core)
+            const journalSubmissionController = new JournalSubmissionController(core)
 
             const request = {
                 session: {
@@ -844,14 +867,13 @@ describe('JournalSubmissionController', function() {
                     }
                 },
                 params: {
+                    journalId: 1,
                     id: 1
-                },
-                body: {},
-                query: {}
+                }
             }
 
             const response = new Response()
-            await journalController.deleteJournal(request, response)
+            await journalSubmissionController.deleteSubmission(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
         })
