@@ -154,15 +154,15 @@ module.exports = class JournalSubmissionDAO {
         throw new DAOError('not-implemented', `Update partial submission is not implemented.`)
     }
 
-    async deleteJournalSubmissionReviewer(reviewer) {
+    async deleteJournalSubmissionReviewer(submissionId, userId) {
         const results = await this.database.query(`
             DELETE FROM journal_submission_users
                 WHERE submission_id = $1 AND user_id = $2
-        `, [ reviewer.submissionId, reviewer.userId ])
+        `, [ submissionId, userId ])
 
         if ( results.rowCount <= 0 ) {
             throw new DAOError('failed-deletion', 
-                `Failed to delete Reviewer(${reviewer.userId}) for Submission(${reviewer.submissionId}).`)
+                `Failed to delete Reviewer(${userId}) for Submission(${submissionId}).`)
         }
     }
 

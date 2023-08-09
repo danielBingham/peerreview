@@ -670,25 +670,25 @@ module.exports = function(core) {
         })
     })
 
-    router.get('/journal/:journalId/member/:id', function(request, response, next) {
+    router.get('/journal/:journalId/member/:userId', function(request, response, next) {
         journalController.getJournalMember(request, response).catch(function(error) {
             next(error)
         })
     })
 
-    router.put('/journal/:journalId/member/:id', function(request, response, next) {
+    router.put('/journal/:journalId/member/:userId', function(request, response, next) {
         journalController.putJournalMember(request, response).catch(function(error) {
             next(error)
         })
     })
 
-    router.patch('/journal/:journalId/member/:id', function(request, response, next) {
+    router.patch('/journal/:journalId/member/:userId', function(request, response, next) {
         journalController.patchJournalMember(request, response).catch(function(error) {
             next(error)
         })
     })
 
-    router.delete('/journal/:journalId/member/:id', function(request, response, next) {
+    router.delete('/journal/:journalId/member/:userId', function(request, response, next) {
         journalController.deleteJournalMember(request, response).catch(function(error) {
             next(error)
         })

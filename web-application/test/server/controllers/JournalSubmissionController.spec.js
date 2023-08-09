@@ -879,5 +879,575 @@ describe('JournalSubmissionController', function() {
         })
     })
 
+    describe('.postReviewers()', function() {
+
+        it('should return a 400 when request body is missing', async function() {
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {},
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                }
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.postReviewers(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(400)
+                expect(error.type).toBe('missing-body')
+            }
+
+            expect.hasAssertions()
+        })
+        
+
+        it('should return a 401 for non-authenticated users', async function() {
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {},
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                },
+                body: {
+                    userId: 2
+                }
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.postReviewers(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(401)
+                expect(error.type).toBe('not-authenticated')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return a 404 when the submission does not exist', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 1
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                },
+                body: {
+                    userId: 2
+                }
+
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.postReviewers(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(404)
+                expect(error.type).toBe('submission-not-found')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return 404 when the requested journal does not exist', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmission
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // selectJournals
+                .mockReturnValueOnce({ rowCount: 0, rows: [] }) 
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 1
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                },
+                body: {
+                    userId: 2
+                }
+
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.postReviewers(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(404)
+                expect(error.type).toBe('journal-not-found')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return a 403 for non-member users', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 4
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                },
+                body: {
+                    userId: 2
+                }
+
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.postReviewers(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(403)
+                expect(error.type).toBe('not-authorized')
+            }
+
+            expect.hasAssertions()
+        })
+
+
+        it('should return 403 for reviewers attempting to assign someone other than themselves', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 3
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                },
+                body: {
+                    userId: 2
+                }
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.postReviewers(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(403)
+                expect(error.type).toBe('not-authorized')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return 200 for reviewers assigning themselves', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+                // insertJournalSubmissionReviewer
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 3
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                },
+                body: {
+                    userId: 3
+                }
+            }
+
+            const response = new Response()
+            await journalSubmissionController.postReviewers(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+        })
+
+        it('should return 200 when owners assign reviewers', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+                // insertJournalSubmissionReviewer
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 1
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                },
+                body: {
+                    userId: 3
+                }
+            }
+
+            const response = new Response()
+            await journalSubmissionController.postReviewers(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+        })
+
+        it('should return 200 when editors assign reviewers', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+                // insertJournalSubmissionReviewer
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 2
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1
+                },
+                body: {
+                    userId: 3
+                }
+            }
+
+            const response = new Response()
+            await journalSubmissionController.postReviewers(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+        })
+    })
+
+    describe('.deleteReviewer()', function() {
+
+        it('should return a 401 for non-authenticated users', async function() {
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {},
+                params: {
+                    journalId: 1,
+                    submissionId: 1,
+                    userId: 3
+                }
+                
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.deleteReviewer(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(401)
+                expect(error.type).toBe('not-authenticated')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return a 404 when the submission does not exist', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 1
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1,
+                    userId: 3
+                }
+
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.deleteReviewer(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(404)
+                expect(error.type).toBe('submission-not-found')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return 404 when the requested journal does not exist', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmission
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // selectJournals
+                .mockReturnValueOnce({ rowCount: 0, rows: [] }) 
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 1
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1,
+                    userId: 3
+                }
+
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.deleteReviewer(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(404)
+                expect(error.type).toBe('journal-not-found')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return a 403 for non-member users', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 4
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1,
+                    userId: 3
+                }
+
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.deleteReviewer(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(403)
+                expect(error.type).toBe('not-authorized')
+            }
+
+            expect.hasAssertions()
+        })
+
+
+        it('should return 403 for reviewers attempting to unassign someone other than themselves', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 3
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1,
+                    userId: 2
+                }
+            }
+
+            const response = new Response()
+            try {
+                await journalSubmissionController.deleteReviewer(request, response)
+            } catch (error) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toBe(403)
+                expect(error.type).toBe('not-authorized')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should return 200 for reviewers unassigning themselves', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+                // insertJournalSubmissionReviewer
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 3
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1,
+                    userId: 3
+                }
+            }
+
+            const response = new Response()
+            await journalSubmissionController.deleteReviewer(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+        })
+
+        it('should return 200 when owners unassign reviewers', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+                // insertJournalSubmissionReviewer
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 1
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1,
+                    userId: 3
+                }
+            }
+
+            const response = new Response()
+            await journalSubmissionController.deleteReviewer(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+        })
+
+        it('should return 200 when editors unassign reviewers', async function() {
+            core.database.query.mockReturnValue(undefined)
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
+                // insertJournalSubmissionReviewer
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                // selectJournalSubmissions
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+
+
+            const journalSubmissionController = new JournalSubmissionController(core)
+
+            const request = {
+                session: {
+                    user: {
+                        id: 2
+                    }
+                },
+                params: {
+                    journalId: 1,
+                    submissionId: 1,
+                    userId: 3
+                }
+            }
+
+            const response = new Response()
+            await journalSubmissionController.deleteReviewer(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+        })
+    })
 
 })

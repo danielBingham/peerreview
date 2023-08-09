@@ -134,12 +134,12 @@ module.exports = class JournalDAO {
 
     // ======= Journal Members ================================================
 
-    async insertJournalMember(journal, member) {
+    async insertJournalMember(journalId, member) {
         const results = await this.database.query(`
             INSERT INTO journal_members (journal_id, user_id, permissions, created_date, updated_date)
                 VALUES ($1, $2, $3, now(), now())
             `, 
-            [ journal.id, member.userId, member.permissions ]
+            [ journalId, member.userId, member.permissions ]
         )
 
         if ( results.rowCount <= 0 ) {
@@ -147,32 +147,30 @@ module.exports = class JournalDAO {
         }
     }
 
-    async updateJournalMember(journal, member) {
+    async updateJournalMember(journalId, member) {
         const results = await this.database.query(`
             UPDATE journal_members SET permissions = $1, updated_date = now()
                 WHERE journal_id = $2 AND user_id = $3
-        `, [ member.permissions, journal.id, member.userId ])
+        `, [ member.permissions, journalId, member.userId ])
 
         if ( results.rowCount <= 0 ) {
             throw new DAOError('failed-update', `Failed to update Member(${member.userId}) of Journal(${journal.id}).`)
         }
-
     }
 
     async updatePartialJournalMember(journal, member) {
         throw new DAOError('not-implemented', `Attempt to call updatePartialJournalMember() which isn't implemented.`)
     }
 
-    async deleteJournalMember(journal, member) {
+    async deleteJournalMember(journalId, userId) {
         const results = await this.database.query(`
             DELETE FROM journal_users WHERE journal_id = $1 AND user_id = $2
-        `, [ journal.id, member.userId ])
+        `, [ journalId, userId ])
 
         if ( results.rowCount <= 0 ) {
             throw new DAOError('failed-deletion', 
-                `Failed to delete Member(${member.userId}) from Journal(${journal.id}).`)
+                `Failed to delete Member(${member.userId}) from Journal(${journalId}).`)
         }
-
     }
 
 }
