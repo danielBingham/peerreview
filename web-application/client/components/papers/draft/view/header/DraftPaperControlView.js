@@ -135,7 +135,6 @@ const DraftPaperControlView = function(props) {
          contents = (
              <div className="author-controls">
                  <button onClick={uploadVersion}>Upload New Version</button>
-                 <button onClick={publishPaper}>Submit for Publication</button>
              </div>
         )
      }

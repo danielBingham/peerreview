@@ -134,12 +134,12 @@ module.exports = class TokenController {
         // Validation: 2. request.body.type must be 'reset-password'
         if ( tokenParams.type == 'reset-password' ) {
             // Validation: 1. A User with request.body.email must exist.
-            const users = await this.userDAO.selectUsers('WHERE email=$1', [ tokenParams.email ])
+            const userResults = await this.userDAO.selectUsers('WHERE email=$1', [ tokenParams.email ])
 
-            if ( users.length <= 0) {
+            if ( userResults.list.length <= 0) {
                 return response.status(200).json(null)
             }
-            const user = users[0]
+            const user = userResults.dictionary[userResults.list[0]]
 
             const token = this.tokenDAO.createToken(tokenParams.type)
             token.userId = user.id

@@ -142,13 +142,13 @@ module.exports = class AuthenticationController {
         try {
             const userId = await this.auth.authenticateUser(credentials)
 
-            const users = await this.userDAO.selectUsers('WHERE users.id = $1', [ userId ])
+            const userResults = await this.userDAO.selectUsers('WHERE users.id = $1', [ userId ])
 
-            if ( users.length <= 0 ) {
+            if ( ! userResults.dictionary[userId] ) {
                 throw new ControllerError(500, 'server-error', `Failed to find User(${userId}) after authenticating them!`)
             }
 
-            return response.status(200).json(users[0])
+            return response.status(200).json(userResults.dictionary[userId])
         } catch (error ) {
             if ( error instanceof backend.ServiceError ) {
                 if ( error.type == 'no-user' ) {
@@ -280,7 +280,7 @@ module.exports = class AuthenticationController {
             return response.status(200).json(responseBody)
         } else if ( request.session.user ) {
             throw new ControllerError(400, 'already-linked',
-                `User(${request.sesison.user.id}) attempting to link ORCID iD (${orcidId}) already connected to User(${orcidResults.rows[0].id}).`)
+                `User(${request.session.user.id}) attempting to link ORCID iD (${orcidId}) already connected to User(${orcidResults.rows[0].id}).`)
         }
 
 
