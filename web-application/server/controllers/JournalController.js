@@ -5,7 +5,7 @@
  *
  ******************************************************************************/
 
-const { JournalDAO, DAOError } = require('@danielbingham/peerreview-backend')
+const { JournalDAO, JournalSubmissionDAO, PaperDAO, UserDAO, DAOError } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -15,6 +15,125 @@ module.exports = class JournalController {
         this.core = core
 
         this.journalDAO = new JournalDAO(this.core)
+        this.journalSubmissionDAO = new JournalSubmissionDAO(this.core)
+        this.paperDAO = new PaperDAO(this.core)
+        this.userDAO = new UserDAO(this.core)
+    }
+
+    async getRelations(results, requestedRelations) {
+        const relations = {}
+
+        // Always get journal.members[].user
+
+        const userIds = []
+        for(const id of results.list) {
+            for(const member of results.dictionary[id].members) {
+                userIds.push(member.userId) 
+            }
+        }
+        const userResults = await this.userDAO.selectUsers('WHERE users.id = ANY($1::bigint[])', [ userIds ])
+        relations.users = userResults.dictionary
+
+        if ( requestedRelations ) {
+            // Query for the requested related objects.
+            for(const relation of requestedRelations) {
+                if ( relation == 'submissions') {
+                    const submissionResults = await this.journalSubmissionDAO.selectJournalSubmissions(
+                        'WHERE journal_submissions.journal_id = ANY($1::bigint[])',
+                        [ results.list ]
+                    )
+                    relations.submissions = submissionResults.dictionary
+
+                    const paperIds = []
+                    for(const submission of submissionResults.list) {
+                        if ( submission.paperId ) {
+                            paperIds.push(submission.paperId)
+                        }
+                    }
+                    const paperResults = await this.paperDAO.selectPapers('where papers.id = ANY($1::bigint[])', [ paperIds ])
+                    relations.papers = paperResults.dictionary
+                }
+            }
+        }
+        return relations
+    }
+
+    /**
+     * Parse a query string from the `GET /journals` endpoint for use with both
+     * `JournalDAO::selectJournals()` and `JournalDAO::countJournals()`.
+     *
+     * @param {Object} query    The query string (from `request.query`) that we
+     * wish to parse.
+     * @param {string} query.name   (Optional) A string to compare to journal's name for
+     * matches.  Compared using trigram matching.
+     * @param {int} query.page    (Optional) A page number indicating which page of
+     * results we want.  
+     * @param {string} query.sort (Optional) A sort parameter describing how we want
+     * to sort journals.
+     * @param {Object} options  A dictionary of options that adjust how we
+     * parse it.
+     * @param {boolean} options.ignorePage  Skip the page parameter.  It will
+     * still be in the result object and will default to `1`.
+     *
+     * @return {Object} A result object with the results in a form
+     * understandable to `selectJournals()` and `countJournals()`.  Of the following
+     * format:
+     * ```
+     * { 
+     *  where: 'WHERE ...', // An SQL where statement.
+     *  params: [], // An array of paramters matching the $1,$2, parameterization of `where`
+     *  page: 1, // A page parameter, to select which page of results we want.
+     *  order: '', // An SQL order statement.
+     *  emptyResult: false // When `true` we can skip the selectJournals() call,
+     *  // because we know we have no results to return.
+     * }
+     * ```
+     */
+    async parseQuery(query, options) {
+        options = options || {
+            ignorePage: false
+        }
+        
+        const result = {
+            where: 'WHERE',
+            params: [],
+            page: 1,
+            order: '',
+            emptyResult: false,
+            requestedRelations:  ( query.relations ? query.relations : [] )
+        }
+
+        let count = 0
+
+
+        if ( query.name && query.name.length > 0) {
+            count += 1
+            const and = count > 1 ? ' AND ' : ''
+            result.where += `${and} SIMILARITY(journals.name, $${count}) > 0`
+            result.params.push(query.name)
+            result.order = `SIMILARITY(journals.name, $${count}) desc`
+        }
+
+        if ( query.page && ! options.ignorePage ) {
+            result.page = query.page
+        } else if ( ! options.ignorePage ) {
+            result.page = 1
+        }
+
+        if ( query.sort == 'newest' ) {
+            result.order = 'journals.created_date desc'
+        } else if ( query.sort = 'alphabetical' ) {
+            result.order = 'journals.name asc'
+        }
+
+
+        // If we haven't added anything to the where clause, then clear it.
+        if ( result.where == 'WHERE') {
+            result.where = ''
+        }
+
+        return result
+
     }
 
     /**
@@ -23,14 +142,45 @@ module.exports = class JournalController {
      * Get a list of journals. 
      *
      * @param {Object} request  Standard Express request object.
-     * @param {Object} request.body Must be a valid `journal` object.
+     * @param {string} request.query.name   (Optional) A string to compare to
+     * journal's names for matches.  Compared using trigram matching.
+     * @param {int} request.query.page    (Optional) A page number indicating
+     * which page of results we want.  
+     * @param {string} request.query.sort (Optional) A sort parameter
+     * describing how we want to sort journals.
      * @param {Object} response Standard Express response object.
      *
      * @returns {Promise}   Resolves to void.
      */
     async getJournals(request, response) {
-        const { dictionary, list } = await this.journalDAO.selectJournals()
-        return response.status(200).json(list)
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * Anyone may call this endpoint.
+         * 
+         * **********************************************************/
+
+        const { where, params, order, page, emptyResult, requestedRelations} = await this.parseQuery(request.query)
+
+        if ( emptyResult ) {
+            return response.status(200).json({
+                meta: {
+                    count: 0,
+                    page: 1,
+                    pageSize: 1,
+                    numberOfPages: 1
+                }, 
+                result: [],
+                relations: {}
+            })
+        }
+
+        const results = await this.journalDAO.selectJournals(where, params, order, page)
+        results.meta = await this.journalDAO.countJournals(where, params, page)
+
+        results.relations = await this.getRelations(results, requestedRelations) 
+
+        return response.status(200).json(results)
     }
 
     /**
@@ -85,7 +235,7 @@ module.exports = class JournalController {
             journal.id = await journalTransactionDAO.insertJournal(journal)
 
             for(const member of journal.members) {
-                await journalTransactionDAO.insertJournalMember(journal, member)
+                await journalTransactionDAO.insertJournalMember(journal.id, member)
             }
            
             await client.query(`COMMIT`)
@@ -96,12 +246,14 @@ module.exports = class JournalController {
             client.release()
         }
 
-        const { dictionary, list } = await this.journalDAO.selectJournals('WHERE journals.id=$1', [ journal.id ])
-        if ( list.length <= 0 ) {
+        const results  = await this.journalDAO.selectJournals('WHERE journals.id=$1', [ journal.id ])
+
+        if (  ! results.dictionary[journal.id]) {
             throw new ControllerError(500, 'server-error', `Journal(${journal.id}) does not exist after creation!`)
-        } else {
-            return response.status(201).json(dictionary[journal.id])
-        }
+        } 
+            
+        const relations = await this.getRelations(results) 
+        return response.status(201).json({ entity: results.dictionary[journal.id], relations: relations })
     }
 
     /**
@@ -117,7 +269,7 @@ module.exports = class JournalController {
      * @returns {Promise}   Resolves to void.
      */
     async getJournal(request, response) {
-        const { dictionary, list } = await this.journalDAO.selectJournals('WHERE journals.id=$1', [ request.params.id ])
+        const results = await this.journalDAO.selectJournals('WHERE journals.id=$1', [ request.params.id ])
 
         /*************************************************************
          * Permissions Checking and Input Validation
@@ -126,12 +278,14 @@ module.exports = class JournalController {
          * 
          * **********************************************************/
 
-        if ( list.length <= 0 ) {
+        if ( ! results.dictionary[request.params.id] ) {
             throw new ControllerError(404, 'not-found',
                 `Journal(${request.params.id}) not found.`)
         }
 
-        return response.status(200).json(dictionary[request.params.id])
+        const relations = await this.getRelations(results, request.query.relations)
+
+        return response.status(200).json({ entity: results.dictionary[request.params.id], relations: relations })
     }
 
     /**
@@ -201,12 +355,13 @@ module.exports = class JournalController {
 
         await this.journalDAO.updatePartialJournal(journal)
 
-        const returnJournal  = await this.journalDAO.selectJournals('WHERE journals.id = $1', [ journal.id ])
-        if ( returnJournal.list.length <= 0 ) {
+        const results = await this.journalDAO.selectJournals('WHERE journals.id = $1', [ journal.id ])
+        if ( ! results.dictionary[journal.id] ) {
             throw new ControllerError(500, 'server-error', `Failed to find Journal(${journal.id}) after patching!`)
         }
 
-        return response.status(200).json(returnJournal.dictionary[journal.id])
+        const relations = await this.getRelations(results) 
+        return response.status(201).json({ entity: results.dictionary[journal.id], relations: relations })
     }
 
     /**
@@ -258,7 +413,7 @@ module.exports = class JournalController {
 
         await this.journalDAO.deleteJournal(existingJournal)
 
-        return response.status(200).send()
+        return response.status(200).json({ entity: { id: request.params.id } })
     }
 
     // ======= Journal Members ================================================
@@ -345,11 +500,16 @@ module.exports = class JournalController {
 
         const results = await this.journalDAO.selectJournals(`WHERE journals.id = $1`, [ journalId ])
 
-        if ( results.list.length <= 0 ) {
+        if ( ! results.dictionary[journalId] ) {
             throw new ControllerError(500, 'server-error', `Failed to find Journal(${journalID}) after adding new member.`)
         }
 
-        return response.status(200).json(results.dictionary[journalId])
+        const relations = await this.getRelations(results)
+
+        return response.status(200).json({ 
+            entity: results.dictionary[journalId],
+            relations: relations
+        })
     }
 
     /**
@@ -467,11 +627,16 @@ module.exports = class JournalController {
 
         const results = await this.journalDAO.selectJournals(`WHERE journals.id = $1`, [ journalId ])
 
-        if ( results.list.length <= 0 ) {
+        if ( ! results.dictionary[journalId] ) {
             throw new ControllerError(500, 'server-error', `Failed to find Journal(${journalID}) after adding new member.`)
         }
 
-        return response.status(200).json(results.dictionary[journalId])
+        const relations = await this.getRelations(results)
+
+        return response.status(200).json({ 
+            entity: results.dictionary[journalId],
+            relations: relations
+        })
     }
 
     /**
@@ -556,10 +721,15 @@ module.exports = class JournalController {
 
         const results = await this.journalDAO.selectJournals(`WHERE journals.id = $1`, [ journalId ])
 
-        if ( results.list.length <= 0 ) {
+        if ( ! results.dictionary[journalId] ) {
             throw new ControllerError(500, 'server-error', `Failed to find Journal(${journalID}) after adding new member.`)
         }
 
-        return response.status(200).json(results.dictionary[journalId])
+        const relations = await this.getRelations(results)
+
+        return response.status(200).json({ 
+            entity: results.dictionary[journalId],
+            relations: relations
+        })
     }
 }

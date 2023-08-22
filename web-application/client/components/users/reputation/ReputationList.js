@@ -70,7 +70,7 @@ const ReputationList = function(props) {
         if ( reputations && reputations.results ) {
             const reputationViews = []
             for ( const reputation of reputations.results) {
-                reputationViews.push(<div key={ reputation.field.id } className="reputation"><Field field={ reputation.field } /> { parseInt(reputation.reputation).toLocaleString() } </div>)
+                reputationViews.push(<div key={ reputation.field.id } className="reputation"><Field id={ reputation.field.id } /> { parseInt(reputation.reputation).toLocaleString() } </div>)
             }
 
             if ( reputationViews.length > 0 ) {
@@ -98,7 +98,7 @@ const ReputationList = function(props) {
             <ListGridContent>
                 {content}
             </ListGridContent>
-            <PaginationControls  prefix={'reputation'} counts={meta} /> 
+            <PaginationControls  prefix={'reputation'} meta={meta} /> 
         </List>
     )
 

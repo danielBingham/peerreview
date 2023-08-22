@@ -153,7 +153,7 @@ module.exports = function(core) {
 
     /**************************************************************************
      *  Reputation Routes 
-     **************************************************************************/
+     **************************************************************************
 
     const ReputationController = require('./controllers/ReputationController')
     const reputationController = new ReputationController(core)
@@ -200,7 +200,7 @@ module.exports = function(core) {
 
     /****************************************************************
      * Reputation Administration Methods
-     ****************************************************************/
+     ****************************************************************
 
     // NOTE: These are here for testing and development purposes only.
     // TODO Remove before we go to production.  (Or formalize into a
@@ -479,6 +479,16 @@ module.exports = function(core) {
     })
 
     /**************************************************************************
+     * Paper Submission REST Routes
+     **************************************************************************/
+
+    router.get('/paper/:paperId/submissions', function(request, response, next) {
+        paperController.getPaperSubmissions(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    /**************************************************************************
      *      Paper Review REST Routes
      *************************************************************************/
 
@@ -741,13 +751,6 @@ module.exports = function(core) {
     })
 
     // ======= Journal Submission Reviewers ====================================
-    // These are the submission reviewer assignees.
-
-    router.get('/journal/:journalId/submission/:submissionId/reviewers', function(request, response, next) {
-        journalSubmissionController.getReviewers(request, response).catch(function(error) {
-            next(error)
-        })
-    })
 
     router.post('/journal/:journalId/submission/:submissionId/reviewers', function(request, response, next) {
         journalSubmissionController.postReviewers(request, response).catch(function(error) {
@@ -755,26 +758,22 @@ module.exports = function(core) {
         })
     })
 
-    router.get('/journal/:journalId/submission/:submissionId/reviewers/:userId', function(request, response, next) {
-        journalSubmissionController.getReviewer(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.put('/journal/:journalId/submission/:submissionId/reviewers/:userId', function(request, response, next) {
-        journalSubmissionController.putReviewer(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.patch('/journal/:journalId/submission/:submissionId/reviewers/:userId', function(request, response, next) {
-        journalSubmissionController.patchReviewer(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.delete('/journal/:journalId/submission/:submissionId/reviewers/:userId', function(request, response, next) {
+    router.delete('/journal/:journalId/submission/:submissionId/reviewer/:userId', function(request, response, next) {
         journalSubmissionController.deleteReviewer(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    // ======= Journal Submission Editors ====================================
+
+    router.post('/journal/:journalId/submission/:submissionId/editors', function(request, response, next) {
+        journalSubmissionController.postEditors(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.delete('/journal/:journalId/submission/:submissionId/editor/:userId', function(request, response, next) {
+        journalSubmissionController.deleteEditor(request, response).catch(function(error) {
             next(error)
         })
     })

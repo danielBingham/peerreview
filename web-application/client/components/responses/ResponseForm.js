@@ -67,31 +67,40 @@ const ResponseForm = function(props) {
     let error = null
     if ( lengthError ) {
         error = (
-            <span className="length-error">You must submit a response of at least 250 words in order to vote.</span>
+            <span className="length-error">You must submit a response of at least 250 words in order to endorse.</span>
         )
     }
 
     let length = content.split(/\s/).length - 1
     let wordsLeft = (
-        <span className="words-left">You have entered { length } of 125 words required to submit a vote with this response.</span>
+        <span className="words-left">You have entered { length } of 125 words required to submit an endorsement with this response.</span>
     )
+
+    let voteView = ''
+    if (vote == 1 ) {
+        voteView = 'Endorsed'
+    } else if ( vote == -1 ) {
+        voteView = 'Refuted'
+    } else {
+        voteView = 'Neutral'
+    }
 
     return (
         <div className="paper-response-form">
             <div className="vote-widget">
-                <div 
-                    className={ vote == 1 ? 'vote-button vote-up highlight' : 'vote-button vote-up' } 
+                <button
                     onClick={(e) => vote == 1 ? setVote(0) : setVote(1)} 
                 >
-                </div> 
-                <div className="vote-text">
-                    Vote
+                    Endorse
+                </button>
+                <div>
+                    { voteView }            
                 </div>
-                <div 
-                    className={ vote == -1 ? 'vote-button vote-down highlight' : 'vote-button vote-down' } 
+                <button
                     onClick={(e) => vote == -1 ? setVote(0) : setVote(-1) } 
                 >
-                </div> 
+                    Refute
+                </button> 
             </div>
             <div className="response-wrapper">
                 <div className="error"> { error } </div>

@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { getReviews, clearList, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
-import DraftPaperHeader from './header/DraftPaperHeader'
 import ReviewHeaderView from '/components/reviews/widgets/ReviewHeaderView'
 import DraftPaperPDFView from './pdf/DraftPaperPDFView'
 
@@ -63,7 +62,6 @@ const DraftPaperView = function({ id, versionNumber, tab }) {
     if ( reviewsRequest && reviewsRequest.state == 'fulfilled') {
         return (
             <div id={`paper-${id}`} className="draft-paper">
-                <DraftPaperHeader id={id} tab={tab} versionNumber={versionNumber} />
                 <ReviewHeaderView paperId={id} versionNumber={versionNumber} />
                 <DraftPaperPDFView paperId={id} versionNumber={versionNumber} />
             </div>

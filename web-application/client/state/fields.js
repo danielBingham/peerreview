@@ -1,7 +1,16 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import logger from '../logger'
+import setRelationsInState from './helpers/relations'
+
+import {
+    setInDictionary,
+    removeEntity,
+    makeQuery,
+    setQueryResults,
+    clearQuery,
+    clearQueries
+} from './helpers/state'
 
 import { 
     makeSearchParams,
@@ -58,71 +67,15 @@ export const fieldsSlice = createSlice({
 
     },
     reducers: {
-        /**
-         * Add fields to the dictionary, or update fields already in the
-         * dictionary.
-         *
-         * Also adds the parents and children, linking them to their parents
-         * and children where possible.
-         *
-         * @param {object} state    The redux state slice.
-         * @param {object} action   The redux action we're reducing.
-         * @param {object} action   The action payload to be reduced, in this
-         * case a list of field objects to be added to the store.
-         */
-        setFieldInDictionary: function(state, action) {
-            const field = action.payload
-            state.dictionary[field.id] = field
-        },
+        // ======== State Manipulation Helpers ================================
+        // @see ./helpers/state.js
 
-        removeField: function(state, action) {
-            const field = action.payload
-            delete state.dictionary[field.id]
-        },
-
-        addFieldsToDictionary: function(state, action) {
-            const fields = action.payload
-            if ( fields && Array.isArray(fields)) {
-                for ( const field of fields) {
-                    state.dictionary[field.id] = field
-                }
-            } else if (fields ) {
-                state.dictionary[fields.id] = fields
-            }
-        },
-
-        makeQuery: function(state, action) {
-            const name = action.payload.name
-
-            state.queries[name] = {
-                meta: {
-                    page: 1,
-                    count: 0,
-                    pageSize: 1,
-                    numberOfPages: 1
-                },
-                list: [] 
-            }
-        },
-
-        setQueryResults: function(state, action) {
-            const name = action.payload.name
-            const meta = action.payload.meta
-            const result = action.payload.result
-
-            state.queries[name].meta = meta
-            state.queries[name].list = result
-        },
-
-        clearQuery: function(state, action) {
-            const name = action.payload.name
-
-            if ( state.queries[name] ) {
-                delete state.queries[name]
-            }
-        },
-
-
+        setFieldsInDictionary: setInDictionary,
+        removeField: removeEntity,
+        makeFieldQuery: makeQuery,
+        setFieldQueryResults: setQueryResults,
+        clearFieldQuery: clearQuery,
+        clearFieldQueries: clearQueries,
 
         // ========== Request Tracking Methods =============
 
@@ -154,23 +107,16 @@ export const getFields = function(name, params) {
         const queryString = makeSearchParams(params)
         const endpoint = '/fields' + ( params ? '?' + queryString.toString() : '')
 
-        dispatch(fieldsSlice.actions.makeQuery({ name: name }))
+        dispatch(fieldsSlice.actions.makeFieldQuery({ name: name }))
 
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'GET', endpoint, null,
-            function(responseBody) {
-                const resultIds = []
-                if ( responseBody.result.length > 0 ) {
-                    for(const field of responseBody.result) {
-                        resultIds.push(field.id)
-                        dispatch(fieldsSlice.actions.setFieldInDictionary(field))
-                    }
-                }
-                dispatch(fieldsSlice.actions.setQueryResults({ 
-                    name: name, 
-                    meta: responseBody.meta,
-                    result: resultIds 
-                }))
+            function(response) {
+                dispatch(fieldsSlice.actions.setFieldsInDictionary({ dictionary: response.dictionary}))
+
+                dispatch(fieldsSlice.actions.setFieldQueryResults({ name: name, meta: response.meta, list: response.list }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
 
@@ -196,8 +142,10 @@ export const postFields = function(field) {
         dispatch(fieldsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'POST', endpoint, body,
-            function(returnedField) {
-                dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
+            function(response) {
+                dispatch(fieldsSlice.actions.setFieldsInDictionary({ entity: response.entity}))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -220,8 +168,10 @@ export const getField = function(id) {
     return function(dispatch, getState) {
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'GET', `/field/${id}`, null,
-            function(field) {
-                dispatch(fieldsSlice.actions.setFieldInDictionary(field))
+            function(response) {
+                dispatch(fieldsSlice.actions.setFieldsInDictionary({ entity: response.entity}))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -244,8 +194,10 @@ export const putField = function(field) {
         dispatch(fieldsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'PUT', `/field/${field.id}`, field,
-            function(returnedField) {
-                dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
+            function(response) {
+                dispatch(fieldsSlice.actions.setFieldsInDictionary({ entity: response.entity}))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -268,8 +220,10 @@ export const patchField = function(field) {
         dispatch(fieldsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'PATCH', `/field/${field.id}`, field,
-            function(returnedField) {
-                dispatch(fieldsSlice.actions.setFieldInDictionary(returnedField))
+            function(response) {
+                dispatch(fieldsSlice.actions.setFieldsInDictionary({ entity: response.entity}))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -293,7 +247,7 @@ export const deleteField = function(field) {
         return makeTrackedRequest(dispatch, getState, fieldsSlice,
             'DELETE', `/field/${field.id}`, null,
             function(response) {
-                dispatch(fieldsSlice.actions.removeField(field))
+                dispatch(fieldsSlice.actions.setFieldsInDictionary({ entity: response.entity}))
             }
         )
     }
@@ -301,8 +255,8 @@ export const deleteField = function(field) {
 
 
 export const { 
-    setFieldInDictionary, removeField, addFieldsToDictionary,
-    makeQuery, clearQuery, setQueryResults,
+    setFieldsInDictionary, removeField, 
+    makeFieldQuery, clearFieldQuery, setFieldQueryResults,
     cleanupRequest 
 }  = fieldsSlice.actions
 

@@ -18,6 +18,14 @@ module.exports = class FieldController {
     }
 
     /**
+     * Get related entities.  Currently a no-op as no related entities have
+     * been implemented.
+     */
+    async getRelations(results, requestedRelations) {
+        return {}
+    }
+
+    /**
      * Helper method.
      *
      * Build a query object from the query string that can be used with both
@@ -66,6 +74,7 @@ module.exports = class FieldController {
             params: [],
             page: 1,
             order: '',
+            requestedRelations: query.relations ? query.relations : [],
             emptyResult: false
         }
 
@@ -148,7 +157,7 @@ module.exports = class FieldController {
          * Any user may call this endpoint.  
          * 
          * ********************************************************************/
-        const { where, params, order, page, emptyResult } = await this.parseQuery(request.query)
+        const { where, params, order, page, emptyResult, requestedRelations } = await this.parseQuery(request.query)
 
         if ( emptyResult ) {
             return response.status(200).json({
@@ -158,16 +167,18 @@ module.exports = class FieldController {
                     pageSize: 1,
                     numberOfPages: 1
                 }, 
-                result: []
+                dictionary: {},
+                list: [],
+                relations: {}
             })
         }
         
-        const meta = await this.fieldDAO.countFields(where, params, page)
-        const fields = await this.fieldDAO.selectFields(where, params, order, page)
-        return response.status(200).json({
-            meta: meta,
-            result: fields
-        })
+        const results = await this.fieldDAO.selectFields(where, params, order, page)
+        results.meta = await this.fieldDAO.countFields(where, params, page)
+
+        results.relations = await this.getRelations(results, requestedRelations)
+
+        return response.status(200).json(results)
     }
 
     /**
@@ -228,13 +239,18 @@ module.exports = class FieldController {
          * Any user may call this endpoint.  
          * 
          * ********************************************************************/
-        const returnFields = await this.fieldDAO.selectFields('WHERE fields.id = $1', [request.params.id])
+        const results = await this.fieldDAO.selectFields('WHERE fields.id = $1', [request.params.id])
 
-        if ( returnFields.length <= 0 ) {
+        if ( results.length <= 0 ) {
             throw new ControllerError(404, 'no-resource', `Failed to find Field(${request.params.id})`)
         }
 
-        return response.status(200).json(returnFields[0])
+        const relations = await this.getRelations(results)
+
+        return response.status(200).json({ 
+            entity: results.list[0],
+            relations: relations
+        })
     }
 
     /**

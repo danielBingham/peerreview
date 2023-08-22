@@ -49,25 +49,25 @@ module.exports = class FieldDAO {
      * @return {Object[]}   The data parsed into one or more objects.
      */
     hydrateFields(rows) {
-        const fields = {}
+        const dictionary = {}
         const list = []
 
         for(const row of rows) {
             const field = this.hydrateField(row)
 
-            if ( ! fields[field.id] ) {
-                fields[field.id] = field
+            if ( ! dictionary[field.id] ) {
+                dictionary[field.id] = field
                 list.push(field)
             }
         }
 
-        return list 
+        return { dictionary: dictionary, list: list } 
     }
 
-    async selectFields(where, params, order, page) {
-        params = params ? params : []
-        where = where ? where : ''
-        order = order ? order : 'fields.depth asc, fields.name asc'
+    async selectFields(whereStatement, parameters, orderStatement, page) {
+        const params = parameters ? [ ...parameters ] : []
+        let where = whereStatement ? whereStatement : ''
+        let order = orderStatement ? orderStatement : 'fields.depth asc, fields.name asc'
 
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we
@@ -101,7 +101,7 @@ module.exports = class FieldDAO {
         return this.hydrateFields(results.rows)
     }
 
-    async countFields(where, params) {
+    async countFields(where, params, page) {
         params = params ? params : []
         where = where ? where : ''
 
@@ -117,6 +117,7 @@ module.exports = class FieldDAO {
         if ( results.rows.length <= 0) {
             return {
                 count: 0,
+                page: page ? page : 1,
                 pageSize: PAGE_SIZE,
                 numberOfPages: 1
             }
@@ -125,6 +126,7 @@ module.exports = class FieldDAO {
         const count = results.rows[0].count
         return {
             count: count,
+            page: page ? page : 1,
             pageSize: PAGE_SIZE,
             numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
         }

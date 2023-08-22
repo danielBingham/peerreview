@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 
 import { postJournals, cleanupRequest } from '/state/journals'
 
-import SelectCoEditorsWidget from '/components/journals/widgets/SelectCoEditorsWidget'
+import AddJournalMembersWidget from '/components/journals/widgets/AddJournalMembersWidget'
 import Spinner from '/components/Spinner'
 
 import './CreateJournalForm.css'
@@ -19,11 +19,11 @@ const CreateJournalForm = function(props) {
     // ================ Render State ================================
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
-    const [editors, setEditors] = useState([])
+    const [members, setMembers] = useState([])
 
     const [nameError, setNameError] = useState(null)
     const [descriptionError, setDescriptionError] = useState(null)
-    const [editorsError, setEditorsError] = useState(null)
+    const [membersError, setMembersError] = useState(null)
 
     // ================== Request Tracking ====================================
     
@@ -63,19 +63,19 @@ const CreateJournalForm = function(props) {
             }
         }
 
-        if ( ! formFieldName || formFieldName == 'editors' ) {
-            if ( editors.length <= 0 ) {
-                setEditorsError('no-editors')
+        if ( ! formFieldName || formFieldName == 'members' ) {
+            if ( members.length <= 0 ) {
+                setMembersError('no-members')
             }
 
             let haveOwner = false
-            for(const editor of editors ) {
-                if ( editor.permissions == 'owner' ) {
+            for(const member of members ) {
+                if ( member.permissions == 'owner' ) {
                     haveOwner = true
                 }
             }
             if ( ! haveOwner ) {
-                setEditorsError('no-owner')
+                setMembersError('no-owner')
             }
 
         }
@@ -100,7 +100,7 @@ const CreateJournalForm = function(props) {
         const journal = {
             name: name,
             description: description,
-            editors: editors
+            members: members
         }
         setPostJournalsRequestId(dispatch(postJournals(journal)))
 
@@ -111,16 +111,16 @@ const CreateJournalForm = function(props) {
     // ================= Effect Handling =======================
     
     useLayoutEffect(function() {
-        const newEditors = [ {
+        const newMembers = [ {
             userId: currentUser.id,
             permissions: 'owner'
         }]
-        setEditors(newEditors)
+        setMembers(newMembers)
     }, [])
 
     useEffect(function() {
         if ( postJournalsRequest && postJournalsRequest.state == 'fulfilled') {
-            const path = "/journal/" + postJournalsRequest.result.id
+            const path = "/journal/" + postJournalsRequest.result.entity.id
             navigate(path)
         }
     }, [ postJournalsRequest] )
@@ -187,7 +187,7 @@ const CreateJournalForm = function(props) {
                     />
                 </div>
 
-                <SelectCoEditorsWidget editors={editors} setEditors={setEditors} />
+                <AddJournalMembersWidget members={members} setMembers={setMembers} />
 
                 { requestError }
                 <div className="submit field-wrapper">

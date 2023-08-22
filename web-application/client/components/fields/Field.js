@@ -106,6 +106,8 @@ const colors = {
 const Field = function(props) {
 
 
+    // ======= Request Tracking =====================================
+    
     const [ requestId, setRequestId ] = useState(null)
     const request = useSelector(function(state) {
         if ( requestId ) {
@@ -115,6 +117,8 @@ const Field = function(props) {
         }
     })
 
+    // ======= Redux State ==========================================
+    
     let field = useSelector(function(state) {
         if ( props.id ) {
             return state.fields.dictionary[props.id]
@@ -123,11 +127,8 @@ const Field = function(props) {
         }
     })
 
-    if ( props.field ) {
-        field = props.field
-    }
-
     // ======= Actions and Event Handling ===========================
+   
     const dispatch = useDispatch()
 
     /**

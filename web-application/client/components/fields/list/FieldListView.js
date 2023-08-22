@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 
 import FieldBadge from '../FieldBadge'
-import { getFields, clearQuery, cleanupRequest } from '/state/fields'
+import { getFields, clearFieldQuery, cleanupRequest } from '/state/fields'
 
 import Spinner from '/components/Spinner'
 import List from '/components/generic/list/List'
@@ -47,9 +47,9 @@ const FieldListView = function(props) {
         }
 
         const fields = []
-        for ( const id of state.fields.queries[title].list) {
-            if ( state.fields.dictionary[id] ) {
-                fields.push(state.fields.dictionary[id])
+        for ( const field of state.fields.queries[title].list) {
+            if ( state.fields.dictionary[field.id] ) {
+                fields.push(state.fields.dictionary[field.id])
             }
         }
         return fields
@@ -134,7 +134,7 @@ const FieldListView = function(props) {
             <ListGridContent>
                 {content}
             </ListGridContent>
-            <PaginationControls prefix={title} counts={meta} />
+            <PaginationControls prefix={title} meta={meta} />
         </List>
     )
 }

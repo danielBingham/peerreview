@@ -66,7 +66,6 @@ const DraftPaperReviewsView = function(props) {
     if ( reviewsRequest && reviewsRequest.state == 'fulfilled') {
         return (
             <div id={`paper-${props.paperId}-reviews`} className="draft-paper-reviews">
-                <DraftPaperHeader id={props.paperId} tab={props.tab} versionNumber={props.versionNumber} />
                 <ReviewList paperId={props.paperId} versionNumber={props.versionNumber} />
             </div>
         )

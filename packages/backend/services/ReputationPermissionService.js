@@ -136,7 +136,7 @@ module.exports = class ReputationPermissionService {
         }
 
         const fieldIds = paper.fields.map((f) => f.id)
-        const authorIds = paper.authors.map((a) => a.user.id)
+        const authorIds = paper.authors.map((a) => a.userId)
 
         // Must be an author to publish a paper.
         if ( ! authorIds.find((aid) => aid == userId) ) {

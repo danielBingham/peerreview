@@ -1,0 +1,32 @@
+.submission {
+    padding: 10px;
+    background-color: #f0f3f5;
+    border-top: thin solid #D3D9DE;
+    border-bottom: thin solid #D3D9DE;
+}
+.submission .grid-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.submission .date {
+    padding: 5px 0 10px 0;
+    grid-column: 1/2;
+}
+.submission .status {
+    padding: 5px 0 10px 0;
+    grid-column: 2/3;
+    text-align: left;
+}
+.submission .grid-wrapper .editors {
+    grid-column: 3/4;
+}
+.submission .grid-wrapper .assigned-editors {
+    padding: 10px;
+}
+.submission .grid-wrapper .reviewers {
+    grid-column: 4/5;
+    text-align: left;
+}
+.submission .grid-wrapper .reviewers .assigned-reviewers {
+    padding: 10px;
+}

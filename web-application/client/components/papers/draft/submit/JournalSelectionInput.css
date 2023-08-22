@@ -1,0 +1,26 @@
+.journals-input .journal-suggestions {
+    position: relative;
+    padding: 10px;
+    border: thin solid var(--main-border-color);
+    box-shadow: 2px 2px 2px #666;
+}
+.journals-input .journals {
+    padding: 10px 0;
+}
+.journals-input h3 {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+.journals-input .journal-suggestions .journal-suggestion {
+    padding: 10px;
+}
+.journals-input .journal-suggestions .journal-suggestion:hover, .journals-input .journal-suggestions .journal-suggestion.highlighted {
+    background-color: #dfdfdf;
+}
+.journals-input .error {
+    padding: 10px;
+}

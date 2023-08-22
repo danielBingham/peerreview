@@ -2,10 +2,14 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { EllipsisVerticalIcon } from '@heroicons/react/24/solid'
+import { CheckCircleIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, XCircleIcon } from '@heroicons/react/24/outline'
+
+import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/reviews/timeline/Timeline'
 
 import ReviewSummaryForm from '/components/reviews/widgets/ReviewSummaryForm'
 import ReviewSummaryView from '/components/reviews/widgets/ReviewSummaryView'
 import CommentThreadView from './CommentThreadView'
+import UserProfileImage from '/components/users/UserProfileImage'
 
 import Spinner from '/components/Spinner'
 
@@ -23,6 +27,14 @@ const ReviewView = function({ id, paperId, versionNumber }) {
         }
 
         return state.reviews.dictionary[paperId][id]
+    })
+
+    const user = useSelector(function(state) {
+        if ( ! review || ! state.users.dictionary[review.userId]) {
+            return null
+        } else {
+            return state.users.dictionary[review.userId]
+        }
     })
 
     const pages = []
@@ -48,10 +60,30 @@ const ReviewView = function({ id, paperId, versionNumber }) {
         )
     }
 
+    let timelineIcon = null
+    if ( review.recommendation == 'commentary' ) {
+        timelineIcon = (<div className="commentary"><ChatBubbleLeftRightIcon /></div>)
+    } else if ( review.recommendation == 'approve' ) {
+        timelineIcon = (<div className="approved"> <CheckCircleIcon /></div>)
+    } else if ( review.recommendation == 'request-changes' ) {
+        timelineIcon = (<div className="request-changes"><ClipboardDocumentListIcon /></div>)
+    } else if ( review.recommendation == 'reject' ) {
+        timelineIcon = (<div className="rejected"><XCircleIcon /></div>)
+    }
+
     return (
         <div id={`review-${id}`} className="review-view">
-            { summary }
-            { commentThreadViews }
+            <TimelineItem>
+                <TimelineIcon>
+                    { timelineIcon } 
+                </TimelineIcon>
+                <TimelineItemWrapper>
+                    <div className="review-view-summary-wrapper">
+                        { summary }
+                    </div>
+                    { commentThreadViews }
+                </TimelineItemWrapper>
+            </TimelineItem>
         </div>
     )
 

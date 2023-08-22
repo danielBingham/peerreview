@@ -1,0 +1,9 @@
+.assignment-widget {
+}
+.assignment-widget .assigned-member svg.check {
+    display: inline-block;
+    width: 14px;
+}
+.assignment-widget .assigned-members {
+    padding: 20px 0;
+}

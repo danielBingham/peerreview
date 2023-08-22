@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getUsers, clearQuery, cleanupRequest } from '/state/users'
+import { getUsers, clearUserQuery, cleanupRequest } from '/state/users'
 
 import UserInvite from '/components/users/input/UserInvite'
 import Spinner from '/components/Spinner'
@@ -43,7 +43,7 @@ const UserInput = function(props) {
         }
         
         const users = []
-        for( const id of state.users.queries['UserInput'].result ) {
+        for( const id of state.users.queries['UserInput'].list) {
             users.push(state.users.dictionary[id])
         }
         return users
@@ -57,7 +57,7 @@ const UserInput = function(props) {
      * Clear the suggestions list.
      */
     const clearSuggestions = function() {
-        dispatch(clearQuery({ name: 'UserInput'}))
+        dispatch(clearUserQuery({ name: 'UserInput'}))
         setHighlightedSuggestion(0)
         setRequestId(null)
     }
@@ -81,7 +81,7 @@ const UserInput = function(props) {
         timeoutId.current = setTimeout(function() {
             if ( name.length > 0) {
                 if ( ! requestId ) {
-                    dispatch(clearQuery({ name: 'UserInput' }))
+                    dispatch(clearUserQuery({ name: 'UserInput' }))
                     setRequestId(dispatch(getUsers('UserInput', {name: name})))
                 } else if( request && request.state == 'fulfilled') {
                     clearSuggestions()
@@ -185,7 +185,7 @@ const UserInput = function(props) {
 
     // Clear the user list on mount.  
     useLayoutEffect(function() {
-        dispatch(clearQuery({ name: 'UserInput' }))
+        dispatch(clearUserQuery({ name: 'UserInput' }))
     }, [])
 
     // Make sure the highlightedSuggestion is never outside the bounds of the

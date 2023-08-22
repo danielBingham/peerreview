@@ -3,13 +3,15 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
 
-import { postPapers, setDraft, cleanupRequest as cleanupPapersRequest } from '/state/papers'
+import { postPapers, cleanupRequest as cleanupPapersRequest } from '/state/papers'
+import { postJournalSubmissions, cleanupRequest as cleanupSubmissionRequest } from '/state/journalSubmissions'
 
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 import SelectCoAuthorsWidget from './SelectCoAuthorsWidget'
 import FieldsInput from '/components/fields/FieldsInput'
 import FileUploadInput from '/components/files/FileUploadInput' 
+import JournalSelectionInput from './JournalSelectionInput'
 import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
 
@@ -27,11 +29,15 @@ const SubmitDraftForm = function(props) {
     const [fields, setFields] = useState([])
     const [file, setFile] = useState(null)
     const [authors, setAuthors] = useState([])
+    const [showPreprint, setShowPreprint] = useState(false)
+    const [journal, setJournal] = useState(null)
 
     const [titleError, setTitleError] = useState(null)
     const [fieldsError, setFieldsError] = useState(null)
     const [fileError, setFileError] = useState(null)
     const [authorsError, setAuthorsError] = useState(null)
+    const [preprintError, setPreprintError] = useState(null)
+    const [journalError, setJournalError ] = useState(null)
 
     // ================== Request Tracking ====================================
     
@@ -43,6 +49,16 @@ const SubmitDraftForm = function(props) {
             return null
         }
     })
+
+    const [postJournalSubmissionsRequestId, setPostJournalSubmissionRequestId] = useState(null)
+    const postJournalSubmissionsRequest = useSelector(function(state) {
+        if ( postJournalSubmissionsRequestId) {
+            return state.journalSubmissions.requests[postJournalSubmissionsRequestId]
+        } else {
+            return null
+        }
+    })
+
 
     // ================= Redux State ================================================
     
@@ -98,6 +114,14 @@ const SubmitDraftForm = function(props) {
             }
         }
 
+        if ( ! name || name == 'showPreprint' ) {
+            if (  showPreprint !== false && showPreprint !== true ) {
+                setPreprintError('invalid-value')
+            } else {
+                setPreprintError(null)
+            }
+        }
+
         return ! error
     }
 
@@ -118,6 +142,7 @@ const SubmitDraftForm = function(props) {
         const paper = {
             title: title,
             isDraft: true,
+            showPreprint: showPreprint,
             fields: fields,
             authors: authors,
             versions: [
@@ -125,8 +150,8 @@ const SubmitDraftForm = function(props) {
                     file: file
                 }
             ]
-
         }
+
         setPostPapersRequestId(dispatch(postPapers(paper)))
 
         return false
@@ -141,9 +166,10 @@ const SubmitDraftForm = function(props) {
             // author to not be first author, or for authors to be re-ordered
             // easily.  But it is not this day.
             const author = {
-                user: currentUser,
+                userId: currentUser.id,
                 order: 1,
-                owner: true
+                owner: true,
+                submitter: true
             }
             setAuthors([ author ])
         }
@@ -151,11 +177,22 @@ const SubmitDraftForm = function(props) {
 
     useEffect(function() {
         if ( postPapersRequest && postPapersRequest.state == 'fulfilled') {
-            const path = "/draft/" + postPapersRequest.result.id
-            navigate(path)
+            if ( ! journal ) {
+                const path = "/draft/" + postPapersRequest.result.entity.id
+                navigate(path)
+            } else {
+                setPostJournalSubmissionRequestId(dispatch(postJournalSubmissions(journal.id, { paperId: postPapersRequest.result.entity.id })))
+            }
         }
 
     }, [ postPapersRequest] )
+
+    useEffect(function() {
+        if ( postJournalSubmissionsRequest && postJournalSubmissionsRequest.state == 'fulfilled') {
+            const path = `/draft/${postPapersRequest.result.entity.id}`
+            navigate(path)
+        }
+    }, [ postJournalSubmissionsRequest ])
 
     useEffect(function() {
         return function cleanup() {
@@ -171,25 +208,6 @@ const SubmitDraftForm = function(props) {
     let requestError = null 
     if ( postPapersRequest && postPapersRequest.state == 'failed') {
         let errorContent = 'Something went wrong.' 
-        if ( postPapersRequest.error == 'not-authorized:reputation' ) {
-            if ( ! postPapersRequest.errorData.missingFields ) {
-                throw new Error('Missing data for error.')
-            } else {
-
-                const missingFieldViews = []
-                for ( const fieldId of postPapersRequest.errorData.missingFields ) {
-                    missingFieldViews.push(<span key={fieldId} className="missing-field"><Field id={fieldId} /></span>)
-                }
-                errorContent = (
-                    <>
-                        <ExclamationTriangleIcon />
-                        <p>No author has enough reputation to publish in the following fields:</p> 
-                        {missingFieldViews}
-                        <p>Please either add an author with enough reputation to publish, or remove the fields in question.</p>
-                    </>
-                )
-            }
-        }
 
         requestError = (
             <div className="overall-error">
@@ -203,6 +221,7 @@ const SubmitDraftForm = function(props) {
     let fieldsErrorView = null
     let authorsErrorView = null
     let fileErrorView = null
+    let preprintErrorView = null
 
     if ( titleError && titleError == 'no-title' ) {
         titleErrorView = ( <div className="error">Must include a title.</div> )
@@ -220,6 +239,10 @@ const SubmitDraftForm = function(props) {
         authorsErrorView = ( <div className="error">Must select at least one author.</div> )
     }
 
+    if ( preprintError && preprintError == 'invalid-value' ) {
+        preprintErrorView = ( <div className="error">Show Preprint must be either "yes" or "no".</div> )
+    }
+
 
     let spinning = null
     if ( postPapersRequest && postPapersRequest.state == 'pending') {
@@ -232,7 +255,7 @@ const SubmitDraftForm = function(props) {
             <form onSubmit={onSubmit}>
 
                 <div className="title field-wrapper">
-                    <label htmlFor="title">Title</label>
+                    <h3>Title</h3>
                     <div className="explanation">Enter the title of your paper. It should match the title you use in the document.</div>
                     <input type="text" 
                         name="title" 
@@ -248,7 +271,7 @@ const SubmitDraftForm = function(props) {
                     fields={fields} 
                     setFields={setFields} 
                     title="Fields"
-                    explanation={`Enter up to five fields, subfields, or areas you believe your paper is relevant to, eg. "biology", "chemistry", or "microbiology.`}
+                    explanation={`Select tags from the taxonomy to categorize your paper.  You may select as many as you think appropriate. The taxonomy is heirarchical. At the top are the major disciplines (eg. biology, art, philosophy).  As you travel down there are sub-disciplines, topics, concepts, and keywords.  You can tag your paper from any layer(s) of the hierarchy.  This will help identify appropriate reviewers and also help interested readers discover your paper. Start typing to view suggestions.`}
                 />
                 { fieldsErrorView }
 
@@ -263,10 +286,32 @@ const SubmitDraftForm = function(props) {
                 <FileUploadInput file={file} setFile={setFile} types={[ 'application/pdf' ]}/>
                 { fileErrorView }
 
+                <div className="preprint field-wrapper">
+                    <h3>Show Preprint</h3>
+                    <div className="explanation">Show a preprint of this paper and solicit feedback from your peers.  Draft versions of this paper will be shown on the review screen as a preprint and your peers will be able to give you detailed review feedback.  You can choose to submit this paper to a journal now alongside showing the preprint, or later after you've recieved one or more rounds of preprint feedback.</div>
+                    <label htmlFor="preprint">Show preprint?</label>
+                    <input type="checkbox"
+                        name="preprint"
+                        checked={showPreprint}
+                        onBlur={ (event) => isValid('preprint') }
+                        onChange={ (event) => { setShowPreprint(!showPreprint) } }
+                    />
+                    { preprintErrorView }
+                </div>
+
+                <JournalSelectionInput 
+                    onBlur={ (event) => isValid('journal') }
+                    journal={journal}
+                    setJournal={setJournal}
+                />
+                <div className="selected-journal field-wrapper">
+                    <strong>Selected journal: </strong> {journal ? journal.name : "none selected at this time"}
+                </div>
+
                 { requestError }
                 <div className="submit field-wrapper">
                     { spinning && spinning }
-                    { ! spinning && <input type="submit" name="submit-draft" value="Submit Draft for Pre-publish Review" /> }
+                    { ! spinning && <input type="submit" name="submit-draft" value="Submit Paper" /> }
                 </div>
             </form>
         </div>

@@ -38,7 +38,7 @@ const JournalView = function({ id }) {
     const dispatch = useDispatch()
 
     useEffect(function() {
-        setJournalRequestId(dispatch(getJournal(id)))
+        setJournalRequestId(dispatch(getJournal(id, { relations: [ 'submissions' ] })))
     }, [id])
 
     useEffect(function() {

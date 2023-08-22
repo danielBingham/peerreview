@@ -9,15 +9,9 @@ const ResponseView = function(props) {
 
     let vote = null
     if ( props.response.vote == 1 ) {
-        vote = (
-            <div className='vote-button vote-up highlight'>
-            </div> 
-        )
+        vote = (<div>Endorsed</div>)
     } else if ( props.response.vote == -1 ) {
-        vote = (
-            <div className='vote-button vote-down highlight'>
-            </div> 
-        )
+        vote = ( <div>Refuted</div> ) 
 
     }
 

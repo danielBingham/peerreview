@@ -1,5 +1,6 @@
 #authentication-navigation {
     position: relative;
+    cursor: pointer;
 }
 #authentication-navigation svg {
     display: inline-block;

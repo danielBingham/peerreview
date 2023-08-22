@@ -12,18 +12,30 @@
     padding: 20px;
 }
 .draft-paper-submission-form .field-wrapper .explanation {
-    padding: 5px 0;
+    line-height: 1.47em;
+    padding: 1em 0;
 }
-.draft-paper-submission-form label {
+.draft-paper-submission-form h3 {
     display: block;
     width: 100%;
+    padding: 0;
+    margin: 0;
     font-size: 16px;
     font-weight: bold;
 }
+
 .draft-paper-submission-form input[type=text] {
     width: 948px;
     padding: 5px;
     border: thin solid var(--input-border-color);
+}
+.draft-paper-submission-form label {
+    display: inline-block;
+    vertical-align: middle;
+}
+.draft-paper-submission-form input[type=checkbox] {
+    display: inline-block;
+    vertical-align: middle;
 }
 
 .draft-paper-submission-form .submit {

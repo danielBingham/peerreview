@@ -15,20 +15,24 @@
     --user-menu-text-color: #D3D9DE;
     --user-menu-text-highlight-color: white;
 
+    --page-header-background-color: #f0f3f5;
+
     --page-background-color: white;
     --page-text-color: #2a2c2e;
     --page-border-color: none;
 
-    --tab-bar-background-color: #D3D9DE;
-    --tab-bar-border-color: #B6c0c8;
+    --tab-bar-background-color: #f0f3f5;
+    --tab-bar-border-color: #D3d9de;
     --tab-bar-text-color: #2a2c2e;
-    --tab-bar-icon-color: #B6c0c8;
+    --tab-bar-icon-color: #D3d9de;
 
     --main-background-color: white;
     --main-border-color: #D3d9de;
     --main-text-color: #2a2c2e;
     --main-icon-color: #B6c0c8;
     --main-icon-highlight-color: #D3d9de;
+
+    --floating-menu-border-color: #D3d9de;
 
     --icon-color: #2a2c2e;
 
@@ -78,14 +82,18 @@ main {
     box-sizing: border-box;
     margin: 0 auto;
     width: 100%;
+    color: var(--main-text-color);
+    background-color: var(--main-background-color);
     padding-bottom: 50px;
 }
 
 .page {
     width: 1200px;
+    min-height: 400px;
     margin: 50px auto;
-    background-color: white;
-    padding: 20px;
+    background-color: var(--page-background-color);
+    color: var(--page-text-color);
+    padding: 50px 20px 20px 20px;
 }
 
 .maintenance-mode {

@@ -34,19 +34,19 @@ module.exports = class AuthenticationService {
      *
      */
     async loginUser(id, request) {
-        const users = await this.userDAO.selectUsers('WHERE users.id=$1', [id])
-        if ( ! users ) {
+        const results = await this.userDAO.selectUsers('WHERE users.id=$1', [id])
+        if ( results.list.length <= 0) {
             throw new ServiceError('no-user', 'Failed to get full record for authenticated user!')
         } 
+
+        const user = results.dictionary[id]
 
         const settings = await this.settingsDAO.selectSettings('WHERE user_settings.user_id = $1', [ id ])
         if ( settings.length == 0 ) {
             throw new ServiceError('no-settings', 'Failed to retrieve settings for authenticated user.')
         }
 
-        request.session.user = users[0]
-        console.log('Setting session to user: ')
-        console.log(request.session.user)
+        request.session.user = user
         return {
             user: request.session.user,
             settings: settings[0] 

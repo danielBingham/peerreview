@@ -5,7 +5,7 @@ import logger from '/logger'
 
 import { addSettingsToDictionary } from '/state/settings'
 import { setCurrentUser, setSettings } from '/state/authentication'
-import { addUsersToDictionary } from '/state/users'
+import { setUsersInDictionary } from '/state/users'
 
 import { 
     makeSearchParams,
@@ -73,7 +73,7 @@ export const postTestingOrcid = function(orcidId) {
                 dispatch(setCurrentUser(responseBody.user))
                 dispatch(setSettings(responseBody.settings))
                 dispatch(addSettingsToDictionary(responseBody.settings))
-                dispatch(addUsersToDictionary(responseBody.user))
+                dispatch(setUsersInDictionary({ entity: responseBody.user }))
             }
         )
     }
@@ -87,7 +87,7 @@ export const getTestingOrcidReset = function() {
                 dispatch(setCurrentUser(responseBody.user))
                 dispatch(setSettings(responseBody.settings))
                 dispatch(addSettingsToDictionary(responseBody.settings))
-                dispatch(addUsersToDictionary(responseBody.user))
+                dispatch(setUsersInDictionary({ entity: responseBody.user }))
             }
         )
     }

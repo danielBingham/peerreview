@@ -1,0 +1,18 @@
+.journal-tag {
+    display: inline-block;
+    margin-right: 5px;
+    border-radius: 26px;
+    font-size: 12px;
+    height: 12px;
+    padding: 5px 10px;
+    background-color: white;
+    color: black;
+    box-shadow: 1px 1px 1px #999;
+}
+.journal-tag:hover {
+    filter: opacity(0.75);
+}
+
+.journal-tag a:link, .journal-tag a:active, .journal-tag a:visited {
+    color: black;
+}

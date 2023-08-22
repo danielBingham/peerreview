@@ -63,7 +63,7 @@ const UserAccountPage = function(props) {
             orcidIdConnection = (
                 <div className="orcid-connection">
                     <h2>Connect your ORCID iD</h2>
-                    <p>Authenticate with your ORCID iD to connect it to your account.  When you connect your ORCID iD to you're account, we will attempt to generate initial reputation for you using <a href="https://openalex.org">Open Alex</a>.</p>
+                    <p>Authenticate with your ORCID iD to connect it to your account.</p>
                     <ORCIDAuthenticationButton connect={true} />
                 </div>
             )

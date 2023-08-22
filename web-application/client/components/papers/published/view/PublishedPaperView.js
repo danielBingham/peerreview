@@ -12,7 +12,6 @@ import PublishedPaperFieldsWidget from './widgets/PublishedPaperFieldsWidget'
 
 import PublishedPaperPDFView from './pdf/PublishedPaperPDFView'
 
-import ResponseList from '/components/responses/ResponseList'
 
 import './PublishedPaperView.css'
 
@@ -73,22 +72,10 @@ const PublishedPaperView = function({ id }) {
         return (
             <>
                 <article id={paper.id} className="published-paper">
-                    <section className="header">
-                        <h2 className="paper-title">{paper.title}</h2>
-                        <PublishedPaperFieldsWidget paper={paper} />
-                    </section>
-                    <aside className="sidebar">
-                        <div className="published-paper-vote-widget">
-                            <div className="score">{paper.score}</div>
-                        </div>
-                        <div className="published-date">published <DateTag timestamp={paper.updatedDate} /></div>
-                        <PublishedPaperAuthorsWidget paper={paper} />
-                    </aside>
                     <section className="main">
                         <PublishedPaperPDFView paper={paper} />
                     </section>
                 </article>
-                <ResponseList paper={paper} />
             </>
         )
     }

@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 
 import { useSelector } from 'react-redux'
 
+import JournalSubmissionsTags from '/components/journals/JournalSubmissionsTags'
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
 import Spinner from '/components/Spinner'
@@ -37,15 +38,17 @@ const DraftPapersListItemView = function(props) {
     })
 
     // ======= Render ===============================================
-    
+   
+    let submission = (<div className="preprint">Preprint</div>)
+
     const authors = [] 
     for (const author of props.paper.authors) {
-        authors.push(<UserTag key={author.user.id} id={author.user.id} />)
+        authors.push(<UserTag key={author.userId} id={author.userId} />)
     }
 
     const fields = []
     for( const field of props.paper.fields ) {
-        fields.push(<Field key={field.id} field={field} />)
+        fields.push(<Field key={field.id} id={field.id} />)
     }
 
     const paperPath = `/draft/${props.paper.id}`
@@ -58,6 +61,7 @@ const DraftPapersListItemView = function(props) {
                 {props.paper.versions.length} <br />
                 <span className="label">{ props.paper.versions.length == 1 ? 'version' : 'versions' }</span></div>
             <div className="wrapper">
+                <JournalSubmissionsTags id={props.paper.id} />
                 <div className="title"> <Link to={paperPath}>{props.paper.title}</Link></div>
                 <div className="authors">by {authors}</div>
                 <div className="fields"> {fields}</div>

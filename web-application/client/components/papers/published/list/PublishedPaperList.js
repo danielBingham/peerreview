@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import isEqual from 'lodash.isequal'
 
-import { clearList, countPapers, getPapers, cleanupRequest } from '/state/papers'
+import { getPapers, clearPaperQuery, cleanupRequest } from '/state/papers'
 import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
 
 import Spinner from '/components/Spinner'
@@ -39,15 +39,6 @@ const PublishedPaperList = function(props) {
         }
     })
 
-    const [countRequestId, setCountRequestId ] = useState(null)
-    const countRequest = useSelector(function(state) {
-        if (countRequestId) {
-            return state.papers.requests[countRequestId]
-        } else {
-            null
-        }
-    })
-
     const [responseRequestId, setResponseRequestId ] = useState(null)
     const responseRequest = useSelector(function(state) {
         if (responseRequestId) {
@@ -60,8 +51,8 @@ const PublishedPaperList = function(props) {
 
     // ======= Redux State ==========================================
    
-    const paperList = useSelector(function(state) {
-        return state.papers.list
+    const paperQuery = useSelector(function(state) {
+        return state.papers.queries['PublishedPaperList']
     })
 
     const counts = useSelector(function(state) {
@@ -93,6 +84,10 @@ const PublishedPaperList = function(props) {
             }
         }
 
+        if ( props.journalId ) {
+            query.journalId = props.journalId
+        }
+
         if ( searchString ) {
             query.searchString = searchString
         }
@@ -115,8 +110,7 @@ const PublishedPaperList = function(props) {
             query.page = page
         }
 
-        setCountRequestId(dispatch(countPapers(query, true)))
-        setRequestId(dispatch(getPapers(query, true)))
+        setRequestId(dispatch(getPapers('PublishedPaperList', query, true)))
         setResponseRequestId(dispatch(countResponses()))
     }
 
@@ -129,15 +123,11 @@ const PublishedPaperList = function(props) {
         queryForPapers(params)
     }, [ searchParams, props.fieldId ])
 
-    // Cleanup our request.
     useEffect(function() {
         return function cleanup() {
-            if ( countRequestId ) {
-                dispatch(cleanupRequest({requestId: countRequestId}))
-            }
+            dispatch(clearPaperQuery({ name: 'PublishedPaperList' }))
         }
-    }, [ countRequestId ])
-
+    }, [])
 
     // Cleanup our request.
     useEffect(function() {
@@ -166,7 +156,7 @@ const PublishedPaperList = function(props) {
     let noContent = null
     if ( request && request.state == 'fulfilled') { 
         content = []
-        for (const paper of paperList) {
+        for (const paper of paperQuery.list) {
             content.push(<PublishedPaperListItem paper={paper} key={paper.id} />)
         }
 
@@ -206,7 +196,7 @@ const PublishedPaperList = function(props) {
             <ListRowContent>
                 {content}
             </ListRowContent>
-            <PaginationControls counts={counts} />
+            <PaginationControls meta={paperQuery?.meta} />
         </List>
     )
 }

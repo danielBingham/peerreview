@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 
 import { getResponses, cleanupRequest } from '/state/responses'
-import { getReputations, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 
 import ResponseForm from './ResponseForm'
 import ResponseView from './ResponseView'
@@ -28,15 +27,6 @@ const ResponseList = function(props) {
         }
     })
 
-    const [ reputationRequestId, setReputationRequestId] = useState(null)
-    const reputationRequest = useSelector(function(state) {
-        if ( ! reputationRequestId ) {
-            return null
-        } else {
-            return state.papers.requests[reputationRequestId]
-        }
-    })
-
     // ======= Redux State ==========================================
    
     const responses = useSelector(function(state) {
@@ -47,10 +37,6 @@ const ResponseList = function(props) {
         return state.authentication.currentUser
     })
 
-    const reputationThresholds = useSelector(function(state) {
-        return state.reputation.thresholds
-    })
-
     const fields = useSelector(function(state) {
         const fields = []
         if ( props.paper.fields.length > 0 ) {
@@ -59,14 +45,6 @@ const ResponseList = function(props) {
             }
         }
         return fields
-    })
-
-    const reputations = useSelector(function(state) {
-        if ( currentUser) {
-            return state.reputation.dictionary[currentUser.id]    
-        } else {
-            return null 
-        }
     })
 
     // ======= Actions and Event Handling ===========================
@@ -80,26 +58,12 @@ const ResponseList = function(props) {
     }, [])
 
     useEffect(function() {
-        if ( currentUser ) {
-            setReputationRequestId(dispatch(getReputations(currentUser.id, { paperId: props.paper.id })))
-        }
-    }, [ currentUser ])
-
-    useEffect(function() {
         return function cleanup() {
             if ( requestId ) {
                 dispatch(cleanupRequest({ requestId: requestId }))
             }
         }
     }, [ requestId ])
-
-    useEffect(function() {
-        return function cleanup() {
-            if ( reputationRequestId ) {
-                dispatch(cleanupReputationRequest({ requestId: reputationRequestId }))
-            }
-        }
-    }, [ reputationRequestId ])
 
     // ======= Render ===============================================
     
@@ -127,16 +91,11 @@ const ResponseList = function(props) {
     }
 
     let canRespond = false
-    if ( currentUser && reputations && fields.length > 0) {
-        for (const field of fields ) {
-            const threshold = reputationThresholds.referee * field.averageReputation
-            if ( reputations[field.id] && reputations[field.id].reputation >= threshold) {
-               canRespond = true 
-            }
-        }
+    if ( currentUser ) {
+       canRespond = true 
     }
 
-    let isAuthor = props.paper.authors.find((a) => a.user.id == currentUser?.id)
+    let isAuthor = props.paper.authors.find((a) => a.userId == currentUser?.id)
 
     return (
         <div className="responses">

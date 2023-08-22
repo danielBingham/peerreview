@@ -11,7 +11,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import logger from '/logger'
 
 import { getConfiguration, getFeatures, cleanupRequest as cleanupSystemRequest } from '/state/system'
-import { getThresholds, cleanupRequest as cleanupReputationRequest } from '/state/reputation'
 import { getAuthentication, cleanupRequest as cleanupAuthenticationRequest } from '/state/authentication'
 
 // Admin page for managing features.  Must be logged in and an admin to load it
@@ -48,6 +47,7 @@ import FieldPage from '/pages/fields/FieldPage'
 import SubmitPage from '/pages/papers/SubmitPage'
 import DraftPaperPage from '/pages/papers/DraftPaperPage'
 import UploadPaperVersionPage from '/pages/papers/UploadPaperVersionPage'
+import SubmitDraftForPublicationPage from '/pages/papers/SubmitDraftForPublicationPage'
 
 import ReviewPapersListPage from '/pages/papers/ReviewPapersListPage'
 import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
@@ -83,16 +83,6 @@ const App = function(props) {
         }
     })
 
-    const [reputationThresholdsRequestId, setReputationThresholdsRequestId] = useState(null)
-    const reputationThresholdsRequest = useSelector(function(state) {
-        if ( ! reputationThresholdsRequestId ) {
-            return null
-        } else {
-            return state.system.requests[reputationThresholdsRequestId]
-        }
-    })
-    
-
     const [ featuresRequestId, setFeaturesRequestId] = useState(null)
     const featuresRequest = useSelector(function(state) {
         if ( featuresRequestId ) {
@@ -121,10 +111,6 @@ const App = function(props) {
         return state.system.configuration
     })
 
-    const reputationThresholds = useSelector(function(state) {
-        return state.reputation.thresholds
-    })
-
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
@@ -138,7 +124,6 @@ const App = function(props) {
             if ( ! configuration.maintenance_mode ) {
                 // Logger is a singleton, this will effect all other imports.
                 logger.setLevel(configuration.log_level)
-                setReputationThresholdsRequestId(dispatch(getThresholds()))
                 setFeaturesRequestId(dispatch(getFeatures()))
                 setAuthenticationRequestId(dispatch(getAuthentication()))
             }
@@ -149,14 +134,6 @@ const App = function(props) {
             }
         }
     }, [ configurationRequest ])
-
-    useEffect(function() {
-        return function cleanup() {
-            if ( reputationThresholdsRequestId ) {
-                dispatch(cleanupSystemRequest({ requestId: reputationThresholdsRequestId }))
-            }
-        }
-    }, [ reputationThresholdsRequestId ])
 
     useEffect(function() {
         return function cleanup() {
@@ -193,13 +170,12 @@ const App = function(props) {
         )
    }
 
-    if ( ! configurationRequestId || ! authenticationRequestId || ! reputationThresholdsRequestId || ! featuresRequestId) {
+    if ( ! configurationRequestId || ! authenticationRequestId || ! featuresRequestId) {
         return (
             <Spinner />
         )
     } else if ( (configurationRequest && configurationRequest.state != 'fulfilled')
         || (authenticationRequest && authenticationRequest.state != 'fulfilled')
-        || (reputationThresholdsRequest && reputationThresholdsRequest.state != 'fulfilled')
         || (featuresRequest && featuresRequest.state != 'fulfilled')
     ) {
         if (configurationRequest && configurationRequest.state == 'failed' && retries < 5) {
@@ -208,8 +184,6 @@ const App = function(props) {
             return (<div className="error">Failed to connect to the backend.  Try refreshing.</div>)
         } else if (authenticationRequest && authenticationRequest.state == 'failed' ) {
             return (<div className="error">Authentication request failed with error: {authenticationRequest.error}.</div>)
-        } else if (reputationThresholdsRequest && reputationThresholdsRequest.state == 'failed' ) {
-            return (<div className="error">Attempt to retrieve reputation thresholds failed with error: {reputationThresholdsRequest.error}.</div>)
         } else if ( featuresRequest && featuresRequest.state == 'failed' ) {
             return (<div className="error">Attempt to retrieve feature list failed with error: { featuresRequest.error}</div> )
         }
@@ -250,7 +224,6 @@ const App = function(props) {
                         <Route path="/accept-invitation" element={ <AcceptInvitationPage /> } />
 
                         { /* ========== Users ================================= */ }
-                        <Route path="/reputation/initialization" element={ <ReputationInitializationPage /> } /> 
                         <Route path="/users" element={ <UsersListPage /> } />
                         <Route path="/user/:id">
                             <Route path=":tab" element={ <UserProfilePage /> } />
@@ -271,9 +244,12 @@ const App = function(props) {
                         { /* ========= Draft Papers  ============================ */ }
                         <Route path="/submit" element={ <SubmitPage /> }  />
                         <Route path="/review" element={ <ReviewPapersListPage /> } />
+                        <Route path="/review/preprints" element={ <ReviewPapersListPage tab="preprints" /> } />
+                        <Route path="/review/submissions" element={ <ReviewPapersListPage tab="submissions" /> } />
                         <Route path="/drafts/" element={ <DraftPapersListPage /> } />
                         <Route path="/draft/:id" element={ <DraftPaperPage tab="reviews" /> }  />
                         <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
+                        <Route path="/draft/:id/publish" element={ <SubmitDraftForPublicationPage /> } />
                         <Route path="/draft/:id/reviews" element={ <DraftPaperPage tab="reviews" /> } />
                         <Route path="/draft/:id/drafts" element={ <DraftPaperPage tab="drafts" /> } />
                         <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage tab="reviews" /> } />
@@ -283,9 +259,11 @@ const App = function(props) {
                         { /* ========= Published Papers ===================== */ }
                         <Route path="/search" element={ <PaperSearchPage /> } />
                         <Route path="/paper/:id" element={ <PublishedPaperPage tab="paper" /> } />
+                        <Route path="/paper/:id/responses" element={ <PublishedPaperPage tab="responses" /> } />
                         <Route path="/paper/:id/reviews" element={ <PublishedPaperPage tab="reviews" /> } />
                         <Route path="/paper/:id/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
                         <Route path="/paper/:id/version/:versionNumber" element={ <PublishedPaperPage tab="drafts" /> } />
+                        <Route path="/paper/:id/version/:versionNumber/responses" element={ <PublishedPaperPage tab="responses" /> } />
                         <Route path="/paper/:id/version/:versionNumber/reviews" element={ <PublishedPaperPage tab="reviews" /> } />
                         <Route path="/paper/:id/version/:versionNumber/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
 
@@ -293,6 +271,11 @@ const App = function(props) {
                         <Route path="/journals" element={ <JournalsListPage /> } />
                         <Route path="/create" element={ <CreateJournalPage /> } />
                         <Route path="/journal/:id" element={ <JournalPage /> } />
+                        <Route path="/journal/:id/papers" element={ <JournalPage tab="papers" /> } />
+                        <Route path="/journal/:id/submissions" element={ <JournalPage tab="submissions" /> } />
+                        <Route path="/journal/:id/members" element={ <JournalPage tab="members" /> } />
+                        <Route path="/journal/:id/about" element={ <JournalPage tab="about" /> } />
+                        <Route path="/journal/:id/settings" element={ <JournalPage tab="settings" /> } />
                     </Routes>
                 </main>
                 <Footer />

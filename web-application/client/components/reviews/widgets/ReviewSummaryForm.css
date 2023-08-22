@@ -3,10 +3,14 @@
 .review-summary-form textarea {
     box-sizing: border-box;
     display: block;
+    background-color: var(--page-header-background-color);
     border: thin solid var(--main-border-color);
     height: 200px;
     width: 100%;
     padding: 10px;
+}
+.review-summary-form textarea:focus {
+    background-color: white;
 }
 .review-summary-form .recommendation-wrapper {
     text-align: right;

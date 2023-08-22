@@ -148,6 +148,7 @@ const ReviewSummaryForm = function(props) {
                             onChange={(e) => setSummary(e.target.value)} 
                             onBlur={commitChange} 
                             value={summary}
+                            placeholder="Write a summary of your review..."
                         >
                         </textarea>
                     </div>

@@ -2,3 +2,15 @@
     display: inline-block;
     margin-right: 5px;
 }
+.user-tag .profile-image {
+    width: 1.5em;
+    height: 1.5em;
+}
+.user-tag .profile-image img {
+    width: 1.5em;
+    height: 1.5em;
+}
+.user-tag .profile-image svg {
+    width: 1.5em;
+    height: 1.5em;
+}

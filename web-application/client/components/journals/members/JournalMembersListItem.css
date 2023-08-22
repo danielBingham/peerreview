@@ -1,0 +1,19 @@
+.journal-member-list-item {
+    padding: 0 20px;
+    font-size: 16px;
+}
+.journal-member-list-item .grid-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+
+}
+.journal-member-list-item .user {
+    grid-column: 1/2;
+    padding: 15px;
+}
+.journal-member-list-item .permissions {
+    grid-column: 2/3;
+    padding: 15px;
+    text-align: center;
+}
+

@@ -1,10 +1,16 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import logger from '../logger'
+import setRelationsInState from './helpers/relations'
 
-import { addFieldsToDictionary } from './fields'
-import { addUsersToDictionary } from './users'
+import {
+    setInDictionary,
+    removeEntity,
+    makeQuery,
+    setQueryResults,
+    clearQuery,
+    clearQueries
+} from './helpers/state'
 
 import { 
     makeSearchParams,
@@ -42,92 +48,48 @@ export const journalsSlice = createSlice({
          * A dictionary of journals we've retrieved from the backend, keyed by
          * journal.id.
          *
+         * Will be updated when a POST, PATCH, or DELETE is called.
+         *
          * @type {object}
          */
         dictionary: {},
 
         /**
-         * A list of journals retrieved from the GET /journals endpoint, or added
-         * with appendJournalsToList, preserving order.
          *
-         * @type {object[]}
+         * An object containing queries made to query supporting endpoints.
+         *
+         * In this case: GET /journals
+         *
+         * NOTE: Will **NOT** be updated when a POST, PATCH, or DELETE is called.
+         *
+         * Structure:
+         * {
+         *  queryName: {
+         *      meta: {
+         *          page: <int>,
+         *          count: <int>,
+         *          pageSize: <int>,
+         *          numberOfPages: <int>
+         *      },
+         *      list: [] 
+         *  },
+         *  ...
+         * }
          */
-        list: []
+        queries: {} 
 
     },
     reducers: {
 
-        /**
-         * Add one or more journals to the state dictionary.  
-         *
-         * Does NOT add them to the list.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object[] | object} action.payload - The journals we want to add.  Can
-         * either be an array of journals or a single journal object.
-         */
-        addJournalsToDictionary: function(state, action) {
-            if ( action.payload && action.payload.length ) {
-                for( const journal of action.payload) {
-                    state.dictionary[journal.id] = journal
-                }
-            } else {
-                state.dictionary[action.payload.id] = action.payload
-            }
-        },
-
-        /**
-         * Append one or more journals to the list.
-         *
-         * DOES add to them to the dictionary as well.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object[] | object} action.payload - The journals we want to
-         * add.  Can be either an array of journals or a single journal.
-         */
-        appendJournalsToList: function(state, action) {
-            if ( action.payload && action.payload.length ) {
-                for (const journal of action.payload) {
-                    state.list.push(journal)
-                    state.dictionary[journal.id] = journal
-                }
-            } else {
-                state.list.push(action.payload)
-                state.dictionary[action.payload.id] = action.payload
-            }
-        },
-
-        /**
-         * Remove journals from the dictionary and the list.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object[] | object} action.payload - An array of journals or a
-         * single journal that we'd like to remove.
-         */
-        removeJournals: function(state, action) {
-            if ( action.payload && action.payload.length ) {
-                for(const journal of action.payload ) {
-                    delete state.dictionary[journal.id]
-                    state.list = state.list.filter((p) => p.id !== journal.id)
-                }
-            } else {
-                delete state.dictionary[action.payload.id]
-                state.list = state.list.filter((p) => p.id !== action.payload.id)
-            }
-        },
-
-        /**
-         * Clear the list, as when you want to start a new ordered query.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         */
-        clearList: function(state, action) {
-            state.list = []
-        },
+        // ======== State Manipulation Helpers ================================
+        // @see ./helpers/state.js
+        
+        setJournalsInDictionary: setInDictionary,
+        removeJournal: removeEntity,
+        makeJournalQuery: makeQuery,
+        setJournalQueryResults: setQueryResults,
+        clearJournalQuery: clearQuery,
+        clearJournalQueries: clearQueries,
 
         // ========== Request Tracking Methods =============
 
@@ -159,21 +121,25 @@ export const journalsSlice = createSlice({
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getJournals = function(params, replaceList) {
+export const getJournals = function(name, params) {
     return function(dispatch, getState) {
         const queryString = makeSearchParams(params) 
         const endpoint = '/journals' + ( params ? '?' + queryString.toString() : '')
 
+        dispatch(journalsSlice.actions.makeJournalQuery({ name: name }))
+
         return makeTrackedRequest(dispatch, getState, journalsSlice,
             'GET', endpoint, null,
-            function(journals) {
-                if ( replaceList ) {
-                    dispatch(journalsSlice.actions.clearList())
-                }
+            function(response) {
+                dispatch(journalsSlice.actions.setJournalsInDictionary({ dictionary: response.dictionary }))
 
-                if ( journals && journals.length ) {
-                    dispatch(journalsSlice.actions.appendJournalsToList(journals))
-                } 
+                dispatch(journalsSlice.actions.setJournalQueryResults({
+                    name: name,
+                    meta: response.meta,
+                    list: response.list 
+                }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -196,8 +162,9 @@ export const postJournals = function(journal) {
         dispatch(journalsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, journalsSlice,
             'POST', '/journals', journal,
-            function(returnedJournal) {
-                dispatch(journalsSlice.actions.addJournalsToDictionary(returnedJournal))
+            function(response) {
+                dispatch(journalsSlice.actions.setJournalsInDictionary({ entity: response.entity }))
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -215,12 +182,17 @@ export const postJournals = function(journal) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getJournal = function(id) {
+export const getJournal = function(id, params) {
     return function(dispatch, getState) {
+        const queryString = makeSearchParams(params) 
+        const endpoint = `/journal/${id}` + ( params ? '?' + queryString.toString() : '')
+
         return makeTrackedRequest(dispatch, getState, journalsSlice,
-            'GET', `/journal/${id}`, null,
-            function(journal) {
-                dispatch(journalsSlice.actions.addJournalsToDictionary(journal))
+            'GET', endpoint, null,
+            function(response) {
+                dispatch(journalsSlice.actions.setJournalsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -243,8 +215,10 @@ export const putJournal = function(journal) {
         dispatch(journalsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, journalsSlice,
             'PUT', `/journal/${journal.id}`, journal,
-            function(returnedJournal) {
-                dispatch(journalsSlice.actions.addJournalsToDictionary(returnedJournal))
+            function(response) {
+                dispatch(journalsSlice.actions.setJournalsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -267,8 +241,10 @@ export const patchJournal = function(journal) {
         dispatch(journalsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, journalsSlice,
             'PATCH', `/journal/${journal.id}`, journal,
-            function(returnedJournal) {
-                dispatch(journalsSlice.actions.addJournalsToDictionary(returnedJournal))
+            function(response) {
+                dispatch(journalsSlice.actions.setJournalsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -282,26 +258,106 @@ export const patchJournal = function(journal) {
  * Makes the request asynchronously and returns a id that can be used to track
  * the request and retreive the results from the state slice.
  *
- * @param {object} journal - A populated journal object.
+ * @param   {int}   id  The id of the Journal we want to delete.
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const deleteJournal = function(journal) {
+export const deleteJournal = function(id) {
     return function(dispatch, getState) {
-        const endpoint = '/journal/' + journal.id
-
         dispatch(journalsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, journalsSlice,
-            'DELETE', `/journal/${journal.id}`, null,
+            'DELETE', `/journal/${id}`, null,
             function(response) {
-                dispatch(journalsSlice.actions.removeJournals(journal))
+                dispatch(journalsSlice.actions.removeJournal({ entity: response.entity }))
+
+                dispatch(journalsSlice.actions.clearJournalQueries())
             }
         )
     }
 } 
 
+/**
+ * POST /journal/:journalId/members
+ *
+ * Add a member to a journal.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {object} journal - A populate journal object.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const postJournalMembers = function(journalId, member) {
+    return function(dispatch, getState) {
+        dispatch(journalsSlice.actions.bustRequestCache())
+        return makeTrackedRequest(dispatch, getState, journalsSlice,
+            'POST', `/journal/${journalId}/members`, member,
+            function(response) {
+                dispatch(journalsSlice.actions.setJournalsInDictionary({ entity: response.entity }))
 
+                dispatch(setRelationsInState(response.relations))
+            }
+        )
+    }
+}
 
-export const {  addJournalsToDictionary, appendJournalsToList, removeJournals, clearList, cleanupRequest   }  = journalsSlice.actions
+/**
+ * PATCH /journal/:journalId/member/:userId
+ *
+ * Modify a journal member.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {object} journal - A populate journal object.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const patchJournalMembers = function(journalId, member) {
+    return function(dispatch, getState) {
+        dispatch(journalsSlice.actions.bustRequestCache())
+        return makeTrackedRequest(dispatch, getState, journalsSlice,
+            'PATCH', `/journal/${journalId}/member/${member.userId}`, member,
+            function(response) {
+                dispatch(journalsSlice.actions.setJournalsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
+            }
+        )
+    }
+}
+
+/**
+ * DELETE /journal/:journalId/member/:userId
+ *
+ * Remove a member from a journal.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {object} journal - A populate journal object.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const deleteJournalMembers = function(journalId, member) {
+    return function(dispatch, getState) {
+        dispatch(journalsSlice.actions.bustRequestCache())
+        return makeTrackedRequest(dispatch, getState, journalsSlice,
+            'DELETE', `/journal/${journalId}/member/${member.userId}`, null,
+            function(response) {
+                dispatch(journalsSlice.actions.setJournalsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
+            }
+        )
+    }
+}
+
+export const {  
+    setJournalsInDictionary, removeJournal, 
+    makeJournalQuery, setJournalQueryResults, clearJournalQuery, 
+    cleanupRequest   
+}  = journalsSlice.actions
 
 export default journalsSlice.reducer

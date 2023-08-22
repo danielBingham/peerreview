@@ -6,7 +6,7 @@ const PublishedPaperFieldsWidget = function(props) {
 
     const fields = []
     for(const field of props.paper.fields) {
-        fields.push(<Field key={field.id} field={field} />) 
+        fields.push(<Field key={field.id} id={field.id} />) 
     }
 
     return (

@@ -63,23 +63,23 @@ const UserMenu = function(props) {
    
     const isAdmin = currentUser.permissions == 'admin' || currentUser.permissions == 'superadmin'
     return (
-        <div id="user-menu" className="floating-menu" onClick={props.toggleMenu} style={{ display: ( props.visible ? 'block' : 'none' ) }} >
+        <div id="user-menu" className="floating-menu" style={{ display: ( props.visible ? 'block' : 'none' ) }} >
             <div className="menu-section">
-                <div className="menu-item"><Link to="/drafts">my drafts</Link></div>
-                <div className="menu-item"><Link to={`/user/${currentUser.id}`}>my profile</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/drafts">my drafts</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to={`/user/${currentUser.id}`}>my profile</Link></div>
             </div>
             <div className="menu-section">
-                <div className="menu-item"><Link to="/account/profile">edit profile</Link></div>
-                <div className="menu-item"><Link to="/account/change-email">change email</Link></div>
-                <div className="menu-item"><Link to="/account/change-password">change password</Link></div>
-                <div className="menu-item"><Link to="/account/orcid">connect ORCID iD</Link></div>
-                <div className="menu-item"><Link to="/account/settings">account settings</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/profile">edit profile</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/change-email">change email</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/change-password">change password</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/orcid">connect ORCID iD</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/settings">account settings</Link></div>
             </div>
             { isAdmin && <div className="menu-section admin">
-                <div className="menu-item"><Link to="/admin">admin</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/admin">admin</Link></div>
             </div> }
             <div className="menu-section bottom"> 
-                <div className="menu-item"><a href="" className="logout" onClick={handleLogout} >logout</a></div>
+                <div className="menu-item" onClick={props.toggleMenu}><a href="" className="logout" onClick={handleLogout} >logout</a></div>
             </div>
         </div>
     )

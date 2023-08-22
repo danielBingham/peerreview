@@ -23,6 +23,10 @@ module.exports = class UserController {
         this.tokenDAO = new backend.TokenDAO(core)
     }
 
+    async getRelations(results, requestedRelations) {
+        return {}
+    }
+
     /**
      * Parse a query string from the `GET /users` endpoint for use with both
      * `UsersDAO::selectUsers()` and `UsersDAO::countUsers()`.
@@ -70,7 +74,8 @@ module.exports = class UserController {
             params: [],
             page: 1,
             order: '',
-            emptyResult: false
+            emptyResult: false,
+            requestedRelations: query.relations ? query.relations : []
         }
 
         if ( query.name && query.name.length > 0) {
@@ -86,11 +91,6 @@ module.exports = class UserController {
         } else if ( ! options.ignorePage ) {
             result.page = 1
         }
-
-        if ( query.sort == 'reputation' ) {
-            result.order = 'users.reputation desc'
-        }
-
 
         // If we haven't added anything to the where clause, then clear it.
         if ( result.where == 'WHERE') {
@@ -126,7 +126,7 @@ module.exports = class UserController {
          * 
          * **********************************************************/
 
-        const { where, params, order, page, emptyResult } = await this.parseQuery(request.query)
+        const { where, params, order, page, emptyResult, requestedRelations } = await this.parseQuery(request.query)
 
         if ( emptyResult ) {
             return response.status(200).json({
@@ -140,12 +140,12 @@ module.exports = class UserController {
             })
         }
         const meta = await this.userDAO.countUsers(where, params, page)
-        const users = await this.userDAO.selectCleanUsers(where, params, order, page)
+        const results = await this.userDAO.selectCleanUsers(where, params, order, page)
+        results.meta = meta
 
-        return response.status(200).json({
-            meta: meta,
-            result: users
-        })
+        results.relations = await this.getRelations(results, requestedRelations) 
+
+        return response.status(200).json(results)
     }
 
     /**
@@ -244,35 +244,42 @@ module.exports = class UserController {
             }
         }
 
-        const createdUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
+        const createdUserResults = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
 
-        if ( createdUsers.length <= 0) {
+        if ( ! createdUserResults.dictionary[user.id] ) {
             throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
         }
+
+        const createdUser = createdUserResults.dictionary[user.id]
 
         if ( loggedInUser ) {
             const token = this.tokenDAO.createToken('invitation')
-            token.userId = createdUsers[0].id
+            token.userId = createdUser
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendInvitation(loggedInUser,createdUsers[0], token)
+            this.emailService.sendInvitation(loggedInUser, createdUser, token)
         } else {
             const token = this.tokenDAO.createToken('email-confirmation')
-            token.userId = createdUsers[0].id
+            token.userId = createdUser.id
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendEmailConfirmation(createdUsers[0], token)
+            this.emailService.sendEmailConfirmation(createdUser, token)
         }
 
-        await this.settingsDAO.initializeSettingsForUser(createdUsers[0])
+        await this.settingsDAO.initializeSettingsForUser(createdUser)
 
-        const returnUsers = await this.userDAO.selectCleanUsers('WHERE users.id=$1', [ user.id ])
+        const results = await this.userDAO.selectCleanUsers('WHERE users.id=$1', [ user.id ])
 
-        if (returnUsers.length <= 0) {
+        if (! results.dictionary[user.id] ) {
             throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
         }
 
-        return response.status(201).json(returnUsers[0])
+        const relations = await this.getRelations(results)
+
+        return response.status(201).json({ 
+            entity: results.dictionary[user.id],
+            relations: relations
+        })
     }
 
     /**
@@ -293,13 +300,18 @@ module.exports = class UserController {
          * Anyone may call this endpoint.
          * 
          * **********************************************************/
-        const returnUsers = await this.userDAO.selectCleanUsers('WHERE users.id = $1', [request.params.id])
+        const results = await this.userDAO.selectCleanUsers('WHERE users.id = $1', [request.params.id])
 
-        if ( returnUsers.length == 0 ) {
+        if ( ! results.dictionary[ request.params.id] ) {
             throw new ControllerError(404, 'not-found', `User(${request.params.id}) not found.`)
         }
 
-        return response.status(200).json(returnUsers[0])
+        const relations = await this.getRelations(results)
+
+        return response.status(200).json({ 
+            entity: results.dictionary[request.params.id],
+            relations: relations
+        })
     }
 
     /**
@@ -410,12 +422,12 @@ module.exports = class UserController {
         // 3. User(:id) must exist.
         // If they don't exist, something is really, really wrong -- since they
         // are logged in and in the session!
-        if ( existingUsers.length <= 0 ) {
+        if ( ! existingUsers.dictionary[id] ) {
             throw new ControllerError(500, 'server-error',
                 `User(${id}) attempted to update themselves, but we couldn't find their database record!`)
         }
 
-        const existingUser = existingUsers[0]
+        const existingUser = existingUsers.dictionary[id]
 
 
         // 4. If a password is included, then oldPassword or a valid token are
@@ -550,29 +562,34 @@ module.exports = class UserController {
         // Issue #132 - We're going to allow the user's email to be returned in this case,
         // because only authenticated users may call this endpoint and then
         // only on themselves.
-        const returnUsers = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
+        const results = await this.userDAO.selectUsers('WHERE users.id=$1', [user.id])
 
-        if ( returnUsers.length <= 0 ) {
+        if ( ! results.dictionary[user.id] ) {
             throw new ControllerError(500, 'server-error', `Failed to find user(${user.id}) after update!`)
         }
 
         // If we get to this point, we know the user being updated is the same
         // as the user in the session.  No one else is allowed to update the
         // user.
-        request.session.user = returnUsers[0]
+        request.session.user = results.dictionary[user.id] 
 
         // If we've changed the email, then we need to send out a new
         // confirmation token.
-        if ( returnUsers[0].email != existingUser.email ) {
+        if ( results.dictionary[user.id].email != existingUser.email ) {
             const token = this.tokenDAO.createToken('email-confirmation')
-            token.userId = returnUsers[0].id
+            token.userId = results.dictionary[user.id].id
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendEmailConfirmation(returnUsers[0], token)
+            this.emailService.sendEmailConfirmation(results.dictionary[user.id], token)
         }
 
 
-        return response.status(200).json(returnUsers[0])
+        const relations = await this.getRelations(results)
+
+        return response.status(200).json({ 
+            entity: results.dictionary[user.id],
+            relations: relations
+        })
     }
 
     /**

@@ -7,6 +7,14 @@
 .authors-input .authors {
     padding: 10px 0;
 }
+.authors-input h3 {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
 .authors-input .author-suggestions .author-suggestion {
     padding: 10px;
 }

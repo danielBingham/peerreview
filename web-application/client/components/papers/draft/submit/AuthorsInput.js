@@ -2,7 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getUsers, clearQuery, cleanupRequest } from '/state/users'
+import { getUsers, clearUserQuery, cleanupRequest } from '/state/users'
 
 import AuthorInvite from '/components/papers/draft/submit/AuthorInvite'
 import UserTag from '/components/users/UserTag'
@@ -61,7 +61,7 @@ const AuthorsInput = function(props) {
         }
         
         const users = []
-        for( const id of state.users.queries['AuthorsInput'].result ) {
+        for( const id of state.users.queries['AuthorsInput'].list) {
             users.push(state.users.dictionary[id])
         }
         return users
@@ -75,7 +75,7 @@ const AuthorsInput = function(props) {
      * Clear the suggestions list.
      */
     const clearSuggestions = function() {
-        dispatch(clearQuery({ name: 'AuthorsInput'}))
+        dispatch(clearUserQuery({ name: 'AuthorsInput'}))
         setHighlightedSuggestion(0)
         setRequestId(null)
     }
@@ -99,7 +99,7 @@ const AuthorsInput = function(props) {
         timeoutId.current = setTimeout(function() {
             if ( name.length > 0) {
                 if ( ! requestId ) {
-                    dispatch(clearQuery({ name: 'AuthorsInput' }))
+                    dispatch(clearUserQuery({ name: 'AuthorsInput' }))
                     setRequestId(dispatch(getUsers('AuthorsInput', {name: name})))
                 } else if( request && request.state == 'fulfilled') {
                     clearSuggestions()
@@ -133,7 +133,7 @@ const AuthorsInput = function(props) {
      */
     const appendAuthor = function(user) {
         setShowInviteForm(false)
-        if ( props.authors.find((a) => a.user.id == user.id) ) {
+        if ( props.authors.find((a) => a.userId == user.id) ) {
             setError('author-already-added')
             setAuthorName('')
             clearSuggestions()
@@ -144,9 +144,10 @@ const AuthorsInput = function(props) {
         clearSuggestions()
 
         const author = {
-            user: user,
+            userId: user.id,
             order: props.authors.length+1,
-            owner: false
+            owner: false,
+            submitter: false
         }
         props.setAuthors([ ...props.authors,author])
     }
@@ -211,7 +212,7 @@ const AuthorsInput = function(props) {
 
     // Clear the user list on mount.  
     useLayoutEffect(function() {
-        dispatch(clearQuery({ name: 'AuthorsInput' }))
+        dispatch(clearUserQuery({ name: 'AuthorsInput' }))
     }, [])
 
     // Make sure the highlightedSuggestion is never outside the bounds of the
@@ -242,7 +243,7 @@ const AuthorsInput = function(props) {
                     onMouseDown={(event) => { appendAuthor(user) }} 
                     className={ index == highlightedSuggestion ? "author-suggestion highlighted" : "author-suggestion" }
                 >
-                    {user.name}
+                    <UserTag id={user.id} /> 
                 </div>
             )
         }
@@ -284,8 +285,8 @@ const AuthorsInput = function(props) {
 
     return (
         <div className="authors-input field-wrapper"> 
-            <label htmlFor="authors">Authors</label>
-            <div className="explanation">Select co-authors to add to this paper.</div>
+            <h3>Authors</h3>
+            <div className="explanation"> Select co-authors to add to this paper. <strong>Corresponding authors</strong> can edit the submission, post new versions, and submit to journals.  <strong>Authors</strong> can view and comment on all reviews. </div>
             <input type="text" 
                 name="authorName" 
                 value={authorName}

@@ -2,10 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 
-import isEqual from 'lodash.isequal'
-
-import { clearList, countJournals, getJournals, cleanupRequest } from '/state/journals'
-import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
+import { clearJournalQuery, getJournals, cleanupRequest } from '/state/journals'
 
 import Spinner from '/components/Spinner'
 import List from '/components/generic/list/List'
@@ -13,6 +10,7 @@ import ListControl from '/components/generic/list/ListControl'
 import ListHeader from '/components/generic/list/ListHeader'
 import ListRowContent from '/components/generic/list/ListRowContent'
 import ListNoContent from '/components/generic/list/ListNoContent'
+import PaginationControls from '/components/PaginationControls'
 
 import JournalListItem from './JournalListItem'
 
@@ -41,21 +39,64 @@ const JournalList = function(props) {
 
     // ======= Redux State ==========================================
    
-    const journalList = useSelector(function(state) {
-        return state.journals.list
+    const journals = useSelector(function(state) {
+        if ( ! state.journals.queries['JournalList'] ) {
+            return []
+        }
+
+        const journals = []
+        for ( const id of state.journals.queries['JournalList'].list) {
+            journals.push(state.journals.dictionary[id])
+        }
+
+        return journals
     })
-    console.log(journalList)
+
+    const meta = useSelector(function(state) {
+        if ( ! state.journals.queries['JournalList'] ) {
+            return {
+                count: 0,
+                page: 1,
+                pageSize: 1,
+                numberOfPages: 1
+            }
+        }
+        return state.journals.queries['JournalList'].meta
+    })
 
     // ======= Effect Handling ======================================
 
     const dispatch = useDispatch()
 
-    const queryForJournals = function() {
-        setRequestId(dispatch(getJournals(null, true)))
+    const setSort = function(sortBy) {
+        searchParams.set('sort', sortBy)
+        setSearchParams(searchParams)
+    }
+
+    const queryForJournals = function(params) {
+        params.relations = [ 'submissions' ]
+
+        setRequestId(dispatch(getJournals('JournalList', params)))
     }
 
     useEffect(function() {
-        queryForJournals()
+        const params = {}
+
+        params.page = searchParams.get('page')
+        if ( ! params.page ) {
+            params.page = 1
+        }
+        
+        params.sort = searchParams.get('sort')
+        if ( ! params.sort ) {
+            params.sort = 'newest'
+        }
+
+        queryForJournals(params)
+
+        return function cleanup() {
+            dispatch(clearJournalQuery({ name: 'JournalList' }))
+        }
     }, [])
 
 
@@ -77,7 +118,7 @@ const JournalList = function(props) {
     let noContent = null
     if ( request && request.state == 'fulfilled') { 
         content = []
-        for (const journal of journalList) {
+        for (const journal of journals) {
             content.push(<JournalListItem journal={journal} key={journal.id} />)
         }
 
@@ -91,10 +132,26 @@ const JournalList = function(props) {
         content = null
         noContent = (<div className="error">Something went wrong with our attempt to retreive the journal list: { request.error }.</div>)
     }
+    
+    const newestParams = new URLSearchParams(searchParams.toString())
+    newestParams.set('sort', 'newest')
+
+    const alphabeticalParams = new URLSearchParams(searchParams.toString())
+    alphabeticalParams.set('sort', 'alphabetical')
+
+    const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
 
     return (
         <List>
             <ListHeader title="Journals">
+                <ListControl url={`?${newestParams.toString()}`} 
+                    onClick={() => setSort('newest')} 
+                    selected={sort == 'newest'} 
+                    name="Newest" />
+                <ListControl url={`?${alphabeticalParams.toString()}`} 
+                    onClick={() => setSort('alphabetical')} 
+                    selected={sort == 'alphabetical'} 
+                    name="Alphabetical" />
             </ListHeader>
             <ListNoContent>
                 {noContent}
@@ -102,6 +159,7 @@ const JournalList = function(props) {
             <ListRowContent>
                 {content}
             </ListRowContent>
+            <PaginationControls meta={meta} /> 
         </List>
     )
 }

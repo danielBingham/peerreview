@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { getPaper, cleanupRequest } from '/state/papers'
 
+import JournalSubmissionsTags from '/components/journals/JournalSubmissionsTags'
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
 import DateTag from '/components/DateTag'
@@ -46,17 +47,18 @@ const DraftPaperHeader = function({ id, versionNumber, tab }) {
 
     let authors = [] 
     for(const author of paper.authors) {
-        authors.push(<UserTag key={author.user.id} id={author.user.id} />)
+        authors.push(<UserTag key={author.userId} id={author.userId} />)
     }
 
     let fields = []
     for(const field of paper.fields) {
-        fields.push(<Field key={field.id} field={field} />)
+        fields.push(<Field key={field.id} id={field.id} />)
     }
 
     return (
         <div id={`paper-${id}`} className="draft-paper-header">
             <DraftPaperControlView id={id} tab={tab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
+            <JournalSubmissionsTags id={paper.id} />
             <h2 className="title">{paper.title}</h2>
             <div className="submitted-date">submitted <DateTag timestamp={paper.createdDate} /></div>
             <div className="authors">by {authors}</div>

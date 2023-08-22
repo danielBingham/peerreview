@@ -1,7 +1,5 @@
 .review-list {
-    margin: 50px auto;
-}
-.review-list .header {
-    text-align: center;
-    padding: 20px;
+    margin: 20px auto;
+    padding: 0 20px;
+    width: 1000px;
 }

@@ -1,5 +1,7 @@
 const DAOError = require('../errors/DAOError')
 
+const PAGE_SIZE = 20
+
 module.exports = class JournalDAO {
 
     constructor(core, database) {
@@ -14,6 +16,11 @@ module.exports = class JournalDAO {
         //
         // TECHDEBT - there's probably a better way to do this.
         this.database = ( database ? database : this.core.database )
+
+        this.selectionString = `
+            journals.id as journal_id, journals.name as journal_name, journals.description as journal_description,
+            journals.created_date as "journal_createdDate", journals.updated_date as "journal_updatedDate",
+        `
     }
 
     hydrateJournals(rows) {
@@ -21,48 +28,107 @@ module.exports = class JournalDAO {
         const list = []
 
         for(const row of rows) {
-            const journal = {
-                id: row.journal_id,
-                name: row.journal_name,
-                description: row.journal_description,
-                createdDate: row.journal_createdDate,
-                updatedDate: row.journal_updatedDate,
-                members: []
-            }
+            const journal = this.hydrateJournal(row) 
 
             if ( ! dictionary[journal.id] ) {
                 dictionary[journal.id] = journal
-                list.push(journal)
+                list.push(journal.id)
             }
 
-            const member = {
-                userId: row.member_userId,
-                permissions: row.member_permissions
-            }
+            if ( row.member_userId ) {
+                const member = {
+                    userId: row.member_userId,
+                    permissions: row.member_permissions
+                }
 
-            if ( ! dictionary[journal.id].members.find((member) => member.userId == row.user_id) ) {
-                dictionary[journal.id].members.push(member)
+                if ( ! dictionary[journal.id].members.find((member) => member.userId == row.user_id) ) {
+                    dictionary[journal.id].members.push(member)
+                }
             }
         }
 
         return { dictionary: dictionary, list: list }
     }
 
-    async selectJournals(where, params) {
+    hydrateJournal(row) {
+        return {
+            id: row.journal_id,
+            name: row.journal_name,
+            description: row.journal_description,
+            createdDate: row.journal_createdDate,
+            updatedDate: row.journal_updatedDate,
+            members: []
+        }
+    }
+
+    async countJournals(where, params, page) {
+        params = params ? params : []
+        where = where ? where : ''
+
+        const sql = `
+               SELECT 
+                 COUNT(journals.id) as count
+                FROM journals 
+                ${where} 
+        `
+
+        const results = await this.database.query(sql, params)
+
+        if ( results.rows.length <= 0) {
+            return {
+                count: 0,
+                page: page ? page : 1,
+                pageSize: PAGE_SIZE,
+                numberOfPages: 1
+            }
+        }
+
+        const count = results.rows[0].count
+        return {
+            count: count,
+            page: page ? page : 1,
+            pageSize: PAGE_SIZE,
+            numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
+        }
+
+    }
+
+    async selectJournals(where, inputParams, order, page) {
         where = where || ''
-        params = params || []
+        const params = [ ...inputParams ] || [] // Need to copy here because we're going
+        // to reuse it in count.
+        order = order ? order : 'journals.created_date desc'
+
+        // We only want to include the paging terms if we actually want paging.
+        // If we're making an internal call for another object, then we
+        // probably don't want to have to deal with pagination.
+        let paging = ''
+        if ( page ) {
+            page = page ? page : 1
+            
+            const offset = (page-1) * PAGE_SIZE
+            let count = params.length 
+
+            paging = `
+                LIMIT $${count+1}
+                OFFSET $${count+2}
+            `
+
+            params.push(PAGE_SIZE)
+            params.push(offset)
+        }
 
         const sql = `
             SELECT 
-                journals.id as journal_id, journals.name as journal_name, journals.description as journal_description,
-                journals.created_date as "journal_createdDate", journals.updated_date as "journal_updatedDate",
+                ${ this.selectionString }
 
                 journal_members.user_id as "member_userId", journal_members.permissions as member_permissions
 
             FROM journals
                 LEFT OUTER JOIN journal_members ON journals.id = journal_members.journal_id
-
             ${where}
+            ORDER BY ${order}
+            ${paging}
         `
 
         const results = await this.database.query(sql, params)
@@ -135,6 +201,7 @@ module.exports = class JournalDAO {
     // ======= Journal Members ================================================
 
     async insertJournalMember(journalId, member) {
+        console.log(member)
         const results = await this.database.query(`
             INSERT INTO journal_members (journal_id, user_id, permissions, created_date, updated_date)
                 VALUES ($1, $2, $3, now(), now())

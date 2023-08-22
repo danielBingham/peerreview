@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom'
 
 import { postOrcidAuthentication, cleanupRequest } from '/state/authentication'
-import { initializeReputation, cleanupReputationRequest } from '/state/reputation'
 
 import Spinner from '/components/Spinner'
 
@@ -48,14 +47,10 @@ const OrcidAuthenticationPage = function(props) {
 
     useEffect(function() {
         if ( currentUser && request && request.state == 'fulfilled') {
-            if ( request.result.type == 'connection' || request.result.type == 'registration') {
-                navigate("/reputation/initialization", { replace: false, state: { connect: true } })
-            } else {
-                if ( location.pathname == '/orcid/connect') {
-                    navigate("/account/details")
-                } else  {
-                    navigate("/")
-                }
+            if ( location.pathname == '/orcid/connect') {
+                navigate("/account/orcid")
+            } else  {
+                navigate("/")
             }
         }
     }, [ request ])

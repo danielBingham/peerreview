@@ -17,9 +17,6 @@ module.exports = class ResponseController {
 
         this.responseDAO = new backend.ResponseDAO(core)
         this.paperDAO = new backend.PaperDAO(core)
-
-        this.reputationGenerationService = new backend.ReputationGenerationService(core)
-        this.reputationPermissionService = new backend.ReputationPermissionService(core)
     }
 
     // TODO Techdebt Need to merge this with getResponses and use the
@@ -75,7 +72,6 @@ module.exports = class ResponseController {
          * To POST a response a user must be:
          *
          * 1. Logged in.
-         * 2. Have 'referee' reputation on Paper(:paper_id).
          * 3. Not be an author of the Paper(:paper_id).
          * 4. Not have previously posted a response to Paper(:paper_id).
          *
@@ -131,14 +127,6 @@ module.exports = class ResponseController {
                 `User(${userId}) submitted an invalid vote on Paper(${paperId}).`)
         }
         
-
-        // 2. Have 'referee' reputation on Paper(:paper_id).
-        const canRespond = this.reputationPermissionService.canReferee(paperResponse.userId, paperResponse.paperId)
-        if ( ! canRespond ) {
-            throw new ControllerError(400, 'not-enough-reputation', 
-                `User(${paperResponse.userId}) attempted to respond to Paper(${paperResponse.paperId}) with out enough reputation to do so!`)
-        }
-
         // 3. Not be an author of the Paper(:paper_id).
         const authorResults = await this.database.query(`
             SELECT user_id FROM paper_authors WHERE paper_id = $1
@@ -165,17 +153,10 @@ module.exports = class ResponseController {
          *      Create the new Response 
          ********************************************************/
 
-        await this.database.query('BEGIN')
-        try {
-            paperResponse.id = await this.responseDAO.insertResponse(paperResponse)
-            for ( const version of paperResponse.versions ) {
-                await this.responseDAO.insertResponseVersion(paperResponse, version)
-            }
-        } catch (error) {
-            await this.database.query('ROLLBACK')
-            throw error
+        paperResponse.id = await this.responseDAO.insertResponse(paperResponse)
+        for ( const version of paperResponse.versions ) {
+            await this.responseDAO.insertResponseVersion(paperResponse, version)
         }
-        await this.database.query('COMMIT')
 
         const returnResponses = await this.responseDAO.selectResponses('WHERE responses.id=$1', [paperResponse.id])
 
@@ -186,14 +167,6 @@ module.exports = class ResponseController {
 
         const returnResponse = returnResponses[0]
 
-        await this.database.query('BEGIN')
-        try {
-            await this.reputationGenerationService.incrementReputationForPaper(returnResponse.paperId, returnResponse.vote)
-        } catch (error) {
-            await this.database.query(`ROLLBACK`)
-            throw error
-        }
-        await this.database.query('COMMIT')
 
         await this.paperDAO.refreshPaperScore(returnResponse.paperId)
 

@@ -5,9 +5,6 @@
 .field-view .field-details {
     grid-column: 1 / 2;
 }
-.field-view .reputation-thresholds {
-    grid-column: 2 / 3;
-}
 
 .field-view .field-details h1 {
     font-size: 2em;

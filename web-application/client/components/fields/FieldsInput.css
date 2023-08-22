@@ -15,14 +15,17 @@
     padding: 20px;
 }
 .fields-input .explanation {
-    padding: 5px 0;
+    line-height: 1.47em;
+    padding: 1em 0;
 }
 .fields-input .selected-fields {
     padding: 5px 0;
 }
-.fields-input label {
+.fields-input h3 {
     display: block;
     width: 100%;
+    padding: 0;
+    marign: 0;
     font-size: 16px;
     font-weight: bold;
 }

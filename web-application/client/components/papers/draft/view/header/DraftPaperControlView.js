@@ -59,8 +59,8 @@ const DraftPaperControlView = function(props) {
         return state.reviews.inProgress[paper.id][props.versionNumber]
     })
 
-    const isAuthor = (currentUser && paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
-    const isOwner = (currentUser && isAuthor && paper.authors.find((a) => a.user.id == currentUser.id).owner ? true : false)
+    const isAuthor = (currentUser && paper.authors.find((a) => a.userId == currentUser.id) ? true : false)
+    const isOwner = (currentUser && isAuthor && paper.authors.find((a) => a.userId == currentUser.id).owner ? true : false)
 
     // ================= User Action Handling  ================================
 
@@ -69,13 +69,8 @@ const DraftPaperControlView = function(props) {
 
     const publishPaper = function(event) {
         event.preventDefault()
-
-
-        const paperPatch = {
-            id: paper.id,
-            isDraft: false
-        }
-        setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
+        const uri = `/draft/${paper.id}/publish`
+        navigate(uri)
     }
 
     const uploadVersion = function(event) {
@@ -97,6 +92,9 @@ const DraftPaperControlView = function(props) {
     const startReview = function(event) {
         if ( ! reviewInProgress ) {
             setPostReviewRequestId(dispatch(newReview(paper.id, props.versionNumber, currentUser.id)))
+
+            let urlString = `/draft/${props.id}/version/${props.versionNumber}/drafts`
+            navigate(urlString)
         }
     }
 
@@ -137,7 +135,7 @@ const DraftPaperControlView = function(props) {
          contents = (
              <div className="author-controls">
                  <button onClick={uploadVersion}>Upload New Version</button>
-                 <button onClick={publishPaper}>Publish</button>
+                 <button onClick={publishPaper}>Submit for Publication</button>
              </div>
         )
      }
@@ -155,7 +153,7 @@ const DraftPaperControlView = function(props) {
                 <select name="versionNumber" value={props.versionNumber} onChange={changeVersion}>
                     {paperVersionOptions}
                 </select>
-                { ! reviewInProgress && ! viewOnly && <button onClick={startReview}>Start Review</button> }
+                { ! reviewInProgress && ! viewOnly && currentUser && <button onClick={startReview}>Start Review</button> }
             </div>
             { contents }
         </div>

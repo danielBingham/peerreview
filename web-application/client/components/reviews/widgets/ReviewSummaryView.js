@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { patchReview, cleanupRequest } from '/state/reviews'
 
-import { CheckCircleIcon, ChatBubbleBottomCenterTextIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import  { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid'
 
 import UserTag from '/components/users/UserTag'
@@ -38,9 +38,9 @@ const ReviewSummaryView = function(props) {
         return state.authentication.currentUser
     })
 
-    const isAuthor = (currentUser && props.paper.authors.find((a) => a.user.id == currentUser.id) ? true : false)
-    const isOwner = (currentUser && isAuthor && props.paper.authors.find((a) => a.user.id == currentUser.id).owner ? true : false)
-    const reviewerIsAuthor = (props.paper.authors.find((a) => a.user.id == props.selectedReview.userId) ? true : false)
+    const isAuthor = (currentUser && props.paper.authors.find((a) => a.userId == currentUser.id) ? true : false)
+    const isOwner = (currentUser && isAuthor && props.paper.authors.find((a) => a.userId == currentUser.id).owner ? true : false)
+    const reviewerIsAuthor = (props.paper.authors.find((a) => a.userId == props.selectedReview.userId) ? true : false)
     const viewOnly = ! props.paper.isDraft
 
     // ======= Actions and Event Handling ===========================
@@ -91,39 +91,16 @@ const ReviewSummaryView = function(props) {
     // ======= Render ===============================================
     
     if ( props.selectedReview ) {
-        let authorControls = null
-        if ( isAuthor && isOwner && ! reviewerIsAuthor && ! viewOnly
-            && props.selectedReview.status == 'submitted' && props.selectedReview.recommendation !== 'commentary' ) 
-        {
-            authorControls = (
-                <div className="author-controls">
-                    <button onClick={acceptReview}>Accept Review</button>
-                    <button onClick={rejectReview}>Reject Review</button>
-                </div>
-            )
-        } else if ( props.selectedReview.status !== 'submitted' ) {
-            let status = null
-            if ( props.selectedReview.status == 'accepted' ) {
-                status = ( <div className="accepted"> <CheckIcon /> Accepted</div> )
-            } else if ( props.selectedReview.status == 'rejected' ) {
-                status = ( <div className="rejected"> <XMarkIcon /> Rejected </div> )
-            }
-            authorControls = (
-                <div className="author-controls">
-                    { status }
-                </div>
-            )
-        }
 
         let recommendation = null
         if ( props.selectedReview.status !== 'in-progress' ) {
             let message = null
             if ( props.selectedReview.recommendation == 'commentary' ) {
-                message = (<div className="commentary">Commentary (No recommendation)</div>)
+                message = (<div className="commentary"><ChatBubbleLeftRightIcon /> Commentary</div>)
             } else if ( props.selectedReview.recommendation == 'approve' ) {
                 message = (<div className="approved"> <CheckCircleIcon /> Recommends Approval</div>)
             } else if ( props.selectedReview.recommendation == 'request-changes' ) {
-                message = (<div className="request-changes"><ChatBubbleBottomCenterTextIcon /> Recommends Changes</div>)
+                message = (<div className="request-changes"><ClipboardDocumentListIcon/> Recommends Changes</div>)
             } else if ( props.selectedReview.recommendation == 'reject' ) {
                 message = (<div className="rejected"><XCircleIcon /> Recommends Rejection</div>)
             }
@@ -146,7 +123,6 @@ const ReviewSummaryView = function(props) {
                     { recommendation }
                     <div className="summary-text"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div>
                 </div>
-                {authorControls}
             </div>
         )
     } else {
