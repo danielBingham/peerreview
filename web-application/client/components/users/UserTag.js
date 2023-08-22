@@ -32,8 +32,10 @@ const UserTag = function(props) {
     const dispatch = useDispatch()
 
     useEffect(function() {
-        setRequestId(dispatch(getUser(props.id)))
-    }, [ ])
+        if ( ! user ) {
+            setRequestId(dispatch(getUser(props.id)))
+        }
+    }, [])
 
     // Cleanup our request.
     useEffect(function() {
@@ -55,8 +57,9 @@ const UserTag = function(props) {
             name = ( <Link to={ `/user/${user.id}` }>{user.name}</Link> )
         }
 
-        content = ( <> { name } ({parseInt(user.reputation).toLocaleString()}) </> ) 
+        content = ( <> <UserProfileImage file={user.file} /> { name } </> ) 
     }
+                    
 
     return (
         <span className="user-tag" > { content } </span> 

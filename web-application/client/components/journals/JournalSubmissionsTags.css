@@ -1,0 +1,28 @@
+.journal-submissions-tags {
+    padding: 5px 0;
+
+}
+
+.journal-submissions-tags .preprint-tag {
+    display: inline-block;
+    margin-right: 5px;
+    border-radius: 26px;
+    font-size: 12px;
+    height: 12px;
+    padding: 5px 10px;
+    background-color: white;
+    color: black;
+    box-shadow: 1px 1px 1px #999;
+}
+
+.journal-submissions-tags .private-draft-tag {
+    display: inline-block;
+    margin-right: 5px;
+    border-radius: 26px;
+    font-size: 12px;
+    height: 12px;
+    padding: 5px 10px;
+    background-color: white;
+    color: black;
+    box-shadow: 1px 1px 1px #999;
+}

@@ -1,17 +1,28 @@
 .review-view {
-    margin: 50px auto 150px auto;
-    width: 1000px;
+    margin: 20px -5px 50px 0;
 }
+
 .review-view  svg.ellipsis {
     display: block;
-    margin: 10px auto;
+    margin: 5px auto;
     width: 24px;
     height: 24px;
     color: var(--main-icon-color);
 }
-.review-view .review-summary, .review-view .review-summary-form {
+.review-view-summary-wrapper {
     border: thin solid var(--main-border-color);
+}
+.review-view .review-summary, .review-view .review-summary-form {
     padding: 20px 50px;
 }
 
+.review-view .approved svg {
+    color: green !important;
+}
+.review-view .request-changes svg {
+    color: #c7a124 !important;
+}
+.review-view .rejected svg {
+    color: red !important;
+}
 

@@ -54,7 +54,7 @@ const UploadPaperVersionPage = function(props) {
                 navigate("/")
             }
 
-            if ( ! paper.authors.find((a) => a.user.id == currentUser.id)) {
+            if ( ! paper.authors.find((a) => a.userId == currentUser.id)) {
                 navigate("/")
             }
         }

@@ -47,15 +47,7 @@ describe('in client/state/users.js', function() {
             )
 
             const requestId = store.dispatch(getUsers('test'))
-            deferred.resolve({
-                meta: {
-                    page: 1,
-                    pageSize: 20,
-                    count: 2,
-                    numberOfPages: 1
-                },
-                result: backend.users.list
-            })
+            deferred.resolve(backend.users)
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -91,7 +83,10 @@ describe('in client/state/users.js', function() {
             )
 
             const requestId = store.dispatch(postUsers(users[1]))
-            deferred.resolve(backend.users.dictionary[1])
+            deferred.resolve({ 
+                entity: backend.users.dictionary[1],
+                relations: backend.users.relations
+            })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -128,7 +123,7 @@ describe('in client/state/users.js', function() {
             )
 
             const requestId = store.dispatch(getUser(backend.users.dictionary[1].id))
-            deferred.resolve(backend.users.dictionary[1])
+            deferred.resolve({ entity: backend.users.dictionary[1], relations: backend.users.relations })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -138,11 +133,9 @@ describe('in client/state/users.js', function() {
 
             expect(state.users.dictionary[1]).toEqual(backend.users.dictionary[1])
         })
-
     })
 
     describe('putUser(user)', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
@@ -173,7 +166,7 @@ describe('in client/state/users.js', function() {
             )
 
             const requestId = store.dispatch(putUser(user))
-            deferred.resolve(backend.users.dictionary[1])
+            deferred.resolve({ entity: backend.users.dictionary[1], relations: backend.users.relations })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -188,7 +181,6 @@ describe('in client/state/users.js', function() {
     })
 
     describe('patchUser(user)', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
@@ -219,7 +211,7 @@ describe('in client/state/users.js', function() {
             )
 
             const requestId = store.dispatch(patchUser(user))
-            deferred.resolve(backend.users.dictionary[1])
+            deferred.resolve({ entity: backend.users.dictionary[1], relations: backend.users.relations })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -234,7 +226,6 @@ describe('in client/state/users.js', function() {
     })
 
     describe('deleteUser(user)', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
@@ -268,7 +259,7 @@ describe('in client/state/users.js', function() {
             )
 
             const initialRequestId = store.dispatch(getUser(user.id))
-            deferred.resolve(backend.users.dictionary[1])
+            deferred.resolve({ entity: backend.users.dictionary[1], relations: backend.users.relations })
 
             let state = await waitForState(store, function(state) {
                 return state.users.requests[initialRequestId] && state.users.requests[initialRequestId].state == 'fulfilled'
@@ -290,7 +281,7 @@ describe('in client/state/users.js', function() {
             )
 
             const requestId = store.dispatch(deleteUser(user))
-            deferred.resolve({ status: 200, body: {}})
+            deferred.resolve({ status: 200, body: { entity: { id: backend.users.dictionary[1].id }}})
 
             state = await waitForState(store, function(state) {
                 return state.users.requests[requestId] && state.users.requests[requestId].state == 'fulfilled'
@@ -298,7 +289,6 @@ describe('in client/state/users.js', function() {
 
             expect(state.users.dictionary).toEqual({})
         })
-
     })
 
 })

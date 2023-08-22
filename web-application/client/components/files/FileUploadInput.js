@@ -173,7 +173,8 @@ const FileUploadInput = function(props) {
             }
             content = (
                 <div className="upload-input">
-                    <label htmlFor="upload">Select a file to upload</label>
+                    <h3>Select a File</h3>
+                    <div className="explanation">Please select the file containing your document. Supported document formats are: pdf.</div>
                     <input type="file"
                         name="file"
                         accept={props.types.join(',')}

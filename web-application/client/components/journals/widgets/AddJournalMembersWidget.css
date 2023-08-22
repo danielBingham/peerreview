@@ -1,0 +1,33 @@
+.add-members-widget .selected-member {
+    padding: 10px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.add-members-widget .selected-member .left {
+    grid-column: 1 / 2;
+    text-align: left;
+}
+.add-members-widget .selected-member .left svg {
+    width: 20px;
+    height: 20px;
+    margin-right: 5px;
+    margin-bottom: -4px;
+}
+.add-members-widget .selected-member .left .order {
+    margin: 0 10px;
+}
+.add-members-widget .selected-member .right {
+    grid-column: 2 / 3;
+    text-align: right;
+}
+.add-members-widget .selected-member .right svg {
+    width: 20px;
+    height: 20px;
+    margin-left: 20px;
+    margin-bottom: -4px;
+    color: red;
+}
+
+
+
+

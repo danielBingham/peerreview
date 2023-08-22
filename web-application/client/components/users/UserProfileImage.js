@@ -23,7 +23,7 @@ const UserProfileImage = function(props) {
 
 
     return (
-        <div className="profile-image">
+        <div className={ props.className ? `profile-image ${props.className}` : "profile-image"}>
             {content}
         </div>
     )

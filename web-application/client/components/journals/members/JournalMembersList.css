@@ -1,0 +1,15 @@
+.journal-member-list {}
+.journal-member-list .member-list-controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.journal-member-list .member-list-controls .find-members {
+    grid-column: 1/2;
+    text-align: left;
+    padding: 10px 10px 10px 0;
+}
+.journal-member-list .member-list-controls .invite-member {
+    grid-column: 2/3;
+    text-align: right;
+    padding: 10px 0 10px 10px;
+}

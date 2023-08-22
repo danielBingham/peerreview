@@ -209,7 +209,7 @@ module.exports = class AuthenticationController {
      *   their ORCID account.
      * - It can be called by a logged in user to connect their ORCID iD to
      *   their Peer Review account, allowing them to login with ORCID in the
-     *   future and intializing their reputation.
+     *   future.
      * - It can be called to login a user who previously registered with ORCID
      *   or connected their ORCID to their account.
      *
@@ -363,7 +363,6 @@ module.exports = class AuthenticationController {
             await this.userDAO.updatePartialUser(user)
 
             await this.settingsDAO.initializeSettingsForUser(user)
-            // Initialize their reputation
 
             const responseBody = await this.auth.loginUser(user.id, request)
             responseBody.type = "registration"
@@ -383,7 +382,6 @@ module.exports = class AuthenticationController {
                 status: 'confirmed'
             }
             await this.userDAO.updatePartialUser(user)
-            // initialize their reputation.
 
             const responseBody = await this.auth.loginUser(id, request)
             responseBody.type = "connection"

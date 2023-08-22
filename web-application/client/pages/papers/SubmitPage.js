@@ -9,8 +9,6 @@ import Spinner from '/components/Spinner'
 import './SubmitPage.css'
 
 const SubmitPage = function(props) {
-    const { stage } = useParams()
-
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })

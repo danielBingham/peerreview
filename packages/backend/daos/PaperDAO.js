@@ -15,6 +15,8 @@ const PAGE_SIZE = 50
 module.exports = class PaperDAO {
 
     constructor(core) {
+        this.PAGE_SIZE = PAGE_SIZE
+
         this.database = core.database
         this.userDAO = new UserDAO(core)
         this.fileDAO = new FileDAO(core)
@@ -30,11 +32,7 @@ module.exports = class PaperDAO {
      * @return {Object[]}   The data parsed into one or more objects.
      */
     hydratePapers(rows) {
-        if ( rows.length == 0 ) {
-            return null 
-        }
-
-        const papers = {}
+        const dictionary = {}
         const list = []
 
         for(const row of rows) {
@@ -42,6 +40,7 @@ module.exports = class PaperDAO {
                 id: row.paper_id,
                 title: row.paper_title,
                 isDraft: row.paper_isDraft,
+                showPreprint: row.paper_showPreprint,
                 score: row.paper_score,
                 createdDate: row.paper_createdDate,
                 updatedDate: row.paper_updatedDate,
@@ -50,19 +49,20 @@ module.exports = class PaperDAO {
                 versions: []
             }
 
-            if ( ! papers[paper.id] ) {
-                papers[paper.id] = paper
+            if ( ! dictionary[paper.id] ) {
+                dictionary[paper.id] = paper
                 list.push(paper)
             }
 
             const author = {
-                id: row.author_id,
+                userId: row.author_userId,
                 order: row.author_order,
-                owner: row.author_owner
+                owner: row.author_owner,
+                submitter: row.author_submitter
             }
 
-            if ( ! papers[paper.id].authors.find((a) => a.id == author.id)) {
-                papers[paper.id].authors.push(author)
+            if ( ! dictionary[paper.id].authors.find((a) => a.userId == author.userId)) {
+                dictionary[paper.id].authors.push(author)
             }
 
             const paper_version = {
@@ -72,19 +72,23 @@ module.exports = class PaperDAO {
                 updatedDate: row.version_updatedDate
             }
             // Ignore versions that haven't finished uploading.
-            if (paper_version.version && ! papers[paper.id].versions.find((v) => v.version == paper_version.version)) {
-                papers[paper.id].versions.push(paper_version)
+            if (paper_version.version && ! dictionary[paper.id].versions.find((v) => v.version == paper_version.version)) {
+                dictionary[paper.id].versions.push(paper_version)
             }
 
-            const paper_field = this.fieldDAO.hydrateField(row)
+            if ( row.paperField_fieldId) {
+                const paper_field = {
+                    id: row.paperField_fieldId
+                }
 
-            if ( ! papers[paper.id].fields.find((f) => f.id == paper_field.id)) {
-                papers[paper.id].fields.push(paper_field)
+                if ( ! dictionary[paper.id].fields.find((f) => f.id == paper_field.id)) {
+                    dictionary[paper.id].fields.push(paper_field)
+                }
             }
 
         }
 
-        return list 
+        return { dictionary: dictionary, list: list } 
     }
 
     /**
@@ -122,25 +126,24 @@ module.exports = class PaperDAO {
                SELECT 
 
                     papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft",
-                    papers.score as paper_score,
+                    papers.score as paper_score, papers.show_preprint as "paper_showPreprint",
                     papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
 
-                    paper_authors.user_id as author_id, paper_authors.author_order as author_order,
-                    paper_authors.owner as author_owner,
+                    paper_authors.user_id as "author_userId", paper_authors.author_order as author_order,
+                    paper_authors.owner as author_owner, paper_authors.submitter as author_submitter,
 
                     paper_versions.version as version_version,
                     paper_versions.created_date as "version_createdDate", paper_versions.updated_date as "version_updatedDate",
 
                     ${ this.fileDAO.getFilesSelectionString() },
 
-                    ${ this.fieldDAO.selectionString }
+                    paper_fields.field_id as "paperField_fieldId"
 
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
                     LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
                     LEFT OUTER JOIN files on paper_versions.file_id = files.id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
-                    LEFT OUTER JOIN fields ON paper_fields.field_id = fields.id
                     ${activeOrderJoins}
                 ${where} 
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
@@ -148,17 +151,9 @@ module.exports = class PaperDAO {
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length == 0 ) {
-            return [] 
+            return { dictionary: {}, list: [] } 
         } else {
-            const papers = this.hydratePapers(results.rows)
-            for( const paper of papers) {
-                for ( const author of paper.authors ) {
-                    const users = await this.userDAO.selectCleanUsers('WHERE users.id = $1', [ author.id])
-                    author.user = users[0]
-                    delete author.id
-                }
-            }
-            return papers
+            return this.hydratePapers(results.rows)
         }
     }
 
@@ -221,7 +216,7 @@ module.exports = class PaperDAO {
     /**
      *
      */
-    async countPapers(where, params) {
+    async countPapers(where, params, page) {
         where = (where ? where : '')
         params = (params ? params : [])
 
@@ -239,16 +234,19 @@ module.exports = class PaperDAO {
         if ( results.rows.length <= 0 || results.rows[0].paper_count == 0) {
             return { 
                 count: 0,
+                page: page ? page : 1,
                 pageSize: PAGE_SIZE,
                 numberOfPages: 1
 
             }
         }
 
+        const count = results.rows[0].paper_count
         return { 
             count: results.rows[0].paper_count,
+            page: page ? page : 1,
             pageSize: PAGE_SIZE,
-            numberOfPages: parseInt(results.rows[0].paper_count / PAGE_SIZE)+( results.rows[0].paper_count % PAGE_SIZE > 0 ? 1 : 0)
+            numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0)
         }
     }
 
@@ -257,11 +255,11 @@ module.exports = class PaperDAO {
      */
     async insertPaper(paper) {
         const results = await this.database.query(`
-                INSERT INTO papers (title, is_draft, created_date, updated_date) 
-                    VALUES ($1, $2, now(), now()) 
+                INSERT INTO papers (title, is_draft, show_preprint, created_date, updated_date) 
+                    VALUES ($1, $2, $3, now(), now()) 
                     RETURNING id
                 `, 
-            [ paper.title, paper.isDraft ]
+            [ paper.title, paper.isDraft, paper.showPreprint ]
         )
         if ( results.rows.length == 0 ) {
            throw new DAOError('failed-insertion', 'Failed to insert a paper.')
@@ -277,15 +275,15 @@ module.exports = class PaperDAO {
      * @throws Error Doesn't catch errors, so any errors returned by the database will bubble up.
      */
     async insertAuthors(paper) {
-        let sql =  `INSERT INTO paper_authors (paper_id, user_id, author_order, owner) VALUES `
+        let sql =  `INSERT INTO paper_authors (paper_id, user_id, author_order, owner, submitter) VALUES `
         let params = []
 
         let count = 1
         let authorCount = 1
         for (const author of paper.authors) {
-            sql += `($${count}, $${count+1}, $${count+2}, $${count+3})` + (authorCount < paper.authors.length ? ', ' : '')
-            params.push(paper.id, author.user.id, author.order, author.owner)
-            count = count+4
+            sql += `($${count}, $${count+1}, $${count+2}, $${count+3}, $${count+4})` + (authorCount < paper.authors.length ? ', ' : '')
+            params.push(paper.id, author.userId, author.order, author.owner, author.submitter)
+            count = count+5
             authorCount++
         }
 
@@ -409,7 +407,9 @@ module.exports = class PaperDAO {
             }
 
             if ( key == 'isDraft') {
-                sql += 'is_draft = $' + count + ', '
+                sql += `is_draft = $${count}, `
+            } else if ( key == 'showPreprint' ) {
+                sql += `show_preprint = $${count}, `
             } else {
                 sql += key + ' = $' + count + ', '
             }

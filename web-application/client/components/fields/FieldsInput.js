@@ -4,7 +4,7 @@ import debounce from 'lodash.debounce'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getFields, clearQuery, cleanupRequest } from '/state/fields'
+import { getFields, clearFieldQuery, cleanupRequest } from '/state/fields'
 
 import Field from '/components/fields/Field'
 import FieldBadge from '/components/fields/FieldBadge'
@@ -59,9 +59,9 @@ const FieldsInput = function(props) {
     const fields = useSelector(function(state) {
         const fields = []
         if ( state.fields.queries['suggestions'] ) {
-            for(const id of state.fields.queries['suggestions'].list) {
-                if ( state.fields.dictionary[id] ) {
-                    fields.push(state.fields.dictionary[id])
+            for(const field of state.fields.queries['suggestions'].list) {
+                if ( state.fields.dictionary[field.id] ) {
+                    fields.push(state.fields.dictionary[field.id])
                 }
             }
         }
@@ -265,7 +265,7 @@ const FieldsInput = function(props) {
     useEffect(function() {
         return function cleanup() {
             if ( fieldsRequestId ) {
-                dispatch(clearQuery('suggestions'))
+                dispatch(clearFieldQuery('suggestions'))
                 dispatch(cleanupRequest({ requestId: fieldsRequestId }))
             }
         }
@@ -276,7 +276,7 @@ const FieldsInput = function(props) {
     let fieldList = [] 
     if ( props.fields.length > 0) {
         for(const field of props.fields) {
-            fieldList.push(<Field key={field.id} field={field} remove={removeField} target="_blank" />)
+            fieldList.push(<Field key={field.id} id={field.id} remove={removeField} target="_blank" />)
         }
     }
 
@@ -299,7 +299,7 @@ const FieldsInput = function(props) {
 
     return (
         <div className="fields-input"> 
-            <label htmlFor="fields">{ props.title }</label>
+            <h3>{ props.title }</h3>
             <div className="explanation">{ props.explanation }</div>
             <div className="selected-fields">{fieldList}</div>
             { fieldSelectedError && <div className="error">You've already added that field.</div> }

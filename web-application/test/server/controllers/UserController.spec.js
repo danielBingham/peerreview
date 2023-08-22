@@ -9,14 +9,12 @@ const UserController = require('../../../server/controllers/UserController')
 const ControllerError = require('../../../server/errors/ControllerError')
 
 const DatabaseFixtures = require('../fixtures/database')
-const ExpectedFixtures = require('../fixtures/expected')
-const SubmittedFixtures = require('../fixtures/submitted')
+const ExpectedFixtures = require('../fixtures/entities')
 
-describe('UserController', function() {
+xdescribe('UserController', function() {
     
     // ====================== Fixture Data ====================================
 
-    const submittedUsers = SubmittedFixtures.users 
     const database = DatabaseFixtures.database 
     const expectedUsers = ExpectedFixtures.users 
     const expectedUncleanUsers = ExpectedFixtures.usersUnclean

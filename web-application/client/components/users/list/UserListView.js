@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 
-import {getUsers, clearQuery, cleanupRequest } from '/state/users'
+import {getUsers, clearUserQuery, cleanupRequest } from '/state/users'
 
 import UserBadge from '../UserBadge'
 
@@ -38,7 +38,7 @@ const UserListView = function(props) {
         }
         
         const users = []
-        for( const id of state.users.queries['UserList'].result ) {
+        for( const id of state.users.queries['UserList'].list) {
             users.push(state.users.dictionary[id])
         }
 
@@ -81,7 +81,7 @@ const UserListView = function(props) {
 
         setRequestId(dispatch(getUsers('UserList', params)))
         return function cleanup() {
-            dispatch(clearQuery({ name: 'UserList'}))
+            dispatch(clearUserQuery({ name: 'UserList'}))
         }
     }, [ searchParams ])
 
@@ -113,9 +113,6 @@ const UserListView = function(props) {
     const newestParams = new URLSearchParams(searchParams.toString())
     newestParams.set('sort', 'newest')
 
-    const reputationParams = new URLSearchParams(searchParams.toString())
-    reputationParams.set('sort', 'reputation')
-
     const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
     return (
         <List className="user-list">
@@ -124,15 +121,11 @@ const UserListView = function(props) {
                     onClick={() => setSort('newest')} 
                     selected={sort == 'newest'} 
                     name="Newest" />
-                <ListControl url={`?${reputationParams.toString()}`} 
-                    onClick={() => setSort('reputation')} 
-                    selected={sort == 'reputation'} 
-                    name="Reputation" />
             </ListHeader>
             <ListGridContent>
                 { content } 
             </ListGridContent>
-            <PaginationControls counts={meta} /> 
+            <PaginationControls meta={meta} /> 
         </List>
     )
         

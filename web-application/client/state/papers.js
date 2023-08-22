@@ -1,10 +1,17 @@
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
-import logger from '../logger'
+import setRelationsInState from './helpers/relations'
 
-import { addFieldsToDictionary } from './fields'
-import { addUsersToDictionary } from './users'
+import {
+    setInDictionary,
+    removeEntity,
+    makeQuery,
+    setQueryResults,
+    clearQuery,
+    clearQueries
+} from './helpers/state'
+
 import { 
     makeSearchParams,
     makeTrackedRequest,
@@ -45,22 +52,7 @@ export const papersSlice = createSlice({
          */
         dictionary: {},
 
-        /**
-         * A list of papers retrieved from the GET /papers endpoint, or added
-         * with appendPapersToList, preserving order.
-         *
-         * @type {object[]}
-         */
-        list: [],
-
-        /**
-         * An object holding counts for the current list.
-         */
-        counts: { 
-            count: 0,
-            pageSize: 1,
-            numberOfPages: 1
-        },
+        queries: {},
 
         /**
          * The draft paper the current user is assembling.  It hasn't been
@@ -70,68 +62,18 @@ export const papersSlice = createSlice({
     },
     reducers: {
 
-        /**
-         * Add one or more papers to the state dictionary.  
-         *
-         * Does NOT add them to the list.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object[] | object} action.payload - The papers we want to add.  Can
-         * either be an array of papers or a single paper object.
-         */
-        addPapersToDictionary: function(state, action) {
-            if ( action.payload && action.payload.length ) {
-                for( const paper of action.payload) {
-                    state.dictionary[paper.id] = paper
-                }
-            } else {
-                state.dictionary[action.payload.id] = action.payload
-            }
-        },
+        // ======== State Manipulation Helpers ================================
+        // @see ./helpers/state.js
 
-        /**
-         * Append one or more papers to the list.
-         *
-         * DOES add to them to the dictionary as well.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object[] | object} action.payload - The papers we want to
-         * add.  Can be either an array of papers or a single paper.
-         */
-        appendPapersToList: function(state, action) {
-            if ( action.payload && action.payload.length ) {
-                for (const paper of action.payload) {
-                    state.list.push(paper)
-                    state.dictionary[paper.id] = paper
-                }
-            } else {
-                state.list.push(action.payload)
-                state.dictionary[action.payload.id] = action.payload
-            }
-        },
+        setPapersInDictionary: setInDictionary,
+        removePaper: removeEntity,
+        makePaperQuery: makeQuery,
+        setPaperQueryResults: setQueryResults,
+        clearPaperQuery: clearQuery,
+        clearPaperQueries: clearQueries,
 
-        /**
-         * Remove papers from the dictionary and the list.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object[] | object} action.payload - An array of papers or a
-         * single paper that we'd like to remove.
-         */
-        removePapers: function(state, action) {
-            if ( action.payload && action.payload.length ) {
-                for(const paper of action.payload ) {
-                    delete state.dictionary[paper.id]
-                    state.list = state.list.filter((p) => p.id !== paper.id)
-                }
-            } else {
-                delete state.dictionary[action.payload.id]
-                state.list = state.list.filter((p) => p.id !== action.payload.id)
-            }
-        },
-
+        // ======== Paper Specific State Manipulation =========================
+        
         addVoteToPaper: function(state, action) {
             // Add the vote to the dictionary
             const vote = action.payload
@@ -146,18 +88,23 @@ export const papersSlice = createSlice({
             }
         },
 
-        /**
-         * Clear the list, as when you want to start a new ordered query.
-         *
-         * @param {object} state - The redux state slice.
-         * @param {object} action - The redux action we're reducing.
-         */
-        clearList: function(state, action) {
-            state.list = []
+        setSubmissionsOnPaper: function(state, action) {
+            const paperId = action.payload.paperId
+            const submissions = action.payload.submissions
+
+            if ( state.dictionary[paperId] ) {
+                state.dictionary[paperId].submissions = submissions
+            }
         },
 
-        setCounts: function(state, action) {
-            state.counts = action.payload
+        updateSubmissionOnPaper: function(state, action) {
+            const paperId = action.payload.paperId
+            const submission = action.payload.submission
+
+            if ( state.dictionary[paperId] ) {
+                const index = state.dictionary[paperId].submissions.findIndex((s) => s.id == submission.id)
+                state.dictionary[paperId].submissions[index] = submission
+            }
         },
 
         setDraft: function(state, action) {
@@ -182,32 +129,6 @@ export const papersSlice = createSlice({
     }
 })
 
-//
-
-/**
- * GET /papers/count
- *
- * Get all papers in the database.  Populates state.papers.
- *
- * Makes the request asynchronously and returns a id that can be used to track
- * the request and retreive the results from the state slice.
- *
- * @returns {string} A uuid requestId that can be used to track this request.
- */
-export const countPapers = function(params, replaceList) {
-    return function(dispatch, getState) {
-        const queryString = makeSearchParams(params) 
-        const endpoint = '/papers/count' + ( params ? '?' + queryString.toString() : '')
-
-        return makeTrackedRequest(dispatch, getState, papersSlice,
-            'GET', endpoint, null,
-            function(counts) {
-                dispatch(papersSlice.actions.setCounts(counts))
-            }
-        )
-    }
-}
-
 
 /**
  * GET /papers
@@ -219,27 +140,21 @@ export const countPapers = function(params, replaceList) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getPapers = function(params, replaceList) {
+export const getPapers = function(name, params) {
     return function(dispatch, getState) {
         const queryString = makeSearchParams(params) 
         const endpoint = '/papers' + ( params ? '?' + queryString.toString() : '')
 
+        dispatch(papersSlice.actions.makePaperQuery({ name: name }))
+
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'GET', endpoint, null,
-            function(papers) {
-                if ( replaceList ) {
-                    dispatch(papersSlice.actions.clearList())
-                }
+            function(response) {
+                dispatch(papersSlice.actions.setPapersInDictionary({ dictionary: response.dictionary}))
 
-                if ( papers && papers.length ) {
-                    for (const paper of papers) {
-                        for (const author of paper.authors) {
-                            dispatch(addUsersToDictionary(author.user))
-                        }
-                        dispatch(addFieldsToDictionary(paper.fields))
-                    }
-                    dispatch(papersSlice.actions.appendPapersToList(papers))
-                } 
+                dispatch(papersSlice.actions.setPaperQueryResults({ name: name, meta: response.meta, list: response.list }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -262,12 +177,10 @@ export const postPapers = function(paper) {
         dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'POST', '/papers', paper,
-            function(returnedPaper) {
-                dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
-                for (const author of paper.authors) {
-                    dispatch(addUsersToDictionary(author.user))
-                }
-                dispatch(addFieldsToDictionary(paper.fields))
+            function(response) {
+                dispatch(papersSlice.actions.setPapersInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -289,12 +202,10 @@ export const getPaper = function(id) {
     return function(dispatch, getState) {
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'GET', `/paper/${id}`, null,
-            function(paper) {
-                for(const author of paper.authors) {
-                    dispatch(addUsersToDictionary(author.user))
-                }
-                dispatch(addFieldsToDictionary(paper.fields))
-                dispatch(papersSlice.actions.addPapersToDictionary(paper))
+            function(response) {
+                dispatch(papersSlice.actions.setPapersInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -317,12 +228,10 @@ export const putPaper = function(paper) {
         dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'PUT', `/paper/${paper.id}`, paper,
-            function(returnedPaper) {
-                for(const author of returnedPaper.authors) {
-                    dispatch(addUsersToDictionary(author.user))
-                }
-                dispatch(addFieldsToDictionary(returnedPaper.fields))
-                dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
+            function(response) {
+                dispatch(papersSlice.actions.setPapersInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -345,12 +254,10 @@ export const patchPaper = function(paper) {
         dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'PATCH', `/paper/${paper.id}`, paper,
-            function(returnedPaper) {
-                for(const author of returnedPaper.authors) {
-                    dispatch(addUsersToDictionary(author.user))
-                }
-                dispatch(addFieldsToDictionary(returnedPaper.fields))
-                dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
+            function(response) {
+                dispatch(papersSlice.actions.setPapersInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -376,7 +283,7 @@ export const deletePaper = function(paper) {
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'DELETE', `/paper/${paper.id}`, null,
             function(response) {
-                dispatch(papersSlice.actions.removePapers(paper))
+                dispatch(papersSlice.actions.removePaper({ entity: response.entity.id }))
             }
         )
     }
@@ -401,12 +308,10 @@ export const postPaperVersions = function(paper, version) {
         dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'POST', `/paper/${paper.id}/versions`, version,
-            function(returnedPaper) {
-                for(const author of returnedPaper.authors) {
-                    dispatch(addUsersToDictionary(author.user))
-                }
-                dispatch(addFieldsToDictionary(returnedPaper.fields))
-                dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
+            function(response) {
+                dispatch(papersSlice.actions.setPapersInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
@@ -430,19 +335,33 @@ export const patchPaperVersion = function(paper, version) {
         dispatch(papersSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, papersSlice,
             'PATCH', `/paper/${paper.id}/version/${version.version}`, version,
-            function(returnedPaper) {
-                for(const author of returnedPaper.authors) {
-                    dispatch(addUsersToDictionary(author.user))
-                }
-                dispatch(addFieldsToDictionary(returnedPaper.fields))
-                dispatch(papersSlice.actions.addPapersToDictionary(returnedPaper))
+            function(response) {
+                dispatch(papersSlice.actions.setPapersInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
             }
         )
     }
 }
 
+export const getPaperSubmissions = function(paperId) {
+    return function(dispatch, getState) {
+        dispatch(papersSlice.actions.bustRequestCache())
 
+        return makeTrackedRequest(dispatch, getState, papersSlice,
+            'GET', `/paper/${paperId}/submissions`, null,
+            function(results) {
+                dispatch(papersSlice.actions.setSubmissionsOnPaper({ paperId: paperId, submissions: results}))
+            }
+        )
+    }
+}
 
-export const {  addPapersToDictionary, appendPapersToList, removePapers, clearList, setDraft, cleanupRequest   }  = papersSlice.actions
+export const {  
+    setPapersInDictionary, removePaper,
+    makePaperQuery, setPaperQueryResults, clearPaperQuery,
+    setSubmissionsOnPaper, updateSubmissionOnPaper, setDraft, 
+    cleanupRequest   
+}  = papersSlice.actions
 
 export default papersSlice.reducer

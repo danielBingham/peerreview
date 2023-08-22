@@ -7,9 +7,12 @@ import { getPaper, cleanupRequest } from '/state/papers'
 import PublishedPaperView from '/components/papers/published/view/PublishedPaperView'
 import DraftPaperView from '/components/papers/draft/view/DraftPaperView'
 import DraftPaperReviewsView from '/components/papers/draft/view/DraftPaperReviewsView'
+import DraftPaperHeader from '/components/papers/draft/view/header/DraftPaperHeader'
+import ResponseList from '/components/responses/ResponseList'
 
-import { DocumentCheckIcon, ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
+import { DocumentCheckIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline'
 
+import PageHeader from '/components/generic/PageHeader'
 import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
 import PageTab from '/components/generic/pagetabbar/PageTab'
 import Spinner from '/components/Spinner'
@@ -69,12 +72,22 @@ const PublishedPaperPage = function(props) {
 
     // ================= Render ===============================================
     
+    if ( ! request || request.state !== 'fulfilled' ) {
+        return (
+            <Spinner />
+        )
+    }
+
     const selectedTab = ( props.tab ? props.tab : 'paper')
 
     let content = (<Spinner local={true} />)
     if ( request && request.state == 'fulfilled' ) {
         if ( selectedTab == 'paper' ) {
             content = ( <PublishedPaperView  id={id} /> )
+        } else if ( selectedTab == 'responses' ) {
+            content = (
+                <ResponseList paper={paper} />
+            )
         } else if ( selectedTab == 'reviews' ) {
             content = (
                 <DraftPaperReviewsView paperId={id} tab={selectedTab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
@@ -96,9 +109,15 @@ const PublishedPaperPage = function(props) {
 
     return (
         <>
+            <PageHeader>
+                <DraftPaperHeader id={id} tab={selectedTab} versionNumber={versionNumber} />
+            </PageHeader>
             <PageTabBar>
                 <PageTab url={`/paper/${id}`} selected={selectedTab == 'paper'}>
                     <DocumentCheckIcon /> Paper
+                </PageTab>
+                <PageTab url={`/paper/${id}/responses`} selected={selectedTab == 'responses'}>
+                    <ChatBubbleLeftEllipsisIcon /> Responses
                 </PageTab>
                 <PageTab url={`/paper/${id}/version/${ ( versionNumber ? versionNumber : mostRecentVersion ) }/reviews`} selected={selectedTab == 'reviews'}>
                     <ChatBubbleLeftRightIcon /> Reviews

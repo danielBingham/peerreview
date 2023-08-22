@@ -83,7 +83,7 @@ const ReviewHeaderView = function(props) {
             )
         } else {
             content = (
-                <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.  <button onClick={startReview}>Start Review</button> to begin a new review and add comments.</p>
+                <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.  { currentUser && <span><button onClick={startReview}>Start Review</button> to begin a new review and add comments.</span> }</p>
             )
         }
     } else {

@@ -17,7 +17,7 @@ import {
 
 import { addSettingsToDictionary } from '/state/settings'
 import { reset } from '/state/system'
-import { addUsersToDictionary } from '/state/users'
+import { setUsersInDictionary } from '/state/users'
 
 export const authenticationSlice = createSlice({
     name: 'authentication',
@@ -93,7 +93,7 @@ export const getAuthentication = function() {
                     dispatch(authenticationSlice.actions.setCurrentUser(responseBody.user))
                     dispatch(authenticationSlice.actions.setSettings(responseBody.settings))
                     dispatch(addSettingsToDictionary(responseBody.settings))
-                    dispatch(addUsersToDictionary(responseBody.user))
+                    dispatch(setUsersInDictionary({ entity: responseBody.user }))
                 } else if ( responseBody ) {
                     dispatch(authenticationSlice.actions.setCurrentUser(null))
                     dispatch(authenticationSlice.actions.setSettings(responseBody.settings))
@@ -131,7 +131,7 @@ export const postAuthentication = function(email, password) {
                 dispatch(authenticationSlice.actions.setCurrentUser(responseBody.user))
                 dispatch(authenticationSlice.actions.setSettings(responseBody.settings))
                 dispatch(addSettingsToDictionary(responseBody.settings))
-                dispatch(addUsersToDictionary(responseBody.user))
+                dispatch(setUsersInDictionary({ entity: responseBody.user }))
             }
         )
     }
@@ -219,7 +219,7 @@ export const postOrcidAuthentication = function(code, connect) {
                 dispatch(authenticationSlice.actions.setCurrentUser(responseContent.user))
                 dispatch(authenticationSlice.actions.setSettings(responseContent.settings))
                 dispatch(addSettingsToDictionary(responseContent.settings))
-                dispatch(addUsersToDictionary(responseContent.user))
+                dispatch(setUsersInDictionary({ entity: responseContent.user }))
             }
         )
     }
@@ -236,7 +236,7 @@ export const validateToken = function(token, type) {
                 dispatch(authenticationSlice.actions.setCurrentUser(responseContent.user))
                 dispatch(authenticationSlice.actions.setSettings(responseContent.settings))
                 dispatch(addSettingsToDictionary(responseContent.settings))
-                dispatch(addUsersToDictionary(responseContent.user))
+                dispatch(setUsersInDictionary({ entity: responseContent.user }))
             }
         )
     }

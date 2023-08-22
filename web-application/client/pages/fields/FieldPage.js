@@ -7,6 +7,7 @@ import PublishedPaperList from '/components/papers/published/list/PublishedPaper
 
 import { DocumentCheckIcon, TagIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
 
+import PageHeader from '/components/generic/PageHeader'
 import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
 import PageTab from '/components/generic/pagetabbar/PageTab'
 import Spinner from '/components/Spinner'
@@ -36,6 +37,9 @@ const FieldPage = function(props) {
 
     return (
         <>
+            <PageHeader>
+                <FieldView id={ id } />
+            </PageHeader>
             <PageTabBar>
                 <PageTab url={`/field/${id}/papers`} selected={selectedTab == 'papers'}>
                     <DocumentCheckIcon /> Papers
@@ -48,7 +52,6 @@ const FieldPage = function(props) {
                 </PageTab>
             </PageTabBar>
             <div id="field-page" className="page">
-                <FieldView id={ id } />
                 { content }
             </div>
         </>

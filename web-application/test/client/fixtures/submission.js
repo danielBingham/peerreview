@@ -13,3 +13,28 @@ export const users = {
         institution: 'Planetary University',
     }
 }
+
+export const journals = {
+    1: {
+        name: 'Journal One',
+        description: 'A test journal.',
+        users: [
+            {
+                userId: 1,
+                permissions: 'owner'
+            }
+        ]
+    },
+    2: {
+        id: 2,
+        name: 'Journal Two',
+        description: 'A second test journal.',
+        users: [
+            {
+                userId: 2,
+                permissions: 'owner'
+            }
+        ]
+    }
+}
+

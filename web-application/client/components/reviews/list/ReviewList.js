@@ -6,11 +6,18 @@ import { newReview, getReviews, clearList, cleanupRequest } from '/state/reviews
 
 import { Document } from 'react-pdf/dist/esm/entry.webpack'
 
+import { InboxArrowDownIcon, QuestionMarkCircleIcon, CheckBadgeIcon } from '@heroicons/react/24/outline'
+
+import { Timeline, TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/reviews/timeline/Timeline'
+import UserProfileImage from '/components/users/UserProfileImage'
+import UserTag from '/components/users/UserTag'
+import JournalTag from '/components/journals/JournalTag'
 
 import Spinner from '/components/Spinner'
 import Error404 from '/components/Error404'
 
 import ReviewView from '/components/reviews/view/ReviewView'
+import ReviewDecisionControls from '/components/reviews/widgets/ReviewDecisionControls'
 
 import './ReviewList.css'
 
@@ -47,6 +54,8 @@ const ReviewList = function({ paperId, versionNumber }) {
         }
     })
 
+    const [ getPaperSubmissionsRequestId, setGetPaperSubmissionRequestId ] = useState(null)
+
     // ================= Redux State ==========================================
     
     const currentUser = useSelector(function(state) {
@@ -56,6 +65,15 @@ const ReviewList = function({ paperId, versionNumber }) {
     const paper = useSelector(function(state) {
         return state.papers.dictionary[paperId]
     })
+
+    const submissions = useSelector(function(state) {
+        const allSubmissions = Object.values(state.journalSubmissions.dictionary)
+        return allSubmissions.filter((s) => s.paperId == paper.id)
+    })
+
+    const submittingAuthor = paper.authors.find((a) => a.submitter == true) 
+    
+    const editorSubmissions = submissions?.filter((s) => ( currentUser.memberships.find((m) => (m.permissions == 'owner' || m.permissions == 'editor') && s.journalId == m.journalId) ? true : false )) 
 
     const reviews = useSelector(function(state) {
         if ( state.reviews.list[paperId] ) {
@@ -175,40 +193,90 @@ const ReviewList = function({ paperId, versionNumber }) {
         )
     }
 
+    // Generate the url for the file.
     let version = paper.versions.find((v) => v.version == versionNumber)
     if ( ! version ) {
         version = paper.versions[0]
     }
+    const fileUrl = new URL(version.file.filepath, version.file.location)
 
-    const url = new URL(version.file.filepath, version.file.location)
-
-    let draftsTabUrl = ''
+    let decisionViews = []
     if ( paper.isDraft ) {
-        draftsTabUrl = `/draft/${paperId}/version/${versionNumber}/drafts`
+        if ( editorSubmissions ) {
+            for(const submission of editorSubmissions ) {
+                if ( ! submission.deciderId ) {
+                    decisionViews.push(
+                        <TimelineItem key={submission.id}>
+                            <TimelineIcon>
+                                <QuestionMarkCircleIcon /> 
+                            </TimelineIcon>
+                            <TimelineItemWrapper>
+                                <ReviewDecisionControls submission={submission} />
+                            </TimelineItemWrapper>
+                        </TimelineItem>
+                    )
+                } else {
+                    decisionViews.push(
+                        <TimelineItem key={submission.id}>
+                            <TimelineIcon>
+                                <CheckBadgeIcon />
+                            </TimelineIcon>
+                            <TimelineItemWrapper>
+                                <div className="decision">
+                                    <div><UserTag id={submission.deciderId} /> { submission.status == 'published' ? 'published' : 'rejected' } this paper for <JournalTag paper={paper} submission={submission} />.</div>
+                                    { submission.decisionComment }
+                                </div>
+                            </TimelineItemWrapper>
+                        </TimelineItem>
+                    )
+                }
+
+            }
+        }
     } else {
-        draftsTabUrl = `/paper/${paperId}/version/${versionNumber}/drafts`
+        if ( submissions ) {
+            for(const submission of submissions) {
+                if ( submission.status == 'published' ) {
+                    decisionViews.push(
+                        <TimelineItem key={submission.id}>
+                            <TimelineIcon>
+                                <CheckBadgeIcon />
+                            </TimelineIcon>
+                            <TimelineItemWrapper>
+                                <div className="decision">
+                                    <div><UserTag id={submission.deciderId} /> published this paper in <JournalTag paper={paper} submission={submission} />.</div>
+                                    { submission.decisionComment }
+                                </div>
+                            </TimelineItemWrapper>
+                        </TimelineItem>
+                    )
+                }
+            }
+        }
     }
+
     return (
         <div id={`paper-${paperId}-review-list`} className="review-list">
-            <div className="header">
-                { reviewViews.length > 0 && <span>Viewing { reviews.length } reviews on version { versionNumber}.  To read the full text, go to the <a href={draftsTabUrl}> drafts tab</a>.</span> }
-                { paper.isDraft && reviewViews.length <= 0 && ! reviewInProgress && <div className="empty-list">
-                        No reviews have been written yet for version {versionNumber}.  Read the full text on the <a href={draftsTabUrl}>drafts tab</a> and <button onClick={startReview} >Start Review</button> to be the first to write one!
-                    </div> }
-                { paper.isDraft && reviewViews.length <= 0 && reviewInProgress && <span>
-                    No reviews have been written yet for version {versionNumber}.  Read the full text and complete your review in progress on the <a href={draftsTabUrl}>drafts tab</a>!</span> }
-                { reviewInProgress && <div>You have a review in progress.</div> }
-                { ! paper.isDraft && reviewViews.length <= 0 && <span>No reviews were written for this paper.</span> }
-            </div>
-            <Document 
-                file={url.toString()} 
-                loading={loading} 
-                onSourceError={onSourceError}
-                onLoadError={onLoadError}
-                onLoadSuccess={onLoadSuccess}
-            >
-                { reviewViews }
-            </Document>
+            <Timeline>
+                { submittingAuthor && <TimelineItem>
+                    <TimelineIcon>
+                        <InboxArrowDownIcon />
+                    </TimelineIcon>
+                    <TimelineItemWrapper>
+                        <UserTag id={submittingAuthor.userId} /> submitted { paper.showPreprint ? 'preprint' : 'private draft' }. 
+                    </TimelineItemWrapper>
+                </TimelineItem> }
+                <Document 
+                    file={fileUrl.toString()} 
+                    loading={loading} 
+                    onSourceError={onSourceError}
+                    onLoadError={onLoadError}
+                    onLoadSuccess={onLoadSuccess}
+                >
+                    { reviewViews }
+                </Document>
+                { decisionViews }
+            </Timeline>
         </div>
     )
 

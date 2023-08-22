@@ -15,7 +15,7 @@ const DraftPapersListPage = function(props) {
     return (
         <div id="draft-papers-list-page" className="page">
             { ! currentUser && <div className="login-notice">You must be logged in to view your submitted drafts.  Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</div> }
-            { currentUser && <DraftPapersListView authorId={ currentUser?.id } /> }
+            { currentUser && <DraftPapersListView type="drafts" /> }
         </div>
     )
 }

@@ -1,0 +1,18 @@
+.decision-controls {
+    padding: 20px;
+}
+.decision-controls .instructions {
+    padding: 20px;
+}
+.decision-controls textarea {
+    box-sizing: border-box;
+    display: block;
+    background-color: var(--page-header-background-color);
+    border: thin solid var(--main-border-color);
+    height: 200px;
+    width: 100%;
+    padding: 10px;
+}
+.decision-controls textarea:focus {
+    background-color: white;
+}

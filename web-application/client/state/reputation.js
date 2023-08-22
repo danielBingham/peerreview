@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { addSettingsToDictionary } from '/state/settings'
 import { setCurrentUser, setSettings } from '/state/authentication'
-import { addUsersToDictionary } from '/state/users'
+import { setUsersInDictionary } from '/state/users'
 
 import { 
     makeTrackedRequest,
@@ -200,7 +200,7 @@ export const initializeReputation = function(userId) {
                 dispatch(setCurrentUser(responseBody.user))
                 dispatch(setSettings(responseBody.settings))
                 dispatch(addSettingsToDictionary(responseBody.settings))
-                dispatch(addUsersToDictionary(responseBody.user))
+                dispatch(setUsersInDictionary({ entity: responseBody.user }))
             }
         )
     }

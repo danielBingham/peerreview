@@ -1,5 +1,19 @@
 .file-upload { 
 }
+.field-upload.field-wrapper {
+    padding: 20px;
+}
+.file-upload .field-wrapper h3 {
+    display: block;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+}
+.field-upload .field-wrapper .explanation {
+    padding: 5px 0;
+}
 .file-upload .file {
     display: grid;
     grid-template-columns: 44px auto 44px;

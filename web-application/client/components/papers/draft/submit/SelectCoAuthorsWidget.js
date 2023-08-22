@@ -22,6 +22,14 @@ const SelectCoAuthorsWidget = function(props) {
         return state.authentication.currentUser
     })
 
+    const userDictionary = useSelector(function(state) {
+        const users = {}
+        for(const author of props.authors) {
+            users[author.userId] = state.users.dictionary[author.userId]
+        }
+        return users
+    })
+
     // =========== Actions and Event Handling =====================================
 
     const assignPermissions = function(author, permissions) {
@@ -30,18 +38,18 @@ const SelectCoAuthorsWidget = function(props) {
         } else {
             author.owner = false
         }
-        const newAuthors = props.authors.filter((a) => a.user.id != author.user.id)
+        const newAuthors = props.authors.filter((a) => a.userId != author.userId)
         newAuthors.push(author)
         newAuthors.sort((a,b) => a.order - b.order)
         props.setAuthors(newAuthors)
     }
 
     const removeAuthor = function(author) {
-        if ( author.user.id == currentUser.id ) {
+        if ( author.userId == currentUser.id ) {
             return
         }
            
-        const newAuthors = props.authors.filter((a) => a.user.id != author.user.id)
+        const newAuthors = props.authors.filter((a) => a.userId != author.userId)
         props.setAuthors(newAuthors)
     }
 
@@ -52,7 +60,7 @@ const SelectCoAuthorsWidget = function(props) {
 
         const authorAbove = props.authors.find((a) => a.order == author.order-1)
 
-        const newAuthors = props.authors.filter((a) => a.user.id != author.user.id && a.user.id != authorAbove.user.id)
+        const newAuthors = props.authors.filter((a) => a.userId != author.userId && a.userId != authorAbove.userId)
         author.order = author.order - 1
         authorAbove.order = authorAbove.order + 1
         newAuthors.push(author)
@@ -68,7 +76,7 @@ const SelectCoAuthorsWidget = function(props) {
 
         const authorBelow = props.authors.find((a) => a.order == author.order+1)
 
-        const newAuthors = props.authors.filter((a) => a.user.id != author.user.id && a.user.id != authorBelow.user.id)
+        const newAuthors = props.authors.filter((a) => a.userId != author.userId && a.userId != authorBelow.userId)
         author.order = author.order + 1
         authorBelow.order = authorBelow.order - 1
         newAuthors.push(author)
@@ -89,23 +97,23 @@ const SelectCoAuthorsWidget = function(props) {
 
     for(const author of sortableAuthors) {
         selectedAuthorViews.push( 
-            <div key={author.user.id} className="selected-author">
+            <div key={author.userId} className="selected-author">
                 <div className="left">
                     { author.order != 1 && <a href="" onClick={(e) => {e.preventDefault(); moveUp(author)}}><ArrowLongUpIcon /></a>}
                     { author.order != props.authors.length && <a href="" onClick={(e) => {e.preventDefault(); moveDown(author)}}><ArrowLongDownIcon /></a> }
                     <span className="order">{author.order}.</span>
-                    <UserTag id={author.user.id} /> 
+                    <UserTag id={author.userId} /> 
                 </div>
                 <div className="right">
-                    { author.user.status == 'invited' ? <span className="status">Invited</span> : null }
+                    { userDictionary[author.userId].status == 'invited' ? <span className="status">Invited</span> : null }
                     <select 
                         onChange={(e) => assignPermissions(author, e.target.value) } 
                         value={ author.owner ? 'owner' : 'commenter' } name="permissions"
                     > 
-                        <option value="owner">Owner</option>
-                        <option value="commenter">Commenter</option>
+                        <option value="owner">Corresponding Author</option>
+                        <option value="commenter">Author</option>
                     </select>
-                    { author.user.id != currentUser.id && <a href="" onClick={(e) => { e.preventDefault(); removeAuthor(author) }} ><XMarkIcon  /></a> }
+                    { author.userId != currentUser.id && <a href="" onClick={(e) => { e.preventDefault(); removeAuthor(author) }} ><XMarkIcon  /></a> }
                 </div>
             </div>
         )

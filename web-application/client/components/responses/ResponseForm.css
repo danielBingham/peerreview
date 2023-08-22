@@ -25,52 +25,14 @@
 }
 
 .paper-response-form .vote-widget {
-    margin: 10px auto;
-    width: 40px;
-    padding: 0;
     grid-column: 1 /2;
-}
 
-.paper-response-form .vote-widget .vote-text {
-    width: 28px;
-    font-size: 14px;
-    padding: 10px;
+    margin: 10px auto;
+    width: 80px;
     text-align: center;
-    margin: 10px 0;
-} 
-
-.paper-response-form .vote-widget .vote-up {
-    width: 0;
-    height: 0;
-
-    border-left: 25px solid transparent;
-    border-right: 25px solid transparent;
-
-    border-bottom: 40px solid #ccc;
-    margin-bottom: 10px;
+    padding: 0;
 }
-.paper-response-form .vote-widget .vote-up.highlight {
-    border-left: 25px solid transparent;
-    border-right: 25px solid transparent;
-
-    border-bottom: 40px solid green;
-}
-
-
-.paper-response-form .vote-widget .vote-down {
-    width: 0;
-    height: 0;
-
-    border-left: 25px solid transparent;
-    border-right: 25px solid transparent;
-
-    border-top: 40px solid #ccc;
-    margin-top: 10px;
-}
-.paper-response-form .vote-widget .vote-down.highlight {
-    border-left: 25px solid transparent;
-    border-right: 25px solid transparent;
-
-    border-top: 40px solid red;
+.paper-response-form .vote-widget button {
+    margin: 10px auto;
 }
 

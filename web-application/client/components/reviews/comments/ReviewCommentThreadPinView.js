@@ -32,6 +32,9 @@ const ReviewCommentThreadPinView = function(props) {
     // ======= Actions and Event Handling ===========================
 
     const pinClicked = function(event) {
+        event.preventDefault()
+        event.stopPropagation()
+
         searchParams.set('thread', thread.id)
         setSearchParams(searchParams)
         if ( pinRef.current ) {

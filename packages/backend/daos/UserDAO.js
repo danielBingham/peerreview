@@ -7,6 +7,8 @@ module.exports = class UserDAO {
 
 
     constructor(core) {
+        this.core = core
+
         this.database = core.database
         this.logger = core.logger
 
@@ -38,12 +40,12 @@ module.exports = class UserDAO {
      * @return {Object}     The users parsed into a dictionary keyed using user.id. 
      */
     hydrateUsers(rows, clean) {
-        if ( rows.length == 0 ) {
-            return [] 
-        }
-
-        const users = {}
+        // Users
+        const dictionary = {}
         const list = []
+
+        // Relationships
+        const memberships = {}
 
         for( const row of rows ) {
             const user = {
@@ -55,7 +57,8 @@ module.exports = class UserDAO {
                 institution: ( row.user_institution !== undefined ? row.user_institution : null), 
                 reputation: ( row.user_reputation !== undefined ? row.user_reputation : null),
                 createdDate: ( row.user_createdDate !== undefined ? row.user_createdDate : null),
-                updatedDate: ( row.user_updatedDate !== undefined ? row.user_updatedDate : null)
+                updatedDate: ( row.user_updatedDate !== undefined ? row.user_updatedDate : null),
+                memberships: []
             }
 
             if ( ! clean ) {
@@ -71,13 +74,35 @@ module.exports = class UserDAO {
                 user.file = null
             }
 
-            if ( ! users[row.user_id] ) {
-                users[user.id] = user
-                list.push(user)
+            if ( row.membership_journalId ) {
+                if (! memberships[user.id] ) {
+                    memberships[user.id] = {}
+                } 
+                if ( ! memberships[user.id][row.membership_journalId] ){
+                    const membership = {
+                        journalId: (row.membership_journalId !== undefined ? row.membership_journalId : null),
+                        permissions: (row.membership_permissions !== undefined ? row.membership_permissions: null),
+                        createdDate: (row.membership_createdDate !== undefined ? row.membership_createdDate : null),
+                        updatedDate: (row.membership_updatedDate !== undefined ? row.membership_updatedDate : null)
+                    }
+
+                    memberships[user.id][membership.journalId] = membership
+                }
+            }
+
+            if ( ! dictionary[row.user_id] ) {
+                dictionary[user.id] = user
+                list.push(user.id)
             }
         }
 
-        return list 
+        for(const id of list ) {
+            if ( memberships[id] ) {
+                dictionary[id].memberships = Object.values(memberships[id])
+            }
+        }
+
+        return { dictionary: dictionary, list: list } 
     }
 
     /**
@@ -122,9 +147,15 @@ module.exports = class UserDAO {
         const sql = `
                 SELECT 
                     ${ clean === true ? this.cleanSelectionString : this.selectionString},
-                    ${this.fileDAO.getFilesSelectionString()}
+
+                    ${this.fileDAO.getFilesSelectionString()}${ this.core.features.hasFeature('journals-79') ? `, journal_members.journal_id as "membership_journalId",
+                    journal_members.permissions as "membership_permissions",
+                    journal_members.created_date as "membership_createdDate",
+                    journal_members.updated_date as "membership_updatedDate"` : '' }
+
                 FROM users
                     LEFT OUTER JOIN files ON files.id = users.file_id
+                    ${ this.core.features.hasFeature('journals-79') ? `LEFT OUTER JOIN journal_members on journal_members.user_id = users.id` : '' }
                 ${where} 
                 ORDER BY ${order} 
                 ${paging}

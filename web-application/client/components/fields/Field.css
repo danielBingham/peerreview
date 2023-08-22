@@ -8,7 +8,7 @@
     line-height: 1em !important;
 }
 .field:hover {
-    filter: saturate(300%);
+    filter: brightness(130%);
 }
 
 .field a:link, .field a:active, .field a:visited, .field a:hover, .field span {

@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {  Link } from 'react-router-dom'
 
 import UserTag from '/components/users/UserTag'
 import UserMenu from './UserMenu'
 
-import { ChevronDoubleDownIcon, BarsArrowDownIcon, BarsArrowUpIcon } from '@heroicons/react/24/solid'
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid'
 
 import './AuthenticationNavigation.css'
 
@@ -17,6 +17,8 @@ import './AuthenticationNavigation.css'
 const AuthenticationNavigation = function(props) {
     
     const [ menuVisible, setMenuVisible ] = useState(false)
+
+    const menuRef = useRef(null)
 
     // ======= Request Tracking =====================================
 
@@ -31,9 +33,6 @@ const AuthenticationNavigation = function(props) {
     const dispatch = useDispatch()
 
     const toggleMenu = function(event) {
-        event.preventDefault()
-        event.stopPropagation()
-
         setMenuVisible( ! menuVisible )
     }
 
@@ -41,25 +40,23 @@ const AuthenticationNavigation = function(props) {
 
     useEffect(function() {
         const onBodyClick = function(event) {
-            if ( ! event.target.matches('#authentication-navigation') 
-                && ! event.target.matches('#authentication-navigation:scope') ) 
-            {
+            if ( menuRef.current && ! menuRef.current.contains(event.target) ) {
                 setMenuVisible(false)
             } 
         }
-        document.body.addEventListener('click', onBodyClick)
+        document.body.addEventListener('mousedown', onBodyClick)
 
         return function cleanup() {
-            document.body.removeEventListener('click', onBodyClick)
+            document.body.removeEventListener('mousedown', onBodyClick)
         }
-    }, [ menuVisible ])
+    }, [ menuVisible, menuRef ])
 
     // ============= Render =======================
     
     if ( currentUser ) {
         return (
-            <div id="authentication-navigation" className="navigation-block authenticated">
-                <span className="logged-in-user"><a href="" onClick={toggleMenu}>{ menuVisible ? <BarsArrowUpIcon /> : <BarsArrowDownIcon /> }<UserTag id={currentUser.id} link={false} /></a></span>
+            <div ref={menuRef} id="authentication-navigation" className="navigation-block authenticated">
+                <span className="logged-in-user"><span href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<UserTag id={currentUser.id} link={false} /></span></span>
                 <UserMenu visible={menuVisible} toggleMenu={toggleMenu} />
             </div>
         )

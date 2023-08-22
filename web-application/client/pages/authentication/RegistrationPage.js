@@ -21,11 +21,6 @@ publicly visible on your ORCID profile, you can create an account using email
 and password and connect your ORCID to your Peer Review account from the
 Settings Page.  
 </p>
-                <p>
-If you register with ORCID, we'll attempt to use your ORCID with <a
-href="https://openalex.org">OpenAlex</a> to generate initial reputation for
-you.
-                </p>
             </div>
             <ORCIDAuthenticationButton />
         </div>

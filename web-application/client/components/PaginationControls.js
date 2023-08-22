@@ -7,6 +7,14 @@ import './PaginationControls.css'
 const PaginationControls = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
 
+    const defaultMeta = {
+        count: 0,
+        page: 1,
+        pageSize: 1,
+        numberOfPages: 1
+    }
+    const meta = props.meta ? props.meta : defaultMeta 
+
     const goToPage = function(page) {
         searchParams.set(`${ ( props.prefix ? `${props.prefix}-` : '' )}page`, page)
         setSearchParams(searchParams)
@@ -26,11 +34,11 @@ const PaginationControls = function(props) {
     const prevPageParams = new URLSearchParams(searchParams.toString())
     prevPageParams.set(`${ ( props.prefix ? `${props.prefix}-` : '' )}page`, prevPage)
 
-    const nextPage = ( page+1 >= props.counts.numberOfPages ? props.counts.numberOfPages : page+1)
+    const nextPage = ( page+1 >= meta.numberOfPages ? meta.numberOfPages : page+1)
     const nextPageParams = new URLSearchParams(searchParams.toString())
     nextPageParams.set(`${ ( props.prefix ? `${props.prefix}-` : '' )}page`, nextPage)
 
-    const lastPage = props.counts.numberOfPages
+    const lastPage = meta.numberOfPages
     const lastPageParams = new URLSearchParams(searchParams.toString())
     lastPageParams.set(`${ ( props.prefix ? `${props.prefix}-` : '' )}page`, lastPage)
 
@@ -42,7 +50,7 @@ const PaginationControls = function(props) {
             <a className="control" 
                 onClick={(e) => {e.preventDefault(); goToPage(prevPage)}} 
                 href={`?${prevPageParams.toString()}`} >prev</a>
-            <span className="control">Page {page} of {props.counts.numberOfPages}</span>
+            <span className="control">Page {page} of {meta.numberOfPages}</span>
             <a className="control" 
                 onClick={(e) => {e.preventDefault(); goToPage(nextPage)}} 
                 href={`?${nextPageParams.toString()}`} >next</a>

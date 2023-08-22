@@ -1,6 +1,12 @@
+.user-view {
+    padding: 20px 0;
+    text-align: left;
+}
 .user-view .profile-image {
-    display: block;
-    margin: 10px auto;
+    display: inline-block;
+    float: left;
+    margin-right: 10px;
+    margin-bottom: 10px;
     width: 150px;
     height: 150px;
 }
@@ -15,7 +21,6 @@
     padding: 12px;
 }
 .user-view .name {
-    text-align: center;
     font-weight: bold;
     font-size: 1.4em;
 }

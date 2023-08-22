@@ -149,6 +149,7 @@ CREATE TABLE papers (
     id  bigserial PRIMARY KEY,
     title   varchar(1024) NOT NULL,
     searchable_title tsvector GENERATED ALWAYS AS (to_tsvector('english', title)) STORED,
+    show_preprint boolean DEFAULT false,
     is_draft   boolean DEFAULT true,
     score   int NOT NULL DEFAULT 0,
     created_date    timestamptz,
@@ -175,6 +176,7 @@ CREATE TABLE paper_authors (
     user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
     author_order    int,
     owner           boolean,
+    submitter       boolean,
     PRIMARY KEY (paper_id, user_id)
 );
 
@@ -182,6 +184,75 @@ CREATE TABLE paper_fields (
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
     field_id    bigint REFERENCES fields(id) ON DELETE CASCADE,
     PRIMARY KEY (paper_id, field_id)
+);
+
+/*
+CREATE TYPE paper_event_types AS ENUM('version', 'review', 'comment', 'submission', 'decision');
+CREATE TABLE paper_events (
+    id bigserial PRIMARY KEY,
+    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+    user_id bigint REFERENCES users(id),
+    type paper_event_types,
+
+
+) ;
+*/
+
+/******************************************************************************
+ * Journals
+ ******************************************************************************/
+
+CREATE TABLE journals (
+    id      bigserial PRIMARY KEY,
+    name    varchar(1024) NOT NULL,
+    description text,
+    created_date    timestamptz,
+    updated_date    timestamptz
+);
+CREATE INDEX journals__name_index ON journals (name);
+CREATE INDEX journals_name_trgm_index ON journals USING GIN (name gin_trgm_ops);
+
+CREATE TYPE journal_member_permissions AS ENUM('owner', 'editor', 'reviewer');
+CREATE TABLE journal_members (
+    journal_id  bigint REFERENCES journals(id) ON DELETE CASCADE,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    permissions journal_user_permissions DEFAULT 'editor',
+    created_date    timestamptz,
+    updated_date    timestamptz,
+    PRIMARY KEY (journal_id, user_id)
+);
+
+CREATE TYPE journal_submission_status AS ENUM('submitted', 'review', 'proofing', 'published', 'rejected', 'retracted')
+CREATE TABLE journal_submissions (
+    id bigserial PRIMARY KEY,
+    journal_id bigint REFERENCES journals(id) ON DELETE CASCADE,
+    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+    submitter_id bigint REFERENCES users(id),
+    submission_comment text,
+    status journal_submission_status,
+    decider_id bigint REFERENCES users(id) DEFAULT null,
+    decision_comment text,
+    decision_date timestamptz,
+    created_date timestamptz,
+    updated_date timestamptz
+);
+CREATE INDEX journal_submissions__journal_id_index ON journal_submissions ( journal_id );
+CREATE INDEX journal_submissions__paper_id_index ON journal_submissions ( paper_id );
+
+CREATE TABLE journal_submission_editors (
+    submission_id bigint REFERENCES journal_submissions(id) ON DELETE CASCADE,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    created_date timestamptz,
+    updated_date timestamptz,
+    PRIMARY KEY (submission_id, user_id)
+);
+
+CREATE TABLE journal_submission_reviewers (
+    submission_id bigint REFERENCES journal_submissions(id) ON DELETE CASCADE,
+    user_id bigint REFERENCES users(id) ON DELETE CASCADE,
+    created_date timestamptz,
+    updated_date timestamptz,
+    PRIMARY KEY (submission_id, user_id)
 );
 
 /******************************************************************************
@@ -232,6 +303,7 @@ CREATE TYPE review_recommendation as ENUM( 'reject', 'commentary', 'request-chan
 CREATE TABLE reviews (
     id bigserial PRIMARY KEY,
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
+    submission_id bigint REFERENCES journal_submissions(id) DEFAULT null,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     version int,
     number int, /* Number of review on this paper version. 0 - n where n is the number of reviews on this paper specifically. */

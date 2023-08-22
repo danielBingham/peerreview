@@ -20,6 +20,7 @@ const MainNavigation = function(props) {
             </div>
             <div id="main-navigation" className="navigation-block">
                 <Link to="/">papers</Link>
+                <Link to="/journals">journals</Link>
                 <Link to="/fields">fields</Link>
                 <Link to="/users">users</Link>
             </div>

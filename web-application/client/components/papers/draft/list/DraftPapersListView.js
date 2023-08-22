@@ -3,7 +3,7 @@ import { useParams, useSearchParams, Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
-import { clearList, countPapers, getPapers, cleanupRequest } from '/state/papers'
+import { getPapers, clearPaperQuery, cleanupRequest } from '/state/papers'
 import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import Spinner from '/components/Spinner'
@@ -43,15 +43,6 @@ const DraftPapersListView = function(props) {
         }
     })
 
-    const [countRequestId, setCountRequestId ] = useState(null)
-    const countRequest = useSelector(function(state) {
-        if (countRequestId) {
-            return state.papers.requests[countRequestId]
-        } else {
-            null
-        }
-    })
-
     const [countReviewsRequestId, setCountReviewsRequestId] = useState(null)
     const countReviewsRequest = useSelector(function(state) {
         if ( countReviewsRequestId) {
@@ -63,12 +54,8 @@ const DraftPapersListView = function(props) {
 
     // ======= Redux State ==========================================
 
-    const paperList = useSelector(function(state) {
-        return state.papers.list
-    })
-
-    const counts = useSelector(function(state) {
-        return state.papers.counts 
+    const paperQuery = useSelector(function(state) {
+        return state.papers.queries['DraftPapersListView']
     })
     
     const currentUser = useSelector(function(state) {
@@ -100,7 +87,14 @@ const DraftPapersListView = function(props) {
             query.authorId = props.authorId
         }
 
+        if ( props.type ) {
+            query.type = props.type
+        } else {
+            query.type = "preprint"
+        }
+
         query.isDraft = true 
+
 
         if ( ! sortBy ) {
             query.sort = 'newest'
@@ -114,8 +108,7 @@ const DraftPapersListView = function(props) {
             query.page = page
         }
 
-        setCountRequestId(dispatch(countPapers(query, true)))
-        setRequestId(dispatch(getPapers(query, true)))
+        setRequestId(dispatch(getPapers('DraftPapersListView', query, true)))
         setCountReviewsRequestId(dispatch(countReviews()))
     }
 
@@ -128,7 +121,7 @@ const DraftPapersListView = function(props) {
             page: searchParams.get('page')
         }
         queryForPapers(params)
-    }, [searchParams])
+    }, [searchParams, props.type])
 
     // Logging out doesn't always unmount the component.  When that happens, we
     // can end up in a state where we have a requestId, but don't have a
@@ -145,6 +138,12 @@ const DraftPapersListView = function(props) {
         }
     }, [ request ])
 
+    useEffect(function() {
+        return function cleanup() {
+            dispatch(clearPaperQuery({ name: 'DraftPapersListView' }))
+        }
+    }, [])
+
     // Cleanup our request.
     useEffect(function() {
         return function cleanup() {
@@ -153,15 +152,6 @@ const DraftPapersListView = function(props) {
             }
         }
     }, [ requestId ])
-
-    // Cleanup our request.
-    useEffect(function() {
-        return function cleanup() {
-            if ( countRequestId ) {
-                dispatch(cleanupRequest({requestId: countRequestId}))
-            }
-        }
-    }, [ countRequestId ])
 
     useEffect(function() {
         return function cleanup() {
@@ -180,7 +170,7 @@ const DraftPapersListView = function(props) {
     let noContent = null
     if ( request && request.state == 'fulfilled' && countReviewsRequest && countReviewsRequest.state == 'fulfilled') {
         content = []
-        for (const paper of paperList) {
+        for (const paper of paperQuery.list) {
             content.push(<DraftPapersListItemView paper={paper} key={paper.id} />)
         }
 
@@ -201,9 +191,18 @@ const DraftPapersListView = function(props) {
 
     const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
 
+    let title = "Draft Papers"
+    if ( props.type == 'preprint') {
+        title = "Preprints"
+    } else if ( props.type == 'drafts' ) {
+        title = "My Drafts"
+    } else if ( props.type == 'submissions' ) {
+        title = "Submissions for Review"
+    }
+
     return (
         <List>
-            <ListHeader title="Draft Papers">
+            <ListHeader title={ title }>
                 <ListControl url={`?${newestParams.toString()}`}
                     onClick={() => { setSort('newest')}} 
                     selected={ sort == 'newest' }
@@ -219,7 +218,7 @@ const DraftPapersListView = function(props) {
             <ListRowContent>
                 { content }
             </ListRowContent>
-            <PaginationControls counts={counts} />
+            <PaginationControls meta={paperQuery?.meta} />
         </List>
     )
 

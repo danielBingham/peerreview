@@ -14,9 +14,6 @@ module.exports = class ReviewController {
         this.logger = core.logger
 
         this.reviewDAO = new backend.ReviewDAO(core)
-        
-        this.reputationService = new backend.ReputationGenerationService(core)
-        this.reputationPermissionService = new backend.ReputationPermissionService(core)
     }
 
     async countReviews(request, response) {
@@ -54,7 +51,7 @@ module.exports = class ReviewController {
          * **********************************************************/
 
         const paperResults = await this.database.query(
-            'SELECT is_draft as "isDraft" FROM papers WHERE papers.id = $1',
+            'SELECT is_draft as "isDraft", show_preprint as "showPreprint" FROM papers WHERE papers.id = $1',
             [ paperId ]
         )
 
@@ -64,18 +61,14 @@ module.exports = class ReviewController {
         }
 
         const isDraft = paperResults.rows[0].isDraft
-        // 2. Paper(:paper_id) is a draft AND User is logged in AND User has
+        const showPreprint = paperResults.rows[0].showPreprint
+
+        // 2. Paper(:paper_id) is a draft preprint OR User is logged in AND User has
         // Review on Paper(:paper_id)
         if ( isDraft ) {
-            if ( ! userId ) {
+            if ( ! userId && ! showPreprint ) {
                 throw new ControllerError(401, 'not-authenticated', 
                     `Unauthenticated user attempting to view reviews for draft Paper(${paperId}).`)
-            }
-
-            const canReview = await this.reputationPermissionService.canReview(userId, paperId)
-            if ( ! canReview ) {
-                throw new ControllerError(404, 'no-resource', 
-                    `Unauthorized User(${userId}) attempting to view reviews for draft Paper(${paperId}).`)
             }
         }
 
@@ -183,13 +176,6 @@ module.exports = class ReviewController {
         if ( ! existing.paper_isDraft ) {
             throw new ControllerError(403, 'not-authorized:published-paper', 
                 `User(${userId}) attempted to add a review to published Paper(${review.paperId}).`)
-        }
-
-        // 2. Have Review permissions on Paper(:paper_id).
-        const canReview = await this.reputationPermissionService.canReview(userId, paperId)
-        if ( ! canReview ) {
-            throw new ControllerError(404, 'no-resource', 
-                `Unauthorized User(${userId}) attempting to view reviews for draft Paper(${review.paperId}).`)
         }
 
         /********************************************************
@@ -349,13 +335,6 @@ module.exports = class ReviewController {
                     `Unauthenticated user attempted to view Review(${reviewId}) on draft Paper(${paperId}).`)
             }
 
-            const canReview = await this.reputationPermissionService.canReview(request.session.user.id, paperId)
-            if ( ! canReview ) {
-                // Return a 404, so we don't let them know that a review they
-                // aren't allowed to see exists.
-                throw new ControllerError(404, 'no-resource', 
-                    `Unauthorized User(${userId}) attempting to view reviews for draft Paper(${paperId}).`)
-            }
         }
 
         // 5. Review(:review_id) is not in-progress AND Paper(:paper_id) is NOT
@@ -595,7 +574,6 @@ module.exports = class ReviewController {
             // that will have all the information we need.
             // If we got here, the update was successful.
             if ( existing.review_status != 'accepted' && returnReviews[0].status == 'accepted' ) {
-                await this.reputationService.incrementReputationForReview(returnReviews[0])
             }
         } catch (error) {
             await this.database.query('ROLLBACK')
@@ -1070,11 +1048,6 @@ module.exports = class ReviewController {
         //  2. Be author of the review...
         if ( ! isAuthor ) {
             // ...OR have Review permissions on Paper(:paper_id)
-            const canReview = await this.reputationPermissionService.canReview(userId, paperId)
-            if ( ! canReview ) {
-                throw new ControllerError(403, 'not-authorized:reputation', 
-                    `Unauthorized User(${userId}) attempting to comment on draft Paper(${paperId}).`)
-            }
         }
 
         // 7. Review(:review_id) is NOT in progress 
