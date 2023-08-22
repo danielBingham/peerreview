@@ -6,9 +6,26 @@ This file contains a record of all Peer Review releases as well as a change log.
 
 ### Changelog
 
+#### Epics
+
 #### Features
 
 #### Bugs fixed
+
+### Release Testing
+
+Local Regression:
+
+Staging Regresssion: 
+
+Release Date: 
+
+## TEMPLATE - Release x.x.x
+
+### Changelog
+
+#### Epics 
+- Issue #79: Journals
 
 ### Release Testing
 
