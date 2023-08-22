@@ -8,8 +8,7 @@ const JournalSubmissionController = require('../../../server/controllers/Journal
 const ControllerError = require('../../../server/errors/ControllerError')
 
 const DatabaseFixtures = require('../fixtures/database')
-const ExpectedFixtures = require('../fixtures/expected')
-const SubmittedFixtures = require('../fixtures/submitted')
+const ExpectedFixtures = require('../fixtures/entities')
 
 describe('JournalSubmissionController', function() {
 
@@ -103,10 +102,11 @@ describe('JournalSubmissionController', function() {
             expect.hasAssertions()
         })
 
-        it('should return 200 and the list of journal submissions', async function() {
+        it('should return 200 and the requested journal submissions', async function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journalSubmissions[1] })
+                .mockReturnValueOnce({ rowCount: 3, rows: [ ...database.journalSubmissions[1], ...database.journalSubmissions[2] ] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { count: 2 } ] })
 
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -118,16 +118,15 @@ describe('JournalSubmissionController', function() {
                 },
                 params: {
                     journalId: 1
-                }
+                },
+                query: {}
             }
 
             const response = new Response()
             await journalSubmissionController.getSubmissions(request, response)
 
-            const expected = [ expectedSubmissions[0] ]
-
             expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expected)
+            expect(response.json.mock.calls[0][0]).toEqual(expectedSubmissions)
 
         })
 
@@ -371,7 +370,10 @@ describe('JournalSubmissionController', function() {
             await journalSubmissionController.postSubmissions(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(201)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedSubmissions[0])
+            expect(response.json.mock.calls[0][0]).toEqual({
+                entity: expectedSubmissions.dictionary[1],
+                relations: expectedSubmissions.relations
+            })
         })
     })
 
@@ -543,10 +545,11 @@ describe('JournalSubmissionController', function() {
             const response = new Response()
             await journalSubmissionController.getSubmission(request, response)
 
-            const expected = expectedSubmissions[0]
-
             expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expected)
+            expect(response.json.mock.calls[0][0]).toEqual({ 
+                entity: expectedSubmissions.dictionary[1],
+                relations: expectedSubmissions.relations
+            })
         })
     })
 
@@ -729,13 +732,15 @@ describe('JournalSubmissionController', function() {
             const response = new Response()
             await journalSubmissionController.patchSubmission(request, response)
 
-            expect(response.status.mock.calls[0][0]).toEqual(201)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedSubmissions[0])
+            expect(response.status.mock.calls[0][0]).toEqual(200)
+            expect(response.json.mock.calls[0][0]).toEqual({
+                entity: expectedSubmissions.dictionary[1],
+                relations: expectedSubmissions.relations
+            })
         })
     })
 
     describe('.deleteSubmission()', function() {
-
         it('should return a 401 for non-authenticated users', async function() {
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -880,7 +885,6 @@ describe('JournalSubmissionController', function() {
     })
 
     describe('.postReviewers()', function() {
-
         it('should return a 400 when request body is missing', async function() {
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -1185,7 +1189,6 @@ describe('JournalSubmissionController', function() {
     })
 
     describe('.deleteReviewer()', function() {
-
         it('should return a 401 for non-authenticated users', async function() {
             const journalSubmissionController = new JournalSubmissionController(core)
 

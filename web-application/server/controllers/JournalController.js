@@ -31,7 +31,7 @@ module.exports = class JournalController {
                 userIds.push(member.userId) 
             }
         }
-        const userResults = await this.userDAO.selectUsers('WHERE users.id = ANY($1::bigint[])', [ userIds ])
+        const userResults = await this.userDAO.selectCleanUsers('WHERE users.id = ANY($1::bigint[])', [ userIds ])
         relations.users = userResults.dictionary
 
         if ( requestedRelations ) {

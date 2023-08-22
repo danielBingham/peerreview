@@ -8,15 +8,14 @@ const JournalController = require('../../../server/controllers/JournalController
 const ControllerError = require('../../../server/errors/ControllerError')
 
 const DatabaseFixtures = require('../fixtures/database')
-const ExpectedFixtures = require('../fixtures/expected')
-const SubmittedFixtures = require('../fixtures/submitted')
+const EntityFixtures = require('../fixtures/entities')
 
 describe('JournalController', function() {
 
     // ====================== Fixture Data ====================================
 
     const database = DatabaseFixtures.database
-    const expectedJournals = ExpectedFixtures.journals
+    const expectedJournals = EntityFixtures.journals
 
     // ====================== Mocks ===========================================
 
@@ -55,6 +54,8 @@ describe('JournalController', function() {
         it('should return 200 and the list of journals', async function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 8, rows: [ ...database.journals[1], ...database.journals[2], ...database.journals[3] ]}) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { count: 3 } ]})
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
 
             const journalController = new JournalController(core)
@@ -69,7 +70,6 @@ describe('JournalController', function() {
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
             expect(response.json.mock.calls[0][0]).toEqual(expectedJournals)
-
         })
 
         it('should pass any errors on to the error handler', async function() {
@@ -168,6 +168,7 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 0, rows: [] }) // COMMIT
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -194,7 +195,10 @@ describe('JournalController', function() {
             await journalController.postJournals(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(201)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedJournals[0])
+            expect(response.json.mock.calls[0][0]).toEqual({
+                entity: expectedJournals.dictionary[1],
+                relations: expectedJournals.relations 
+            })
 
 
         })
@@ -203,7 +207,8 @@ describe('JournalController', function() {
     describe('.getJournal', function() {
         it('should return 200 and the requested journal', async function() {
             core.database.query.mockReturnValue(undefined)
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -219,7 +224,10 @@ describe('JournalController', function() {
             await journalController.getJournal(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedJournals[0])
+            expect(response.json.mock.calls[0][0]).toEqual({ 
+                entity: expectedJournals.dictionary[1],
+                relations: expectedJournals.relations 
+            })
 
         })
 
@@ -362,11 +370,12 @@ describe('JournalController', function() {
             expect.hasAssertions()
         })
 
-        it('should return 200 and the patched journal', async function() {
+        it('should return 201 and the patched journal', async function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) // Get existing journal
                 .mockReturnValueOnce({ rowCount: 1, rows: [] }) // UPDATE journals ...
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) // returnJournal = journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -386,8 +395,11 @@ describe('JournalController', function() {
             const response = new Response()
             await journalController.patchJournal(request, response)
 
-            expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual(expectedJournals[0])
+            expect(response.status.mock.calls[0][0]).toEqual(201)
+            expect(response.json.mock.calls[0][0]).toEqual({
+                entity: expectedJournals.dictionary[1],
+                relations: expectedJournals.relations
+            })
 
         })
     })
@@ -667,7 +679,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -696,7 +709,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -725,7 +739,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -754,7 +769,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -966,7 +982,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -1176,7 +1193,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -1202,7 +1220,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -1228,7 +1247,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 
@@ -1254,7 +1274,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
 

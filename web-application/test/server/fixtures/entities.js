@@ -1,6 +1,6 @@
 
-const fields = [
-    {
+const fields = {
+    1: {
         id: 1,
         name: 'biology',
         description: 'Study of life.',
@@ -10,7 +10,7 @@ const fields = [
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
     },
-    {
+    2: {
         id: 2,
         name: 'genetics',
         description: 'Study of genes and DNA.',
@@ -21,10 +21,10 @@ const fields = [
         updatedDate: 'TIMESTAMP'
     }
 
-]
+}
 
-const usersUnclean = [
-    {
+const usersUnclean = {
+    1: {
         id: 1,
         orcidId: null,
         name: 'James Watson',
@@ -37,9 +37,10 @@ const usersUnclean = [
         institution: 'University of Cambridge',
         reputation: 10,
         createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP'
+        updatedDate: 'TIMESTAMP',
+        memberships: []
     },
-    {
+    2: {
         id: 2,
         orcidId: null,
         name: 'Francis Crick',
@@ -52,13 +53,30 @@ const usersUnclean = [
         institution: 'University of Cambridge',
         reputation: 10,
         createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP'
+        updatedDate: 'TIMESTAMP',
+        memberships: [] 
+    },
+    3: {
+        id: 3,
+        orcidId: null,
+        name: 'Rosalind Franklin',
+        email: 'rfranklin@university.edu',
+        status: 'confirmed',
+        permissions: 'user',
+        file: null,
+        bio: 'Should probably have been given more credit for the discovery of the structure of DNA.',
+        location: '',
+        institution: '',
+        reputation: 10,
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        memberships: []
     }
-]
+}
 
 
-const usersCleaned = [
-    {
+const usersCleaned = {
+    1: {
         id: 1,
         orcidId: null,
         name: 'James Watson',
@@ -68,9 +86,10 @@ const usersCleaned = [
         institution: 'University of Cambridge',
         reputation: 10,
         createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP'
+        updatedDate: 'TIMESTAMP',
+        memberships: []
     },
-    {
+    2: {
         id: 2,
         orcidId: null,
         name: 'Francis Crick',
@@ -80,12 +99,26 @@ const usersCleaned = [
         institution: 'University of Cambridge',
         reputation: 10,
         createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP'
+        updatedDate: 'TIMESTAMP',
+        memberships: []
+    },
+    3: {
+        id: 3,
+        orcidId: null,
+        name: 'Rosalind Franklin',
+        file: null,
+        bio: 'Should probably have been given more credit for the discovery of the structure of DNA.',
+        location: '',
+        institution: '',
+        reputation: 10,
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        memberships: []
     }
-]
+}
 
-const files = [
-    { 
+const files = {
+    1: { 
         id: 1,
         userId: 1,
         filepath: '/uploads/papers/1-1-molecular-structure-of-nucleic-acids.pdf',
@@ -94,7 +127,7 @@ const files = [
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
     },
-    { 
+    2: { 
         id: 2,
         userId: 1,
         filepath: '/uploads/papers/1-2-molecular-structure-of-nucleic-acids.pdf',
@@ -104,10 +137,10 @@ const files = [
         updatedDate: 'TIMESTAMP'
 
     }
-]
+}
 
-const papers = [
-    {
+const papers = {
+    1: {
         id: 1,
         title: 'Molecular Structure of Nucleic Acids',
         isDraft: false,
@@ -144,7 +177,7 @@ const papers = [
             }
         ]
     },
-    {
+    2: {
         id: 2,
         title: 'Molecular Structure of Nucleic Acids',
         isDraft: true,
@@ -181,10 +214,10 @@ const papers = [
             }
         ]
     }
-]
+}
 
-const journals = [
-    {
+const journals = {
+    1: {
         id: 1,
         name: 'Journal One',
         description: 'A first test journal.',
@@ -205,7 +238,7 @@ const journals = [
             }
         ]
     },
-    {
+    2: {
         id: 2,
         name: 'Journal Two',
         description: 'A second test journal.',
@@ -226,7 +259,7 @@ const journals = [
             }
         ]
     },
-    {
+    3: {
         id: 3,
         name: 'Journal Three',
         description: 'A third test journal.',
@@ -243,23 +276,34 @@ const journals = [
             }
         ]
     }
-]
+}
 
-const journalSubmissions = [
-    {
+const journalSubmissions = {
+    1: {
         id: 1,
         journalId: 1,
         paperId: 1,
         status: 'submitted',
+        submitterId: 1,
+        submitterComment: '',
+        deciderId: 2,
+        decisionComment: '',
+        decisionDate: 'TIMESTAMP',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP',
-        reviewers: []
+        reviewers: [],
+        editors: []
     },
-    {
+    2: {
         id: 2,
         journalId: 2,
         paperId: 2,
         status: 'in-review',
+        submitterId: 2,
+        submitterComment: '',
+        deciderId: 3,
+        decisionComment: '',
+        decisionDate: 'TIMESTAMP',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP',
         reviewers: [
@@ -271,16 +315,88 @@ const journalSubmissions = [
                 userId: 2,
                 assignedDate: 'TIMESTAMP'
             }
+        ],
+        editors: [
+            {
+                userId: 1,
+                assignedDate: 'TIMESTAMP'
+            },
+            {
+                userId: 2,
+                assignedDate: 'TIMESTAMP'
+            }
         ]
     }
-]
+}
 
 
 module.exports = {
-    fields: fields,
-    users: usersCleaned,
-    usersUnclean: usersUnclean,
-    papers: papers,
-    journals: journals,
-    journalSubmissions: journalSubmissions
+    fields: {
+        dictionary: fields,
+        list: Object.values(fields),
+        meta: {
+            count: Object.keys(fields).length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
+    },
+    users: {
+        dictionary: usersCleaned,
+        list: Object.values(usersCleaned),
+        meta: {
+            count: Object.keys(usersCleaned).length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
+    },
+    usersUnclean: {
+        dictionary: usersUnclean,
+        list: Object.values(usersUnclean),
+        meta: {
+            count: Object.keys(usersUnclean).length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
+    },
+    papers: {
+        dictionary: papers,
+        list: Object.values(papers),
+        meta: {
+            count: Object.keys(papers).length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
+    },
+    journals: {
+        dictionary: journals,
+        list: Object.values(journals).map((j) => j.id),
+        meta: {
+            count: Object.keys(journals).length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {
+            'users': usersCleaned
+        }
+    },
+    journalSubmissions: {
+        dictionary: journalSubmissions,
+        list: Object.values(journalSubmissions),
+        meta: {
+            count: Object.keys(journalSubmissions).length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
+    }
 }

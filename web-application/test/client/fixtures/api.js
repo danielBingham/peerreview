@@ -81,15 +81,29 @@ const journals = {
 export const backend = {
     users: {
         dictionary: users,
-        list: Object.values(users)
+        list: Object.values(users),
+        meta: {
+            count: 2,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
     },
     settings: {
         dictionary: settings,
-        list: Object.values(settings)
+        list: Object.values(settings),
     },
     journals: {
         dictionary: journals,
-        list: Object.values(journals)
+        list: Object.values(journals),
+        meta: {
+            count: 2,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
     }
 }
 

@@ -50,7 +50,7 @@ module.exports = class JournalSubmissionDAO {
                 assignedDate: row.reviewer_assignedDate
             }
 
-            if ( reviewer.userId !== null 
+            if ( reviewer.userId != null 
                 && ! dictionary[submission.id].reviewers.find((r) => r.userId == reviewer.userId) ) 
             {
                 dictionary[submission.id].reviewers.push(reviewer)
@@ -61,7 +61,7 @@ module.exports = class JournalSubmissionDAO {
                 assignedDate: row.editor_assignedDate
             }
 
-            if ( editor.userId !== null 
+            if ( editor.userId != null 
                 && ! dictionary[submission.id].editors.find((e) => e.userId == editor.userId) )
             {
                 dictionary[submission.id].editors.push(editor)
@@ -124,7 +124,7 @@ module.exports = class JournalSubmissionDAO {
                 journal_submissions.created_date as "submission_createdDate",
                 journal_submissions.updated_date as "submission_updatedDate",
 
-                journal_submission_reviewers.submission_id as reviewer_submissionId,
+                journal_submission_reviewers.submission_id as "reviewer_submissionId",
                 journal_submission_reviewers.user_id as "reviewer_userId",
                 journal_submission_reviewers.created_date as "reviewer_assignedDate",
 

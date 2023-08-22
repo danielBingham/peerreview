@@ -139,6 +139,20 @@ const users = [
         user_reputation: 10,
         user_createdDate: 'TIMESTAMP',
         user_updatedDate: 'TIMESTAMP',
+    },
+    {
+        user_id: 3,
+        user_orcidId: null,
+        user_name: 'Rosalind Franklin',
+        user_email: 'rfranklin@university.edu',
+        user_status: 'confirmed',
+        user_permissions: 'user',
+        user_bio: 'Should probably have been given more credit for the discovery of the structure of DNA.',
+        user_location: '',
+        user_institution: '',
+        user_reputation: 10,
+        user_createdDate: 'TIMESTAMP',
+        user_updatedDate: 'TIMESTAMP'
     }
 ]
 
@@ -218,6 +232,11 @@ const journal_submissions = [
         submission_journalId: 1,
         submission_paperId: 1,
         submission_status: 'submitted',
+        submission_submitterId: 1,
+        submission_submitterComment: '',
+        submission_deciderId: 2,
+        submission_decisionComment: '',
+        submission_decisionDate: 'TIMESTAMP',
         submission_createdDate: 'TIMESTAMP',
         submission_updatedDate: 'TIMESTAMP'
     },
@@ -226,12 +245,17 @@ const journal_submissions = [
         submission_journalId: 2,
         submission_paperId: 2,
         submission_status: 'in-review',
+        submission_submitterId: 2,
+        submission_submitterComment: '',
+        submission_deciderId: 3,
+        submission_decisionComment: '',
+        submission_decisionDate: 'TIMESTAMP',
         submission_createdDate: 'TIMESTAMP',
         submission_updatedDate: 'TIMESTAMP'
     }
 ]
 
-const journal_submission_users = [
+const journal_submission_reviewers = [
     {
         reviewer_userId: null,
         reviewer_assignedDate: null
@@ -243,6 +267,21 @@ const journal_submission_users = [
     {
         reviewer_userId: 2,
         reviewer_assignedDate: 'TIMESTAMP'
+    }
+]
+
+const journal_submission_editors = [
+    {
+        editor_userId: null,
+        editor_assignedDate: null
+    },
+    {
+        editor_userId: 1,
+        editor_assignedDate: 'TIMESTAMP'
+    },
+    {
+        editor_userId: 2,
+        editor_assignedDate: 'TIMESTAMP'
     }
 ]
 
@@ -277,7 +316,6 @@ const database = {
             { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[0]},
             { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[1]},
         ]
-
     } ,
     journals: {
         1: [
@@ -297,11 +335,11 @@ const database = {
     },
     journalSubmissions: {
         1: [
-            { ...journal_submissions[0], ...journal_submission_users[0] },
+            { ...journal_submissions[0], ...journal_submission_reviewers[0], ...journal_submission_editors[0] },
         ],
         2: [
-            { ...journal_submissions[1], ...journal_submission_users[1] },
-            { ...journal_submissions[1], ...journal_submission_users[2] }
+            { ...journal_submissions[1], ...journal_submission_reviewers[1], ...journal_submission_editors[1] },
+            { ...journal_submissions[1], ...journal_submission_reviewers[2], ...journal_submission_editors[2] }
         ]
     },
     users: {
@@ -312,6 +350,10 @@ const database = {
         2: [
             { ...users[1], ...user_field_reputation[0], ...fields[0] },
             { ...users[1], ...user_field_reputation[0], ...fields[1] }
+        ],
+        3: [
+            { ...users[2], ...user_field_reputation[0], ...fields[0] },
+            { ...users[2], ...user_field_reputation[0], ...fields[1] }
         ]
     },
     files: {

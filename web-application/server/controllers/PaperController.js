@@ -190,6 +190,8 @@ module.exports = class PaperController {
             result.params.push(false)
         }
 
+        // Query for papers published in a certain journal.  Only retrieve
+        // published papers.
         if ( query.journalId ) {
             const results = await this.database.query(`SELECT paper_id FROM journal_submissions WHERE journal_id = $1 AND status = 'published'`, [ query.journalId ])
             if ( results.rows.length > 0 ) {
@@ -367,33 +369,6 @@ module.exports = class PaperController {
 
 
         return result
-    }
-
-    /**
-     * GET /papers/count
-     *
-     * Return an object with counts of papers, pages, and page size.
-     *
-     * TODO This is techdebt.  Merge it with getPapers() and use the
-     * meta/result response format.
-     */
-    async countPapers(request, response) {
-        /** 
-         * parseQuery() handles the permissions by only selecting papers the
-         * user is allowed to view. 
-         */
-        const { where, params, emptyResult } = await this.parseQuery(request.session, request.query, { ignoreOrder: true, ignorePage: true })
-
-        if ( emptyResult ) {
-            return response.status(200).json({
-                count: 0,
-                pageSize: 1,
-                numberOfPages: 1
-            })
-        }
-
-        const countResult = await this.paperDAO.countPapers(where, params)
-        return response.status(200).json(countResult)
     }
 
     /**

@@ -46,8 +46,15 @@ describe('in client/state/journals.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(getJournals(null, true))
-            deferred.resolve( backend.journals.list)
+            const requestId = store.dispatch(getJournals('test', null))
+
+
+            deferred.resolve({ 
+                dictionary: backend.journals.dictionary, 
+                list: backend.journals.list, 
+                meta: backend.journals.meta, 
+                relations: backend.journals.relations 
+            })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -83,7 +90,10 @@ describe('in client/state/journals.js', function() {
             )
 
             const requestId = store.dispatch(postJournals(journals[1]))
-            deferred.resolve(backend.journals.dictionary[1])
+            deferred.resolve({
+                entity: backend.journals.dictionary[1],
+                relations: backend.journals.relations
+            })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -120,7 +130,10 @@ describe('in client/state/journals.js', function() {
             )
 
             const requestId = store.dispatch(getJournal(backend.journals.dictionary[1].id))
-            deferred.resolve(backend.journals.dictionary[1])
+            deferred.resolve({
+                entity: backend.journals.dictionary[1], 
+                relations: backend.journals.relations
+            })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -130,11 +143,9 @@ describe('in client/state/journals.js', function() {
 
             expect(state.journals.dictionary[1]).toEqual(backend.journals.dictionary[1])
         })
-
     })
 
     describe('putJournal(journal)', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
@@ -165,7 +176,10 @@ describe('in client/state/journals.js', function() {
             )
 
             const requestId = store.dispatch(putJournal(journal))
-            deferred.resolve(backend.journals.dictionary[1])
+            deferred.resolve({
+                entity: backend.journals.dictionary[1],
+                relations: backend.journals.relations
+            })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -178,7 +192,6 @@ describe('in client/state/journals.js', function() {
     })
 
     describe('patchJournal(journal)', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
@@ -209,7 +222,10 @@ describe('in client/state/journals.js', function() {
             )
 
             const requestId = store.dispatch(patchJournal(journal))
-            deferred.resolve(backend.journals.dictionary[1])
+            deferred.resolve({
+                entity: backend.journals.dictionary[1],
+                relations: backend.journals.relations
+            })
 
             // Wait until Redux has processed all the actions that get fired
             // and the request is returned 'fulfilled'.
@@ -222,7 +238,6 @@ describe('in client/state/journals.js', function() {
     })
 
     describe('deleteJournal(journal)', function() {
-
         afterEach(function() {
             fetchMock.restore()
             store.dispatch(reset())
@@ -232,10 +247,7 @@ describe('in client/state/journals.js', function() {
         it('should complete the request when the backend returns', async function() {
             let deferred = { resolve: null, reject: null }
 
-            const journal = {
-                ...journals[1]
-            }
-            journal.id = backend.journals.dictionary[1].id 
+            const journal = backend.journals.dictionary[1]
 
             const endpoint = '/journal/' + journal.id 
 
@@ -256,7 +268,10 @@ describe('in client/state/journals.js', function() {
             )
 
             const initialRequestId = store.dispatch(getJournal(journal.id))
-            deferred.resolve(backend.journals.dictionary[1])
+            deferred.resolve({
+                entity: backend.journals.dictionary[1],
+                relations: {}
+            })
 
             let state = await waitForState(store, function(state) {
                 return state.journals.requests[initialRequestId] && state.journals.requests[initialRequestId].state == 'fulfilled'
@@ -277,8 +292,8 @@ describe('in client/state/journals.js', function() {
                 })
             )
 
-            const requestId = store.dispatch(deleteJournal(journal))
-            deferred.resolve({ status: 200, body: {}})
+            const requestId = store.dispatch(deleteJournal(journal.id))
+            deferred.resolve({ status: 200, body: { entity: { id: 1 } }})
 
             state = await waitForState(store, function(state) {
                 return state.journals.requests[requestId] && state.journals.requests[requestId].state == 'fulfilled'

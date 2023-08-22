@@ -17,7 +17,7 @@ export const setInDictionary = function(state, action) {
 }
 
 export const removeEntity = function(state, action) {
-    const entity = action.payload
+    const entity = action.payload.entity
     delete state.dictionary[entity.id]
 }
 

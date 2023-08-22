@@ -313,7 +313,7 @@ module.exports = class JournalSubmissionController {
 
         const relations = await this.getRelations(results)
 
-        return response.status(200).json({ 
+        return response.status(201).json({ 
             entity: results.list[0],
             relations: relations
         })
