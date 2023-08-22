@@ -29,7 +29,7 @@ Release Date:
 
 ### Release Testing
 
-Local Regression:
+Local Regression: pending
 
 Staging Regresssion: 
 
