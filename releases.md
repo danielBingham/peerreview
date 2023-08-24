@@ -29,7 +29,7 @@ Release Date:
 
 ### Release Testing
 
-Local Regression:
+Local Regression: 08/22/2023 
 
 Staging Regresssion: 
 
