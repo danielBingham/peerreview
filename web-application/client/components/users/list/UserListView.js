@@ -2,16 +2,22 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 
+import { UserCircleIcon } from '@heroicons/react/24/outline'
+
 import {getUsers, clearUserQuery, cleanupRequest } from '/state/users'
 
 import UserBadge from '../UserBadge'
 
 import Spinner from '/components/Spinner'
-import List from '/components/generic/list/List'
-import ListControl from '/components/generic/list/ListControl'
-import ListHeader from '/components/generic/list/ListHeader'
-import ListGridContent from '/components/generic/list/ListGridContent'
-import ListNoContent from '/components/generic/list/ListNoContent'
+import { 
+    List, 
+    ListHeader, 
+    ListTitle, 
+    ListControls, 
+    ListControl, 
+    ListGridContent, 
+    ListNoContent 
+} from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
 import './UserListView.css'
@@ -116,11 +122,14 @@ const UserListView = function(props) {
     const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
     return (
         <List className="user-list">
-            <ListHeader title="Users">
-                <ListControl url={`?${newestParams.toString()}`} 
-                    onClick={() => setSort('newest')} 
-                    selected={sort == 'newest'} 
-                    name="Newest" />
+            <ListHeader>
+                <ListTitle><UserCircleIcon/>Users</ListTitle>
+                <ListControls>
+                    <ListControl url={`?${newestParams.toString()}`} 
+                        onClick={() => setSort('newest')} 
+                        selected={sort == 'newest'} 
+                        name="Newest" />
+                </ListControls>
             </ListHeader>
             <ListGridContent>
                 { content } 

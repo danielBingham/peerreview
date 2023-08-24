@@ -1,0 +1,39 @@
+.button {
+    all: unset;
+
+    display: inline-block;
+    border-radius: 5px;
+    padding: 5px 15px;
+    margin: 5px;
+    cursor: pointer;
+}
+.button:hover {
+    filter: brightness(110%);
+}
+.button.primary {
+    background-color: var(--button-color);
+    border: thin solid var(--button-color);
+    color: white;
+}
+.button.secondary {
+    border: thin solid var(--button-color);
+    color: var(--button-color) !important;
+}
+.button.primary-highlight {
+    background-color: var(--button-highlight-color);
+    border: thin solid var(--button-highlight-color);
+    color: white;
+}
+.button.secondary-highlight {
+    border: thin solid var(--button-highlight-color);
+    color: var(--button-highlight-color) !important;
+}
+.button.primary-warn {
+    background-color: var(--button-warn-color);
+    border: thin solid var(--button-warn-color);
+    color: white;
+}
+.button.secondary-warn {
+    border: thin solid var(--button-warn-color);
+    color: var(--button-warn-color) !important;
+}

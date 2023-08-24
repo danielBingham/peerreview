@@ -41,6 +41,10 @@
 
     --link-color: #0796fc;
     --link-highlight-color: #74c3fc;
+
+    --button-color: #0796fc;
+    --button-highlight-color: #32a852;
+    --button-warn-color: #a83a32;
 }
 
 html {

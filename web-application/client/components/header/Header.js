@@ -1,7 +1,10 @@
 import React from 'react'
+import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { useSelector } from 'react-redux'
+import { 
+    BookOpenIcon
+} from '@heroicons/react/24/outline'
 
 import MainNavigation from './navigation/MainNavigation'
 import UserNavigation from './navigation/UserNavigation'
@@ -16,14 +19,19 @@ import './Header.css'
  */
 const Header = function(props) {
 
+
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
+    })
+
     // ======= Render ===============================================
     
     return (
         <header>
-            <div id="site-title"><Link to="/"><img src="/img/icon.svg" /> Peer Review</Link><sub className="wip">( beta )</sub></div>
+            <div id="site-title"><Link to="/"><BookOpenIcon />JournalHub</Link><sub className="wip">( beta )</sub></div>
             <div id="navigation">
                 <MainNavigation />
-                <UserNavigation /> 
+                { currentUser && <UserNavigation /> }
                 <AuthenticationNavigation />
             </div>
         </header>

@@ -2,15 +2,21 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 
+import { TagIcon } from '@heroicons/react/24/outline'
+
 import FieldBadge from '../FieldBadge'
 import { getFields, clearFieldQuery, cleanupRequest } from '/state/fields'
 
 import Spinner from '/components/Spinner'
-import List from '/components/generic/list/List'
-import ListControl from '/components/generic/list/ListControl'
-import ListHeader from '/components/generic/list/ListHeader'
-import ListGridContent from '/components/generic/list/ListGridContent'
-import ListNoContent from '/components/generic/list/ListNoContent'
+import { 
+    List, 
+    ListHeader, 
+    ListTitle, 
+    ListControls, 
+    ListControl, 
+    ListGridContent, 
+    ListNoContent 
+} from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
 import './FieldListView.css'
@@ -39,7 +45,7 @@ const FieldListView = function(props) {
     })
 
     // ======= Redux State ==========================================
-    const title = props.title ? props.title : 'FieldListView' 
+    const title = props.title ? props.title : 'Taxonomy' 
 
     const fields = useSelector(function(state) {
         if ( ! state.fields.queries[title] ) {
@@ -126,7 +132,8 @@ const FieldListView = function(props) {
 
     return (
         <List>
-            <ListHeader title={ title }>
+            <ListHeader>
+                <ListTitle><TagIcon />{title }</ListTitle>
             </ListHeader>
             <ListNoContent>
                 {noContent}

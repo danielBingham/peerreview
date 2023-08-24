@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import {  Link } from 'react-router-dom'
+import {  Link, useNavigate } from 'react-router-dom'
+
+import Button from '/components/generic/button/Button'
 
 import UserTag from '/components/users/UserTag'
 import UserMenu from './UserMenu'
@@ -31,8 +33,11 @@ const AuthenticationNavigation = function(props) {
     // ======= Actions and Event Handling ===========================
 
     const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     const toggleMenu = function(event) {
+        event.preventDefault()
+
         setMenuVisible( ! menuVisible )
     }
 
@@ -56,15 +61,15 @@ const AuthenticationNavigation = function(props) {
     if ( currentUser ) {
         return (
             <div ref={menuRef} id="authentication-navigation" className="navigation-block authenticated">
-                <span className="logged-in-user"><span href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<UserTag id={currentUser.id} link={false} /></span></span>
+                <span className="logged-in-user"><a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<UserTag id={currentUser.id} link={false} /></a></span>
                 <UserMenu visible={menuVisible} toggleMenu={toggleMenu} />
             </div>
         )
     } else {
         return (
             <div id="authentication-navigation" className="navigation-block not-authenticated">
-                <Link to="login">login</Link>
-                <Link to="register">register</Link>
+                <Button type="secondary" onClick={(e) => navigate('login')}>login</Button>
+                <Button type="primary" onClick={(e) => navigate('register')}>register</Button>
             </div>
         )
     }

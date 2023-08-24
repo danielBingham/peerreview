@@ -1,5 +1,15 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
+import React, { useState, useEffect, useRef } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import {  Link } from 'react-router-dom'
+
+import { 
+    ChevronUpIcon, 
+    ChevronDownIcon, 
+    DocumentArrowUpIcon, 
+    BookOpenIcon, 
+    PlusIcon,
+    ClipboardDocumentIcon 
+} from '@heroicons/react/24/outline'
 
 import './UserNavigation.css'
 
@@ -10,13 +20,48 @@ import './UserNavigation.css'
  */
 const UserNavigation = function(props) {
 
+    const [ menuVisible, setMenuVisible ] = useState(false)
+
+    const menuRef = useRef(null)
+
+    // ======= Actions and Event Handling ===========================
+
+    const dispatch = useDispatch()
+
+    const toggleMenu = function(event) {
+        event.preventDefault()
+
+        setMenuVisible( ! menuVisible )
+    }
+
+    // ======= Effect Handling ======================================
+
+    useEffect(function() {
+        const onBodyClick = function(event) {
+            if ( menuRef.current && ! menuRef.current.contains(event.target) ) {
+                setMenuVisible(false)
+            } 
+        }
+        document.body.addEventListener('mousedown', onBodyClick)
+
+        return function cleanup() {
+            document.body.removeEventListener('mousedown', onBodyClick)
+        }
+    }, [ menuVisible, menuRef ])
     // ======= Render ===============================================
     
     return (
         <div id="user-navigation" className="navigation-block">
-            <Link to="/review">review</Link>
-            <Link to="/submit">submit</Link>
-            <Link to="/create">create</Link>
+            <div ref={menuRef} id="creation-navigation">
+                <span className="creation-menu-trigger"><a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<PlusIcon />new</a></span>
+                <div id="creation-menu" className="floating-menu" style={{ display: ( menuVisible ? 'block' : 'none' ) }} >
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/submit"><DocumentArrowUpIcon />new submission</Link></div>
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/create"><BookOpenIcon />new journal</Link></div>
+                </div>
+            </div>
+            <div id="user-action-navigation">
+                <Link to="/review"><ClipboardDocumentIcon />review</Link>
+            </div>
         </div>
     )
 

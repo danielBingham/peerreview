@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-
 import { useDispatch, useSelector } from 'react-redux'
+
+import { CheckCircleIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, XCircleIcon } from '@heroicons/react/24/outline'
 
 import { patchReview, deleteReview, cleanupRequest} from '/state/reviews'
 
+import Button from '/components/generic/button/Button'
 import Spinner from '/components/Spinner'
 
 import './ReviewSummaryForm.css'
@@ -153,19 +155,64 @@ const ReviewSummaryForm = function(props) {
                         </textarea>
                     </div>
                     <div className="recommendation-wrapper">
-                        <select name="recommendation-field" 
+                        { /*<select name="recommendation-field" 
                             onChange={(e) => setRecommendation(e.target.value)}
                             onBlur={commitChange} 
                             value={recommendation} 
                         >
+
                                 <option value="commentary">Commentary (No recommendation)</option>
                                 <option value="request-changes">Recommend Changes</option>
                                 <option value="approve">Recommend Approval</option>
                                 <option value="reject">Recommend Rejection</option>
-                        </select>
+                        </select> */ }
+                        <div className="recommendation-option">
+                            <input 
+                                type="radio" 
+                                name="recommendation" 
+                                checked={ recommendation == 'commentary' }
+                                onChange={(e) => setRecommendation('commentary')}
+                                onBlur={commitChange}
+                                value="commentary" />
+                            <label htmlFor="commentary"><ChatBubbleLeftRightIcon/>Commentary</label>
+                            <div className="explanation">Add commentary to the draft with out making an explicit recommendation.</div>
+                        </div>
+                        <div className="recommendation-option">
+                            <input 
+                                type="radio" 
+                                name="recommendation" 
+                                checked={ recommendation == 'request-changes' }
+                                onChange={(e) => setRecommendation('request-changes')}
+                                onBlur={commitChange}
+                                value="request-changes" />
+                            <label htmlFor="request-changes"><ClipboardDocumentListIcon/>Request Changes</label>
+                            <div className="explanation">Recommend that authors make the changes outlined in this review.</div>
+                        </div>
+                        <div className="recommendation-option">
+                            <input 
+                                type="radio" 
+                                name="recommendation" 
+                                checked={ recommendation == 'reject' }
+                                onChange={(e) => setRecommendation('reject')}
+                                onBlur={commitChange}
+                                value="reject" />
+                            <label htmlFor="approve"><XCircleIcon/>Reject</label>
+                            <div className="explanation">Recommend that the draft be rejected.</div>
+                        </div>
+                        <div className="recommendation-option">
+                            <input 
+                                type="radio" 
+                                name="recommendation" 
+                                checked={ recommendation == 'approve' }
+                                onChange={(e) => setRecommendation('approve')}
+                                onBlur={commitChange}
+                                value="approve" />
+                            <label htmlFor="approve"><CheckCircleIcon/>Approve</label>
+                            <div className="explanation">Recommend that the draft be approved with out additional changes.</div>
+                        </div>
                         <div className="submission-buttons">
-                            <button name="cancel" onClick={cancel} >Cancel Review</button>
-                            <button name="finish" onClick={finish} >Finish Review</button>
+                            <Button type="secondary-warn" onClick={cancel} >Cancel Review</Button>
+                            <Button type="primary" onClick={finish} >Finish Review</Button>
                         </div>
                         <div className="submission-error" style={ ( errorType ? { display: 'block' } : { display: 'none' } ) }>
                             { errorType == 'comment-in-progress' && 'There are still comments in progress on your review.  Submit or cancel all comments and then submit your review.' }

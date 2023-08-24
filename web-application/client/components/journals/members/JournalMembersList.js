@@ -4,11 +4,15 @@ import { useDispatch, useSelector } from 'react-redux'
 import { getJournal, cleanupRequest } from '/state/journals'
 
 import Spinner from '/components/Spinner'
-import List from '/components/generic/list/List'
-import ListControl from '/components/generic/list/ListControl'
-import ListHeader from '/components/generic/list/ListHeader'
-import ListRowContent from '/components/generic/list/ListRowContent'
-import ListNoContent from '/components/generic/list/ListNoContent'
+import { 
+    List, 
+    ListHeader, 
+    ListTitle, 
+    ListControls, 
+    ListControl, 
+    ListRowContent, 
+    ListNoContent 
+} from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
 import JournalMembersListItem from '/components/journals/members/JournalMembersListItem'
@@ -87,7 +91,8 @@ const JournalMembersList = function({ id }) {
                 </div>
             </div>
             <List>
-                <ListHeader title="Journal Members">
+                <ListHeader>
+                    <ListTitle>Journal Members</ListTitle>
                 </ListHeader>
                 <ListNoContent>
                     {noContent}

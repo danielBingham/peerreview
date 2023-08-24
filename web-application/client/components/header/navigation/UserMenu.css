@@ -2,14 +2,21 @@
     position: absolute;
     top: 44px;
     left: 0;
-    min-width: 225px;
-    text-align: center;
+    text-align: left;
     background-color: var(--user-menu-background-color);
     border-bottom: thin solid var(--user-menu-border-color);
     border-left: thin solid var(--user-menu-border-color);
     border-right: thin solid var(--user-menu-border-color);
     padding: 10px 0 10px 0;
     z-index: 1000;
+    white-space: nowrap;
+}
+#user-menu img {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    margin-bottom: -4px;
 }
 #user-menu .menu-section {
     padding: 5px 0;

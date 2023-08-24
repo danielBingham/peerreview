@@ -16,3 +16,7 @@
 .decision-controls textarea:focus {
     background-color: white;
 }
+.decision-controls .decision {
+    text-align: right;
+    padding: 10px;
+}

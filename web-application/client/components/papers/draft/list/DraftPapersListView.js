@@ -3,15 +3,21 @@ import { useParams, useSearchParams, Link } from 'react-router-dom'
 
 import { useDispatch, useSelector } from 'react-redux'
 
+import { DocumentIcon, InboxIcon } from '@heroicons/react/24/outline'
+
 import { getPapers, clearPaperQuery, cleanupRequest } from '/state/papers'
 import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import Spinner from '/components/Spinner'
-import List from '/components/generic/list/List'
-import ListControl from '/components/generic/list/ListControl'
-import ListHeader from '/components/generic/list/ListHeader'
-import ListRowContent from '/components/generic/list/ListRowContent'
-import ListNoContent from '/components/generic/list/ListNoContent'
+import { 
+    List, 
+    ListHeader, 
+    ListTitle, 
+    ListControls, 
+    ListControl, 
+    ListRowContent, 
+    ListNoContent 
+} from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
 import DraftPapersListItemView from './DraftPapersListItemView'
@@ -193,24 +199,27 @@ const DraftPapersListView = function(props) {
 
     let title = "Draft Papers"
     if ( props.type == 'preprint') {
-        title = "Preprints"
+        title = (<><DocumentIcon/>Preprints</>)
     } else if ( props.type == 'drafts' ) {
-        title = "My Drafts"
+        title = (<><DocumentIcon/>My Drafts</>)
     } else if ( props.type == 'submissions' ) {
-        title = "Submissions for Review"
+        title = (<><InboxIcon/>Submissions</>)
     }
 
     return (
         <List>
-            <ListHeader title={ title }>
-                <ListControl url={`?${newestParams.toString()}`}
-                    onClick={() => { setSort('newest')}} 
-                    selected={ sort == 'newest' }
-                    name="Newest" />
-                <ListControl url={`?${activeParams.toString()}`} 
-                    onClick={() => {  setSort('active')}} 
-                    selected={ sort == 'active' } 
-                    name="Active" />
+            <ListHeader>
+                <ListTitle>{ title }</ListTitle>
+                <ListControls>
+                    <ListControl url={`?${newestParams.toString()}`}
+                        onClick={() => { setSort('newest')}} 
+                        selected={ sort == 'newest' }
+                        name="Newest" />
+                    <ListControl url={`?${activeParams.toString()}`} 
+                        onClick={() => {  setSort('active')}} 
+                        selected={ sort == 'active' } 
+                        name="Active" />
+                </ListControls>
             </ListHeader>
             <ListNoContent>
                 {noContent}

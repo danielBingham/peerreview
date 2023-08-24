@@ -4,3 +4,45 @@
     background-color: white;
     border: thin solid var(--main-border-color);
 }
+
+.list .list-header {
+    display: grid;
+    grid-template-columns: 1fr, 1fr;
+    grid-template-rows: auto;
+    border-bottom: thin solid var(--main-border-color);
+    padding: 10px 20px;
+}
+.list .list-header h2 {
+    grid-column: 1 / 2;
+    padding: 0;
+    margin: 0;
+}
+.list .list-header h2 svg {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-right: 6px;
+    margin-bottom: -4px;
+}
+.list .list-header .controls {
+    grid-column: 2 / 3;
+    text-align: right;
+}
+.list .list-header .controls a.list-control {
+    display: inline-block;
+    padding: 5px;
+    margin: 0 10px;
+}
+.list .list-header .controls a.list-control.selected {
+    text-decoration: underline;
+}
+
+.list .list-row-content {}
+.list .list-grid-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.list .list-no-content {
+    padding: 20px;
+    text-align: center;
+}

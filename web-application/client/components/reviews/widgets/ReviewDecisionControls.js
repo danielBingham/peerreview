@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom'
 import { patchJournalSubmission, cleanupRequest } from '/state/journalSubmissions'
 import { patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 
+import Button from '/components/generic/button/Button'
+
 import Spinner from '/components/Spinner'
 import Error404 from '/components/Error404'
 
@@ -82,8 +84,8 @@ const ReviewDecisionControls = function(props) {
                 </textarea> 
             </div>
             <div className="decision">
-                <button onClick={(e) => makeDecision('rejected')}>Reject</button> 
-                <button onClick={(e) => makeDecision('published')}>Publish</button>
+                <Button type="primary-warn" onClick={(e) => makeDecision('rejected')}>Reject</Button> 
+                <Button type="primary-highlight" onClick={(e) => makeDecision('published')}>Publish</Button>
             </div>
         </div>
     )

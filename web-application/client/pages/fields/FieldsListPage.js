@@ -8,7 +8,7 @@ const FieldsListPage = function(props) {
 
     return (
         <div id="fields-list-page" className="page">
-            <FieldListView title={ 'Fields' } />
+            <FieldListView title={ 'Taxonomy' } />
         </div>
     )
 }

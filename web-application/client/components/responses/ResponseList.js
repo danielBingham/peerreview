@@ -6,11 +6,15 @@ import { getResponses, cleanupRequest } from '/state/responses'
 import ResponseForm from './ResponseForm'
 import ResponseView from './ResponseView'
 
-import List from '/components/generic/list/List'
-import ListControl from '/components/generic/list/ListControl'
-import ListHeader from '/components/generic/list/ListHeader'
-import ListRowContent from '/components/generic/list/ListRowContent'
-import ListNoContent from '/components/generic/list/ListNoContent'
+import { 
+    List, 
+    ListHeader, 
+    ListTitle, 
+    ListControls, 
+    ListControl, 
+    ListRowContent, 
+    ListNoContent 
+} from '/components/generic/list/List'
 
 import Spinner from '/components/Spinner'
 
@@ -100,7 +104,8 @@ const ResponseList = function(props) {
     return (
         <div className="responses">
             <List className="response-list">
-                <ListHeader title="Responses">
+                <ListHeader>
+                    <ListTitle>Responses</ListTitle>
                 </ListHeader>
                 <ListNoContent>
                     {noContent}

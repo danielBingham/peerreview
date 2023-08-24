@@ -1,8 +1,0 @@
-a.list-control {
-    display: inline-block;
-    padding: 5px;
-    margin: 0 10px;
-}
-a.list-control.selected {
-    text-decoration: underline;
-}

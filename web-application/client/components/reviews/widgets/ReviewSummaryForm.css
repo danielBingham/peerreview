@@ -13,7 +13,34 @@
     background-color: white;
 }
 .review-summary-form .recommendation-wrapper {
-    text-align: right;
+    text-align: left;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    padding: 10px;
+}
+.review-summary-form .recommendation-wrapper .recommendation-option {
+    padding: 5px;
+}
+.review-summary-form .recommendation-wrapper .recommendation-option label {
+    font-size: 18px;
+    padding-left: 5px;
+}
+.review-summary-form .recommendation-wrapper .recommendation-option label svg {
+    width: 1em;
+    height: 1em;
+    margin-right: 0.2em;
+    margin-bottom: -0.2em;
+}
+.review-summary-form .recommendation-wrapper .recommendation-option .explanation {
+    padding: 2px;
+    font-size: 0.8em;
+    color: #333;
+}
+.review-summary-form .recommendation-wrapper .submission-buttons {
+    grid-column: 1 / 3;
+    text-align: center;
+    padding: 10px;
 }
 .review-summary-form .submission-error {
     text-align: center;

@@ -2,6 +2,18 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 
+import { 
+    UserCircleIcon,
+    EnvelopeIcon,
+    LockClosedIcon,
+    Cog6ToothIcon,
+    DocumentIcon,
+    PencilIcon,
+    ArrowRightOnRectangleIcon,
+    AdjustmentsHorizontalIcon
+} from '@heroicons/react/24/outline'
+
+
 import { cleanupRequest, deleteAuthentication } from '/state/authentication'
 
 import './UserMenu.css'
@@ -65,21 +77,21 @@ const UserMenu = function(props) {
     return (
         <div id="user-menu" className="floating-menu" style={{ display: ( props.visible ? 'block' : 'none' ) }} >
             <div className="menu-section">
-                <div className="menu-item" onClick={props.toggleMenu}><Link to="/drafts">my drafts</Link></div>
-                <div className="menu-item" onClick={props.toggleMenu}><Link to={`/user/${currentUser.id}`}>my profile</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/drafts"><DocumentIcon/>my drafts</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to={`/user/${currentUser.id}`}><UserCircleIcon />my profile</Link></div>
             </div>
             <div className="menu-section">
-                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/profile">edit profile</Link></div>
-                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/change-email">change email</Link></div>
-                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/change-password">change password</Link></div>
-                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/orcid">connect ORCID iD</Link></div>
-                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/settings">account settings</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/profile"><PencilIcon/>edit profile</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/change-email"><EnvelopeIcon />change email</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/change-password"><LockClosedIcon />change password</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/orcid"><img src="/img/ORCID.svg" />connect ORCID iD</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/account/settings"><Cog6ToothIcon/>account settings</Link></div>
             </div>
             { isAdmin && <div className="menu-section admin">
-                <div className="menu-item" onClick={props.toggleMenu}><Link to="/admin">admin</Link></div>
+                <div className="menu-item" onClick={props.toggleMenu}><Link to="/admin"><AdjustmentsHorizontalIcon/>admin</Link></div>
             </div> }
             <div className="menu-section bottom"> 
-                <div className="menu-item" onClick={props.toggleMenu}><a href="" className="logout" onClick={handleLogout} >logout</a></div>
+                <div className="menu-item" onClick={props.toggleMenu}><a href="" className="logout" onClick={handleLogout} ><ArrowRightOnRectangleIcon/>logout</a></div>
             </div>
         </div>
     )

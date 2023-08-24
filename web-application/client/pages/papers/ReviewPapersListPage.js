@@ -2,7 +2,7 @@ import React from 'react'
 import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { InboxIcon, BookOpenIcon } from '@heroicons/react/24/outline'
+import { InboxIcon, DocumentIcon} from '@heroicons/react/24/outline'
 
 import DraftPapersListView from '/components/papers/draft/list/DraftPapersListView'
 
@@ -39,7 +39,7 @@ const ReviewPapersListPage = function(props) {
                     <InboxIcon /> Submissions
                 </PageTab>
                 <PageTab url={`/review/preprints`} selected={selectedTab == 'preprints'}>
-                    <BookOpenIcon /> Preprints 
+                    <DocumentIcon/> Preprints 
                 </PageTab>
             </PageTabBar>
             <div id="review-papers-list-page" className="page">

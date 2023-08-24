@@ -270,7 +270,7 @@ const SubmitDraftForm = function(props) {
                     onBlur={ (event) => isValid('fields') }
                     fields={fields} 
                     setFields={setFields} 
-                    title="Fields"
+                    title="Taxonomy Tags"
                     explanation={`Select tags from the taxonomy to categorize your paper.  You may select as many as you think appropriate. The taxonomy is heirarchical. At the top are the major disciplines (eg. biology, art, philosophy).  As you travel down there are sub-disciplines, topics, concepts, and keywords.  You can tag your paper from any layer(s) of the hierarchy.  This will help identify appropriate reviewers and also help interested readers discover your paper. Start typing to view suggestions.`}
                 />
                 { fieldsErrorView }

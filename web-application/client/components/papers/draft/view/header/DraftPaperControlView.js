@@ -5,6 +5,8 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import {  patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import {  newReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
+import Button from '/components/generic/button/Button'
+
 import './DraftPaperControlView.css'
 
 /**
@@ -152,7 +154,7 @@ const DraftPaperControlView = function(props) {
                 <select name="versionNumber" value={props.versionNumber} onChange={changeVersion}>
                     {paperVersionOptions}
                 </select>
-                { ! reviewInProgress && ! viewOnly && currentUser && <button onClick={startReview}>Start Review</button> }
+                { ! reviewInProgress && ! viewOnly && currentUser && <Button onClick={startReview}>Start Review</Button> }
             </div>
             { contents }
         </div>

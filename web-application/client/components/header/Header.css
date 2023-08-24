@@ -13,13 +13,16 @@ header #site-title {
     font-weight: bold;
 
     flex-grow: 1;
+    padding: 11px 0;
 
     text-align: left;
 }
-header #site-title img {
-    width: 30px;
-    height: 30px;
-    margin-bottom: -6px;
+header #site-title svg {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    margin-right: 6px;
+    margin-bottom: -4px;
 }
 header #site-title .wip {
     font-size: 10px;
@@ -35,7 +38,7 @@ header #navigation {
 
 header .navigation-block {
     display: inline-block;
-    margin-left: 25px;
+    margin-left: 10px;
 }
 
 header a:link, header a:active, header a:visited {

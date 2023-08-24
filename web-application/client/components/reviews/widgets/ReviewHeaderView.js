@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import {  newReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
+import Button from '/components/generic/button/Button'
 import Spinner from '/components/Spinner'
 
 import ReviewSummaryView from './ReviewSummaryView'
@@ -83,7 +84,7 @@ const ReviewHeaderView = function(props) {
             )
         } else {
             content = (
-                <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.  { currentUser && <span><button onClick={startReview}>Start Review</button> to begin a new review and add comments.</span> }</p>
+                <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.  { currentUser && <span><Button onClick={startReview}>Start Review</Button> to begin a new review and add comments.</span> }</p>
             )
         }
     } else {

@@ -4,15 +4,21 @@ import { useSearchParams } from 'react-router-dom'
 
 import isEqual from 'lodash.isequal'
 
+import { DocumentCheckIcon } from '@heroicons/react/24/outline'
+
 import { getPapers, clearPaperQuery, cleanupRequest } from '/state/papers'
 import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
 
 import Spinner from '/components/Spinner'
-import List from '/components/generic/list/List'
-import ListControl from '/components/generic/list/ListControl'
-import ListHeader from '/components/generic/list/ListHeader'
-import ListRowContent from '/components/generic/list/ListRowContent'
-import ListNoContent from '/components/generic/list/ListNoContent'
+import { 
+    List, 
+    ListHeader, 
+    ListTitle, 
+    ListControls, 
+    ListControl, 
+    ListRowContent, 
+    ListNoContent 
+} from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
 import PublishedPaperListItem from './PublishedPaperListItem'
@@ -180,15 +186,18 @@ const PublishedPaperList = function(props) {
     const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
     return (
         <List>
-            <ListHeader title="Published Papers">
-                <ListControl url={`?${newestParams.toString()}`}
-                    onClick={() => setSort('newest')} 
-                    selected={sort == 'newest'} 
-                    name="Newest" />
-                <ListControl url={`?${activeParams.toString()}`} 
-                    onClick={() => setSort('active')} 
-                    selected={sort == 'active'} 
-                    name="Active" />
+            <ListHeader>
+                <ListTitle><DocumentCheckIcon/>Papers</ListTitle>
+                <ListControls>
+                    <ListControl url={`?${newestParams.toString()}`}
+                        onClick={() => setSort('newest')} 
+                        selected={sort == 'newest'} 
+                        name="Newest" />
+                    <ListControl url={`?${activeParams.toString()}`} 
+                        onClick={() => setSort('active')} 
+                        selected={sort == 'active'} 
+                        name="Active" />
+                </ListControls>
             </ListHeader>
             <ListNoContent>
                 {noContent}

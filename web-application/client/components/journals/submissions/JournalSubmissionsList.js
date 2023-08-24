@@ -9,11 +9,15 @@ import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/rev
 import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 
-import List from '/components/generic/list/List'
-import ListControl from '/components/generic/list/ListControl'
-import ListHeader from '/components/generic/list/ListHeader'
-import ListRowContent from '/components/generic/list/ListRowContent'
-import ListNoContent from '/components/generic/list/ListNoContent'
+import { 
+    List, 
+    ListHeader, 
+    ListTitle, 
+    ListControls, 
+    ListControl, 
+    ListRowContent, 
+    ListNoContent 
+} from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
 import DraftPapersListItemView from '/components/papers/draft/list/DraftPapersListItemView'
@@ -155,7 +159,8 @@ const JournalSubmissionsList = function(props) {
 
     return (
         <List>
-            <ListHeader title="Draft Submissions">
+            <ListHeader>
+                <ListTitle>Draft Submissions</ListTitle>
             </ListHeader>
             <ListNoContent>
                 {noContent}

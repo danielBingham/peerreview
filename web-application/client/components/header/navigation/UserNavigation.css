@@ -1,7 +1,60 @@
-#user-navigation a:link, 
-#user-navigation a:active, 
-#user-navigation a:visited,
-#user-navigation a:hover {
+#user-navigation {
+    padding: 11px 0;
+}
+
+#user-action-navigation {
+    display: inline-block;
+}
+#user-action-navigation a:link, 
+#user-action-navigation a:active, 
+#user-action-navigation a:visited,
+#user-action-navigation a:hover {
     padding: 5px;
     margin: 0 5px;
 }
+#user-action-navigation svg {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    margin-bottom: -4px;
+}
+
+
+#creation-navigation {
+    display: inline-block;
+    position: relative;
+    cursor: pointer;
+}
+#creation-navigation svg {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+    margin-bottom: -4px;
+}
+
+#creation-menu {
+    position: absolute;
+    top: 44px;
+    left: 0;
+    text-align: left;
+    background-color: var(--user-menu-background-color);
+    border-bottom: thin solid var(--user-menu-border-color);
+    border-left: thin solid var(--user-menu-border-color);
+    border-right: thin solid var(--user-menu-border-color);
+    padding: 10px 0 10px 0;
+    z-index: 1000;
+}
+#creation-menu .menu-section {
+    padding: 5px 0;
+    border-bottom: thin solid var(--user-menu-spacer-color);
+}
+#creation-menu .menu-section.bottom {
+    border-bottom: none;
+}
+#creation-menu .menu-item {
+    white-space: nowrap;
+    padding: 5px 10px 5px 10px;
+}
+#creation-menu .menu-item:hover { }
