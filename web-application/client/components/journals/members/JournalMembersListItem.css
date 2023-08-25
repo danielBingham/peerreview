@@ -4,7 +4,7 @@
 }
 .journal-member-list-item .grid-wrapper {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 2fr 1fr 1fr;
 
 }
 .journal-member-list-item .user {
@@ -12,8 +12,19 @@
     padding: 15px;
 }
 .journal-member-list-item .permissions {
-    grid-column: 2/3;
+    grid-column: 4/5;
     padding: 15px;
     text-align: center;
+}
+.journal-member-list-item .remove {
+    grid-column: 5/6;
+    text-align: center;
+    padding: 15px;
+}
+.journal-member-list-item .remove svg {
+    width: 18px;
+    height: 18px;
+    color: red;
+    margin-bottom: -0.2em;
 }
 

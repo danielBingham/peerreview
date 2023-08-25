@@ -1,0 +1,11 @@
+.invite-member-modal .selected-user {
+    padding: 20px;
+}
+.invite-member-modal .selected-user svg.cancel {
+    display: inline-block;
+    width: 1.2em;
+    height: 1.2em;
+    margin-bottom: -0.2em;
+    color: red;
+    cursor: pointer;
+}

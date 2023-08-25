@@ -3,6 +3,9 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { XMarkIcon } from '@heroicons/react/20/solid'
 
+import { deleteJournalMember, cleanupRequest } from '/state/journals'
+
+import MemberPermissionsWidget from '/components/journals/widgets/members/MemberPermissionsWidget'
 import UserTag from '/components/users/UserTag'
 
 import Spinner from '/components/Spinner'
@@ -15,6 +18,14 @@ const JournalMembersListItem = function({ member }) {
 
     // ================== Request Tracking ====================================
     
+    const [ requestId, setRequestId] = useState(null)
+    const request = useSelector(function(state) {
+        if ( ! requestId) {
+            return null
+        } else {
+           return state.journals.requests[requestId]
+        }
+    })
 
     // ================= Redux State ================================================
 
@@ -22,24 +33,42 @@ const JournalMembersListItem = function({ member }) {
         return state.authentication.currentUser
     })
 
+    const currentUserPermissions = currentUser.memberships.find((m) => m.journalId == member.journalId)?.permissions
+    const canModify = (
+        (member.permissions == 'editor' && currentUserPermissions == 'owner')
+        || (member.permissions == 'reviewer' && (currentUserPermissions == 'owner' || currentUserPermissions == 'editor'))
+    )
+
+
     // =========== Actions and Event Handling =====================================
 
     const dispatch = useDispatch()
 
+    const removeMember = function(event) {
+        event.preventDefault()
+
+        if ( ! canModify ) {
+            return 
+        }
+
+        setRequestId(dispatch(deleteJournalMember(member.journalId, member.userId)))
+    }
+
+    const assignPermissions = function(event) {
+
+    }
 
     // ================= Effect Handling =======================
-   
+ 
+    useEffect(function() {
+        return function cleanup() {
+            if ( requestId ) {
+                dispatch(cleanupRequest({requestId: requestId }))
+            }
+        }
+    }, [ requestId ])
 
     // ====================== Render ==========================================
-
-    let permissions = "Reviewer"
-    if ( member.permissions == "owner") {
-        permissions = "Managing Editor"
-    } else if ( member.permissions == 'editor' ) {
-        permissions = "Editor"
-    } else if ( member.permissions == "reviewer") {
-        permissions = "Reviewer"
-    }
 
     return (
         <div className="journal-member-list-item">
@@ -48,7 +77,10 @@ const JournalMembersListItem = function({ member }) {
                     <UserTag id={ member.userId} />
                 </div>
                 <div className="permissions">
-                    { permissions }
+                    <MemberPermissionsWidget member={member} /> 
+                </div>
+                <div className="remove">
+                    { canModify && <a href="" onClick={removeMember} ><XMarkIcon /></a> }
                 </div>
             </div>
         </div>

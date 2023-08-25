@@ -1,4 +1,8 @@
 :root {
+    --primary-highlight-color: #0796fc;
+    --secondary-highlight-color: #32a852;
+    --warn-highlight-color: #a83a32;
+
     --header-background-color: #2a2c2e;
     --header-border-color: #2a2c2e;
     --header-text-color: #D3D9DE;
@@ -42,7 +46,10 @@
     --link-color: #0796fc;
     --link-highlight-color: #74c3fc;
 
-    --button-color: #0796fc;
+    --button-color: #e0e7eb;
+    --button-border-color: #D3d9de;
+
+    --button-primary-color: #0796fc;
     --button-highlight-color: #32a852;
     --button-warn-color: #a83a32;
 }
@@ -73,6 +80,23 @@ a:hover {
 
 input:focus, textarea:focus, select:focus {
     outline-color: var(--input-highlight-color) !important;
+}
+
+input[type="submit"] {
+    all: unset;
+
+    display: inline-block;
+    border-radius: 5px;
+    padding: 5px 15px;
+    margin: 5px;
+    cursor: pointer;
+
+    background-color: var(--button-primary-color);
+    border: thin solid var(--button-primary-color);
+    color: white;
+}
+input[type="submit"]:hover {
+    filter: opacity(80%);
 }
 
 #root {

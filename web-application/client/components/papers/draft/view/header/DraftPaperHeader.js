@@ -10,7 +10,6 @@ import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 import Error404 from '/components/Error404'
 
-import DraftPaperControlView from './DraftPaperControlView'
 
 import './DraftPaperHeader.css'
 
@@ -57,7 +56,6 @@ const DraftPaperHeader = function({ id, versionNumber, tab }) {
 
     return (
         <div id={`paper-${id}`} className="draft-paper-header">
-            <DraftPaperControlView id={id} tab={tab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
             <JournalSubmissionsTags id={paper.id} />
             <h2 className="title">{paper.title}</h2>
             <div className="submitted-date">submitted <DateTag timestamp={paper.createdDate} /></div>

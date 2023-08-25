@@ -314,7 +314,7 @@ export const postJournalMembers = function(journalId, member) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const patchJournalMembers = function(journalId, member) {
+export const patchJournalMember = function(journalId, member) {
     return function(dispatch, getState) {
         dispatch(journalsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, journalsSlice,
@@ -340,11 +340,11 @@ export const patchJournalMembers = function(journalId, member) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const deleteJournalMembers = function(journalId, member) {
+export const deleteJournalMember = function(journalId, userId) {
     return function(dispatch, getState) {
         dispatch(journalsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, journalsSlice,
-            'DELETE', `/journal/${journalId}/member/${member.userId}`, null,
+            'DELETE', `/journal/${journalId}/member/${userId}`, null,
             function(response) {
                 dispatch(journalsSlice.actions.setJournalsInDictionary({ entity: response.entity }))
 

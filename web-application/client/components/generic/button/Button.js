@@ -7,7 +7,7 @@ const Button = function({ type, className, onClick, children }) {
     return (
         <button
             ahref="" 
-            className={`button ${ type ? type : 'primary' } ${ className ? className : '' }`} 
+            className={`button ${ type ? type : 'default' } ${ className ? className : '' }`} 
             onClick={(e) => {
                 e.preventDefault()
 

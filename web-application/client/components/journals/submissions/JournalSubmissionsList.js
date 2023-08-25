@@ -20,6 +20,7 @@ import {
 } from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
+import SubmissionControls from '/components/journals/widgets/SubmissionControls'
 import DraftPapersListItemView from '/components/papers/draft/list/DraftPapersListItemView'
 
 import SubmissionStatusWidget from '/components/journals/widgets/status/SubmissionStatusWidget'
@@ -127,21 +128,8 @@ const JournalSubmissionsList = function(props) {
             content.push(
                 <div className="journal-submission" key={submission.id}>
                     <DraftPapersListItemView paper={paperDictionary[submission.paperId]} />
-                    <div className="submission">
-                        <div className="grid-wrapper">
-                            <div className="date">
-                                <strong>Submitted:</strong> <DateTag timestamp={submission.createdDate} />
-                            </div>
-                            <div className="status">
-                                <SubmissionStatusWidget id={submission.id} />
-                            </div>
-                            <div className="editors">
-                                <AssignmentWidget type="editor" id={submission.id} /> 
-                            </div>
-                            <div className="reviewers">
-                                <AssignmentWidget type="reviewer" id={submission.id} /> 
-                            </div>
-                        </div>
+                    <div className="submission-controls-wrapper">
+                        <SubmissionControls submissionId={submission.id} />
                     </div>
                 </div>
             )

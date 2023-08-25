@@ -2,21 +2,27 @@ import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 
+import { ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
+
 import { getPaper, cleanupRequest } from '/state/papers'
 
 import DraftPaperView from '/components/papers/draft/view/DraftPaperView'
 import DraftPaperReviewsView from '/components/papers/draft/view/DraftPaperReviewsView'
 
 import DraftPaperHeader from '/components/papers/draft/view/header/DraftPaperHeader'
+import DraftPaperControlView from '/components/papers/draft/view/header/DraftPaperControlView'
+import SubmissionControls from '/components/journals/widgets/SubmissionControls'
+
 import ReviewList from '/components/reviews/list/ReviewList'
 
-import { ChatBubbleLeftRightIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
-
+import { TabbedBox, TabbedBoxTab, TabbedBoxContent } from '/components/generic/tabbed-box/TabbedBox'
 import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
 import PageTab from '/components/generic/pagetabbar/PageTab'
 import PageHeader from '/components/generic/PageHeader'
 import Spinner from '/components/Spinner'
 import Error404 from '/components/Error404'
+
+import './DraftPaperPage.css'
 
 const DraftPaperPage = function(props) {
 
@@ -44,6 +50,12 @@ const DraftPaperPage = function(props) {
         return state.papers.dictionary[id]
     })
     const mostRecentVersion = paper?.versions[0].version
+
+    const submissions = useSelector(function(state) {
+        const allSubmissions = Object.values(state.journalSubmissions.dictionary)
+        return allSubmissions.filter((s) => s.paperId == paper.id)
+    })
+
 
     // ======= Actions ====================================
 
@@ -112,11 +124,16 @@ const DraftPaperPage = function(props) {
             <Error404 />
         )
     } 
+
     
     return (
         <>
             <PageHeader>
-                <DraftPaperHeader id={id} tab={selectedTab} versionNumber={versionNumber} />
+                <div className="draft-paper-page-header">
+                    <div></div>
+                    <DraftPaperControlView id={id} tab={selectedTab} versionNumber={( versionNumber ? versionNumber : mostRecentVersion )} />
+                    <DraftPaperHeader id={id} tab={selectedTab} versionNumber={versionNumber} />
+                </div>
             </PageHeader>
             <PageTabBar>
                 <PageTab url={`/draft/${id}/version/${version}/reviews`} selected={selectedTab == 'reviews'}>

@@ -37,7 +37,9 @@ module.exports = class JournalDAO {
 
             if ( row.member_userId ) {
                 const member = {
+                    journalId: row.member_journalId,
                     userId: row.member_userId,
+                    order: row.member_order,
                     permissions: row.member_permissions
                 }
 
@@ -122,7 +124,8 @@ module.exports = class JournalDAO {
             SELECT 
                 ${ this.selectionString }
 
-                journal_members.user_id as "member_userId", journal_members.permissions as member_permissions
+                journal_members.journal_id as "member_journalId", journal_members.user_id as "member_userId", 
+                journal_members.member_order as member_order, journal_members.permissions as member_permissions
 
             FROM journals
                 LEFT OUTER JOIN journal_members ON journals.id = journal_members.journal_id
@@ -203,10 +206,10 @@ module.exports = class JournalDAO {
     async insertJournalMember(journalId, member) {
         console.log(member)
         const results = await this.database.query(`
-            INSERT INTO journal_members (journal_id, user_id, permissions, created_date, updated_date)
-                VALUES ($1, $2, $3, now(), now())
+            INSERT INTO journal_members (journal_id, user_id, member_order, permissions, created_date, updated_date)
+                VALUES ($1, $2, $3, $4, now(), now())
             `, 
-            [ journalId, member.userId, member.permissions ]
+            [ journalId, member.userId, member.order, member.permissions ]
         )
 
         if ( results.rowCount <= 0 ) {
@@ -216,9 +219,9 @@ module.exports = class JournalDAO {
 
     async updateJournalMember(journalId, member) {
         const results = await this.database.query(`
-            UPDATE journal_members SET permissions = $1, updated_date = now()
-                WHERE journal_id = $2 AND user_id = $3
-        `, [ member.permissions, journalId, member.userId ])
+            UPDATE journal_members SET permissions = $1, member_order = $2, updated_date = now()
+                WHERE journal_id = $3 AND user_id = $4
+        `, [ member.permissions, member.order, journalId, member.userId ])
 
         if ( results.rowCount <= 0 ) {
             throw new DAOError('failed-update', `Failed to update Member(${member.userId}) of Journal(${journal.id}).`)
@@ -231,7 +234,7 @@ module.exports = class JournalDAO {
 
     async deleteJournalMember(journalId, userId) {
         const results = await this.database.query(`
-            DELETE FROM journal_users WHERE journal_id = $1 AND user_id = $2
+            DELETE FROM journal_members WHERE journal_id = $1 AND user_id = $2
         `, [ journalId, userId ])
 
         if ( results.rowCount <= 0 ) {

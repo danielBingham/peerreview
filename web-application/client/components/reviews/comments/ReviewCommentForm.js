@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { deleteReviewComment, patchReviewComment, cleanupRequest } from '/state/reviews'
 
+import Button from '/components/generic/button/Button'
 import Spinner from '/components/Spinner'
 
 import './ReviewCommentForm.css'
@@ -67,8 +68,7 @@ const ReviewCommentForm = function(props) {
         setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
     }
 
-    const onSubmit = function(event) {
-        event.preventDefault()
+    const submitComment = function(event) {
         const comment = {
             id: props.comment.id,
             status: 'posted',
@@ -138,21 +138,19 @@ const ReviewCommentForm = function(props) {
 
     return (
         <section className="comment-form" >
-            <form onSubmit={onSubmit}>
-                <div className="content">
-                    <textarea 
-                        name="content" 
-                        onBlur={commit}
-                        onChange={(e) => setContent(e.target.value)} 
-                        value={content}
-                    >
-                    </textarea>
-                </div>
-            <div className="controls">
-                <button onClick={cancelComment}>Cancel</button>
-                <input type="submit" name="submit" value={ status == 'edit-in-progress' ? 'Edit' : 'Add Comment'} />
+            <div className="content">
+                <textarea 
+                    name="content" 
+                    onBlur={commit}
+                    onChange={(e) => setContent(e.target.value)} 
+                    value={content}
+                >
+                </textarea>
             </div>
-            </form>
+            <div className="controls">
+                <Button onClick={cancelComment}>Cancel</Button>
+                <Button type="primary" onClick={submitComment}>{ status == 'edit-in-progress' ? 'Edit' : 'Add Comment'}</Button>
+            </div>
         </section>
     
     )

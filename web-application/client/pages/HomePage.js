@@ -1,11 +1,20 @@
 import React, { useState, useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
 
+import { DocumentCheckIcon, DocumentIcon } from '@heroicons/react/24/outline'
+
 import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
+import DraftPapersListView from '/components/papers/draft/list/DraftPapersListView'
 import PaperSearchView from '/components/papers/search/PaperSearchView'
 import WelcomeNotice from '/components/about/notices/WelcomeNotice'
 import SupportNotice from '/components/about/notices/SupportNotice'
 import WIPNotice from '/components/about/notices/WIPNotice'
+
+import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
+import PageTab from '/components/generic/pagetabbar/PageTab'
+import PageHeader from '/components/generic/PageHeader'
+
+import Spinner from '/components/Spinner'
 
 import './HomePage.css'
 
@@ -47,11 +56,35 @@ const HomePage = function(props) {
         }
     }, [ fieldSettings ])
 
+
+    const selectedTab = ( props.tab ? props.tab : 'papers')
+
+    let content = ( <Spinner />)
+    if ( selectedTab == 'papers' ) {
+        content = (
+            <>
+                <PaperSearchView />
+                <PublishedPaperList query={query} />
+            </>
+        )
+    } else if ( selectedTab == 'preprints' ) {
+        content = ( <DraftPapersListView type="preprint" /> )
+    }
+
     return (
-        <div id="home-page" className="page">
-            <PaperSearchView />
-            <PublishedPaperList query={query} />
-        </div>
+        <>
+            <PageTabBar>
+                <PageTab url="/papers" selected={selectedTab == 'papers'}>
+                    <DocumentCheckIcon/>Papers 
+                </PageTab>
+                <PageTab url="/preprints" selected={selectedTab == 'preprints'}>
+                    <DocumentIcon/>Preprints 
+                </PageTab>
+            </PageTabBar>
+            <div id="home-page" className="page">
+                { content }
+            </div>
+        </>
     )
 }
 

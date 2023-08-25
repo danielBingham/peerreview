@@ -171,6 +171,15 @@ module.exports = class PaperController {
                 visibleIds = await this.paperPermissionsService.getDrafts(session.user.id)
             } else if (session.user && query.type == 'submissions' ) {
                 visibleIds = await this.paperPermissionsService.getVisibleDraftSubmissions(session.user.id)
+            } else if ( session.user && query.type == 'assigned-review' ) {
+                const assignedResults = await this.database.query(`
+                    SELECT journal_submissions.paper_id
+                        FROM journal_submissions
+                            LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submission_id
+                        WHERE journal_submission_reviewers.user_id = $1
+                `, [ session.user.id ])
+
+                visibleIds = assignedResults.rows.map((r) => r.paper_id)
             } else {
                 result.emptyResult = true
                 return result

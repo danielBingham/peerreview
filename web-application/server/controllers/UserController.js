@@ -254,7 +254,7 @@ module.exports = class UserController {
 
         if ( loggedInUser ) {
             const token = this.tokenDAO.createToken('invitation')
-            token.userId = createdUser
+            token.userId = createdUser.id
             token.id = await this.tokenDAO.insertToken(token)
 
             this.emailService.sendInvitation(loggedInUser, createdUser, token)

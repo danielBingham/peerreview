@@ -8,16 +8,24 @@
     cursor: pointer;
 }
 .button:hover {
-    filter: brightness(110%);
+    filter: opacity(80%);
+}
+.button.default {
+    background-color: var(--button-color);
+    border: thin solid var(--button-border-color);
+    color: black;
+}
+.button.default:hover{
+    filter: brightness(95%);
 }
 .button.primary {
-    background-color: var(--button-color);
-    border: thin solid var(--button-color);
+    background-color: var(--button-primary-color);
+    border: thin solid var(--button-primary-color);
     color: white;
 }
 .button.secondary {
-    border: thin solid var(--button-color);
-    color: var(--button-color) !important;
+    border: thin solid var(--button-primary-color);
+    color: var(--button-primary-color) !important;
 }
 .button.primary-highlight {
     background-color: var(--button-highlight-color);

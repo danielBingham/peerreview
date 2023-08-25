@@ -1,31 +1,36 @@
-.add-members-widget .selected-member {
-    padding: 10px 20px;
+.add-members-widget .selected-members .selected-member {
+    padding: 10px 100px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 3fr 1fr;
 }
-.add-members-widget .selected-member .left {
+.add-members-widget .selected-members .selected-member .member {
     grid-column: 1 / 2;
     text-align: left;
 }
-.add-members-widget .selected-member .left svg {
+.add-members-widget .selected-members .selected-member .member svg {
     width: 20px;
     height: 20px;
-    margin-right: 5px;
+    margin-left: 5px;
     margin-bottom: -4px;
 }
-.add-members-widget .selected-member .left .order {
+.add-members-widget .selected-members .selected-member .member .order {
     margin: 0 10px;
 }
-.add-members-widget .selected-member .right {
-    grid-column: 2 / 3;
-    text-align: right;
+.add-members-widget .selected-members .selected-member .role {
+    grid-column: 3 / 4;
 }
-.add-members-widget .selected-member .right svg {
+.add-members-widget .selected-members .selected-member .role svg {
     width: 20px;
     height: 20px;
     margin-left: 20px;
     margin-bottom: -4px;
     color: red;
+}
+.add-members-widget .selected-members .selected-member.header .member {
+    text-align: center;
+}
+.add-members-widget .selected-members .selected-member.header .role {
+    text-align: center;
 }
 
 
