@@ -204,7 +204,6 @@ module.exports = class JournalDAO {
     // ======= Journal Members ================================================
 
     async insertJournalMember(journalId, member) {
-        console.log(member)
         const results = await this.database.query(`
             INSERT INTO journal_members (journal_id, user_id, member_order, permissions, created_date, updated_date)
                 VALUES ($1, $2, $3, $4, now(), now())
