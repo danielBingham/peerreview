@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { getJournal, cleanupRequest } from '/state/journals'
+import { XMarkIcon } from '@heroicons/react/24/solid'
+
+import { getJournal, postJournalMembers, deleteJournalMember, cleanupRequest } from '/state/journals'
 
 import Spinner from '/components/Spinner'
 import { 
@@ -14,14 +16,21 @@ import {
     ListNoContent 
 } from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
+import Modal from '/components/generic/modal/Modal'
+import Button from '/components/generic/button/Button'
 
 import JournalMembersListItem from '/components/journals/members/JournalMembersListItem'
+import UserInput from '/components/users/input/UserInput'
+import UserTag from '/components/users/UserTag'
+import InviteJournalMemberModal from '/components/journals/widgets/members/InviteJournalMemberModal'
 
 import './JournalMembersList.css'
 
 const JournalMembersList = function({ id }) {
 
     // ================ Render State ================================
+    const [ showInviteModal, setShowInviteModal ] = useState(false)
+    const [ selectedUser, setSelectedUser ] = useState(null)
 
     // ================== Request Tracking ====================================
     
@@ -47,7 +56,6 @@ const JournalMembersList = function({ id }) {
     // =========== Actions and Event Handling =====================================
 
     const dispatch = useDispatch()
-
 
     // ================= Effect Handling =======================
    
@@ -83,12 +91,7 @@ const JournalMembersList = function({ id }) {
     return (
         <div className="journal-member-list">
             <div className="member-list-controls">
-                <div className="find-members">
-                    <label>Find Members</label><input type="text" />
-                </div>
-                <div className="invite-member">
-                        <button>Invite Member</button>
-                </div>
+                <InviteJournalMemberModal id={journal.id} />                 
             </div>
             <List>
                 <ListHeader>

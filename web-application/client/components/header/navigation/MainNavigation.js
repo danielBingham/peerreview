@@ -59,18 +59,18 @@ const MainNavigation = function(props) {
     return (
         <>
             <div id="about-navigation" className="navigation-block">
-                <Link to="/"><HomeIcon />home</Link>
-                <Link to="/about"><QuestionMarkCircleIcon />about</Link>
-                <a href="https://blog.peer-review.io"><NewspaperIcon />news</a>
+                <Link to="/"><HomeIcon />Home</Link>
+                <Link to="/about"><QuestionMarkCircleIcon />About</Link>
+                <a href="https://blog.peer-review.io"><NewspaperIcon />News</a>
             </div>
             <div ref={menuRef} id="main-navigation" className="navigation-block">
-                <span className="explore-menu-trigger"><a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<GlobeAltIcon />explore</a></span>
+                <span className="explore-menu-trigger"><a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<GlobeAltIcon />Explore</a></span>
                 <div id="explore-menu" className="floating-menu" style={{ display: ( menuVisible ? 'block' : 'none' ) }} >
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/"><DocumentCheckIcon />papers</Link></div>
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/review/preprints"><DocumentIcon/>preprints</Link></div>
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/journals"><BookOpenIcon />journals</Link></div>
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/fields"><TagIcon />taxonomy</Link></div>
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/users"><UserCircleIcon />users</Link></div>
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/"><DocumentCheckIcon />Papers</Link></div>
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/preprints"><DocumentIcon/>Preprints</Link></div>
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/journals"><BookOpenIcon />Journals</Link></div>
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/fields"><TagIcon />Taxonomy</Link></div>
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/users"><UserCircleIcon />Users</Link></div>
                 </div>
             </div>
         </>

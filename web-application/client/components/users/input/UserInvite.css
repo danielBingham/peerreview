@@ -1,15 +1,24 @@
 .user-invite {
+    border: thin solid var(--main-border-color);
     padding: 10px;
+    width: 700px;
+    margin: 20px auto;
 }
-.field-wrapper .user-invite input[type=text], .user-invite input[type=text] {
+.user-invite h3 {
+    text-align: center;
+}
+.field-wrapper .user-invite .user-inputs .form-inputs input[type=text], .user-invite .user-inputs .form-inputs input[type=text] {
     display: inline-block;
-    width: 300px;
+    width: 200px;
+    font-size: 16px;
     margin: 0 10px;
 }
-.field-wrapper .user-invite label, .user-invite label {
+.field-wrapper .user-inputs .form-inputs .user-invite label, .user-invite .user-inputs .form-inputs label {
+    all: initial; 
+
     display: inline-block;
-    width: 100px;
-    margin: 0 10px;
+    font-size: 14px;
+    font-weight: normal;
 }
 .user-invite .form-buttons {
     padding: 10px 20px;

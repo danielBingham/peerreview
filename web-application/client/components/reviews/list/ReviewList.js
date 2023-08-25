@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 
 import { newReview, getReviews, clearList, cleanupRequest } from '/state/reviews'
 
@@ -8,7 +8,10 @@ import { Document } from 'react-pdf/dist/esm/entry.webpack'
 
 import { InboxArrowDownIcon, QuestionMarkCircleIcon, CheckBadgeIcon } from '@heroicons/react/24/outline'
 
+
+import { TabbedBox, TabbedBoxTab, TabbedBoxContent } from '/components/generic/tabbed-box/TabbedBox'
 import { Timeline, TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/reviews/timeline/Timeline'
+
 import UserProfileImage from '/components/users/UserProfileImage'
 import UserTag from '/components/users/UserTag'
 import JournalTag from '/components/journals/JournalTag'
@@ -18,6 +21,7 @@ import Error404 from '/components/Error404'
 
 import ReviewView from '/components/reviews/view/ReviewView'
 import ReviewDecisionControls from '/components/reviews/widgets/ReviewDecisionControls'
+import SubmissionControls from '/components/journals/widgets/SubmissionControls'
 
 import './ReviewList.css'
 
@@ -69,6 +73,14 @@ const ReviewList = function({ paperId, versionNumber }) {
     const submissions = useSelector(function(state) {
         const allSubmissions = Object.values(state.journalSubmissions.dictionary)
         return allSubmissions.filter((s) => s.paperId == paper.id)
+    })
+
+    const journalDictionary = useSelector(function(state) {
+        const dictionary = {}
+        for(const submission of submissions) {
+            dictionary[submission.journalId] = state.journals.dictionary[submission.journalId]
+        }
+        return dictionary
     })
 
     const submittingAuthor = paper.authors.find((a) => a.submitter == true) 
@@ -201,19 +213,22 @@ const ReviewList = function({ paperId, versionNumber }) {
     const fileUrl = new URL(version.file.filepath, version.file.location)
 
     let decisionViews = []
+    let controlViews = []
     if ( paper.isDraft ) {
         if ( editorSubmissions ) {
             for(const submission of editorSubmissions ) {
                 if ( ! submission.deciderId ) {
-                    decisionViews.push(
-                        <TimelineItem key={submission.id}>
-                            <TimelineIcon>
-                                <QuestionMarkCircleIcon /> 
-                            </TimelineIcon>
-                            <TimelineItemWrapper>
+                    const membership = currentUser.memberships.find((m) => m.journalId == submission.journalId)
+                    const membershipAction = ( membership.permissions == 'editor' || membership.permissions == 'owner') ? 'Editting' : 'Reviewing' 
+
+                    controlViews.push(
+                        <TabbedBox key={submission.id} className="submission-controls-wrapper">
+                            <TabbedBoxTab>{ membershipAction } for <Link to={`/journal/${submission.journalId}`}>{ journalDictionary[submission.journalId].name }</Link></TabbedBoxTab>
+                            <TabbedBoxContent>
+                                <SubmissionControls submissionId={submission.id} />
                                 <ReviewDecisionControls submission={submission} />
-                            </TimelineItemWrapper>
-                        </TimelineItem>
+                            </TabbedBoxContent>
+                        </TabbedBox>
                     )
                 } else {
                     decisionViews.push(
@@ -277,6 +292,9 @@ const ReviewList = function({ paperId, versionNumber }) {
                 </Document>
                 { decisionViews }
             </Timeline>
+            <div className="journal-controls">
+                { controlViews }
+            </div>
         </div>
     )
 

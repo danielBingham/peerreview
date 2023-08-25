@@ -1,17 +1,46 @@
-.users-input .user-suggestions {
+.users-input {
+}
+
+.users-input.field-wrapper {
+    padding: 20px;
+}
+.users-input.field-wrapper .explanation {
+    padding: 5px 0;
+}
+.users-input.field-wrapper label {
+    display: block;
+    width: 100%;
+    font-size: 16px;
+    font-weight: bold;
+}
+.users-input.field-wrapper input[type=text] {
+    font-size: 14px;
+    width: 948px;
+    padding: 5px;
+    border: thin solid var(--input-border-color);
+}
+
+.users-input .input-wrapper {
     position: relative;
+}
+.users-input .input-wrapper .user-suggestions {
+    position: absolute;
+    top: 26px;
+    left: 0;
+    width: 938px;
     padding: 10px;
+    text-align: left;
+    background-color: white;
     border: thin solid var(--main-border-color);
     box-shadow: 2px 2px 2px #666;
+    z-index: 1002;
 }
-.users-input .users {
-    padding: 10px 0;
-}
-.users-input .user-suggestions .user-suggestion {
+.users-input .input-wrapper .user-suggestions .user-suggestion {
     padding: 10px;
 }
-.users-input .user-suggestions .user-suggestion:hover, .users-input .user-suggestions .user-suggestion.highlighted {
-    background-color: #dfdfdf;
+.users-input .input-wrapper .user-suggestions .user-suggestion.highlighted {
+    background-color: var(--primary-highlight-color);
+    color: white;
 }
 .users-input .error {
     padding: 10px;

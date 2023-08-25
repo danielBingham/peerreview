@@ -113,6 +113,7 @@ const CreateJournalForm = function(props) {
     useLayoutEffect(function() {
         const newMembers = [ {
             userId: currentUser.id,
+            order: 1,
             permissions: 'owner'
         }]
         setMembers(newMembers)

@@ -136,7 +136,7 @@ const DraftPaperControlView = function(props) {
      if ( ! viewOnly && isAuthor && isOwner ) {
          contents = (
              <div className="author-controls">
-                 <button onClick={uploadVersion}>Upload New Version</button>
+                 <Button onClick={uploadVersion}>Upload New Version</Button>
              </div>
         )
      }
@@ -154,7 +154,7 @@ const DraftPaperControlView = function(props) {
                 <select name="versionNumber" value={props.versionNumber} onChange={changeVersion}>
                     {paperVersionOptions}
                 </select>
-                { ! reviewInProgress && ! viewOnly && currentUser && <Button onClick={startReview}>Start Review</Button> }
+                { ! reviewInProgress && ! viewOnly && currentUser && <Button type="primary" onClick={startReview}>Start Review</Button> }
             </div>
             { contents }
         </div>

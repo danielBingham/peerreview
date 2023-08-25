@@ -49,7 +49,7 @@ import DraftPaperPage from '/pages/papers/DraftPaperPage'
 import UploadPaperVersionPage from '/pages/papers/UploadPaperVersionPage'
 import SubmitDraftForPublicationPage from '/pages/papers/SubmitDraftForPublicationPage'
 
-import ReviewPapersListPage from '/pages/papers/ReviewPapersListPage'
+import ReviewDashboardPage from '/pages/papers/ReviewDashboardPage'
 import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
 
 import PublishedPaperPage from '/pages/papers/PublishedPaperPage'
@@ -208,6 +208,8 @@ const App = function(props) {
                     { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
                     <Routes>
                         <Route path="/" element={ <HomePage /> } />
+                        <Route path="/papers" element={ <HomePage tab="papers" /> } />
+                        <Route path="/preprints" element={ <HomePage tab="preprints" /> } />
                         <Route path="/about" element={ <AboutPage />} />
                         <Route path="/tos" element={ <TermsOfServicePage /> } />
                         <Route path="/privacy" element={ <PrivacyPage /> } />
@@ -243,9 +245,10 @@ const App = function(props) {
 
                         { /* ========= Draft Papers  ============================ */ }
                         <Route path="/submit" element={ <SubmitPage /> }  />
-                        <Route path="/review" element={ <ReviewPapersListPage /> } />
-                        <Route path="/review/preprints" element={ <ReviewPapersListPage tab="preprints" /> } />
-                        <Route path="/review/submissions" element={ <ReviewPapersListPage tab="submissions" /> } />
+                        <Route path="/review" element={ <ReviewDashboardPage /> } />
+                        <Route path="/review/preprints" element={ <ReviewDashboardPage tab="preprints" /> } />
+                        <Route path="/review/submissions" element={ <ReviewDashboardPage tab="submissions" /> } />
+                        <Route path="/review/assigned" element={ <ReviewDashboardPage tab="assigned" /> } />
                         <Route path="/drafts/" element={ <DraftPapersListPage /> } />
                         <Route path="/draft/:id" element={ <DraftPaperPage tab="reviews" /> }  />
                         <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />

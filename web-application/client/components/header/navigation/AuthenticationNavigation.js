@@ -68,8 +68,8 @@ const AuthenticationNavigation = function(props) {
     } else {
         return (
             <div id="authentication-navigation" className="navigation-block not-authenticated">
-                <Button type="secondary" onClick={(e) => navigate('login')}>login</Button>
-                <Button type="primary" onClick={(e) => navigate('register')}>register</Button>
+                <Button type="secondary" onClick={(e) => navigate('login')}>Log In</Button>
+                <Button type="primary" onClick={(e) => navigate('register')}>Register</Button>
             </div>
         )
     }

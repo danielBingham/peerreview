@@ -1,0 +1,17 @@
+.tabbed-box { }
+.tabbed-box-content {
+    margin: 0;
+    padding: 10px;
+    background-color: white;
+    border: thin solid var(--tab-bar-border-color);
+}
+.tabbed-box-tab {
+    display: inline-block;
+    padding: 10px;
+    z-index: 1;
+    margin-bottom: -1px;
+    background-color: white;
+    border-left: thin solid var(--tab-bar-border-color);
+    border-top: thin solid var(--tab-bar-border-color);
+    border-right: thin solid var(--tab-bar-border-color);
+}

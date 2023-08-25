@@ -4,12 +4,13 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { getUsers, clearUserQuery, cleanupRequest } from '/state/users'
 
+import UserTag from '/components/users/UserTag'
 import UserInvite from '/components/users/input/UserInvite'
 import Spinner from '/components/Spinner'
 
 import './UserInput.css'
 
-const UserInput = function(props) {
+const UserInput = function({ onBlur, selectUser, label, explanation }) {
 
     // ======= Render State =========================================
 
@@ -113,12 +114,12 @@ const UserInput = function(props) {
      * @param {object} user A `user` object to append to the list of selected
      * users.
      */
-    const selectUser = function(user) {
+    const selectUserInternal = function(user) {
         setShowInviteForm(false)
         setUserName('')
         clearSuggestions()
 
-        const error = props.selectUser(user)
+        const error = selectUser(user)
         if ( error ) {
             setError(error)
             return
@@ -139,7 +140,7 @@ const UserInput = function(props) {
             const suggestionsWrappers = document.getElementsByClassName('user-suggestions')
             const suggestions = suggestionsWrappers[0].children
             if (suggestions.length > 0) {
-                selectUser(userSuggestions[highlightedSuggestion])
+                selectUserInternal(userSuggestions[highlightedSuggestion])
             }
         } else if ( event.key == "ArrowDown" ) {
             event.preventDefault()
@@ -170,8 +171,8 @@ const UserInput = function(props) {
     const onUserNameBlur = function(event) {
         clearSuggestions()
 
-        if ( props.onBlur ) {
-            props.onBlur(event) 
+        if ( onBlur ) {
+            onBlur(event) 
         }
     }
 
@@ -213,10 +214,11 @@ const UserInput = function(props) {
         for ( const [ index, user ] of userSuggestions.entries()) {
             suggestedUserList.push(
                 <div key={user.id} 
-                    onMouseDown={(event) => { selectUser(user) }} 
+                    onMouseDown={(event) => { selectUserInternal(user) }}
+                    onMouseOver={(event) => { setHighlightedSuggestion(index) }}
                     className={ index == highlightedSuggestion ? "user-suggestion highlighted" : "user-suggestion" }
                 >
-                    {user.name}
+                    <UserTag id={user.id} link={false}/>
                 </div>
             )
         }
@@ -224,10 +226,11 @@ const UserInput = function(props) {
         let index = suggestedUserList.length
         suggestedUserList.push(
             <div key="user-invite"
-                onClick={(event) => { 
+                onMouseDown={(event) => { 
                     setShowInviteForm(true) 
                     clearSuggestions()
                 }} 
+                onMouseOver={(event) => { setHighlightedSuggestion(index) }}
                 className={ index == highlightedSuggestion ? "user-suggestion highlighted" : "user-suggestion" }
             >
                 Invite User 
@@ -252,31 +255,36 @@ const UserInput = function(props) {
 
     let inviteForm = null
     if ( showInviteForm ) {
-        inviteForm = ( <UserInvite name={userName} hideInviteForm={hideInviteForm} selectUser={selectUser} /> )
+        inviteForm = ( <UserInvite initialName={userName} hideInviteForm={hideInviteForm} setInvitedUser={selectUserInternal} /> )
     }
 
     return (
-        <div className="users-input field-wrapper"> 
-            <label htmlFor="users">{ props.label }</label>
-            <div className="explanation">{ props.explanation }</div>
-            <input type="text" 
-                name="userName" 
-                value={userName}
-                ref={inputRef}
-                onKeyDown={handleKeyDown}
-                onBlur={onUserNameBlur}
-                onFocus={onUserNameFocus}
-                onChange={handleChange} 
-            />
-            { errorView }
-            <div className="user-suggestions" 
-                style={ ( suggestedUserList.length > 0 || suggestionsError ? { display: 'block' } : { display: 'none' } ) }
-            >
-                { suggestionsError }
-                { suggestedUserList }
+        <>
+            <div className="users-input field-wrapper"> 
+                { label && <label htmlFor="userName">{ label }</label> }
+                { explanation && <div className="explanation">{ explanation }</div> }
+                <div className="input-wrapper">
+                    <input type="text" 
+                        name="userName" 
+                        value={userName}
+                        ref={inputRef}
+                        onKeyDown={handleKeyDown}
+                        onBlur={onUserNameBlur}
+                        onFocus={onUserNameFocus}
+                        onChange={handleChange} 
+                        placeholder={`Search for users by name. Start typing to view suggestions...`}
+                    />
+                    <div className="user-suggestions" 
+                        style={ ( suggestedUserList.length > 0 || suggestionsError ? { display: 'block' } : { display: 'none' } ) }
+                    >
+                        { suggestionsError }
+                        { suggestedUserList }
+                    </div>
+                </div>
+                { errorView }
             </div>
             { inviteForm }
-        </div>
+        </>
     )
 
 }

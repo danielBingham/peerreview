@@ -12,31 +12,52 @@ import PageHeader from '/components/generic/PageHeader'
 
 import Spinner from '/components/Spinner'
 
-import './ReviewPapersListPage.css'
+import './ReviewDashboardPage.css'
 
-const ReviewPapersListPage = function(props) {
+const ReviewDashboardPage = function(props) {
 
+    // ================ Render State ================================
+    
+
+    // ================== Request Tracking ====================================
+    
+
+    // ================= Redux State ================================================
+    
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
-    const selectedTab = ( props.tab ? props.tab : 'submissions')
+    // =========== Actions and Event Handling =====================================
+    
+
+    // ================= Effect Handling =======================
+    
+
+    // ====================== Render ==========================================
+    
+    const selectedTab = ( props.tab ? props.tab : 'assigned')
 
     let content = ( <Spinner local={true} /> )
     if ( selectedTab == 'preprints' ) {
         content = ( <DraftPapersListView type="preprint" /> )
     } else if ( selectedTab == 'submissions' ) {
         content = ( <DraftPapersListView type="submissions" /> )
+    } else if ( selectedTab == 'assigned' ) {
+        content = ( <DraftPapersListView type="assigned-review" /> )
     }
 
     return (
         <>
             <PageHeader>
-                <h2>Review Draft Papers</h2>
+                <h2>Review Dashboard</h2>
             </PageHeader>
             <PageTabBar>
+                <PageTab url={`/review/assigned`} selected={selectedTab == 'assigned'}>
+                    <InboxIcon /> Assigned to Me 
+                </PageTab>
                 <PageTab url={`/review/submissions`} selected={selectedTab == 'submissions'}>
-                    <InboxIcon /> Submissions
+                    <InboxIcon /> Open Submissions
                 </PageTab>
                 <PageTab url={`/review/preprints`} selected={selectedTab == 'preprints'}>
                     <DocumentIcon/> Preprints 
@@ -49,4 +70,4 @@ const ReviewPapersListPage = function(props) {
     )
 }
 
-export default ReviewPapersListPage
+export default ReviewDashboardPage

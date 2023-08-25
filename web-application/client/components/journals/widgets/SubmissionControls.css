@@ -1,0 +1,29 @@
+.submission-controls {
+    padding: 10px;
+}
+.submission-controls .grid-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+}
+.submission-controls .date {
+    padding: 5px 0 10px 0;
+    grid-column: 1/2;
+}
+.submission-controls .status {
+    padding: 5px 0 10px 0;
+    grid-column: 2/3;
+    text-align: left;
+}
+.submission-controls .grid-wrapper .editors {
+    grid-column: 3/4;
+}
+.submission-controls .grid-wrapper .assigned-editors {
+    padding: 10px;
+}
+.submission-controls .grid-wrapper .reviewers {
+    grid-column: 4/5;
+    text-align: left;
+}
+.submission-controls .grid-wrapper .reviewers .assigned-reviewers {
+    padding: 10px;
+}

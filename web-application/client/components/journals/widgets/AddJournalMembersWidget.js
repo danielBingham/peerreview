@@ -34,7 +34,8 @@ const AddJournalMembersWidget = function(props) {
 
         const member = {
             userId: user.id,
-            permissions: 'reviewer'
+            permissions: 'reviewer',
+            order: props.members.length+1
         }
 
         newMembers.push(member)
@@ -65,13 +66,26 @@ const AddJournalMembersWidget = function(props) {
 
     const selectedMemberViews = []
 
-    for(const member of props.members) {
+    selectedMemberViews.push(
+        <div key="header" className="selected-member header">
+            <div className="member">
+                Member
+            </div>
+            <div className="role">
+                Role
+            </div>
+        </div>
+    )
+
+    const membersOrdered = [ ...props.members ]
+    membersOrdered.sort((a, b) => a.order - b.order)
+    for(const member of membersOrdered) {
         selectedMemberViews.push( 
             <div key={member.userId} className="selected-member">
-                <div className="left">
+                <div className="member">
                     <UserTag id={member.userId} /> 
                 </div>
-                <div className="right">
+                <div className="role">
                     <select 
                         onChange={(e) => assignPermissions(member, e.target.value) } 
                         value={ member.permissions } name="permissions"

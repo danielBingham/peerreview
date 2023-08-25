@@ -5,10 +5,11 @@ import { postUsers, cleanupRequest } from '/state/users'
 
 import UserTag from '/components/users/UserTag'
 import Spinner from '/components/Spinner'
+import Button from '/components/generic/button/Button'
 
 import './UserInvite.css'
 
-const UserInvite = function(props) {
+const UserInvite = function({ initialName, hideInviteForm, setInvitedUser }) {
     const [ name, setName ] = useState('')
     const [ email, setEmail ] = useState('')
 
@@ -48,12 +49,12 @@ const UserInvite = function(props) {
     }
 
     const cancel = function(event) {
-        props.hideInviteForm()
+        hideInviteForm()
     }
 
     useLayoutEffect(function() {
-        setName(props.name)
-    }, [ props.name ])
+        setName(initialName)
+    }, [ initialName ])
 
     useEffect(function() {
         if ( nameInputRef.current ) {
@@ -63,7 +64,7 @@ const UserInvite = function(props) {
 
     useEffect(function() {
         if ( request && request.state == 'fulfilled' ) {
-            props.append(request.result)
+            setInvitedUser(request.result.entity)
         }
     }, [ request ])
 
@@ -99,25 +100,23 @@ const UserInvite = function(props) {
 
         content = (
             <>
-            <h3>Invite New User</h3> 
-            <p>To invite a new user, please enter their name and email. We'll send them an email letting them know they've been invited and allowing them to claim the account.</p>
-            <div className="user-inputs">
-                <div className="form-inputs">
-                    <label htmlFor="name">Name: </label>
-                    <input type="text" ref={nameInputRef} onChange={(e) => setName(e.target.value)} value={name} name="name" />
-                    <label htmlFor="email">Email: </label>
-                    <input type="text" onChange={(e) => setEmail(e.target.value)} value={email}  name="email" />
+                <h3>Invite New User</h3> 
+                <p>To invite a new user, please enter their name and email. We'll send them an email letting them know they've been invited and allowing them to claim the account.</p>
+                <div className="user-inputs">
+                    <div className="form-inputs">
+                        <label htmlFor="name">Name</label>
+                        <input type="text" ref={nameInputRef} onChange={(e) => setName(e.target.value)} value={name} name="name" />
+                        <label htmlFor="email">Email</label>
+                        <input type="text" onChange={(e) => setEmail(e.target.value)} value={email}  name="email" />
+                        <Button onClick={cancel}>Cancel</Button><Button onClick={invite}>Invite</Button>
+                    </div>
                 </div>
-                <div className="form-buttons">
-                    <button onClick={invite} name="invite">Invite</button><button onClick={cancel} name="cancel">Cancel</button>
+                <div className="errors">
+                    { submissionError && ! name && <div className="error">Name is required.</div> }
+                    { submissionError && ! email && <div className="error">Email is required.</div> }
+                    { requestError }
                 </div>
-            </div>
-            <div className="errors">
-                { submissionError && ! name && <div className="error">Name is required.</div> }
-                { submissionError && ! email && <div className="error">Email is required.</div> }
-                { requestError }
-            </div>
-            { successMessage }
+                { successMessage }
             </>
         )    
     }

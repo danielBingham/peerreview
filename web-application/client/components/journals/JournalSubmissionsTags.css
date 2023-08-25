@@ -7,11 +7,12 @@
     display: inline-block;
     margin-right: 5px;
     border-radius: 26px;
-    font-size: 12px;
-    height: 12px;
+    font-size: 14px;
+    height: 14px;
     padding: 5px 10px;
     background-color: white;
     color: black;
+    border: thin solid var(--main-border-color);
     box-shadow: 1px 1px 1px #999;
 }
 
@@ -19,10 +20,11 @@
     display: inline-block;
     margin-right: 5px;
     border-radius: 26px;
-    font-size: 12px;
-    height: 12px;
+    font-size: 14px;
+    height: 14px;
     padding: 5px 10px;
     background-color: white;
     color: black;
+    border: thin solid var(--main-border-color);
     box-shadow: 1px 1px 1px #999;
 }

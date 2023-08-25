@@ -165,8 +165,11 @@ const AuthorsInput = function(props) {
             event.preventDefault()
             const suggestionsWrappers = document.getElementsByClassName('author-suggestions')
             const suggestions = suggestionsWrappers[0].children
-            if (suggestions.length > 0) {
+            if (highlightedSuggestion < userSuggestions.length) {
                 appendAuthor(userSuggestions[highlightedSuggestion])
+            } else {
+                setShowInviteForm(true) 
+                clearSuggestions()
             }
         } else if ( event.key == "ArrowDown" ) {
             event.preventDefault()
@@ -251,7 +254,7 @@ const AuthorsInput = function(props) {
         let index = suggestedAuthorList.length
         suggestedAuthorList.push(
             <div key="user-invite"
-                onClick={(event) => { 
+                onMouseDown={(event) => { 
                     setShowInviteForm(true) 
                     clearSuggestions()
                 }} 

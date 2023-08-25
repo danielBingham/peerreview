@@ -53,10 +53,10 @@ const UserNavigation = function(props) {
     return (
         <div id="user-navigation" className="navigation-block">
             <div ref={menuRef} id="creation-navigation">
-                <span className="creation-menu-trigger"><a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<PlusIcon />new</a></span>
+                <span className="creation-menu-trigger"><a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<PlusIcon />New</a></span>
                 <div id="creation-menu" className="floating-menu" style={{ display: ( menuVisible ? 'block' : 'none' ) }} >
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/submit"><DocumentArrowUpIcon />new submission</Link></div>
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/create"><BookOpenIcon />new journal</Link></div>
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/submit"><DocumentArrowUpIcon />New Submission</Link></div>
+                    <div className="menu-item" onClick={toggleMenu}><Link to="/create"><BookOpenIcon />New Journal</Link></div>
                 </div>
             </div>
             <div id="user-action-navigation">
