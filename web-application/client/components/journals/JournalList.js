@@ -82,6 +82,10 @@ const JournalList = function(props) {
     const queryForJournals = function(params) {
         params.relations = [ 'submissions' ]
 
+        if ( props.userId ) {
+            params.userId = props.userId
+        }
+
         setRequestId(dispatch(getJournals('JournalList', params)))
     }
 

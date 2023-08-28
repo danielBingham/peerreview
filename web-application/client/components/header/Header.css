@@ -1,7 +1,7 @@
 header {
     display: flex;
     margin: 0;
-    padding: 15px 50px;
+    padding: 5px 50px;
     border-bottom: thin solid var(--header-border-color);
     background-color: var(--header-background-color);
     color: var(--header-text-color);
@@ -39,6 +39,7 @@ header #navigation {
 header .navigation-block {
     display: inline-block;
     margin-left: 10px;
+    padding: 11px 0;
 }
 
 header a:link, header a:active, header a:visited {

@@ -44,7 +44,12 @@
     color: black;
 }
 .draft-paper-list-item .title a:hover {
-    color: #666;
+    color: #888;
+}
+.draft-paper-list-item .title svg {
+    width: 1em;
+    height: 1em;
+    margin-bottom: -0.2em;
 }
 .draft-paper-list-item .authors {
     font-size: 14px;

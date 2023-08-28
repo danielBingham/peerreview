@@ -28,13 +28,10 @@
     grid-column: 2 / 3;
     text-align: right;
 }
-.list .list-header .controls a.list-control {
+.list .list-header .controls .list-control {
     display: inline-block;
     padding: 5px;
     margin: 0 10px;
-}
-.list .list-header .controls a.list-control.selected {
-    text-decoration: underline;
 }
 
 .list .list-row-content {}

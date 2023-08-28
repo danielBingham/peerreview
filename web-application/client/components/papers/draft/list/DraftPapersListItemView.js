@@ -1,8 +1,8 @@
-
 import React from 'react'
+import { useSelector } from 'react-redux'
 import { Link } from 'react-router-dom'
 
-import { useSelector } from 'react-redux'
+import { ArrowLeftOnRectangleIcon } from '@heroicons/react/24/solid'
 
 import JournalSubmissionsTags from '/components/journals/JournalSubmissionsTags'
 import UserTag from '/components/users/UserTag'
@@ -62,7 +62,7 @@ const DraftPapersListItemView = function(props) {
                 <span className="label">{ props.paper.versions.length == 1 ? 'version' : 'versions' }</span></div>
             <div className="wrapper">
                 <JournalSubmissionsTags id={props.paper.id} />
-                <div className="title"> <Link to={paperPath}>{props.paper.title}</Link></div>
+                <div className="title"> <Link to={paperPath}>{props.paper.title}<ArrowLeftOnRectangleIcon /></Link></div>
                 <div className="authors">by {authors}</div>
                 <div className="fields"> {fields}</div>
             </div>

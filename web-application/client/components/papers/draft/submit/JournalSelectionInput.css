@@ -1,25 +1,47 @@
-.journals-input .journal-suggestions {
-    position: relative;
-    padding: 10px;
-    border: thin solid var(--main-border-color);
-    box-shadow: 2px 2px 2px #666;
+.journals-input { }
+.journals-input.field-wrapper {
+    padding: 20px;
 }
-.journals-input .journals {
-    padding: 10px 0;
+.journals-input.field-wrapper .explanation {
+    padding: 5px 0;
 }
-.journals-input h3 {
+.journals-input.field-wrapper label {
     display: block;
-    width: 100%;
-    padding: 0;
-    margin: 0;
     font-size: 16px;
     font-weight: bold;
 }
-.journals-input .journal-suggestions .journal-suggestion {
+.journals-input.field-wrapper input[type=text] {
+    font-size: 14px;
+    width: 948px;
+    padding: 5px;
+    border: thin solid var(--input-border-color);
+}
+
+.journals-input .selected-journal {
     padding: 10px;
 }
-.journals-input .journal-suggestions .journal-suggestion:hover, .journals-input .journal-suggestions .journal-suggestion.highlighted {
-    background-color: #dfdfdf;
+
+.journals-input .input-wrapper {
+    position: relative;
+}
+.journals-input .input-wrapper .journal-suggestions {
+    position: absolute;
+    top: 26px;
+    left: 0;
+    width: 938px;
+    padding: 10px;
+    text-align: left;
+    background-color: white;
+    border: thin solid var(--main-border-color);
+    box-shadow: 2px 2px 2px #666;
+    z-index: 1002;
+}
+.journals-input .input-wrapper .journal-suggestions .journal-suggestion {
+    padding: 10px;
+}
+.journals-input .input-wrapper .journal-suggestions .journal-suggestion.highlighted {
+    background-color: var(--primary-highlight-color);
+    color: white;
 }
 .journals-input .error {
     padding: 10px;

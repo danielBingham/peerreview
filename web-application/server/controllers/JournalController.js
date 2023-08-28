@@ -103,16 +103,35 @@ module.exports = class JournalController {
             requestedRelations:  ( query.relations ? query.relations : [] )
         }
 
-        let count = 0
+        let count = 1
 
 
         if ( query.name && query.name.length > 0) {
-            count += 1
             const and = count > 1 ? ' AND ' : ''
+
             result.where += `${and} SIMILARITY(journals.name, $${count}) > 0`
-            result.params.push(query.name)
             result.order = `SIMILARITY(journals.name, $${count}) desc`
+
+            result.params.push(query.name)
+            count += 1
         }
+
+        if ( query.userId ) {
+            const memberResults = await this.core.database.query(
+                `SELECT journal_id FROM journal_members WHERE user_id = $1 AND (permissions = 'editor' OR permissions = 'owner')`, 
+                [ query.userId ]
+            )
+
+            const journalIds = memberResults.rows.map((r) => r.journal_id) 
+            
+
+            const and = count > 1 ? ' AND ' : ''
+            result.where += `${and} journals.id = ANY($${count}::bigint[])`
+
+            result.params.push(journalIds)
+            count += 1
+        }
+
 
         if ( query.page && ! options.ignorePage ) {
             result.page = query.page

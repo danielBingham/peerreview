@@ -5,6 +5,9 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import {  patchPaper, cleanupRequest as cleanupPaperRequest } from '/state/papers'
 import {  newReview, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
+import JournalSubmissionButton from '/components/papers/controls/JournalSubmissionButton'
+import PreprintSubmissionButton from '/components/papers/controls/PreprintSubmissionButton'
+import UploadNewVersionButton from '/components/papers/controls/UploadNewVersionButton'
 import Button from '/components/generic/button/Button'
 
 import './DraftPaperControlView.css'
@@ -69,17 +72,6 @@ const DraftPaperControlView = function(props) {
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
-    const publishPaper = function(event) {
-        event.preventDefault()
-        const uri = `/draft/${paper.id}/publish`
-        navigate(uri)
-    }
-
-    const uploadVersion = function(event) {
-        const uri = `/draft/${paper.id}/versions/upload`
-        navigate(uri)
-    }
-
     const changeVersion = function(event) {
         const versionNumber = event.target.value
         let urlString = ''
@@ -136,7 +128,9 @@ const DraftPaperControlView = function(props) {
      if ( ! viewOnly && isAuthor && isOwner ) {
          contents = (
              <div className="author-controls">
-                 <Button onClick={uploadVersion}>Upload New Version</Button>
+                 <UploadNewVersionButton id={props.id} />
+                 <PreprintSubmissionButton id={props.id} /> 
+                 <JournalSubmissionButton id={props.id} /> 
              </div>
         )
      }
@@ -154,7 +148,7 @@ const DraftPaperControlView = function(props) {
                 <select name="versionNumber" value={props.versionNumber} onChange={changeVersion}>
                     {paperVersionOptions}
                 </select>
-                { ! reviewInProgress && ! viewOnly && currentUser && <Button type="primary" onClick={startReview}>Start Review</Button> }
+                { ! reviewInProgress && ! viewOnly && currentUser && <Button type={ isAuthor ? "default" : "primary" } onClick={startReview}>Start Review</Button> } 
             </div>
             { contents }
         </div>

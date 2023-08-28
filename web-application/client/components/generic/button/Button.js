@@ -2,7 +2,7 @@ import React from 'react'
 
 import './Button.css'
 
-const Button = function({ type, className, onClick, children }) {
+const Button = function({ type, disabled, className, onClick, children }) {
 
     return (
         <button
@@ -13,6 +13,7 @@ const Button = function({ type, className, onClick, children }) {
 
                 onClick(e)
             }}
+            disabled={disabled}
         >
             { children }
         </button>

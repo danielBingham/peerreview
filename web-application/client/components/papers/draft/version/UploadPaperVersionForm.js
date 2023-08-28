@@ -99,8 +99,12 @@ const UploadPaperVersionForm = function(props) {
      */
     useEffect(function() {
         if ( request && request.state == 'fulfilled') {
-            const draftUri = `/draft/${props.paper.id}/`
-            navigate(draftUri)
+            if ( props.close ) {
+                props.close()
+            } else {
+                const draftUri = `/draft/${props.paper.id}/`
+                navigate(draftUri)
+            }
         } else if ( request && request.state == 'failed' ) {
             setError(<div className="request-error">{ request.error }</div>)
         }

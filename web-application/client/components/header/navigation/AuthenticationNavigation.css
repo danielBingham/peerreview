@@ -16,6 +16,9 @@
     text-align: left;
     white-space: nowrap;
 }
+#authentication-navigation.not-authenticated {
+    padding: 0;
+}
 #authentication-navigation.not-authenticated a:link, 
 #authentication-navigation.not-authenticated a:active, 
 #authentication-navigation.not-authenticated a:visited,

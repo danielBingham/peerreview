@@ -1,25 +1,9 @@
-#about-navigation {}
-#about-navigation svg {
+#creation-navigation {
     display: inline-block;
-    width: 18px;
-    height: 18px;
-    margin-right: 6px;
-    margin-bottom: -4px;
-}
-.navigation-block a:link, 
-.navigation-block a:active, 
-.navigation-block a:visited,
-.navigation-block a:hover {
-    padding: 5px;
-    margin: 0 5px;
-}
-
-
-#main-navigation {
     position: relative;
     cursor: pointer;
 }
-#main-navigation svg {
+#creation-navigation svg {
     display: inline-block;
     width: 18px;
     height: 18px;
@@ -27,7 +11,7 @@
     margin-bottom: -4px;
 }
 
-#explore-menu {
+#creation-menu {
     position: absolute;
     top: 44px;
     left: 0;
@@ -39,15 +23,15 @@
     padding: 10px 0 10px 0;
     z-index: 1000;
 }
-#explore-menu .menu-section {
+#creation-menu .menu-section {
     padding: 5px 0;
     border-bottom: thin solid var(--user-menu-spacer-color);
 }
-#explore-menu .menu-section.bottom {
+#creation-menu .menu-section.bottom {
     border-bottom: none;
 }
-#explore-menu .menu-item {
+#creation-menu .menu-item {
     white-space: nowrap;
     padding: 5px 10px 5px 10px;
 }
-#explore-menu .menu-item:hover { }
+#creation-menu .menu-item:hover { }

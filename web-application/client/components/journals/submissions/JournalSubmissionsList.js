@@ -9,6 +9,7 @@ import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/rev
 import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 
+import { FloatingMenu, FloatingMenuTrigger, FloatingMenuBody, FloatingMenuItem } from '/components/generic/floating-menu/FloatingMenu'
 import { 
     List, 
     ListHeader, 
@@ -149,6 +150,48 @@ const JournalSubmissionsList = function(props) {
         <List>
             <ListHeader>
                 <ListTitle>Draft Submissions</ListTitle>
+                <ListControls>
+                    <ListControl>
+                        <FloatingMenu>
+                            <FloatingMenuTrigger>Status</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
+                    <ListControl>
+                        <FloatingMenu>
+                            <FloatingMenuTrigger>Assigned Editors</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
+                    <ListControl>
+                        <FloatingMenu>
+                            <FloatingMenuTrigger>Assigned Reviewers</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
+                    <ListControl>
+                        <FloatingMenu>
+                            <FloatingMenuTrigger>Authors</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
+                    <ListControl>
+                        <FloatingMenu>
+                            <FloatingMenuTrigger>Taxonomy</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
+                </ListControls>
             </ListHeader>
             <ListNoContent>
                 {noContent}

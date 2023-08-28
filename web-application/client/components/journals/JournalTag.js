@@ -2,11 +2,13 @@ import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Link } from 'react-router-dom'
 
+import { XCircleIcon } from '@heroicons/react/24/solid'
+
 import { getJournal, cleanupRequest } from '/state/journals'
 
 import './JournalTag.css'
 
-const JournalTag = function(props) {
+const JournalTag = function({ submission, id, onRemove }) {
 
     // ======= Request Tracking =====================================
 
@@ -22,7 +24,13 @@ const JournalTag = function(props) {
     // ======= Redux State ==========================================
 
     const journal = useSelector(function(state) {
-        return state.journals.dictionary[props.submission.journalId]
+        if ( submission ) {
+            return state.journals.dictionary[submission.journalId]
+        } else if ( id ) {
+            return state.journals.dictionary[id]
+        } else {
+            return null
+        }
     })
 
     // ======= Effect Handling ======================================
@@ -30,9 +38,12 @@ const JournalTag = function(props) {
     const dispatch = useDispatch()
 
     useEffect(function() {
-        if ( ! journal ) {
-            dispatch(getJournal(props.submission.journalId))
+        if ( ! journal && submission ) {
+            dispatch(getJournal(submission.journalId))
+        } else if ( ! journal && id ) {
+            dispatch(getJournal(id))
         }
+
     }, [])
 
 
@@ -50,24 +61,26 @@ const JournalTag = function(props) {
 
     if ( journal ) {
         let statusView = ''
-        if ( props.submission.status == 'submitted') {
-            statusView = "Submitted to "
-        } else if ( props.submission.status == 'review') {
-            statusView = "Under Review at "
-        } else if ( props.submission.status == 'proofing') {
-            statusView = "In Proofing at "
-        } 
-     
-        if ( props.paper.isDraft ) {
+        if ( submission ) {
+            if ( submission.status == 'submitted') {
+                statusView = "Submitted to "
+            } else if ( submission.status == 'review') {
+                statusView = "Under Review at "
+            } else if ( submission.status == 'proofing') {
+                statusView = "In Proofing at "
+            } 
+        }
+         
+        if ( submission && submission.status !== 'published' ) {
             content = ( 
                 <div>
-                    <Link to={`/journal/${props.submission.journalId}/submissions`}> { statusView } {journal.name}</Link>
+                    <Link to={`/journal/${submission.journalId}/submissions`}> { statusView } {journal.name}</Link>
                 </div> 
             )  
         } else {
             content = (
                 <div>
-                    <Link to={`/journal/${props.submission.journalId}`}>{journal.name}</Link>
+                    <Link to={`/journal/${journal.id}`}>{journal.name}</Link> { onRemove && <XCircleIcon onClick={onRemove} /> } 
                 </div> 
             )
         }

@@ -6,6 +6,8 @@ import { getJournals, clearJournalQuery, cleanupRequest } from '/state/journals'
 
 import Spinner from '/components/Spinner'
 
+import JournalTag from '/components/journals/JournalTag'
+
 import './JournalSelectionInput.css'
 
 const JournalSelectionInput = function(props) {
@@ -13,6 +15,7 @@ const JournalSelectionInput = function(props) {
     // ======= Render State =========================================
 
     const [journalName, setJournalName] = useState('')
+    const [ journal, setJournal ] = useState(null)
 
     const [highlightedSuggestion, setHighlightedSuggestion] = useState(0)
     const [error, setError] = useState(null)
@@ -110,11 +113,20 @@ const JournalSelectionInput = function(props) {
      *
      * @param {object} journal A `journal` object to set in the parent.
      */
-    const setJournal = function(journal) {
+    const selectJournal = function(journal) {
         setJournalName('')
         clearSuggestions()
 
+        setJournal(journal)
         props.setJournal(journal)
+    }
+
+    const removeJournal = function() {
+        setJournalName('')
+        clearSuggestions()
+
+        setJournal(null)
+        props.setJournal(null)
     }
 
     /**
@@ -131,7 +143,7 @@ const JournalSelectionInput = function(props) {
             const suggestionsWrappers = document.getElementsByClassName('journal-suggestions')
             const suggestions = suggestionsWrappers[0].children
             if (suggestions.length > 0) {
-                setJournal(journalSuggestions[highlightedSuggestion])
+                selectJournal(journalSuggestions[highlightedSuggestion])
             }
         } else if ( event.key == "ArrowDown" ) {
             event.preventDefault()
@@ -197,7 +209,7 @@ const JournalSelectionInput = function(props) {
         for ( const [ index, journal] of journalSuggestions.entries()) {
             suggestedJournalList.push(
                 <div key={journal.id} 
-                    onMouseDown={(event) => { setJournal(journal) }} 
+                    onMouseDown={(event) => { selectJournal(journal) }} 
                     className={ index == highlightedSuggestion ? "journal-suggestion highlighted" : "journal-suggestion" }
                 >
                     {journal.name}
@@ -222,24 +234,31 @@ const JournalSelectionInput = function(props) {
 
     return (
         <div className="journals-input field-wrapper"> 
-            <h3>Select a Journal</h3>
-            <div className="explanation">Select a journal you wish to submit this paper to.  You may leave this blank and choose to submit your paper at a later date after collecting co-author feedback and/or preprint feedback.</div>
-            <input type="text" 
-                name="journalName" 
-                value={journalName}
-                ref={inputRef}
-                onKeyDown={handleKeyDown}
-                onBlur={onJournalNameBlur}
-                onFocus={onJournalNameFocus}
-                onChange={handleChange} 
-            />
-            { errorView }
-            <div className="journal-suggestions" 
-                style={ ( suggestedJournalList.length > 0 || suggestionsError ? { display: 'block' } : { display: 'none' } ) }
-            >
-                { suggestionsError }
-                { suggestedJournalList }
-            </div>
+            { props.label &&  <h3>{ props.label }</h3> }
+            { props.explanation && <div className="explanation">{ props.explanation }</div> }
+            { journal && 
+                <div className="selected-journal">
+                    <strong>Submitting to:</strong> <JournalTag id={journal.id} onRemove={(e) => { removeJournal() }} />
+                </div>
+            }
+            { ! journal && <div className="input-wrapper">
+                <input type="text" 
+                    name="journalName" 
+                    value={journalName}
+                    ref={inputRef}
+                    onKeyDown={handleKeyDown}
+                    onBlur={onJournalNameBlur}
+                    onFocus={onJournalNameFocus}
+                    onChange={handleChange} 
+                />
+                { errorView }
+                <div className="journal-suggestions" 
+                    style={ ( suggestedJournalList.length > 0 || suggestionsError ? { display: 'block' } : { display: 'none' } ) }
+                >
+                    { suggestionsError }
+                    { suggestedJournalList }
+                </div> 
+            </div> }
         </div>
     )
 

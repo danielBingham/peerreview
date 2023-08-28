@@ -46,11 +46,11 @@ import FieldPage from '/pages/fields/FieldPage'
 
 import SubmitPage from '/pages/papers/SubmitPage'
 import DraftPaperPage from '/pages/papers/DraftPaperPage'
-import UploadPaperVersionPage from '/pages/papers/UploadPaperVersionPage'
 import SubmitDraftForPublicationPage from '/pages/papers/SubmitDraftForPublicationPage'
 
-import ReviewDashboardPage from '/pages/papers/ReviewDashboardPage'
-import DraftPapersListPage from '/pages/papers/DraftPapersListPage'
+import ReviewDashboardPage from '/pages/dashboards/ReviewDashboardPage'
+import AuthorDashboardPage from '/pages/dashboards/AuthorDashboardPage'
+import EditorDashboardPage from '/pages/dashboards/EditorDashboardPage'
 
 import PublishedPaperPage from '/pages/papers/PublishedPaperPage'
 import PaperSearchPage from '/pages/papers/PaperSearchPage'
@@ -242,16 +242,18 @@ const App = function(props) {
                         <Route path="/field/:id/papers" element={ <FieldPage tab="papers" /> } />
                         <Route path="/field/:id/parents" element={ <FieldPage tab="parents" /> } />
                         <Route path="/field/:id/children" element={ <FieldPage tab="children" /> } />
+                        
+                        { /* ========= Dashboards ============================ */ }
+                        <Route path="/review">
+                            <Route path=":tab" element={ <ReviewDashboardPage /> } />
+                            <Route index element={ <ReviewDashboardPage /> } />
+                        </Route>
+                        <Route path="/edit" element={ <EditorDashboardPage />} />
+                        <Route path="/author" element={ <AuthorDashboardPage /> } />
 
                         { /* ========= Draft Papers  ============================ */ }
                         <Route path="/submit" element={ <SubmitPage /> }  />
-                        <Route path="/review" element={ <ReviewDashboardPage /> } />
-                        <Route path="/review/preprints" element={ <ReviewDashboardPage tab="preprints" /> } />
-                        <Route path="/review/submissions" element={ <ReviewDashboardPage tab="submissions" /> } />
-                        <Route path="/review/assigned" element={ <ReviewDashboardPage tab="assigned" /> } />
-                        <Route path="/drafts/" element={ <DraftPapersListPage /> } />
                         <Route path="/draft/:id" element={ <DraftPaperPage tab="reviews" /> }  />
-                        <Route path="/draft/:id/versions/upload" element={ <UploadPaperVersionPage /> } />
                         <Route path="/draft/:id/publish" element={ <SubmitDraftForPublicationPage /> } />
                         <Route path="/draft/:id/reviews" element={ <DraftPaperPage tab="reviews" /> } />
                         <Route path="/draft/:id/drafts" element={ <DraftPaperPage tab="drafts" /> } />

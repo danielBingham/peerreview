@@ -1,6 +1,6 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
-import { Link } from 'react-router-dom'
+import { Link, useParams } from 'react-router-dom'
 
 import { InboxIcon, DocumentIcon} from '@heroicons/react/24/outline'
 
@@ -15,6 +15,8 @@ import Spinner from '/components/Spinner'
 import './ReviewDashboardPage.css'
 
 const ReviewDashboardPage = function(props) {
+
+    const { tab } = useParams()
 
     // ================ Render State ================================
     
@@ -36,7 +38,7 @@ const ReviewDashboardPage = function(props) {
 
     // ====================== Render ==========================================
     
-    const selectedTab = ( props.tab ? props.tab : 'assigned')
+    const selectedTab = ( tab ? tab : 'assigned')
 
     let content = ( <Spinner local={true} /> )
     if ( selectedTab == 'preprints' ) {
@@ -45,7 +47,10 @@ const ReviewDashboardPage = function(props) {
         content = ( <DraftPapersListView type="submissions" /> )
     } else if ( selectedTab == 'assigned' ) {
         content = ( <DraftPapersListView type="assigned-review" /> )
+    } else {
+        content = ( <DraftPapersListView type="assigned-review" /> )
     }
+
 
     return (
         <>

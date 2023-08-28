@@ -77,7 +77,6 @@ const UserMenu = function(props) {
     return (
         <div id="user-menu" className="floating-menu" style={{ display: ( props.visible ? 'block' : 'none' ) }} >
             <div className="menu-section">
-                <div className="menu-item" onClick={props.toggleMenu}><Link to="/drafts"><DocumentIcon/>My Drafts</Link></div>
                 <div className="menu-item" onClick={props.toggleMenu}><Link to={`/user/${currentUser.id}`}><UserCircleIcon />My Profile</Link></div>
             </div>
             <div className="menu-section">

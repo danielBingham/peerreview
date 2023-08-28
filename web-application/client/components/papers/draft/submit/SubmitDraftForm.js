@@ -300,13 +300,12 @@ const SubmitDraftForm = function(props) {
                 </div>
 
                 <JournalSelectionInput 
+                    label={'Select a Journal'}
+                    explanation={'Select a journal to submit this paper to.  You may leave this selection blank and submit this paper to a journal after collecting co-author and/or preprint feedback.'}
                     onBlur={ (event) => isValid('journal') }
                     journal={journal}
                     setJournal={setJournal}
                 />
-                <div className="selected-journal field-wrapper">
-                    <strong>Selected journal: </strong> {journal ? journal.name : "none selected at this time"}
-                </div>
 
                 { requestError }
                 <div className="submit field-wrapper">

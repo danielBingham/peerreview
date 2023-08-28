@@ -10,6 +10,8 @@ import { getPapers, clearPaperQuery, cleanupRequest } from '/state/papers'
 import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
 
 import Spinner from '/components/Spinner'
+import { FloatingMenu, FloatingMenuTrigger, FloatingMenuBody, FloatingMenuItem } from '/components/generic/floating-menu/FloatingMenu'
+
 import { 
     List, 
     ListHeader, 
@@ -189,14 +191,43 @@ const PublishedPaperList = function(props) {
             <ListHeader>
                 <ListTitle><DocumentCheckIcon/>Papers</ListTitle>
                 <ListControls>
-                    <ListControl url={`?${newestParams.toString()}`}
-                        onClick={() => setSort('newest')} 
-                        selected={sort == 'newest'} 
-                        name="Newest" />
-                    <ListControl url={`?${activeParams.toString()}`} 
-                        onClick={() => setSort('active')} 
-                        selected={sort == 'active'} 
-                        name="Active" />
+                    <ListControl>
+                        <FloatingMenu>
+                            <FloatingMenuTrigger>Journals</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
+                    <ListControl>
+                        <FloatingMenu>
+                            <FloatingMenuTrigger>Authors</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
+                    <ListControl>
+                        <FloatingMenu>
+                            <FloatingMenuTrigger>Taxonomy</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
+                    <ListControl>
+                        <FloatingMenu closeOnClick={true}>
+                            <FloatingMenuTrigger>Sort: { sort }</FloatingMenuTrigger>
+                            <FloatingMenuBody>
+                                <FloatingMenuItem><a url={`?${newestParams.toString()}`}
+                                    onClick={() => { setSort('newest')}} 
+                                >Newest</a></FloatingMenuItem>
+                                <FloatingMenuItem><a url={`?${activeParams.toString()}`} 
+                                    onClick={() => {  setSort('active')}} 
+                                >Active</a></FloatingMenuItem>
+                            </FloatingMenuBody>
+                        </FloatingMenu>
+                    </ListControl>
                 </ListControls>
             </ListHeader>
             <ListNoContent>

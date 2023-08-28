@@ -17,3 +17,15 @@
 .journal-tag a:link, .journal-tag a:active, .journal-tag a:visited {
     color: black;
 }
+.journal-tag svg {
+    padding: 0px 5px;
+    width: 1.2em;
+    height: 1.2em;
+    margin-bottom: -0.2em;
+    color: var(--main-border-color);
+    cursor: pointer;
+}
+.journal-tag svg:hover {
+    filter: brightness(90%);
+}
+

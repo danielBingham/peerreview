@@ -5,20 +5,22 @@ import {  Link } from 'react-router-dom'
 import { 
     ChevronUpIcon, 
     ChevronDownIcon, 
+    DocumentIcon,
     DocumentArrowUpIcon, 
     BookOpenIcon, 
     PlusIcon,
-    ClipboardDocumentIcon 
+    ClipboardDocumentIcon,
+    PencilSquareIcon
 } from '@heroicons/react/24/outline'
 
-import './UserNavigation.css'
+import './CreationNavigation.css'
 
 /**
  * Provide a user controls navigation block to be used in navigation menus.
  *
  * @param {object} props    The standard React props object - empty.
  */
-const UserNavigation = function(props) {
+const CreationNavigation = function(props) {
 
     const [ menuVisible, setMenuVisible ] = useState(false)
 
@@ -51,20 +53,17 @@ const UserNavigation = function(props) {
     // ======= Render ===============================================
     
     return (
-        <div id="user-navigation" className="navigation-block">
-            <div ref={menuRef} id="creation-navigation">
-                <span className="creation-menu-trigger"><a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<PlusIcon />New</a></span>
-                <div id="creation-menu" className="floating-menu" style={{ display: ( menuVisible ? 'block' : 'none' ) }} >
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/submit"><DocumentArrowUpIcon />New Submission</Link></div>
-                    <div className="menu-item" onClick={toggleMenu}><Link to="/create"><BookOpenIcon />New Journal</Link></div>
-                </div>
-            </div>
-            <div id="user-action-navigation">
-                <Link to="/review"><ClipboardDocumentIcon />review</Link>
+        <div ref={menuRef} id="creation-navigation" className="navigation-block">
+            <span className="creation-menu-trigger">
+                <a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<PlusIcon />New</a>
+            </span>
+            <div id="creation-menu" className="floating-menu" style={{ display: ( menuVisible ? 'block' : 'none' ) }} >
+                <div className="menu-item" onClick={toggleMenu}><Link to="/submit"><DocumentArrowUpIcon />New Submission</Link></div>
+                <div className="menu-item" onClick={toggleMenu}><Link to="/create"><BookOpenIcon />New Journal</Link></div>
             </div>
         </div>
     )
 
 }
 
-export default UserNavigation 
+export default CreationNavigation 

@@ -10,6 +10,11 @@
 .button:hover {
     filter: opacity(80%);
 }
+button.button:disabled {
+    filter: opacity(50%);
+}
+
+
 .button.default {
     background-color: var(--button-color);
     border: thin solid var(--button-border-color);

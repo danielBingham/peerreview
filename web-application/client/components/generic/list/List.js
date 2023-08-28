@@ -35,12 +35,12 @@ export const ListControls = function({ children }) {
     )
 }
 
-export const ListControl = function(props) {
+export const ListControl = function({ children }) {
 
     return (
-        <a href={props.url} 
-            onClick={(e) => { e.preventDefault(); props.onClick()}} 
-            className={props.selected ? 'list-control selected' : 'list-control' } >{ props.name }</a>
+        <div className="list-control">
+            { children }
+        </div>
     )
 
 }

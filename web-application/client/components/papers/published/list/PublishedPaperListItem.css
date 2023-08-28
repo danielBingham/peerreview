@@ -50,7 +50,12 @@
     color: black;
 }
 .published-paper-list-item .title a:hover {
-    color: #666;
+    color: #888;
+}
+.published-paper-list-item .title svg {
+    width: 1em;
+    height: 1em;
+    margin-bottom: -0.2em;
 }
 .published-paper-list-item .date-and-authors {
     font-size: 12px;

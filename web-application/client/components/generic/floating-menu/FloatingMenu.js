@@ -4,6 +4,7 @@ import { ChevronDownIcon, ChevronUpIcon, XMarkIcon } from '@heroicons/react/24/o
 
 export const VisibleContext = createContext(false)
 export const ToggleMenuContext = createContext(null)
+export const CloseOnClickContext = createContext(false)
 
 import './FloatingMenu.css'
 
@@ -61,7 +62,9 @@ export const FloatingMenu = function(props) {
         <div ref={menuRef} className={ className }>
             <VisibleContext.Provider value={visible}>
                 <ToggleMenuContext.Provider value={toggleMenu}>
-                    { props.children }
+                    <CloseOnClickContext.Provider value={props.closeOnClick}>
+                        { props.children }
+                    </CloseOnClickContext.Provider>
                 </ToggleMenuContext.Provider>
             </VisibleContext.Provider>
         </div>
@@ -174,6 +177,7 @@ export const FloatingMenuItem = function(props) {
 
     const visible = useContext(VisibleContext)
     const toggleMenu = useContext(ToggleMenuContext)
+    const closeOnClick = useContext(CloseOnClickContext)
 
     // ======= Request Tracking =====================================
 
@@ -181,11 +185,13 @@ export const FloatingMenuItem = function(props) {
 
     // ======= Actions and Event Handling ===========================
     const onClick = function(event) {
-        if ( props.closeOnClick === true) {
+        if ( closeOnClick === true) {
             toggleMenu(); 
         }
 
-        props.onClick(event); 
+        if ( props.onClick ) {
+            props.onClick(event); 
+        }
     }
 
     // ======= Effect Handling ======================================
