@@ -5,7 +5,7 @@
  *
  ******************************************************************************/
 
-const { JournalDAO, JournalSubmissionDAO, PaperDAO, UserDAO, DAOError } = require('@danielbingham/peerreview-backend')
+const { JournalDAO, JournalSubmissionDAO, PaperDAO, UserDAO, FieldDAO, DAOError } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -18,6 +18,7 @@ module.exports = class JournalSubmissionController {
         this.journalDAO = new JournalDAO(this.core)
         this.paperDAO = new PaperDAO(this.core)
         this.userDAO = new UserDAO(this.core)
+        this.fieldDAO = new FieldDAO(this.core)
     }
 
     /**
@@ -118,14 +119,109 @@ module.exports = class JournalSubmissionController {
             requestedRelations: ( query.relations ? query.relations : [])
         }
 
-        if ( query.status ) {
+        if ( query.status && query.status.length > 0 ) {
+            let privateDraft = query.status.includes('privateDraft') 
+            let preprint = query.status.includes('preprint') 
+    
+            const searchStatuses = query.status.filter((s) => s !== 'privateDraft' && s !== 'preprint')
+
+            const results = await this.core.database.query(`
+                SELECT DISTINCT journal_submissions.id 
+                    FROM journal_submissions 
+                        LEFT OUTER JOIN papers ON papers.id = journal_submissions.paper_id
+                    WHERE journal_submissions.status = ANY($1::journal_submission_status[])
+                        ${ privateDraft ? 'OR papers.is_draft = TRUE AND papers.show_preprint = FALSE' : ''}
+                        ${ preprint ? 'OR papers.is_draft = TRUE AND papers.show_preprint = TRUE' : ''}
+            `, [ searchStatuses ])
+
             count += 1
             and = count > 1 ? ' AND ' : ''
 
-            result.where += `${and} journal_submissions.status = ANY($${count}::journal_submission_status[])`
-
-            result.params.push(query.status)
+            result.where += `${and} journal_submissions.id = ANY($${count}::bigint[])`
+            result.params.push(results.rows.map((r) => r.id))
         }
+
+        if ( query.authors ) {
+            const results = await this.core.database.query(`
+                SELECT journal_submissions.id
+                    FROM journal_submissions
+                        LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = journal_submissions.paper_id
+                    WHERE paper_authors.user_id = ANY($1::bigint[]) 
+                    GROUP BY journal_submissions.id 
+                    HAVING COUNT(DISTINCT paper_authors.user_id) = $2
+            `, [ query.authors, query.authors.length ])
+
+            if ( results.rows.length > 0 ) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                result.where += `${and} journal_submissions.id = ANY($${count}::bigint[])`
+                result.params.push(results.rows.map((r) => r.id))
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
+
+        if ( query.reviewers ) {
+            const results = await this.core.database.query(`
+                SELECT submission_id FROM journal_submission_reviewers WHERE user_id = ANY($1::bigint[])
+            `, [ query.reviewers ])
+
+            if ( results.rows.length > 0 ) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                result.where += `${and} journal_submissions.id = ANY($${count}::bigint[])`
+                result.params.push(results.rows.map((r) => r.submission_id))
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
+
+        if ( query.editors ) {
+            const results = await this.core.database.query(`
+                SELECT submission_id FROM journal_submission_editors WHERE user_id = ANY($1::bigint[])
+            `, [ query.editors ])
+
+            if ( results.rows.length > 0 ) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                result.where += `${and} journal_submissions.id = ANY($${count}::bigint[])`
+                result.params.push(results.rows.map((r) => r.submission_id))
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
+
+
+        // Query for papers tagged with certain fields and their children.
+        // These are the fields to limit the query to, in other words a paper
+        // will only be included in the query if it is tagged with one of these
+        // fields (or its children).
+        //
+        // Generates an array of paperIds and compares `papers.id` against the
+        // array.
+        if ( query.fields && query.fields.length > 0) {
+            const fieldIds = await this.fieldDAO.selectFieldDescendents(query.fields)
+            const results = await this.core.database.query(`
+                SELECT DISTINCT journal_submissions.id
+                    FROM journal_submissions
+                        LEFT OUTER JOIN paper_fields ON journal_submissions.paper_id = paper_fields.paper_id
+                    WHERE paper_fields.field_id = ANY ($1::bigint[])
+            `, [ fieldIds])
+
+            if ( results.rows.length > 0) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                result.where += `${and} journal_submissions.id = ANY($${count}::bigint[])`
+                result.params.push(results.rows.map((r) => r.id))
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
+
 
         if ( query.page && ! options.ignorePage ) {
             result.page = query.page
@@ -220,6 +316,19 @@ module.exports = class JournalSubmissionController {
          **********************************************************************/
 
         const { where, params, order, page, emptyResult, requestedRelations } = await this.parseQuery(queryWhere, queryParams, request.query)
+        if ( emptyResult ) {
+            return response.status(200).json({
+                meta: {
+                    count: 0,
+                    page: 1,
+                    pageSize: this.journalSubmissionDAO.PAGE_SIZE,
+                    numberOfPages: 1
+                },
+                dictionary: {},
+                list: [],
+                relations: {}
+            })
+        }
         
         const results = await this.journalSubmissionDAO.selectJournalSubmissions(where, params, order, page)
         results.meta = await this.journalSubmissionDAO.countJournalSubmissions(where, params, page)

@@ -288,7 +288,7 @@ const FieldsInput = function(props) {
                 suggestedFieldList.push(
                     <div className={ index == highlightedSuggestion ? "badge-wrapper highlighted" : "badge-wrapper" } 
                         key={field.id} 
-                        onMouseDown={(event) => { appendField(field) }}
+                        onMouseDown={(event) => { event.stopPropagation(); appendField(field) }}
                     >
                         <FieldBadge id={field.id} noLink={true} />
                     </div>
@@ -298,7 +298,7 @@ const FieldsInput = function(props) {
     }
 
     return (
-        <div className="fields-input"> 
+        <div className={`fields-input ${props.type ? props.type : 'form'} ${ props.className ? props.className : ''}`}> 
             <h3>{ props.title }</h3>
             <div className="explanation">{ props.explanation }</div>
             <div className="selected-fields">{fieldList}</div>

@@ -2,11 +2,11 @@ import React from 'react'
 
 import './List.css'
 
-export const List = function(props) {
+export const List = function({ className, children }) {
 
     return (
-        <div className={`list ${props.className}`}>
-            { props.children }
+        <div className={`list ${ className ? className : ''}`}>
+            { children }
         </div>
     )
 }

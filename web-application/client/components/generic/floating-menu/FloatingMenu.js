@@ -13,7 +13,7 @@ import './FloatingMenu.css'
  *
  * @param {object} props    The standard React props object - empty.
  */
-export const FloatingMenu = function(props) {
+export const FloatingMenu = function({ children, className, closeOnClick }) {
 
     // ======= Render State =========================================
 
@@ -35,7 +35,6 @@ export const FloatingMenu = function(props) {
 
     // ======= Effect Handling ======================================
 
-
     useEffect(function() {
         const onBodyClick = function(event) {
             if (menuRef.current && ! menuRef.current.contains(event.target) ) 
@@ -53,17 +52,12 @@ export const FloatingMenu = function(props) {
     // ======= Render ===============================================
     //
 
-    let className = 'floating-menu'
-    if ( props.className ) {
-        className = `floating-menu ${props.className}`
-    }
-
     return (
-        <div ref={menuRef} className={ className }>
+        <div ref={menuRef} className={`floating-menu ${ className ? className : ''}`}>
             <VisibleContext.Provider value={visible}>
                 <ToggleMenuContext.Provider value={toggleMenu}>
-                    <CloseOnClickContext.Provider value={props.closeOnClick}>
-                        { props.children }
+                    <CloseOnClickContext.Provider value={closeOnClick}>
+                        { children }
                     </CloseOnClickContext.Provider>
                 </ToggleMenuContext.Provider>
             </VisibleContext.Provider>
@@ -96,8 +90,8 @@ export const FloatingMenuTrigger = function(props) {
     // ======= Render ===============================================
    
     return (
-        <div className={visible ? "menu-trigger active" : "menu-trigger" } onClick={toggleMenu} >
-            { props.children } { visible ? <ChevronUpIcon /> : <ChevronDownIcon /> }
+        <div className={visible ? "menu-trigger active" : "menu-trigger" } >
+            <a href="" onClick={(e) => { e.preventDefault(); toggleMenu(); }}>{ props.children } { visible ? <ChevronUpIcon /> : <ChevronDownIcon /> }</a>
         </div>
     )
 
@@ -160,7 +154,7 @@ export const FloatingMenuHeader = function(props) {
     return (
         <div className="menu-header">
             <div className="menu-title">{ props.children }</div>
-            <div className="menu-escape" onClick={toggleMenu} ><XMarkIcon /></div>
+            <div className="menu-escape" ><a href="" onClick={(e) => { e.preventDefault(); toggleMenu(); }}><XMarkIcon /></a></div>
         </div>
     )
 
@@ -199,12 +193,13 @@ export const FloatingMenuItem = function(props) {
     // ======= Render ===============================================
   
     return (
-        <div 
+        <a
+            href=""
             className={ props.className ? `menu-item ${props.className}` : "menu-item"} 
-            onClick={onClick}
+            onClick={(e) => { e.preventDefault(); onClick(e); }}
         >
             { props.children }
-        </div>
+        </a>
     )
 
 }

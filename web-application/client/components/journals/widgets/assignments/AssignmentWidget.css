@@ -7,3 +7,6 @@
 .assignment-widget .assigned-members {
     padding: 20px 0;
 }
+.assignment-widget .member, .assignment-widget .assigned-member {
+    padding: 5px 20px;
+}

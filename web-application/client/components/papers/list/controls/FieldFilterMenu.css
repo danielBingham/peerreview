@@ -1,0 +1,10 @@
+.fields-filter-menu {}
+.fields-filter-menu .selected-field svg {
+    width: 1em;
+    height: 1em;
+    margin-bottom: -0.2em;
+}
+.fields-filter-menu .scroll-pane {
+    max-height: 500px;
+    overflow-y: auto;
+}

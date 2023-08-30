@@ -1,0 +1,13 @@
+.authors-filter-menu {}
+.authors-filter-menu .selected-users {}
+.authors-filter-menu .selected-users .selected-user {
+    padding: 5px 20px;
+}
+.authors-filter-menu .selected-users .selected-user svg.check {
+    width: 1.5em;
+    height: 1.5em;
+    margin-bottom: -0.3em;
+}
+.authors-filter-menu .suggested-author {
+    padding: 5px 20px;
+}

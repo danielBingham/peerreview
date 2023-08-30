@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux'
 import { useLocation, useSearchParams } from 'react-router-dom'
 
 import PaperSearchView from '/components/papers/search/PaperSearchView'
-import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
+import PaperList from '/components/papers/list/PaperList'
 
 import './PaperSearchPage.css'
 
@@ -41,7 +41,7 @@ const PaperSearchPage = function(props) {
     return (
         <div id="paper-search-page" className="page">
             <PaperSearchView  />
-            <PublishedPaperList query={query} />
+            <PaperList type="published" query={query} />
         </div>
     )
 }

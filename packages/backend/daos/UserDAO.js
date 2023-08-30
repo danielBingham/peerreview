@@ -176,6 +176,7 @@ module.exports = class UserDAO {
                 ${where} 
         `
 
+        console.log(sql)
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length <= 0) {

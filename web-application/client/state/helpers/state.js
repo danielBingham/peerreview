@@ -40,8 +40,15 @@ export const setQueryResults = function(state, action) {
     const meta = action.payload.meta
     const list = action.payload.list
 
-    state.queries[name].meta = meta
-    state.queries[name].list = list 
+    if ( ! state.queries[name] ) {
+        state.queries[name] = {
+            meta: meta,
+            list: list
+        }
+    } else {
+        state.queries[name].meta = meta
+        state.queries[name].list = list 
+    }
 }
 
 export const clearQuery = function(state, action) {

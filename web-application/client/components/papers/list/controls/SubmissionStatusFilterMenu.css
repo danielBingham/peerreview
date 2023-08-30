@@ -1,0 +1,9 @@
+.submission-status-filter-menu {}
+.submission-status-filter-menu .status {
+    padding: 5px 20px;
+}
+.submission-status-filter-menu svg {
+    width: 1em;
+    height: 1em;
+    margin-bottom: -0.2em;
+}

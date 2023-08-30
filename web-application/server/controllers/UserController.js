@@ -86,6 +86,14 @@ module.exports = class UserController {
             result.order = `SIMILARITY(users.name, $${count}) desc`
         }
 
+        if ( query.ids && query.ids.length > 0 ) {
+            count += 1
+            const and = count > 1 ? ' AND ' : ''
+
+            result.where += `${and} users.id = ANY($${count}::bigint[])`
+            result.params.push(query.ids)
+        }
+
         if ( query.page && ! options.ignorePage ) {
             result.page = query.page
         } else if ( ! options.ignorePage ) {

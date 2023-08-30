@@ -46,7 +46,6 @@ import FieldPage from '/pages/fields/FieldPage'
 
 import SubmitPage from '/pages/papers/SubmitPage'
 import DraftPaperPage from '/pages/papers/DraftPaperPage'
-import SubmitDraftForPublicationPage from '/pages/papers/SubmitDraftForPublicationPage'
 
 import ReviewDashboardPage from '/pages/dashboards/ReviewDashboardPage'
 import AuthorDashboardPage from '/pages/dashboards/AuthorDashboardPage'
@@ -254,7 +253,6 @@ const App = function(props) {
                         { /* ========= Draft Papers  ============================ */ }
                         <Route path="/submit" element={ <SubmitPage /> }  />
                         <Route path="/draft/:id" element={ <DraftPaperPage tab="reviews" /> }  />
-                        <Route path="/draft/:id/publish" element={ <SubmitDraftForPublicationPage /> } />
                         <Route path="/draft/:id/reviews" element={ <DraftPaperPage tab="reviews" /> } />
                         <Route path="/draft/:id/drafts" element={ <DraftPaperPage tab="drafts" /> } />
                         <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage tab="reviews" /> } />

@@ -8,7 +8,7 @@ import { DocumentCheckIcon, TagIcon } from '@heroicons/react/24/outline'
 import { getUser, cleanupRequest } from '/state/users'
 
 import UserView from '/components/users/UserView'
-import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
+import PaperList from '/components/papers/list/PaperList'
 
 import PageHeader from '/components/generic/PageHeader'
 import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
@@ -75,7 +75,7 @@ const UserProfilePage = function(props) {
     if ( request && request.state == 'fulfilled' ) {
         if ( selectedTab == 'papers' ) {
             content = (
-                <PublishedPaperList authorId={ id }  />
+                <PaperList type="published" authorId={ id }  />
             )
         } else if ( selectedTab == 'biography' ) {
             content = (

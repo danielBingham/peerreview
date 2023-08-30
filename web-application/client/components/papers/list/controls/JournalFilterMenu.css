@@ -1,0 +1,11 @@
+.journals-filter-menu .selected-journals .selected-journal {
+    padding: 5px 20px;
+}
+.journals-filter-menu .selected-journals .selected-journal svg.check {
+    width: 1.5em;
+    height: 1.5em;
+    margin-bottom: -0.3em;
+}
+.journals-filter-menu .suggested-journal {
+    padding: 5px 20px;
+}

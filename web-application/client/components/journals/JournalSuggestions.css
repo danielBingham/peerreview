@@ -1,0 +1,18 @@
+.journal-suggestions {
+    position: relative;
+}
+.journal-suggestions input {
+    min-width: 250px;
+}
+.journal-suggestions svg.clear {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 1.2em;
+    height: 1.2em;
+    margin-bottom: -0.3em;
+    color: var(--main-border-color);
+}
+.journal-suggestions svg.clear:hover {
+    filter: brightness(90%);
+}

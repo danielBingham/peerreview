@@ -1,37 +1,37 @@
-.draft-paper-list {
+.paper-list {
     width: 100%;
     margin: 0 auto;
     background-color: white;
     border: thin solid var(--main-border-color);
 }
-.draft-paper-list .header {
+.paper-list .header {
     display: grid;
     grid-template-columns: 1fr, 1fr;
     grid-template-rows: auto;
     border-bottom: thin solid var(--main-border-color);
     padding: 10px 20px;
 }
-.draft-paper-list .header h2 {
+.paper-list .header h2 {
     grid-column: 1 / 2;
     padding: 0;
     margin: 0;
 }
-.draft-paper-list .header .controls {
+.paper-list .header .controls {
     grid-column: 2 / 3;
 }
-.draft-paper-list .header .controls .sort {
+.paper-list .header .controls .sort {
     text-align: right;
 }
-.draft-paper-list .header .controls .sort a {
+.paper-list .header .controls .sort a {
     display: inline-block;
     padding: 5px;
     margin: 0 10px;
 
 }
-.draft-paper-list .header .controls .sort a.selected {
+.paper-list .header .controls .sort a.selected {
     text-decoration: underline;
 }
-.draft-paper-list .empty-search {
+.paper-list .empty-search {
     padding: 20px;
     text-align: center;
 }

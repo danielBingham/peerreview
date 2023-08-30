@@ -72,6 +72,7 @@ const SubmissionStatusWidget = function(props) {
         statusMenuItemViews.push(
             <FloatingMenuItem
                 key={status}
+                className="status-option"
                 onClick={(e) => updateStatus(status)}
             >
                 { submission.status == status && <CheckIcon />} { status }

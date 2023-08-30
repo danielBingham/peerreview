@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom'
 
 import FieldView from '/components/fields/FieldView'
 import FieldListView from '/components/fields/list/FieldListView'
-import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
+import PaperList from '/components/papers/list/PaperList'
 
 import { DocumentCheckIcon, TagIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
 
@@ -23,7 +23,7 @@ const FieldPage = function(props) {
     let content = ( <Spinner local={true} /> )
     if ( selectedTab == 'papers' ) {
         content = (
-            <PublishedPaperList fieldId={ id } />
+            <PaperList type="published" fieldId={ id } />
         )
     } else if ( selectedTab == 'parents' ) {
         content = (

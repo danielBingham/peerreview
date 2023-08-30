@@ -1,0 +1,18 @@
+.user-suggestions {
+    position: relative;
+}
+.user-suggestions input {
+    min-width: 250px;
+}
+.user-suggestions svg.clear {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 1.2em;
+    height: 1.2em;
+    margin-bottom: -0.3em;
+    color: var(--main-border-color);
+}
+.user-suggestions svg.clear:hover {
+    filter: brightness(90%);
+}

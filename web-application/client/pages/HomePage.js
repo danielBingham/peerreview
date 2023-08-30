@@ -3,8 +3,8 @@ import { useSelector } from 'react-redux'
 
 import { DocumentCheckIcon, DocumentIcon } from '@heroicons/react/24/outline'
 
-import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
-import DraftPapersListView from '/components/papers/draft/list/DraftPapersListView'
+import PaperList from '/components/papers/list/PaperList'
+
 import PaperSearchView from '/components/papers/search/PaperSearchView'
 import WelcomeNotice from '/components/about/notices/WelcomeNotice'
 import SupportNotice from '/components/about/notices/SupportNotice'
@@ -64,11 +64,11 @@ const HomePage = function(props) {
         content = (
             <>
                 <PaperSearchView />
-                <PublishedPaperList query={query} />
+                <PaperList type="published" query={query} />
             </>
         )
     } else if ( selectedTab == 'preprints' ) {
-        content = ( <DraftPapersListView type="preprint" /> )
+        content = ( <PaperList type="preprint" /> )
     }
 
     return (

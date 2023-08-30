@@ -208,12 +208,25 @@ module.exports = class PaperController {
                 and = ( count > 1 ? ' AND ' : '')
 
                 result.where += `${and} papers.id = ANY($${count}::bigint[])`
+                result.params.push(results.rows.map((r) => r.paper_id))
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
 
-                const paperIds = []
-                for(let row of results.rows) {
-                    paperIds.push(row.paper_id)
-                }
-                result.params.push(paperIds)
+        if ( query.journals ) {
+            const results = await this.database.query(`
+                SELECT paper_id FROM journal_submissions WHERE journal_id = ANY($1::bigint[])
+                `, [ query.journals]
+            )
+
+            if ( results.rows.length > 0 ) {
+                count += 1
+                and = ( count > 1 ? ' AND ' : '')
+
+                result.where += `${and} papers.id = ANY($${count}::bigint[])`
+                result.params.push(results.rows.map((r) => r.paper_id))
             } else {
                 result.emptyResult = true
                 return result
@@ -239,6 +252,24 @@ module.exports = class PaperController {
                     paper_ids.push(row.paper_id)
                 }
                 result.params.push(paper_ids)
+            } else {
+                result.emptyResult = true
+                return result
+            }
+        }
+
+        if ( query.authors ) {
+            const results = await this.database.query(`
+                SELECT paper_id FROM paper_authors WHERE user_id = ANY($1::bigint[]) GROUP BY paper_id HAVING COUNT(DISTINCT user_id) = $2
+            `, [ query.authors, query.authors.length ])
+
+            if ( results.rows.length > 0 ) {
+                const paperIds = results.rows.map((r) => r.paper_id)
+                
+                count += 1
+                and = ( count > 1 ? ' AND ' : '' )
+                result.where += `${and} papers.id = ANY($${count}::bigint[])`
+                result.params.push(paperIds)
             } else {
                 result.emptyResult = true
                 return result
@@ -293,6 +324,29 @@ module.exports = class PaperController {
                 const uniquePaperIds = [ ...new Set(paper_ids) ]
                 result.params.push(uniquePaperIds)
             } 
+        }
+
+        if ( query.status && query.status.length > 0 ) {
+            let privateDraft = query.status.includes('privateDraft') 
+            let preprint = query.status.includes('preprint') 
+    
+            const searchStatuses = query.status.filter((s) => s !== 'privateDraft' && s !== 'preprint')
+
+            const results = await this.database.query(`
+                SELECT DISTINCT papers.id 
+                    FROM papers 
+                        LEFT OUTER JOIN journal_submissions ON papers.id = journal_submissions.paper_id
+                    WHERE journal_submissions.status = ANY($1::journal_submission_status[])
+                        ${ privateDraft ? 'OR papers.is_draft = TRUE AND papers.show_preprint = FALSE' : ''}
+                        ${ preprint ? 'OR papers.is_draft = TRUE AND papers.show_preprint = TRUE' : ''}
+            `, [ searchStatuses ])
+
+            const paperIds = results.rows.map((r) => r.id)
+
+            count += 1
+            and = (count > 1 ? ' AND ' : '')
+            result.where += `${and} papers.id = ANY($${count}::bigint[])`
+            result.params.push(paperIds)
         }
 
         // Search the content of the paper for a particular string.

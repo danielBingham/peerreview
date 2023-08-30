@@ -5,6 +5,8 @@ import { Link } from 'react-router-dom'
 import { getField, cleanupRequest } from '/state/fields'
 
 import Field from './Field'
+
+import Spinner from '/components/Spinner'
 import './FieldBadge.css'
 
 /**
@@ -58,11 +60,20 @@ const FieldBadge = function(props) {
 
 
     // ======= Render ===============================================
-    
+  
+    let content = ( <Spinner local={true} /> )
+    if ( field ) {
+        content = (
+            <>
+                <div className="wrapper"><Field id={field.id} noLink={props.noLink} target={props.target} /></div>
+                <div className="description">{ field.description }</div>
+            </>
+        )
+    }
+
     return (
         <div className='field-badge'>
-            <div className="wrapper"><Field id={field.id} noLink={props.noLink} target={props.target} /></div>
-            <div className="description">{ field.description }</div>
+            { content }
         </div>
     )
 }

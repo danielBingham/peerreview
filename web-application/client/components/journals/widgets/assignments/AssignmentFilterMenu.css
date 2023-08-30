@@ -1,0 +1,11 @@
+.assignment-filter-menu .selected-users .selected-user {
+    padding: 5px 20px;
+}
+.assignment-filter-menu .selected-users .selected-user svg.check {
+    width: 1.5em;
+    height: 1.5em;
+    margin-bottom: -0.3em;
+}
+.assignment-filter-menu .member {
+    padding: 5px 20px;
+}

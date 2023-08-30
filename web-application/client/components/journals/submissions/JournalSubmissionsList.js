@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, useSearchParams, Link } from 'react-router-dom'
-
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams, Link } from 'react-router-dom'
+
 
 import { getJournalSubmissions, cleanupRequest } from '/state/journalSubmissions'
 import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
@@ -21,8 +21,14 @@ import {
 } from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
+import AssignmentFilterMenu from '/components/journals/widgets/assignments/AssignmentFilterMenu'
+import JournalFilterMenu from '/components/papers/list/controls/JournalFilterMenu'
+import AuthorFilterMenu from '/components/papers/list/controls/AuthorFilterMenu'
+import SubmissionStatusFilterMenu from '/components/papers/list/controls/SubmissionStatusFilterMenu' 
+import FieldFilterMenu from '/components/papers/list/controls/FieldFilterMenu'
+
 import SubmissionControls from '/components/journals/widgets/SubmissionControls'
-import DraftPapersListItemView from '/components/papers/draft/list/DraftPapersListItemView'
+import DraftPapersListItemView from '/components/papers/list/DraftPapersListItemView'
 
 import SubmissionStatusWidget from '/components/journals/widgets/status/SubmissionStatusWidget'
 import AssignmentWidget from '/components/journals/widgets/assignments/AssignmentWidget'
@@ -41,6 +47,8 @@ import './JournalSubmissionsList.css'
  * @param {object} props    Standard react props object - empty.
  */
 const JournalSubmissionsList = function(props) {
+    
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ======= Request Tracking =====================================
 
@@ -64,18 +72,20 @@ const JournalSubmissionsList = function(props) {
 
     // ======= Redux State ==========================================
 
-    const submissions = useSelector(function(state) {
+    const submissionQuery = useSelector(function(state) {
         if ( state.journalSubmissions.queries['JournalSubmissionsList'] ) {
-            return state.journalSubmissions.queries['JournalSubmissionsList'].list
+            return state.journalSubmissions.queries['JournalSubmissionsList']
         } else {
-            return []
+            return null 
         }
     })
 
     const paperDictionary = useSelector(function(state) {
         const dictionary = {}
-        for(const submission of submissions) {
-            dictionary[submission.paperId] = state.papers.dictionary[submission.paperId]
+        if ( submissionQuery ) {
+            for(const submission of submissionQuery.list) {
+                dictionary[submission.paperId] = state.papers.dictionary[submission.paperId]
+            }
         }
         return dictionary
     })
@@ -89,14 +99,60 @@ const JournalSubmissionsList = function(props) {
 
     const dispatch = useDispatch()
 
-    const queryForPapers = function() {
-        setRequestId(dispatch(getJournalSubmissions('JournalSubmissionsList', props.id, { status: [ 'submitted', 'review', 'proofing' ], relations: [ "papers", "users"] })))
+    const queryForPapers = function({ fields, status, authors, reviewers, editors, sortBy, page }) {
+        let query = { 
+            status: [ 'submitted', 'review', 'proofing' ], 
+            relations: [ "papers", "users"] 
+        }
+
+        if ( fields.length > 0 ) {
+            query.fields = fields 
+        }
+
+        if ( status.length > 0 ) {
+            query.status = status
+        }
+
+        if ( authors.length > 0 ) {
+            query.authors = authors
+        }
+
+        if ( reviewers && reviewers.length > 0) {
+            query.reviewers = reviewers
+        }
+
+        if ( editors && editors.length > 0) {
+            query.editors = editors
+        }
+
+        if ( ! sortBy ) {
+            query.sort = 'newest'
+        } else {
+            query.sort = sortBy
+        }
+
+        if ( ! page ) {
+            query.page = 1
+        } else {
+            query.page = page
+        }
+
+        setRequestId(dispatch(getJournalSubmissions('JournalSubmissionsList', props.id, query)))
         setCountReviewsRequestId(dispatch(countReviews()))
     }
 
     useEffect(function() {
-        queryForPapers()
-    }, [])
+        const params = {
+            fields: searchParams.getAll('fields'),
+            status: searchParams.getAll('status'),
+            authors: searchParams.getAll('authors'),
+            reviewers: searchParams.getAll('reviewers'),
+            editors: searchParams.getAll('editors'),
+            page: searchParams.get('page'),
+            sortBy: searchParams.get('sort')
+        }
+        queryForPapers(params)
+    }, [ searchParams ])
 
     // Cleanup our request.
     useEffect(function() {
@@ -124,7 +180,7 @@ const JournalSubmissionsList = function(props) {
     let noContent = null
     if ( request && request.state == 'fulfilled' && countReviewsRequest && countReviewsRequest.state == 'fulfilled') {
         content = []
-        for (const submission of submissions) {
+        for (const submission of submissionQuery.list) {
 
             content.push(
                 <div className="journal-submission" key={submission.id}>
@@ -138,7 +194,7 @@ const JournalSubmissionsList = function(props) {
 
         if ( content.length <= 0 ) {
             content = null
-            noContent =  (<div className="empty-search">No papers to list.</div>)
+            noContent =  (<div className="empty-search">No submissions to list.</div>)
         }
     } else if (request && request.state == 'failed') {
         content = null
@@ -151,46 +207,11 @@ const JournalSubmissionsList = function(props) {
             <ListHeader>
                 <ListTitle>Draft Submissions</ListTitle>
                 <ListControls>
-                    <ListControl>
-                        <FloatingMenu>
-                            <FloatingMenuTrigger>Status</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>
-                    <ListControl>
-                        <FloatingMenu>
-                            <FloatingMenuTrigger>Assigned Editors</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>
-                    <ListControl>
-                        <FloatingMenu>
-                            <FloatingMenuTrigger>Assigned Reviewers</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>
-                    <ListControl>
-                        <FloatingMenu>
-                            <FloatingMenuTrigger>Authors</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>
-                    <ListControl>
-                        <FloatingMenu>
-                            <FloatingMenuTrigger>Taxonomy</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>
+                    <ListControl><SubmissionStatusFilterMenu /> </ListControl>
+                    <ListControl><AuthorFilterMenu /> </ListControl>
+                    <ListControl><FieldFilterMenu /></ListControl>
+                    <ListControl><AssignmentFilterMenu type="editors" id={props.id} /></ListControl>
+                    <ListControl><AssignmentFilterMenu type="reviewers" id={props.id} /></ListControl>
                 </ListControls>
             </ListHeader>
             <ListNoContent>
@@ -199,6 +220,7 @@ const JournalSubmissionsList = function(props) {
             <ListRowContent>
                 { content }
             </ListRowContent>
+            <PaginationControls meta={submissionQuery?.meta} />
         </List>
     )
 

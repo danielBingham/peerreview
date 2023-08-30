@@ -212,6 +212,7 @@ const ReviewList = function({ paperId, versionNumber }) {
     }
     const fileUrl = new URL(version.file.filepath, version.file.location)
 
+    console.log(editorSubmissions)
     let decisionViews = []
     let controlViews = []
     if ( paper.isDraft ) {

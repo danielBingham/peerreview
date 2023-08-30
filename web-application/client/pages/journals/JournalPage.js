@@ -10,7 +10,7 @@ import JournalView from '/components/journals/JournalView'
 import JournalMembersList from '/components/journals/members/JournalMembersList'
 import JournalSubmissionsList from '/components/journals/submissions/JournalSubmissionsList'
 
-import PublishedPaperList from '/components/papers/published/list/PublishedPaperList'
+import PaperList from '/components/papers/list/PaperList'
 
 import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
 import PageTab from '/components/generic/pagetabbar/PageTab'
@@ -87,7 +87,7 @@ const JournalPage = function(props) {
     let content = ( <Spinner /> )
     if (  request && request.state == 'fulfilled') {
         if ( selectedTab == 'papers' ) {
-            content = ( <PublishedPaperList journalId={id} /> ) 
+            content = ( <PaperList type="published" journalId={id} /> ) 
         } else if ( selectedTab == 'submissions' ) {
             content = ( 
                 <>

@@ -1,6 +1,8 @@
-.submission-status-widget {
-}
+.submission-status-widget { }
 .submission-status-widget svg {
     display: inline-block;
     width: 14px;
+}
+.submission-status-widget .status-option {
+    padding: 5px 20px;
 }

@@ -78,6 +78,10 @@ a:hover {
     color: var(--link-highlight-color); 
 }
 
+input[type="text"], input[type="password"], textarea {
+    padding: 5px;
+    border: thin solid var(--input-border-color);
+}
 input:focus, textarea:focus, select:focus {
     outline-color: var(--input-highlight-color) !important;
 }

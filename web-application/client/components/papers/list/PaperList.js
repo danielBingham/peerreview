@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 
-import { useDispatch, useSelector } from 'react-redux'
-
-import { DocumentIcon, InboxIcon } from '@heroicons/react/24/outline'
+import { DocumentIcon, DocumentCheckIcon, InboxIcon } from '@heroicons/react/24/outline'
 
 import { getPapers, clearPaperQuery, cleanupRequest } from '/state/papers'
 import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
+import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
 
 import Spinner from '/components/Spinner'
 import { FloatingMenu, FloatingMenuTrigger, FloatingMenuBody, FloatingMenuItem } from '/components/generic/floating-menu/FloatingMenu'
@@ -22,9 +22,16 @@ import {
 } from '/components/generic/list/List'
 import PaginationControls from '/components/PaginationControls'
 
-import DraftPapersListItemView from './DraftPapersListItemView'
+import JournalFilterMenu from './controls/JournalFilterMenu'
+import AuthorFilterMenu from './controls/AuthorFilterMenu'
+import SubmissionStatusFilterMenu from './controls/SubmissionStatusFilterMenu' 
+import FieldFilterMenu from './controls/FieldFilterMenu'
+import SortControl from './controls/SortControl'
 
-import './DraftPapersListView.css'
+import DraftPapersListItemView from '/components/papers/list/DraftPapersListItemView'
+import PublishedPaperListItem from '/components/papers/list/PublishedPaperListItem'
+
+import './PaperList.css'
 
 /**
  * Render a list of draft papers belonging to the logged in user.
@@ -37,7 +44,7 @@ import './DraftPapersListView.css'
  *
  * @param {object} props    Standard react props object - empty.
  */
-const DraftPapersListView = function(props) {
+const PaperList = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ======= Request Tracking =====================================
@@ -60,10 +67,19 @@ const DraftPapersListView = function(props) {
         }
     })
 
+    const [responseRequestId, setResponseRequestId ] = useState(null)
+    const responseRequest = useSelector(function(state) {
+        if (responseRequestId) {
+            return state.responses.requests[responseRequestId]
+        } else {
+            null
+        }
+    })
+
     // ======= Redux State ==========================================
 
     const paperQuery = useSelector(function(state) {
-        return state.papers.queries['DraftPapersListView']
+        return state.papers.queries['PaperList']
     })
     
     const currentUser = useSelector(function(state) {
@@ -74,12 +90,7 @@ const DraftPapersListView = function(props) {
 
     const dispatch = useDispatch()
 
-    const setSort = function(sortBy) {
-        searchParams.set('sort', sortBy)
-        setSearchParams(searchParams)
-    }
-
-    const queryForPapers = function({searchString, sortBy, page}) {
+    const queryForPapers = function({searchString, fields, status, authors, journals, sortBy, page}) {
         let query = {}
         if ( props.query ) {
             query = {
@@ -91,8 +102,28 @@ const DraftPapersListView = function(props) {
             query.searchString = searchString
         }
 
+        if ( fields.length > 0 ) {
+            query.fields = fields 
+        }
+
+        if ( status.length > 0 ) {
+            query.status = status
+        }
+
+        if ( authors ) {
+            query.authors = authors
+        }
+
+        if ( journals ) {
+            query.journals = journals
+        }
+
         if ( props.authorId ) {
             query.authorId = props.authorId
+        }
+
+        if ( props.journalId ) {
+            query.journalId = props.journalId
         }
 
         if ( props.type ) {
@@ -101,7 +132,11 @@ const DraftPapersListView = function(props) {
             query.type = "preprint"
         }
 
-        query.isDraft = true 
+        if ( props.type == 'published' ) {
+            query.isDraft = false
+        } else {
+            query.isDraft = true 
+        }
 
 
         if ( ! sortBy ) {
@@ -116,8 +151,13 @@ const DraftPapersListView = function(props) {
             query.page = page
         }
 
-        setRequestId(dispatch(getPapers('DraftPapersListView', query, true)))
-        setCountReviewsRequestId(dispatch(countReviews()))
+        setRequestId(dispatch(getPapers('PaperList', query, true)))
+
+        if ( props.type == 'published' ) {
+            setResponseRequestId(dispatch(countResponses()))
+        } else {
+            setCountReviewsRequestId(dispatch(countReviews()))
+        } 
     }
 
     // Our request is dependent on the searchParams, so whenever they change we
@@ -126,7 +166,11 @@ const DraftPapersListView = function(props) {
         const params = {
             searchString: searchParams.get('q'),
             sortBy: searchParams.get('sort'),
-            page: searchParams.get('page')
+            page: searchParams.get('page'),
+            fields: searchParams.getAll('fields'),
+            status: searchParams.getAll('status'),
+            authors: searchParams.getAll('authors'),
+            journals: searchParams.getAll('journals')
         }
         queryForPapers(params)
     }, [searchParams, props.type])
@@ -140,7 +184,11 @@ const DraftPapersListView = function(props) {
             const params = {
                 searchString: searchParams.get('q'),
                 sortBy: searchParams.get('sort'),
-                page: searchParams.get('page')
+                page: searchParams.get('page'),
+                fields: searchParams.getAll('fields'),
+                status: searchParams.getAll('status'),
+                authors: searchParams.getAll('authors'),
+                journals: searchParams.getAll('journals')
             }
             queryForPapers(params)
         }
@@ -148,7 +196,7 @@ const DraftPapersListView = function(props) {
 
     useEffect(function() {
         return function cleanup() {
-            dispatch(clearPaperQuery({ name: 'DraftPapersListView' }))
+            dispatch(clearPaperQuery({ name: 'PaperList' }))
         }
     }, [])
 
@@ -169,6 +217,15 @@ const DraftPapersListView = function(props) {
         }
     }, [ countReviewsRequestId ])
 
+    // Cleanup our request.
+    useEffect(function() {
+        return function cleanup() {
+            if ( responseRequestId ) {
+                dispatch(cleanupResponseRequest({requestId: responseRequestId}))
+            }
+        }
+    }, [ responseRequestId ])
+
     // ====================== Render ==========================================
 
     // Don't render unless we've completed the request, otherwise we could wind
@@ -176,10 +233,20 @@ const DraftPapersListView = function(props) {
 
     let content = ( <Spinner /> )
     let noContent = null
-    if ( request && request.state == 'fulfilled' && countReviewsRequest && countReviewsRequest.state == 'fulfilled') {
+
+    if ( request && request.state == 'fulfilled' 
+        && (
+            (props.type == 'published' && responseRequest && responseRequest.state == 'fulfilled') 
+            || (countReviewsRequest && countReviewsRequest.state == 'fulfilled'))
+        ) 
+    {
         content = []
         for (const paper of paperQuery.list) {
-            content.push(<DraftPapersListItemView paper={paper} key={paper.id} />)
+            if ( props.type == 'published' ) {
+                content.push(<PublishedPaperListItem paper={paper} key={paper.id} />)
+            } else {
+                content.push(<DraftPapersListItemView paper={paper} key={paper.id} />)
+            }
         }
 
         if ( content.length <= 0 ) {
@@ -188,16 +255,9 @@ const DraftPapersListView = function(props) {
         }
     } else if (request && request.state == 'failed') {
         content = null
-        noContent = ( <div className="error">Attempt to retrieve drafts failed with error: { request.error }.  Please report this as a bug.</div> ) 
+        noContent = ( <div className="error">Attempt to retrieve papers failed with error: { request.error }.  Please report this as a bug.</div> ) 
     }
 
-    const newestParams = new URLSearchParams(searchParams.toString())
-    newestParams.set('sort', 'newest')
-
-    const activeParams = new URLSearchParams(searchParams.toString())
-    activeParams.set('sort', 'active')
-
-    const sort = searchParams.get('sort') ? searchParams.get('sort') : 'newest'
 
     let title = "Draft Papers"
     if ( props.type == 'preprint') {
@@ -208,70 +268,20 @@ const DraftPapersListView = function(props) {
         title = (<><InboxIcon/>Submissions</>)
     } else if ( props.type == 'assigned-review' ) {
         title =(<><InboxIcon />Assigned to Me</>)
+    } else if ( props.type == 'published' ) {
+        title = (<><DocumentCheckIcon/>Papers</>)
     }
 
     return (
-        <List>
+        <List className="paper-list">
             <ListHeader>
                 <ListTitle>{ title }</ListTitle>
                 <ListControls>
-                    { props.type != 'preprint' && 
-                        <ListControl>
-                            <FloatingMenu>
-                                <FloatingMenuTrigger>Status</FloatingMenuTrigger>
-                                <FloatingMenuBody>
-                                    <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                                </FloatingMenuBody>
-                            </FloatingMenu> 
-                        </ListControl>}
-                    { (props.type !== 'preprint' ) &&
-                    <ListControl>
-                        <FloatingMenu>
-                            <FloatingMenuTrigger>Journals</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>}
-                    <ListControl>
-                        <FloatingMenu>
-                            <FloatingMenuTrigger>Authors</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>
-                    <ListControl>
-                        <FloatingMenu>
-                            <FloatingMenuTrigger>Taxonomy</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>Under Construction</FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>
-                    <ListControl>
-                        <FloatingMenu closeOnClick={true}>
-                            <FloatingMenuTrigger>Sort: { sort }</FloatingMenuTrigger>
-                            <FloatingMenuBody>
-                                <FloatingMenuItem>
-                                    <a 
-                                        url={`?${newestParams.toString()}`}
-                                        onClick={(e) => {e.preventDefault();  setSort('newest')}}
-                                    >
-                                        Newest
-                                    </a>
-                                </FloatingMenuItem>
-                                <FloatingMenuItem>
-                                    <a 
-                                        url={`?${activeParams.toString()}`} 
-                                        onClick={(e) => {e.preventDefault();  setSort('active')}} 
-                                    >
-                                        Active
-                                    </a>
-                                </FloatingMenuItem>
-                            </FloatingMenuBody>
-                        </FloatingMenu>
-                    </ListControl>
+                    { props.type != 'preprint' && props.type != 'published' && <ListControl><SubmissionStatusFilterMenu /></ListControl>}
+                    { props.type != 'preprint' && ! props.journalId && <ListControl><JournalFilterMenu /></ListControl>}
+                    <ListControl><AuthorFilterMenu /> </ListControl>
+                    <ListControl><FieldFilterMenu /></ListControl>
+                    <ListControl><SortControl /></ListControl>
                 </ListControls>
             </ListHeader>
             <ListNoContent>
@@ -286,4 +296,4 @@ const DraftPapersListView = function(props) {
 
 }
 
-export default DraftPapersListView 
+export default PaperList 

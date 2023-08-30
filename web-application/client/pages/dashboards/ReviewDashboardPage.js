@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 
 import { InboxIcon, DocumentIcon} from '@heroicons/react/24/outline'
 
-import DraftPapersListView from '/components/papers/draft/list/DraftPapersListView'
+import PaperList from '/components/papers/list/PaperList'
 
 import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
 import PageTab from '/components/generic/pagetabbar/PageTab'
@@ -42,13 +42,13 @@ const ReviewDashboardPage = function(props) {
 
     let content = ( <Spinner local={true} /> )
     if ( selectedTab == 'preprints' ) {
-        content = ( <DraftPapersListView type="preprint" /> )
+        content = ( <PaperList type="preprint" /> )
     } else if ( selectedTab == 'submissions' ) {
-        content = ( <DraftPapersListView type="submissions" /> )
+        content = ( <PaperList type="submissions" /> )
     } else if ( selectedTab == 'assigned' ) {
-        content = ( <DraftPapersListView type="assigned-review" /> )
+        content = ( <PaperList type="assigned-review" /> )
     } else {
-        content = ( <DraftPapersListView type="assigned-review" /> )
+        content = ( <PaperList type="assigned-review" /> )
     }
 
 
