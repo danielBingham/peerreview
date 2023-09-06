@@ -7,18 +7,16 @@ import { DocumentCheckIcon, TagIcon } from '@heroicons/react/24/outline'
 
 import { getUser, cleanupRequest } from '/state/users'
 
+import Spinner from '/components/Spinner'
+import { Page, PageBody, PageHeader, PageTabBar, PageTab } from '/components/generic/Page'
+
 import UserView from '/components/users/UserView'
 import PaperList from '/components/papers/list/PaperList'
-
-import PageHeader from '/components/generic/PageHeader'
-import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
-import PageTab from '/components/generic/pagetabbar/PageTab'
-import Spinner from '/components/Spinner'
 
 import './UserProfilePage.css'
 
 const UserProfilePage = function(props) {
-    const { id, tab } = useParams()
+    const { id, pageTab} = useParams()
 
     // ======= Request Tracking =====================================
 
@@ -46,11 +44,6 @@ const UserProfilePage = function(props) {
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
-    const selectTab = function(tabName) {
-        const urlString = `/user/${id}/${tabName}`
-        navigate(urlString)
-    }
-
     // ======= Effect Handling ======================================
 
     useEffect(function() {
@@ -69,13 +62,13 @@ const UserProfilePage = function(props) {
 
     // ======= Render ===============================================
 
-    const selectedTab = ( tab ? tab : 'papers')
+    const selectedTab = ( pageTab ? pageTab : 'papers')
 
     let content = ( <Spinner local={true} /> )
     if ( request && request.state == 'fulfilled' ) {
         if ( selectedTab == 'papers' ) {
             content = (
-                <PaperList type="published" authorId={ id }  />
+                <PaperList type="published" authors={[ id ]}  />
             )
         } else if ( selectedTab == 'biography' ) {
             content = (
@@ -87,24 +80,24 @@ const UserProfilePage = function(props) {
     }
 
     return (
-        <>
+        <Page id="user-profile-page">
             <PageHeader>
                 <UserView id={id} />
             </PageHeader>
             <PageTabBar>
-                <PageTab url={`/user/${id}/papers`} selected={selectedTab == 'papers'}>
+                <PageTab url={`/user/${id}/papers`} tab="papers" initial={true}>
                     <DocumentCheckIcon /> Papers
                 </PageTab>
-                <PageTab url={`/user/${id}/biography`} selected={selectedTab == 'biography'}>
+                <PageTab url={`/user/${id}/biography`} tab="biography">
                     Biography
                 </PageTab>
             </PageTabBar>
-            <div id="user-profile-page" className="page">
+            <PageBody>
                 <div className="tab-content">
                     { content }
                 </div>
-            </div>
-        </>
+            </PageBody>
+        </Page>
     )
 }
 

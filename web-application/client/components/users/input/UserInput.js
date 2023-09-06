@@ -273,6 +273,7 @@ const UserInput = function({ onBlur, selectUser, label, explanation }) {
                         onFocus={onUserNameFocus}
                         onChange={handleChange} 
                         placeholder={`Search for users by name. Start typing to view suggestions...`}
+                        autoComplete="off"
                     />
                     <div className="user-suggestions" 
                         style={ ( suggestedUserList.length > 0 || suggestionsError ? { display: 'block' } : { display: 'none' } ) }

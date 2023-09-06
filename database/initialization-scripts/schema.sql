@@ -162,6 +162,7 @@ CREATE TABLE paper_versions (
     version int NOT NULL,
     file_id uuid REFERENCES files(id) ON DELETE CASCADE,
     is_published boolean DEFAULT false,
+    review_count int default 0,
     content text NOT NULL,
     searchable_content tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,
     created_date timestamptz,
@@ -186,25 +187,17 @@ CREATE TABLE paper_fields (
     PRIMARY KEY (paper_id, field_id)
 );
 
-/*
-CREATE TYPE paper_event_types AS ENUM('version', 'review', 'comment', 'submission', 'decision');
-CREATE TABLE paper_events (
-    id bigserial PRIMARY KEY,
-    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
-    user_id bigint REFERENCES users(id),
-    type paper_event_types,
 
-
-) ;
-*/
 
 /******************************************************************************
  * Journals
  ******************************************************************************/
 
+CREATE TYPE journal_transparency as ENUM('open', 'closed');
 CREATE TABLE journals (
     id      bigserial PRIMARY KEY,
     name    varchar(1024) NOT NULL,
+    transparency journal_transparency NOT NULL DEFAULT 'closed', 
     description text,
     created_date    timestamptz,
     updated_date    timestamptz
@@ -217,7 +210,7 @@ CREATE TABLE journal_members (
     journal_id  bigint REFERENCES journals(id) ON DELETE CASCADE,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     member_order int,
-    permissions journal_user_permissions DEFAULT 'editor',
+    permissions journal_user_permissions DEFAULT 'reviewer',
     created_date    timestamptz,
     updated_date    timestamptz,
     PRIMARY KEY (journal_id, user_id)
@@ -352,6 +345,58 @@ CREATE TABLE review_comment_versions (
 );
 
 
+/******************************************************************************
+ * Paper Events
+ * 
+ * Paper events need to be created down here, because they have dependencies on
+ * almost every other table.
+ *
+ ******************************************************************************/
+
+CREATE TYPE paper_event_types AS ENUM(
+    'version-uploaded', 
+    'preprint-posted',
+    'review-posted', 
+    'review-comment-reply-posted',
+    'comment-posted',
+    'submitted-to-journal', 
+    'submission-status-changed',
+    'reviewer-assigned',
+    'reviewer-unassigned',
+    'editor-assigned',
+    'editor-unassigned'
+);
+
+CREATE TYPE paper_event_visibility AS ENUM(
+    'managing-editor',
+    'editors',
+    'assigned-editors',
+    'reviewers',
+    'assigned-reviewers',
+    'corresponding-author',
+    'authors',
+    'public'
+);
+
+/** 
+ * Bottom section is sparsely populated links to other entities related to this
+ * particular event.  Each event type will populate a subset of these. 
+ */
+CREATE TABLE paper_events (
+    id bigserial PRIMARY KEY,
+    paper_id bigint REFERENCES papers(id) ON DELETE CASCADE NOT NULL,
+    actor_id bigint REFERENCES users(id) NOT NULL,
+    version int NOT NULL,
+    type paper_event_types NOT NULL,
+    visibility paper_event_visibility[] NOT NULL DEFAULT '{"public"}',
+    event_date timestamptz,
+
+    assignee_id bigint REFERENCES users(id) DEFAULT NULL,
+    review_id bigint REFERENCES reviews(id) DEFAULT NULL,
+    review_comment_id bigint REFERENCES review_comments(id) DEFAULT NULL,
+    submission_id bigint REFERENCES journal_submissions(id) DEFAULT NULL,
+    new_status journal_submission_status DEFAULT NULL
+);
 
 /******************************************************************************
  * Responses 

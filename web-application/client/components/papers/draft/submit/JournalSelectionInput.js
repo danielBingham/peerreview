@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useRef } from 'react'
-
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import { getJournals, clearJournalQuery, cleanupRequest } from '/state/journals'
 
@@ -12,10 +12,13 @@ import './JournalSelectionInput.css'
 
 const JournalSelectionInput = function(props) {
 
+    const [ searchParams, setSearchParams ] = useSearchParams()
+    const initialJournalId = searchParams.get('journal')
+
     // ======= Render State =========================================
 
     const [journalName, setJournalName] = useState('')
-    const [ journal, setJournal ] = useState(null)
+    const [ selectedJournalId, setSelectedJournalId] = useState(null)
 
     const [highlightedSuggestion, setHighlightedSuggestion] = useState(0)
     const [error, setError] = useState(null)
@@ -117,16 +120,19 @@ const JournalSelectionInput = function(props) {
         setJournalName('')
         clearSuggestions()
 
-        setJournal(journal)
-        props.setJournal(journal)
+        setSelectedJournalId(journal.id)
+        props.setSelectedJournalId(journal.id)
     }
 
     const removeJournal = function() {
         setJournalName('')
         clearSuggestions()
 
-        setJournal(null)
-        props.setJournal(null)
+        setSelectedJournalId(null)
+        props.setSelectedJournalId(null)
+
+        searchParams.delete('journal')
+        setSearchParams(searchParams)
     }
 
     /**
@@ -184,6 +190,13 @@ const JournalSelectionInput = function(props) {
         dispatch(clearJournalQuery({ name: 'JournalSelectionInput' }))
     }, [])
 
+    useEffect(function() {
+        const journalId = searchParams.get('journal')
+        if ( journalId ) {
+            setSelectedJournalId(journalId)
+        }
+    }, [ searchParams ])
+
     // Make sure the highlightedSuggestion is never outside the bounds of the
     // journalSuggestions list (plus the journal invite selection).
     useLayoutEffect(function() {
@@ -206,13 +219,13 @@ const JournalSelectionInput = function(props) {
     let suggestedJournalList = []
     let suggestionsError = null
     if ( request && request.state != 'failed') {
-        for ( const [ index, journal] of journalSuggestions.entries()) {
+        for ( const [ index, suggestedJournal] of journalSuggestions.entries()) {
             suggestedJournalList.push(
-                <div key={journal.id} 
-                    onMouseDown={(event) => { selectJournal(journal) }} 
+                <div key={suggestedJournal.id} 
+                    onMouseDown={(event) => { selectJournal(suggestedJournal) }} 
                     className={ index == highlightedSuggestion ? "journal-suggestion highlighted" : "journal-suggestion" }
                 >
-                    {journal.name}
+                    {suggestedJournal.name}
                 </div>
             )
         }
@@ -236,12 +249,12 @@ const JournalSelectionInput = function(props) {
         <div className="journals-input field-wrapper"> 
             { props.label &&  <h3>{ props.label }</h3> }
             { props.explanation && <div className="explanation">{ props.explanation }</div> }
-            { journal && 
+            { selectedJournalId && 
                 <div className="selected-journal">
-                    <strong>Submitting to:</strong> <JournalTag id={journal.id} onRemove={(e) => { removeJournal() }} />
+                    <strong>Submitting to:</strong> <JournalTag id={selectedJournalId} onRemove={(e) => { removeJournal() }} />
                 </div>
             }
-            { ! journal && <div className="input-wrapper">
+            { ! selectedJournalId && <div className="input-wrapper">
                 <input type="text" 
                     name="journalName" 
                     value={journalName}

@@ -1,11 +1,11 @@
-
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { Link, useParams } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 
 import CreateJournalForm from '/components/journals/CreateJournalForm'
 
 import Spinner from '/components/Spinner'
+import { Page, PageBody } from '/components/generic/Page'
 
 import './CreateJournalPage.css'
 
@@ -13,28 +13,25 @@ const CreateJournalPage = function(props) {
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
+  
+    const navigate = useNavigate()
+    useEffect(function() {
+        if ( ! currentUser ) {
+            navigate('/login')
+        }
+    }, [])
 
     let content = ( <Spinner /> )
-    // If we don't have a current user, then we're giving them the login
-    // notice, because they aren't allowed to submit.
-    if ( ! currentUser ) {
-        content = ( 
-            <div className="login-notice">
-                <p>You must be logged in to create a new journal.</p>
-                <p>Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</p>
-            </div>
-        )
-    }
-
-    else {
+    if ( currentUser ) {
         content = ( <CreateJournalForm /> )
     }
 
-
     return (
-        <div id="create-journal-page" className="page">
-            { content }
-        </div>
+        <Page id="create-journal-page">
+            <PageBody>
+                { content }
+            </PageBody>
+        </Page>
     )
 }
 

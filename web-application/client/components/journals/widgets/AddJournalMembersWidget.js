@@ -11,6 +11,7 @@ import './AddJournalMembersWidget.css'
 const AddJournalMembersWidget = function(props) {
 
     // ================ Render State ================================
+    const [ order, setOrder ] = useState(2)
 
     // ================== Request Tracking ====================================
     
@@ -35,11 +36,14 @@ const AddJournalMembersWidget = function(props) {
         const member = {
             userId: user.id,
             permissions: 'reviewer',
-            order: props.members.length+1
+            order: order 
         }
+
+        setOrder(order+1)
 
         newMembers.push(member)
         props.setMembers(newMembers)
+
     }
 
     const assignPermissions = function(member, permissions) {

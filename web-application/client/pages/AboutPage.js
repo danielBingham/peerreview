@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react'
 
+import { Page, PageBody } from '/components/generic/Page'
+
 import GetInvolved from '/components/about/sections/GetInvolved'
 import IntroductionSection from '/components/about/sections/IntroductionSection'
 import HowItWorksSection from '/components/about/sections/HowItWorksSection'
@@ -19,15 +21,19 @@ const AboutPage = function(props) {
     }, [])
 
     return (
-        <article id="about-page" className="page">
-            <GetInvolved />
-            <h1>About Peer Review</h1>
-            <IntroductionSection />
-            <HowItWorksSection />
-            <GovernanceSection />
-            <TeamSection />
-            <FAQSection />
-        </article>
+        <Page id="about-page">
+            <PageBody>
+                <article>
+                    <GetInvolved />
+                    <h1>About Peer Review</h1>
+                    <IntroductionSection />
+                    <HowItWorksSection />
+                    <GovernanceSection />
+                    <TeamSection />
+                    <FAQSection />
+                </article>
+            </PageBody>
+        </Page>
     )
 
 }

@@ -1,0 +1,10 @@
+.paper-pdf-page {
+    position: relative;
+    margin: 0 auto;
+    width: 802px;
+    cursor: crosshair;
+}
+
+.paper-pdf-page .react-pdf__Page {
+    border: thin solid var(--main-border-color);
+}

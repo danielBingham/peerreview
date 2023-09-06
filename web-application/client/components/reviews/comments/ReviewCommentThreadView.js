@@ -36,11 +36,11 @@ const ReviewCommentThreadView = function(props) {
     // DraftPaperPDFView, that's not triggering the ThreadView to re-render
     // appropriately.  This does.
     const thread = useSelector(function(state) {
-        return state.reviews.dictionary[props.paper.id][props.reviewId].threads.find((t) => t.id == props.id)
+        return state.reviews.dictionary[props.reviewId].threads.find((t) => t.id == props.id)
     })
 
     const review = useSelector(function(state) {
-        return state.reviews.dictionary[props.paper.id][thread.reviewId]
+        return state.reviews.dictionary[props.reviewId]
     })
 
     // ======= Actions and Event Handling ===========================

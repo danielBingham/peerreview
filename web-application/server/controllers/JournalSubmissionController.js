@@ -1,11 +1,17 @@
-/******************************************************************************
- * JournalSubmissionController
+/****************************************************************************** JournalSubmissionController
  *
  * Restful routes for manipulating journal submissions.
  *
  ******************************************************************************/
 
-const { JournalDAO, JournalSubmissionDAO, PaperDAO, UserDAO, FieldDAO, DAOError } = require('@danielbingham/peerreview-backend')
+const { 
+    JournalDAO, 
+    JournalSubmissionDAO,
+    PaperDAO,
+    PaperEventDAO,
+    UserDAO,
+    FieldDAO,
+    DAOError } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -17,6 +23,7 @@ module.exports = class JournalSubmissionController {
         this.journalSubmissionDAO = new JournalSubmissionDAO(this.core)
         this.journalDAO = new JournalDAO(this.core)
         this.paperDAO = new PaperDAO(this.core)
+        this.paperEventDAO = new PaperEventDAO(this.core)
         this.userDAO = new UserDAO(this.core)
         this.fieldDAO = new FieldDAO(this.core)
     }
@@ -413,17 +420,27 @@ module.exports = class JournalSubmissionController {
         }
         const id = await this.journalSubmissionDAO.insertJournalSubmission(submission)
 
-        const results  = await this.journalSubmissionDAO.selectJournalSubmissions('WHERE journal_submissions.id = $1', [id])
+        const results = await this.journalSubmissionDAO.selectJournalSubmissions('WHERE journal_submissions.id = $1', [id])
+        const entity = results.dictionary[id]
 
-        if ( results.list.length <= 0 ) {
+        if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
                 `Submission(${id}) of Paper(${paperId}) to Journal(${journalId}) not found after insert!`)
         }
 
+        const event = {
+            paperId: paperId,
+            actorId: user.id,
+            type: 'submitted-to-journal',
+            visibility: [ 'authors', 'managing-editor' ],
+            submission_id: id
+        }
+        await this.paperEventDAO.insertEvent(event)
+
         const relations = await this.getRelations(results)
 
         return response.status(201).json({ 
-            entity: results.list[0],
+            entity: entity,
             relations: relations
         })
     }
@@ -584,10 +601,20 @@ module.exports = class JournalSubmissionController {
                 `User(${user.id}) attempted to patch a submission for Journal(${journalId}) of which they are neither editor nor owner.`)
         }
 
+        const existingResults = await this.journalSubmissionDAO.selectJournalSubmissions(`WHERE journal_submissions.id = $1`, [ id ])
+        const existing = existingResults.dictionary[id]
+
+        if ( ! existing ) {
+            throw new ControllerError(404, 'not-found',
+                `User(${user.id}) atempted to patch Submission(${id}) that doesn't appear to exist.`)
+        }
+
         // TODO Permissions around who can update the decision, as well as the status.
 
         // If this is a decision, we need to set the deciderId from the session.
-        if ( submissionPatch.status == 'published' || submissionPatch.status == 'rejected') {
+        if ( submissionPatch.status != existing.status 
+            && (submissionPatch.status == 'published' || submissionPatch.status == 'rejected')) 
+        {
             submissionPatch.deciderId = user.id
         }
 
@@ -599,13 +626,18 @@ module.exports = class JournalSubmissionController {
         await this.journalSubmissionDAO.updatePartialSubmission(submissionPatch)
 
         const results = await this.journalSubmissionDAO.selectJournalSubmissions('WHERE journal_submissions.id = $1', [id])
+        const entity = results.dictionary[id]
 
+        if ( ! entity ) {
+            throw new ControllerError(500, 'server-error',
+                `Submission(${id}) to Journal(${journalId}) not found after insert!`)
+        }
 
-        let requestedRelations = []
         // If we published this paper, we need to update its draft status.
-        if ( submissionPatch.status == 'published' ) {
+        let requestedRelations = []
+        if (existing.status != submissionPatch.status && submissionPatch.status == 'published' ) {
             const paperPatch = {
-                id: results.dictionary[id].paperId,
+                id: entity.paperId,
                 isDraft: false
             }
 
@@ -613,16 +645,23 @@ module.exports = class JournalSubmissionController {
             requestedRelations.push('papers')
         }
 
-
-        if ( results.list.length <= 0 ) {
-            throw new ControllerError(500, 'server-error',
-                `Submission(${id}) to Journal(${journalId}) not found after insert!`)
+        // If the status changed, we need to post an event.
+        if ( existing.status != submissionPatch.status ) {
+            const event = {
+                paperId: entity.paperId,
+                actorId: user.id,
+                type: 'submission-status-changed',
+                visibility: [ 'public' ],
+                submissionId: entity.id,
+                newStatus: submissionPatch.status
+            }
+            await this.paperEventDAO.insertEvent(event)
         }
 
-        const relations = await this.getRelations(results)
+        const relations = await this.getRelations(results, requestedRelations)
 
         return response.status(200).json({ 
-            entity: results.list[0],
+            entity: entity,
             relations: relations
         })
     }
@@ -795,16 +834,27 @@ module.exports = class JournalSubmissionController {
             'WHERE journal_submissions.id = $1', 
             [ submissionId ]
         )
+        const entity = results.dictionary[submissionId]
 
-        if ( ! results.dictionary[submissionId] ) {
+        if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
                 `Unable to find Submission(${submissionId}) after assigning Reviewer(${reviewer.userId}).`)
         }
 
+        const event = {
+            paperId: entity.paperId,
+            actorId: user.id,
+            type: 'reviewer-assigned',
+            visibility: [ 'public' ],
+            submissionId: entity.id,
+            assigneeId: reviewer.userId
+        }
+        await this.paperEventDAO.insertEvent(event)
+
         const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
-            entity: results.list[0],
+            entity: entity,
             relations: relations
         })
     }
@@ -904,16 +954,27 @@ module.exports = class JournalSubmissionController {
             'WHERE journal_submissions.id = $1', 
             [ submissionId ]
         )
+        const entity = results.dictionary[submissionId]
 
-        if ( ! results.dictionary[submissionId] ) {
+        if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
-                `Unable to find Submission(${submissionId}) after assigning Assignee(${reviewer.userId}).`)
+                `Unable to find Submission(${submissionId}) after unassigning Reviewer(${userId}).`)
         }
+
+        const event = {
+            paperId: entity.paperId,
+            actorId: user.id,
+            type: 'reviewer-unassigned',
+            visibility: [ 'public' ],
+            submissionId: entity.id,
+            assigneeId: userId
+        }
+        await this.paperEventDAO.insertEvent(event)
 
         const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
-            entity: results.list[0],
+            entity: entity,
             relations: relations
         })
     }
@@ -924,7 +985,7 @@ module.exports = class JournalSubmissionController {
     /**
      * POST /journal/:journalId/submission/:submissionId/editors
      *
-     * Assign a reviewer to a journal submission.
+     * Assign an editor to a journal submission.
      *
      * @param {Object} request  Standard Express request object.
      * @param {Object} request.body Must be a valid `journal` object.
@@ -942,8 +1003,8 @@ module.exports = class JournalSubmissionController {
          * 3. Journal(journalId) must exist.
          * 4. Logged in User must be Journal(journalId) member.
          * 5. IF Logged In User is owner or editor, may assign anyone.
-         * 5a. IF Logged in User is reviewer, may only assign themselves.
-         * 6. Assigned reviewer must be a journal member.
+         * 5a. IF Logged in User is editor, may only assign themselves.
+         * 6. Assigned editor must be a journal member.
          *
          * TODO posted user must be editor or owner
          * **********************************************************/
@@ -952,30 +1013,31 @@ module.exports = class JournalSubmissionController {
 
         if ( ! request.body ) {
             throw new ControllerError(400, 'missing-body',
-                `Attempt to assigned reviewer to Submission(${submissionId}) missing reviewer.`)
+                `Attempt to assigned editor to Submission(${submissionId}) missing editor.`)
         }
 
-        const reviewer = request.body
-        reviewer.submissionId = submissionId
+        const editor = request.body
+        editor.submissionId = submissionId
 
         // 1. User is logged in.
         if ( ! request.session || ! request.session.user ) {
             throw new ControllerError(401, 'not-authenticated', 
-                `User must be authenticated to assign a reviewer!`)
+                `User must be authenticated to assign a editor!`)
         }
 
         const user = request.session.user
 
         // 2. Submission(SubmissionId) must exist and belong to Journal(journalId).
-        const submissionResults = await this.journalSubmissionDAO.selectJournalSubmissions(`WHERE journal_submissions.id = $1`, [ reviewer.submissionId ]) 
-        if ( submissionResults.list.length <= 0 ) {
-            throw new ControllerError(404, 'submission-not-found', `Attempt to assign reviewer to Submission(${reviewer.submissionId}) which doesn't exist.`)
+        const submissionResults = await this.journalSubmissionDAO.selectJournalSubmissions(`WHERE journal_submissions.id = $1`, [ editor.submissionId ]) 
+        const existing = submissionResults.dictionary[editor.submissionId]
+
+        if ( ! existing) {
+            throw new ControllerError(404, 'submission-not-found', `Attempt to assign editor to Submission(${editor.submissionId}) which doesn't exist.`)
         }
 
-        const submission = submissionResults.dictionary[reviewer.submissionId]
-        if ( submission.journalId !== journalId ) {
+        if ( existing.journalId !== journalId ) {
             throw new ControlleError(400, 'wrong-journal', 
-                `Attempt to assign reviewer to Submission(${reviewer.submission.id}) which belongs to Journal(${submission.journalId}) not Journal(${journalId}).`)
+                `Attempt to assign editor to Submission(${editor.submission.id}) which belongs to Journal(${submission.journalId}) not Journal(${journalId}).`)
         }
 
         const journalResults = await this.journalDAO.selectJournals('WHERE id = $1', [ journalId])
@@ -984,21 +1046,21 @@ module.exports = class JournalSubmissionController {
         // 3. Journal must exist.
         if ( ! journal ) {
             throw new ControllerError(404, 'journal-not-found',
-                `Attempt to assign reviewer to Submission for Journal(${journalId}) which was not found.`)
+                `Attempt to assign editor to Submission for Journal(${journalId}) which was not found.`)
         }
 
         // 4. Logged in User must be journal member.
         const member = journal.members.find((m) => m.userId == user.id)
         if ( ! member ) {
             throw new ControllerError(403, 'not-authorized',
-                `User(${user.id}) attempted to assign reviewers to Submission(${reviewer.submissionId}) for Journal(${journalId}) of which they are not a member.`)
+                `User(${user.id}) attempted to assign editors to Submission(${editor.submissionId}) for Journal(${journalId}) of which they are not a member.`)
         }
 
         // 5. IF Logged In User is owner or editor, may assign anyone.
-        // 5a. IF Logged in User is reviewer, may only assign themselves.
-        if ( reviewer.userId !== user.id && member.permissions !== 'editor' && member.permissions != 'owner' ) {
+        // 5a. IF Logged in User is editor, may only assign themselves.
+        if ( editor.userId !== user.id && member.permissions !== 'editor' && member.permissions != 'owner' ) {
             throw new ControllerError(403, 'not-authorized',
-                `User(${user.id}) attempted to assign a Revewer(${reviewer.userId}) to a submission for Journal(${journalId}) when they don't have the appropriate permissions.`)
+                `User(${user.id}) attempted to assign an Editor(${editor.userId}) to a submission for Journal(${journalId}) when they don't have the appropriate permissions.`)
         }
 
         // Possible TECHDEBT: We're using this as the user existence check to
@@ -1006,11 +1068,11 @@ module.exports = class JournalSubmissionController {
         // user existence when we add a member to a journal or if the journal
         // members data gets corrupted in any way.
         //
-        // 6. Assigned reviewer must be a journal member.
-        const reviewerMember = journal.members.find((m) => m.userId == reviewer.userId)
-        if ( ! reviewerMember ) {
+        // 6. Assigned editor must be a journal member.
+        const editorMember = journal.members.find((m) => m.userId == editor.userId)
+        if ( ! editorMember ) {
             throw new ControllerError(400, 'not-member',
-                `User(${user.id}) attempted to assign a reviewer who is not a member of Journal(${journalId}).`)
+                `User(${user.id}) attempted to assign a editor who is not a member of Journal(${journalId}).`)
         }
 
         
@@ -1019,22 +1081,33 @@ module.exports = class JournalSubmissionController {
          *       Execute the POST 
          **********************************************************************/
 
-        await this.journalSubmissionDAO.insertJournalSubmissionEditor(reviewer)
+        await this.journalSubmissionDAO.insertJournalSubmissionEditor(editor)
 
         const results = await this.journalSubmissionDAO.selectJournalSubmissions(
             'WHERE journal_submissions.id = $1', 
             [ submissionId ]
         )
+        const entity = results.dictionary[submissionId]
 
-        if ( ! results.dictionary[submissionId] ) {
+        if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
-                `Unable to find Submission(${submissionId}) after assigning Reviewer(${reviewer.userId}).`)
+                `Unable to find Submission(${submissionId}) after assigning Reviewer(${editor.userId}).`)
         }
+
+        const event = {
+            paperId: entity.paperId,
+            actorId: user.id,
+            type: 'editor-assigned',
+            visibility: [ 'public' ],
+            submissionId: entity.id,
+            assigneeId: editor.userId
+        }
+        await this.paperEventDAO.insertEvent(event)
 
         const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
-            entity: results.list[0],
+            entity: entity,
             relations: relations
         })
     }
@@ -1060,8 +1133,8 @@ module.exports = class JournalSubmissionController {
          * 3. Journal(journalId) must exist.
          * 4. Logged in User must be Journal(journalId) member.
          * 5. IF Logged In User is owner or editor, may assign anyone.
-         * 5a. IF Logged in User is reviewer, may only assign themselves.
-         * 6. Assigned reviewer must be a journal member.
+         * 5a. IF Logged in User is editor, may only assign themselves.
+         * 6. Assigned editor must be a journal member.
          * **********************************************************/
         const journalId = request.params.journalId
         const submissionId = request.params.submissionId
@@ -1070,7 +1143,7 @@ module.exports = class JournalSubmissionController {
         // 1. User is logged in.
         if ( ! request.session || ! request.session.user ) {
             throw new ControllerError(401, 'not-authenticated', 
-                `User must be authenticated to unassign a reviewer!`)
+                `User must be authenticated to unassign a editor!`)
         }
 
         const user = request.session.user
@@ -1078,13 +1151,13 @@ module.exports = class JournalSubmissionController {
         // 2. Submission(SubmissionId) must exist and belong to Journal(journalId).
         const submissionResults = await this.journalSubmissionDAO.selectJournalSubmissions(`WHERE journal_submissions.id = $1`, [ submissionId ]) 
         if ( submissionResults.list.length <= 0 ) {
-            throw new ControllerError(404, 'submission-not-found', `Attempt to unassign reviewer from Submission(${submissionId}) which doesn't exist.`)
+            throw new ControllerError(404, 'submission-not-found', `Attempt to unassign editor from Submission(${submissionId}) which doesn't exist.`)
         }
 
         const submission = submissionResults.dictionary[submissionId]
         if ( submission.journalId !== journalId ) {
             throw new ControlleError(400, 'wrong-journal', 
-                `Attempt to unassign reviewer from Submission(${submissionId}) which belongs to Journal(${submission.journalId}) not Journal(${journalId}).`)
+                `Attempt to unassign editor from Submission(${submissionId}) which belongs to Journal(${submission.journalId}) not Journal(${journalId}).`)
         }
 
         const journalResults = await this.journalDAO.selectJournals('WHERE id = $1', [ journalId ])
@@ -1093,18 +1166,18 @@ module.exports = class JournalSubmissionController {
         // 3. Journal must exist.
         if ( ! journal ) {
             throw new ControllerError(404, 'journal-not-found',
-                `Attempt to unassign reviewer from Submission(${submissionId}) which belongs to Journal(${journalId}) which was not found.`)
+                `Attempt to unassign editor from Submission(${submissionId}) which belongs to Journal(${journalId}) which was not found.`)
         }
 
         // 4. Logged in User must be journal member.
         const member = journal.members.find((m) => m.userId == user.id)
         if ( ! member ) {
             throw new ControllerError(403, 'not-authorized',
-                `User(${user.id}) attempted to unassign reviewers to Submission(${submissionId}) for Journal(${journalId}) of which they are not a member.`)
+                `User(${user.id}) attempted to unassign editors to Submission(${submissionId}) for Journal(${journalId}) of which they are not a member.`)
         }
 
         // 5. IF Logged In User is owner or editor, may assign anyone.
-        // 5a. IF Logged in User is reviewer, may only assign themselves.
+        // 5a. IF Logged in User is editor, may only assign themselves.
         if ( userId !== user.id && member.permissions !== 'editor' && member.permissions != 'owner' ) {
             throw new ControllerError(403, 'not-authorized',
                 `User(${user.id}) attempted to assign a Revewer(${userId}) to a submission for Journal(${journalId}) when they don't have the appropriate permissions.`)
@@ -1115,11 +1188,11 @@ module.exports = class JournalSubmissionController {
         // user existence when we add a member to a journal or if the journal
         // members data gets corrupted in any way.
         //
-        // 6. Assigned reviewer must be a journal member.
-        const reviewerMember = journal.members.find((m) => m.userId == userId)
-        if ( ! reviewerMember ) {
+        // 6. Assigned editor must be a journal member.
+        const editorMember = journal.members.find((m) => m.userId == userId)
+        if ( ! editorMember ) {
             throw new ControllerError(400, 'not-member',
-                `User(${user.id}) attempted to assign a reviewer who is not a member of Journal(${journalId}).`)
+                `User(${user.id}) attempted to assign a editor who is not a member of Journal(${journalId}).`)
         }
 
         
@@ -1134,16 +1207,27 @@ module.exports = class JournalSubmissionController {
             'WHERE journal_submissions.id = $1', 
             [ submissionId ]
         )
+        const entity = results.dictionary[submissionId]
 
-        if ( ! results.dictionary[submissionId] ) {
+        if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
-                `Unable to find Submission(${submissionId}) after assigning Assignee(${reviewer.userId}).`)
+                `Unable to find Submission(${submissionId}) after assigning Assignee(${editor.userId}).`)
         }
+
+        const event = {
+            paperId: entity.paperId,
+            actorId: user.id,
+            type: 'editor-unassigned',
+            visibility: [ 'public' ],
+            submissionId: entity.id,
+            assigneeId: userId
+        }
+        await this.paperEventDAO.insertEvent(event)
 
         const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
-            entity: results.list[0],
+            entity: entity,
             relations: relations
         })
     }

@@ -68,6 +68,8 @@ module.exports = class PaperDAO {
             const paper_version = {
                 file: this.fileDAO.hydrateFile(row),
                 version: row.version_version,
+                content: row.version_content,
+                reviewCount: row.version_reviewCount,
                 createdDate: row.version_createdDate,
                 updatedDate: row.version_updatedDate
             }
@@ -133,6 +135,7 @@ module.exports = class PaperDAO {
                     paper_authors.owner as author_owner, paper_authors.submitter as author_submitter,
 
                     paper_versions.version as version_version,
+                    paper_versions.content as version_content, paper_versions.review_count as "version_reviewCount",
                     paper_versions.created_date as "version_createdDate", paper_versions.updated_date as "version_updatedDate",
 
                     ${ this.fileDAO.getFilesSelectionString() },
@@ -243,7 +246,7 @@ module.exports = class PaperDAO {
 
         const count = results.rows[0].paper_count
         return { 
-            count: results.rows[0].paper_count,
+            count: count,
             page: page ? page : 1,
             pageSize: PAGE_SIZE,
             numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0)

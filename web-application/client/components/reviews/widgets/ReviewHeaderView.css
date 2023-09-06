@@ -9,3 +9,19 @@
 .review-header .inner .instructions {
     padding: 20px;
 }
+.review-header .controls {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+}
+.review-header .review-selector .review-option {
+    padding: 20px 10px;
+}
+.review-header .selected-review {
+    border: thin solid var(--main-border-color);
+    margin: 10px auto;
+    padding: 10px;
+}
+.review-selector .review-menu-body {
+    max-height: 600px;
+    overflow: auto;
+}

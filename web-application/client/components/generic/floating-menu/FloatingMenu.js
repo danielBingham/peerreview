@@ -121,7 +121,7 @@ export const FloatingMenuBody = function(props) {
     // ======= Render ===============================================
    
     return (
-        <div className="menu-body" style={{ display: (visible ? 'block' : 'none' ) }} >
+        <div className={`menu-body ${ props.className ? props.className : ''}`} style={{ display: (visible ? 'block' : 'none' ) }} >
             { props.children }
         </div>
     )

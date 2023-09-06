@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useParams, useSearchParams, Link } from 'react-router-dom'
 
 import { getJournalSubmissions, cleanupRequest } from '/state/journalSubmissions'
-import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'

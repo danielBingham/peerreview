@@ -26,6 +26,9 @@ import {
 export const fieldsSlice = createSlice({
     name: 'fields',
     initialState: {
+        
+        // ======== Standard State ============================================
+        
         /**
          * A dictionary of requests in progress or that we've made and completed,
          * keyed with a uuid requestId.

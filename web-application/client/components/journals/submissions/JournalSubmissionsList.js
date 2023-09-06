@@ -4,7 +4,6 @@ import { useSearchParams, Link } from 'react-router-dom'
 
 
 import { getJournalSubmissions, cleanupRequest } from '/state/journalSubmissions'
-import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
 import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
@@ -56,15 +55,6 @@ const JournalSubmissionsList = function(props) {
     const request = useSelector(function(state) {
         if ( requestId) {
             return state.journalSubmissions.requests[requestId]
-        } else {
-            return null
-        }
-    })
-
-    const [countReviewsRequestId, setCountReviewsRequestId] = useState(null)
-    const countReviewsRequest = useSelector(function(state) {
-        if ( countReviewsRequestId) {
-            return state.reviews.requests[countReviewsRequestId]
         } else {
             return null
         }
@@ -138,7 +128,6 @@ const JournalSubmissionsList = function(props) {
         }
 
         setRequestId(dispatch(getJournalSubmissions('JournalSubmissionsList', props.id, query)))
-        setCountReviewsRequestId(dispatch(countReviews()))
     }
 
     useEffect(function() {
@@ -163,14 +152,6 @@ const JournalSubmissionsList = function(props) {
         }
     }, [ requestId ])
 
-    useEffect(function() {
-        return function cleanup() {
-            if ( countReviewsRequestId ) {
-                dispatch(cleanupReviewRequest({ requestId: countReviewsRequestId }))
-            }
-        }
-    }, [ countReviewsRequestId ])
-
     // ====================== Render ==========================================
 
     // Don't render unless we've completed the request, otherwise we could wind
@@ -178,7 +159,7 @@ const JournalSubmissionsList = function(props) {
 
     let content = ( <Spinner /> )
     let noContent = null
-    if ( request && request.state == 'fulfilled' && countReviewsRequest && countReviewsRequest.state == 'fulfilled') {
+    if ( request && request.state == 'fulfilled' ) {
         content = []
         for (const submission of submissionQuery.list) {
 

@@ -14,13 +14,35 @@ module.exports = class ReviewController {
         this.logger = core.logger
 
         this.reviewDAO = new backend.ReviewDAO(core)
+        this.userDAO = new backend.UserDAO(core)
+        this.paperEventDAO = new backend.PaperEventDAO(core)
     }
 
-    async countReviews(request, response) {
-        const counts = await this.reviewDAO.countReviews(`WHERE reviews.status != 'in-progress'`)
-        return response.status(200).json(counts)
-    }
+    async getRelations(currentUser, results, requestedRelations) {
+        const relations = {}
 
+        // ======== Default Relations =========================================
+        // These are relations we always retrieve and return.
+
+        // ======== users =====================================================
+        const userIds = []
+        for(const [id, review] of Object.entries(results.dictionary)) {
+            userIds.push(review.userId)
+            for(const thread of review.threads) {
+                for(const comment of thread.comments) {
+                    if ( comment.status != 'in-progress' && comment.userId != currentUser?.id) {
+                        userIds.push(comment.userId)
+                    }
+                }
+            }
+        }
+
+        const userResults = await this.userDAO.selectCleanUsers(`WHERE users.id = ANY($1::bigint[])`, [ userIds ])
+        relations.users = userResults.dictionary
+
+        return relations
+
+    }
 
     /**
      * GET /paper/:paper_id/reviews
@@ -80,28 +102,26 @@ module.exports = class ReviewController {
          *       Get the Reviews
          ********************************************************/
 
-
-        let reviews = []
+        let where = ''
+        let params = []
+        
         if ( userId ) {
-            reviews = await this.reviewDAO.selectReviews(
-                `WHERE reviews.paper_id=$1 AND (reviews.status != 'in-progress' OR reviews.user_id = $2)`, 
-                [ paperId, userId ]
-            )
+            where = `WHERE reviews.paper_id=$1 AND (reviews.status != 'in-progress' OR reviews.user_id = $2)`
+            params = [ paperId, userId ]
         } else {
-            reviews = await this.reviewDAO.selectReviews(
-                `WHERE reviews.paper_id=$1 AND reviews.status != 'in-progress'`, 
-                [ paperId ]
-            )
+            where = `WHERE reviews.paper_id=$1 AND reviews.status != 'in-progress'`
+            params = [ paperId ]
         }
 
-        if ( ! reviews ) {
-            return response.status(200).json([])
-        }
+        const results = await this.reviewDAO.selectReviews(where, params)
+        results.meta = await this.reviewDAO.countReviews(where, params)
+
+        results.relations = await this.getRelations(request.session.user, results)
 
         // Doesn't need an await, since this just works with the comments in
         // memory and doesn't hit the database.
-        this.reviewDAO.selectVisibleComments(userId, reviews)
-        return response.status(200).json(reviews)
+        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
+        return response.status(200).json(results)
     }
 
     /**
@@ -211,34 +231,49 @@ module.exports = class ReviewController {
          ********************************************************/
 
 
-        await this.database.query(`BEGIN`)
-        try {
-            const results = await this.database.query(`
+        const insertResults = await this.database.query(`
                 INSERT INTO reviews (paper_id, user_id, version, summary, recommendation, status, created_date, updated_date) 
                     VALUES ($1, $2, $3, $4, $5, $6, now(), now()) 
                     RETURNING id
                 `, 
-                [ paperId, userId, review.version, review.summary, review.recommendation, review.status ]
-            )
-            if ( results.rows.length == 0 ) {
-                throw new ControllerError(500, 'server-error', `User(${userId}) failed to insert a new review on Paper(${review.paperId})`)
-            }
-
-            review.id = results.rows[0].id
-            await this.reviewDAO.insertThreads(review) 
-        } catch (error) {
-            await this.database.query(`ROLLBACK`)
-            throw error
+            [ paperId, userId, review.version, review.summary, review.recommendation, review.status ]
+        )
+        if ( insertResults.rows.length == 0 ) {
+            throw new ControllerError(500, 'server-error', `User(${userId}) failed to insert a new review on Paper(${review.paperId})`)
         }
-        await this.database.query(`COMMIT`)
 
-        const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
-        if ( ! returnReviews || returnReviews.length == 0) {
+        review.id = insertResults.rows[0].id
+        await this.reviewDAO.insertThreads(review) 
+
+        const results = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
+        const entity = results.dictionary[review.id]
+        if ( ! entity ) {
             throw new ControllerError(500, 'server-error', `Failed to find newly inserted review ${review.id}.`)
         }
 
-        this.reviewDAO.selectVisibleComments(userId, returnReviews)
-        return response.status(201).json(returnReviews[0])
+        if ( entity.status == 'submitted' ) {
+            // Update the review count on the version
+            await this.database.query(`
+                UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND version = $2
+            `, [ paperId, review.version ])
+        
+            
+            const event = {
+                paperId: paperId,
+                actorId: userId,
+                version: review.version,
+                type: 'review-posted',
+                visibility: [ 'public' ],
+                reviewId: review.id
+            }
+            await this.paperEventDAO.insertEvent(event)
+        }
+
+        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
+        
+        results.relations = await this.getRelations(request.session.user, results)
+
+        return response.status(201).json({ entity: entity, relations: results.relations })
     }
 
     /**
@@ -347,18 +382,19 @@ module.exports = class ReviewController {
 
         // At this point, we've already confirmed that they are allowed to view this review.
         // So just retrieve it.
-        const reviews = await this.reviewDAO.selectReviews(
+        const results = await this.reviewDAO.selectReviews(
             `WHERE reviews.id = $1`, 
             [ reviewId ]
         )
-        if ( ! reviews || reviews.length == 0 ) {
+        if ( ! results.dictionary[reviewId] ) {
             throw new ControllerError(404, 'no-resource', 
                 `Didn't find Review(${reviewId}).`)
         }
 
+        results.relations = await this.getRelations(request.session.user, results)
+        this.reviewDAO.selectVisibleComments(request.session?.user?.id, results.dictionary)
 
-        this.reviewDAO.selectVisibleComments(request.session?.user?.id, reviews)
-        return response.status(200).json(reviews[0])
+        return response.status(200).json({ entity: results.dictionary[reviewId], relations: results.relations })
     }
 
     /**
@@ -555,34 +591,39 @@ module.exports = class ReviewController {
         sql += 'updated_date = now() WHERE id = $' + count
         params.push(review.id)
 
-        const results = await this.database.query(sql, params)
+        const updateResults = await this.database.query(sql, params)
 
-        if ( results.rowCount == 0 ) {
+        if ( updateResults.rowCount == 0 ) {
             throw new ControllerError(500, 'server-error', 
                 `User(${userId}) failed to update Review(${review.id}).`)
         }
 
-        const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
-        if ( ! returnReviews || returnReviews.length == 0) {
+        const results = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ review.id ])
+        if ( ! results.dictionary[review.id] ) {
             throw new ControllerError(500, 'server-error',
                 `Failed to find Review(${review.id}) after User(${userId}) updated it.`)
         }
 
-        await this.database.query(`BEGIN`)
-        try {
-            // We'll use the return review to increment the reputation since
-            // that will have all the information we need.
-            // If we got here, the update was successful.
-            if ( existing.review_status != 'accepted' && returnReviews[0].status == 'accepted' ) {
-            }
-        } catch (error) {
-            await this.database.query('ROLLBACK')
-            throw error
-        }
-        await this.database.query(`COMMIT`)
+        if ( existing.review_status != 'submitted' && results.dictionary[review.id].status == 'submitted' ) {
+            // Update the review count on the version
+            await this.database.query(`
+                UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND version = $2
+            `, [ paperId, review.version ])
 
-        this.reviewDAO.selectVisibleComments(userId, returnReviews)
-        return response.status(200).json(returnReviews[0])
+            const event = {
+                paperId: paperId,
+                actorId: userId,
+                type: 'review-posted',
+                visibility: [ 'public' ],
+                reviewId: review.id
+            }
+            await this.paperEventDAO.insertEvent(event)
+        }
+
+        results.relations = await this.getRelations(request.session.user, results)
+        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
+
+        return response.status(200).json({ entity: results.dictionary[review.id], relations: results.relations })
     }
 
     /**
@@ -802,23 +843,18 @@ module.exports = class ReviewController {
         }
         let threadIds = [] 
 
-        await this.database.query(`BEGIN`)
-        try {
-            threadIds = await this.reviewDAO.insertThreads(review)
-        } catch (error) {
-            await this.database.query(`ROLLBACK`)
-            throw error
-        }
-        await this.database.query(`COMMIT`)
+        threadIds = await this.reviewDAO.insertThreads(review)
 
-        const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
-        if ( ! returnReviews || returnReviews.length == 0) {
+        const results = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
+        if ( ! results.dictionary[reviewId] ) {
             throw new ControllerError(500, 'server-error', 
                 `Failed to find review ${reviewId} after inserting new threads.`)
         }
 
-        this.reviewDAO.selectVisibleComments(userId, returnReviews)
-        return response.status(200).json({ review: returnReviews[0], threadIds: threadIds })
+        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
+        results.relations = await this.getRelations(request.session.user, results)
+
+        return response.status(200).json({ entity: results.dictionary[reviewId], threadIds: threadIds, relations: results.relations })
     }
 
     /**
@@ -926,19 +962,22 @@ module.exports = class ReviewController {
          *      Execute the DELETE 
          * *****************************************************/
 
-        const results = await this.database.query('DELETE FROM review_comment_threads WHERE id = $1', [ threadId ])
-        if ( results.rowCount == 0) {
+        const deleteResults = await this.database.query('DELETE FROM review_comment_threads WHERE id = $1', [ threadId ])
+        if ( deleteResults.rowCount == 0) {
             throw new ControllerError(500, 'server-error',
                 `Attempted to delete review comment Thread(${threadId}), but deleted nothing.`)
         }
 
-        const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
-        if ( ! returnReviews || returnReviews.length == 0) {
+        const results = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
+        if ( ! results.dictionary[reviewId] ) {
             throw new ContollerError(500, 'server-error', 
                 `Failed to find review ${reviewId} after deleting thread ${threadId}.`)
         }
-        this.reviewDAO.selectVisibleComments(userId, returnReviews)
-        return response.status(200).json(returnReviews[0])
+
+        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
+        results.relations = await this.getRelations(request.session.user, results)
+
+        return response.status(200).json({ entity: results.dictionary[reviewId], relations: results.relations })
     }
 
     /**
@@ -1073,29 +1112,25 @@ module.exports = class ReviewController {
         // TODO Override threadOrder and number.  Only allow comments to
         // appended to the end of their thread, and enforce that here.
 
-        await this.database.query(`BEGIN`)
-        try {
-            for (const comment of comments ) {
-                // TECHDEBT -- Issue #171 -- ReviewDAO::insertComment handles
-                // the creation of the initial version.  Ideally, we would
-                // handle version creation either entirely in the controller or
-                // entirely in the DAO, but because of the way we create
-                // comments as a subordinate object of threads and reviews,
-                // that's not actually an easy thing to do.
-                await this.reviewDAO.insertComment(comment)
-            }
-        } catch (error) {
-            await this.database.query(`ROLLBACK`)
-            throw error
+        for (const comment of comments ) {
+            // TECHDEBT -- Issue #171 -- ReviewDAO::insertComment handles
+            // the creation of the initial version.  Ideally, we would
+            // handle version creation either entirely in the controller or
+            // entirely in the DAO, but because of the way we create
+            // comments as a subordinate object of threads and reviews,
+            // that's not actually an easy thing to do.
+            await this.reviewDAO.insertComment(comment)
         }
-        await this.database.query(`COMMIT`)
 
-        const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
-        if ( ! returnReviews || returnReviews.length == 0) {
+        const results = await this.reviewDAO.selectReviews(`WHERE reviews.id=$1`, [ reviewId ])
+        if ( ! results.dictionary[reviewId] ) {
             throw new Error(`Failed to find review ${reviewId} after adding comments.`)
         }
-        this.reviewDAO.selectVisibleComments(userId, returnReviews)
-        return response.status(200).json(returnReviews[0])
+
+        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
+        results.relations = await this.getRelations(request.session.user, results)
+
+        return response.status(200).json({ entity: results.dictionary[reviewId], relations: results.relations })
     }
 
     /**
@@ -1310,14 +1345,16 @@ module.exports = class ReviewController {
         }
 
 
-        const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
-        if ( ! returnReviews || returnReviews.length == 0 ) {
+        const results = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
+        if ( ! results.dictionary[reviewId] ) {
             throw new ControllerError(500, 'server-error', 
                 `Failed to find Review(${reviewId}) after updating related Comment(${commentId}).`)
         }
 
-        this.reviewDAO.selectVisibleComments(userId, returnReviews)
-        return response.status(200).json(returnReviews[0])
+        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
+        results.relations = await this.getRelations(request.session.user, results)
+
+        return response.status(200).json({ entity: results.dictionary[reviewId], relations: results.relations })
     }
 
     /**
@@ -1471,28 +1508,31 @@ module.exports = class ReviewController {
             FROM review_comments 
             WHERE thread_id in (SELECT thread_id FROM review_comments WHERE id = $1) group by thread_id`, [ commentId ])
         if ( threadResults.rows.length > 0 && threadResults.rows[0].count == 1) {
-            const results = await this.database.query(`DELETE FROM review_comment_threads WHERE id = $1`, [ threadResults.rows[0].thread_id ])
+            const deleteResults = await this.database.query(`DELETE FROM review_comment_threads WHERE id = $1`, [ threadResults.rows[0].thread_id ])
 
-            if ( results.rowCount == 0) {
+            if ( deleteResults.rowCount == 0) {
                 throw new ControllerError(500, 'server-error', 
                     `Failed to delete Thread(${threadResults.rows[0].thread_id})`)
             }
         } else {
-            const results = await this.database.query('DELETE FROM review_comments WHERE id = $1', [ commentId ])
+            const deleteResults = await this.database.query('DELETE FROM review_comments WHERE id = $1', [ commentId ])
 
-            if ( results.rowCount == 0 ) {
+            if ( deleteResults.rowCount == 0 ) {
                 throw new ControllerError(500, 'server-error', 
                     `Failed to delete Comment(${commentId}).`)
             }
         }
 
-        const returnReviews = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
-        if ( ! returnReviews || returnReviews.length == 0 ) {
+        const results = await this.reviewDAO.selectReviews(`WHERE reviews.id = $1`, [ reviewId ])
+        if ( ! results.dictionary[reviewId] ) {
             throw new ControllerError(500, 'server-error', 
                 `Failed to find Review(${reviewId}) after updating related Comment(${commentId}).`)
         }
-        this.reviewDAO.selectVisibleComments(userId, returnReviews)
-        return response.status(200).json(returnReviews[0])
+
+        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
+        results.relations = await this.getRelations(request.session.user, results)
+
+        return response.status(200).json({ entity: results.dictionary[reviewId], relations: results.relations })
     }
 
 

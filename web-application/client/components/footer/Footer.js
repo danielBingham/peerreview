@@ -26,9 +26,12 @@ const Footer = function(props) {
                 <p><a href="https://blog.peer-review.io">blog</a></p>
                 <p><a href="/tos">terms of service</a></p>
                 <p><a href="/privacy">privacy policy</a></p>
-                <p>---</p>
+            </div>
+            <div className="content-links">
                 <p><a href="/">papers</a></p>
-                <p><a href="/fields">fields</a></p>
+                <p><a href="/preprints">preprints</a></p>
+                <p><a href="/journals">journals</a></p>
+                <p><a href="/fields">taxonomy</a></p>
                 <p><a href="/users">users</a></p>
             </div>
             <div className="involve-links">

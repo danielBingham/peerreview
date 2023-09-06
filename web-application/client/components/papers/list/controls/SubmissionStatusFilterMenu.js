@@ -41,7 +41,7 @@ const SubmissionStatusFilterMenu = function({}) {
     // ============ Render ====================================================
     
     const statuses = {
-        privateDraft: 'Private Draft',
+        'private-draft': 'Private Draft',
         preprint: 'Preprint',
         submitted: 'Submitted',
         review: 'In Review',

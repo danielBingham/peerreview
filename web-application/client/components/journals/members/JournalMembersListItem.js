@@ -33,7 +33,7 @@ const JournalMembersListItem = function({ member }) {
         return state.authentication.currentUser
     })
 
-    const currentUserPermissions = currentUser.memberships.find((m) => m.journalId == member.journalId)?.permissions
+    const currentUserPermissions = currentUser?.memberships.find((m) => m.journalId == member.journalId)?.permissions
     const canModify = (
         (member.permissions == 'editor' && currentUserPermissions == 'owner')
         || (member.permissions == 'reviewer' && (currentUserPermissions == 'owner' || currentUserPermissions == 'editor'))

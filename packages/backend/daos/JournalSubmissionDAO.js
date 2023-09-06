@@ -138,6 +138,8 @@ module.exports = class JournalSubmissionDAO {
                 LEFT OUTER JOIN journals ON journal_submissions.journal_id = journals.id
 
             ${where}
+
+            ORDER BY journal_submissions.created_date desc
         `
 
         const results = await this.database.query(sql, params)

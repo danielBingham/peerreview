@@ -4,19 +4,16 @@ import { Link, useParams } from 'react-router-dom'
 
 import { InboxIcon, DocumentIcon} from '@heroicons/react/24/outline'
 
-import PaperList from '/components/papers/list/PaperList'
-
-import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
-import PageTab from '/components/generic/pagetabbar/PageTab'
-import PageHeader from '/components/generic/PageHeader'
-
 import Spinner from '/components/Spinner'
+import { Page, PageBody, PageHeader, PageTabBar, PageTab } from '/components/generic/Page'
+
+import PaperList from '/components/papers/list/PaperList'
 
 import './ReviewDashboardPage.css'
 
 const ReviewDashboardPage = function(props) {
 
-    const { tab } = useParams()
+    const { pageTab } = useParams()
 
     // ================ Render State ================================
     
@@ -38,13 +35,13 @@ const ReviewDashboardPage = function(props) {
 
     // ====================== Render ==========================================
     
-    const selectedTab = ( tab ? tab : 'assigned')
+    const selectedTab = ( pageTab ? pageTab : 'assigned')
 
     let content = ( <Spinner local={true} /> )
     if ( selectedTab == 'preprints' ) {
         content = ( <PaperList type="preprint" /> )
     } else if ( selectedTab == 'submissions' ) {
-        content = ( <PaperList type="submissions" /> )
+        content = ( <PaperList type="review-submissions" /> )
     } else if ( selectedTab == 'assigned' ) {
         content = ( <PaperList type="assigned-review" /> )
     } else {
@@ -53,25 +50,25 @@ const ReviewDashboardPage = function(props) {
 
 
     return (
-        <>
+        <Page id="review-dashboard">
             <PageHeader>
                 <h2>Review Dashboard</h2>
             </PageHeader>
             <PageTabBar>
-                <PageTab url={`/review/assigned`} selected={selectedTab == 'assigned'}>
+                <PageTab url={`/review/assigned`} tab="assigned" initial={true}>
                     <InboxIcon /> Assigned to Me 
                 </PageTab>
-                <PageTab url={`/review/submissions`} selected={selectedTab == 'submissions'}>
+                <PageTab url={`/review/submissions`} tab="submissions">
                     <InboxIcon /> Open Submissions
                 </PageTab>
-                <PageTab url={`/review/preprints`} selected={selectedTab == 'preprints'}>
+                <PageTab url={`/review/preprints`} tab="preprints">
                     <DocumentIcon/> Preprints 
                 </PageTab>
             </PageTabBar>
-            <div id="review-papers-list-page" className="page">
+            <PageBody>
                 { content } 
-            </div>
-        </>
+            </PageBody>
+        </Page>
     )
 }
 

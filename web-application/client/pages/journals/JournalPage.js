@@ -4,7 +4,11 @@ import { useNavigate, useParams } from 'react-router-dom'
 
 import { getJournal, cleanupRequest } from '/state/journals'
 
-import { InboxArrowDownIcon, DocumentTextIcon, UserGroupIcon, InformationCircleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
+import { DocumentArrowUpIcon, InboxArrowDownIcon, DocumentTextIcon, UserGroupIcon, InformationCircleIcon, Cog6ToothIcon } from '@heroicons/react/24/outline'
+
+import Spinner from '/components/Spinner'
+import { Page, PageBody, PageHeader, PageHeaderGrid, PageHeaderControls, PageTabBar, PageTab } from '/components/generic/Page'
+import Button from '/components/generic/button/Button'
 
 import JournalView from '/components/journals/JournalView'
 import JournalMembersList from '/components/journals/members/JournalMembersList'
@@ -12,16 +16,12 @@ import JournalSubmissionsList from '/components/journals/submissions/JournalSubm
 
 import PaperList from '/components/papers/list/PaperList'
 
-import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
-import PageTab from '/components/generic/pagetabbar/PageTab'
-import PageHeader from '/components/generic/PageHeader'
-import Spinner from '/components/Spinner'
 
 const JournalPage = function(props) {
 
     // ======= Routing Parameters ===================================
     
-    const { id } = useParams()
+    const { id, pageTab } = useParams()
     
     // ================= Request Tracking =====================================
     
@@ -82,12 +82,12 @@ const JournalPage = function(props) {
 
     // ================= Render ===============================================
    
-    const selectedTab = ( props.tab ? props.tab : 'papers')
+    const selectedTab = ( pageTab ? pageTab : 'papers')
 
     let content = ( <Spinner /> )
     if (  request && request.state == 'fulfilled') {
         if ( selectedTab == 'papers' ) {
-            content = ( <PaperList type="published" journalId={id} /> ) 
+            content = ( <PaperList type="published" journals={[id]} /> ) 
         } else if ( selectedTab == 'submissions' ) {
             content = ( 
                 <>
@@ -122,33 +122,40 @@ const JournalPage = function(props) {
     } 
 
     return (
-        <>
+        <Page id="journal-page">
             <PageHeader>
+                <PageHeaderGrid>
+                    <div></div>
+                    <PageHeaderControls>
+                        <Button type="primary" onClick={(e) => navigate(`/submit?journal=${journal.id}`)}><DocumentArrowUpIcon/>New Submission</Button>
+                    </PageHeaderControls>
                     <JournalView id={id} />
+                    <div></div>
+                </PageHeaderGrid>
             </PageHeader>
             <PageTabBar>
-                <PageTab url={`/journal/${id}/papers`} selected={selectedTab == 'papers'}>
+                <PageTab url={`/journal/${id}/papers`} tab="papers" initial={true}>
                     <DocumentTextIcon /> Published Papers 
                 </PageTab>
-                <PageTab url={`/journal/${id}/about`} selected={selectedTab == 'about'}>
+                <PageTab url={`/journal/${id}/about`} tab="about">
                     <InformationCircleIcon /> About
                 </PageTab>
-                <PageTab url={`/journal/${id}/members`} selected={selectedTab == 'members'}>
+                <PageTab url={`/journal/${id}/members`} tab="members">
                     <UserGroupIcon /> Members
                 </PageTab>
                 { currentUserMember && <>
-                    <PageTab url={`/journal/${id}/submissions`} selected={selectedTab == 'submissions'}>
+                    <PageTab url={`/journal/${id}/submissions`} tab="submissions">
                         <InboxArrowDownIcon /> Submissions 
                     </PageTab>  
-                    <PageTab url={`/journal/${id}/settings`} selected={selectedTab == 'settings'}>
+                    <PageTab url={`/journal/${id}/settings`} tab="settings">
                         <Cog6ToothIcon /> Settings
                     </PageTab> 
                 </>}
             </PageTabBar>
-            <div id="journal-page" className="page">
+            <PageBody>
                 { content } 
-            </div>
-        </>
+            </PageBody>
+        </Page>
     )
 
 }

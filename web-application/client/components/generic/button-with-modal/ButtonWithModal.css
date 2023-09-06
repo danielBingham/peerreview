@@ -1,0 +1,34 @@
+.button-with-modal {
+    display: inline-block;
+    position: relative;
+}
+
+.button-modal {
+    display: none;
+    position: absolute;
+    top: 2.5em;
+    right: 10px;
+    text-align: center;
+    background-color: white; 
+    border: thin solid var(--floating-menu-border-color);
+    box-shadow: 0 0 3px 1px rgba(100,100,100,0.2);
+    padding: 20px;
+    z-index: 1000;
+}
+.button-with-modal .arrow-wrapper {
+    display: inline-block;
+    padding-left: 10px;
+    margin-left: 10px;
+    border-left: thin solid white;
+}
+.button-with-modal .arrow-wrapper .arrow {
+    display: inline-block;
+    width: 0; 
+    height: 0; 
+    padding-bottom: 0.1em;
+
+    border-left: 0.5em solid transparent;
+    border-right: 0.5em solid transparent;
+
+    border-top: 0.5em solid white;
+}

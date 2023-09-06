@@ -14,6 +14,7 @@ const ReviewCommentsWrapper = function(props) {
     // ======= Render State =========================================
     
     const [ threadReflowRequests, setThreadReflowRequests ] = useState(0)
+    const [ selectedReviewId, setSelectedReviewId ] = useState(null)
 
     // ======= Redux State ==========================================
     
@@ -26,16 +27,21 @@ const ReviewCommentsWrapper = function(props) {
     })
 
     const threads = useSelector(function(state) {
-        if ( state.reviews.list[props.paperId] ) {
-            const reviews = state.reviews.list[props.paperId][props.versionNumber]
+        if ( state.reviews.queries[props.paperId]?.list  && ! selectedReviewId) {
+            const reviewIds = state.reviews.queries[props.paperId].list.filter((id) => state.reviews.dictionary[id].version == props.versionNumber)
             const results = []
-            if ( reviews && reviews.length > 0 ) {
-                for (const review of reviews ) {
-                    results.push(...review.threads)
-                }
+            for (const id of reviewIds) {
+                results.push(...state.reviews.dictionary[id].threads)
             }
             // We need to sort them in the order they appear on the page in
             // order for the positioning algorithm to work below.
+            results.sort((a,b) => {
+                return (a.page+a.pinY) - (b.page+b.pinY)
+            })
+            return results
+        } else if ( selectedReviewId ) {
+            const results = []
+            results.push(...state.reviews.dictionary[selectedReviewId].threads)
             results.sort((a,b) => {
                 return (a.page+a.pinY) - (b.page+b.pinY)
             })
@@ -50,7 +56,7 @@ const ReviewCommentsWrapper = function(props) {
     const showCollapsed = function(numberOfCollapsedThreads) {
         const collapsedElement = document.getElementById('collapsed-comments')
 
-        const documentElement = document.getElementsByClassName(`draft-paper-pdf-document`)[0]
+        const documentElement = document.getElementsByClassName(`paper-pdf-document`)[0]
         const documentRect = documentElement.getBoundingClientRect()
 
         collapsedElement.style.top = -60 + 'px'
@@ -92,7 +98,8 @@ const ReviewCommentsWrapper = function(props) {
     }, [ threadReflowRequests, setThreadReflowRequests ])
 
     // ======= Effect Handling ======================================
-    
+   
+
     // When the number of threads changes, then we need to reflow.  We only
     // want to do this when the paper is fully loaded and rendered.
     useEffect(function() {
@@ -113,7 +120,7 @@ const ReviewCommentsWrapper = function(props) {
         // spreading from the centered thread assumes the threads have already
         // been spread from the top.
         reflow()
-    }, [ props.loadedVersion, props.renderedPages, props.renderedVersion])
+    }, [ props.loadedVersion, props.renderedPages, props.renderedVersion, selectedReviewId ])
 
     // An effect to trigger whenever searchParams changes - since that likely
     // means the selected thread has also changed.  Triggers a reflow.
@@ -122,7 +129,13 @@ const ReviewCommentsWrapper = function(props) {
         if ( centeredThread !== null ) {
             reflow()
         }
+
+        const reviewId = searchParams.get('review')
+        if ( reviewId ) {
+            setSelectedReviewId(reviewId)
+        }
     }, [ searchParams ])
+
 
     // The effect that watches the threadReflowRequests and executes the
     // requested reflow.

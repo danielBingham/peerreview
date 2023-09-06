@@ -7,18 +7,16 @@ import PaperList from '/components/papers/list/PaperList'
 
 import { DocumentCheckIcon, TagIcon, ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline'
 
-import PageHeader from '/components/generic/PageHeader'
-import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
-import PageTab from '/components/generic/pagetabbar/PageTab'
 import Spinner from '/components/Spinner'
+import { Page, PageBody, PageHeader, PageTabBar, PageTab } from '/components/generic/Page'
 
 import './FieldPage.css'
 
 const FieldPage = function(props) {
-    const { id } = useParams()
+    const { id, pageTab } = useParams()
     
     // ======= Render =====================================
-    const selectedTab = ( props.tab ? props.tab : 'papers')
+    const selectedTab = ( pageTab ? pageTab : 'papers')
 
     let content = ( <Spinner local={true} /> )
     if ( selectedTab == 'papers' ) {
@@ -36,25 +34,25 @@ const FieldPage = function(props) {
     }
 
     return (
-        <>
+        <Page id="field-page">
             <PageHeader>
                 <FieldView id={ id } />
             </PageHeader>
             <PageTabBar>
-                <PageTab url={`/field/${id}/papers`} selected={selectedTab == 'papers'}>
+                <PageTab url={`/field/${id}/papers`} tab="papers" initial={true}>
                     <DocumentCheckIcon /> Papers
                 </PageTab>
-                <PageTab url={`/field/${id}/parents`} selected={selectedTab == 'parents'}>
+                <PageTab url={`/field/${id}/parents`} tab="parents">
                     <TagIcon /> Parents
                 </PageTab>
-                <PageTab url={`/field/${id}/children`} selected={selectedTab == 'children'}>
+                <PageTab url={`/field/${id}/children`} tab="children">
                     <TagIcon /> Children
                 </PageTab>
             </PageTabBar>
-            <div id="field-page" className="page">
+            <PageBody>
                 { content }
-            </div>
-        </>
+            </PageBody>
+        </Page>
     )
 }
 

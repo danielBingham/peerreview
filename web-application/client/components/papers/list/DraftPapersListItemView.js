@@ -25,18 +25,6 @@ import './DraftPapersListItemView.css'
  */
 const DraftPapersListItemView = function(props) {
 
-    const reviewCount = useSelector(function(state) {
-        if ( state.reviews.counts[props.paper.id] ) {
-            if ( state.reviews.counts[props.paper.id][props.paper.versions[0].version] ) {
-                return state.reviews.counts[props.paper.id][props.paper.versions[0].version]
-            } else {
-                return 0
-            }
-        } else {
-            return 0
-        }
-    })
-
     // ======= Render ===============================================
    
     let submission = (<div className="preprint">Preprint</div>)
@@ -51,11 +39,13 @@ const DraftPapersListItemView = function(props) {
         fields.push(<Field key={field.id} id={field.id} />)
     }
 
-    const paperPath = `/draft/${props.paper.id}`
+    const reviewCount = props.paper.versions[0].reviewCount
+
+    const paperPath = `/paper/${props.paper.id}`
     return (
         <div id={props.paper.id} className="draft-paper-list-item">
             <div className="reviews list-score-box">
-                {reviewCount} <br />
+                { reviewCount } <br />
                 <span className="label">{ reviewCount == 1 ? 'review' : 'reviews' }</span></div>
             <div className="version list-score-box"> 
                 {props.paper.versions.length} <br />

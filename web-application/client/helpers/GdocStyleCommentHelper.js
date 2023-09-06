@@ -112,10 +112,10 @@ const alignThreadsWithPins = function(threads) {
  * @return {void}
  */
 const centerThreadOnPin = function(thread, highlight) {
-    const documentElement = document.getElementsByClassName(`draft-paper-pdf-document`)[0]
+    const documentElement = document.getElementsByClassName(`paper-pdf-document`)[0]
     const documentRect = documentElement.getBoundingClientRect()
 
-    const pageElement = document.getElementById(`draft-paper-pdf-page-${thread.page}`)
+    const pageElement = document.getElementById(`paper-pdf-page-${thread.page}`)
     const pageRect = pageElement.getBoundingClientRect()
 
     threadInfo[thread.id].rect.top = (pageRect.top - documentRect.top) + pageRect.height*thread.pinY - 50

@@ -1,0 +1,4 @@
+.paper-header {}
+.paper-header h2 { margin: 10px 0; padding: 0; }
+.paper-header .submitted-date { display: inline-block; margin-right: 5px; }
+.paper-header .authors { display: inline-block; }

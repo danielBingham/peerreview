@@ -27,23 +27,15 @@ const CommentThreadView = function({ id, reviewId, paperId, versionNumber }) {
     })
 
     const review = useSelector(function(state) {
-        if ( ! state.reviews.dictionary[paperId] ) {
-            return null
-        }
-
-        return state.reviews.dictionary[paperId][reviewId]
+        return state.reviews.dictionary[reviewId]
     })
 
     const thread = useSelector(function(state) {
-        if ( ! state.reviews.dictionary[paperId] ) {
+        if ( ! state.reviews.dictionary[reviewId] ) {
             return null
         }
 
-        if ( ! state.reviews.dictionary[paperId][reviewId] ) {
-            return null
-        }
-
-        return state.reviews.dictionary[paperId][reviewId].threads.find((t) => t.id == id)
+        return state.reviews.dictionary[reviewId].threads.find((t) => t.id == id)
     })
 
     const onRenderSuccess = useCallback((page) => {

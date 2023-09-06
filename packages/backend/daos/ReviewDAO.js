@@ -19,17 +19,12 @@ module.exports = class ReviewDAO {
      * @return {Object[]}   The data parsed into one or more objects.
      */
     hydrateReviews(rows) {
-        if ( rows.length == 0 ) {
-            return null
-        }
-
-
-        const reviews = {}
+        const dictionary = {}
         const list = []
 
         for ( const row of rows ) {
 
-            if ( ! reviews[row.review_id] ) {
+            if ( ! dictionary[row.review_id] ) {
                 const review = {
                     id: row.review_id,
                     paperId: row.review_paperId,
@@ -42,11 +37,11 @@ module.exports = class ReviewDAO {
                     updatedDate: row.review_updatedDate,
                     threads: []
                 }
-                reviews[review.id] = review
-                list.push(review)
+                dictionary[review.id] = review
+                list.push(review.id)
             }
 
-            if ( row.thread_id != null && ! reviews[row.review_id].threads.find((t) => t.id == row.thread_id) ) {
+            if ( row.thread_id != null && ! dictionary[row.review_id].threads.find((t) => t.id == row.thread_id) ) {
                 const thread = {
                     id: row.thread_id,
                     reviewId: row.thread_reviewId,
@@ -55,11 +50,11 @@ module.exports = class ReviewDAO {
                     pinY: row.thread_pinY,
                     comments: []
                 }
-                reviews[row.review_id].threads.push(thread)
+                dictionary[row.review_id].threads.push(thread)
             }
 
             if ( row.comment_id != null) {
-                const thread = reviews[row.review_id].threads.find((t) => t.id == row.comment_threadId)
+                const thread = dictionary[row.review_id].threads.find((t) => t.id == row.comment_threadId)
                 if ( ! thread.comments.find((c) => c.id == row.comment_id) ) {
                     const comment = {
                         id: row.comment_id,
@@ -82,7 +77,7 @@ module.exports = class ReviewDAO {
             }
         }
 
-        return list 
+        return { dictionary: dictionary, list: list }
     }
 
     /**
@@ -93,13 +88,13 @@ module.exports = class ReviewDAO {
      *
      * @param {int} userId The id of the user that is currently logged in, or
      * null if no user is logged in.
-     * @param {object[]} reviews An array of reviews who's comments need to be
+     * @param {object[]} reviews A dictionary of reviews who's comments need to be
      * filtered.  Will be modified (filtered in place).
      *
      * @return {object[]} The filter review array
      */
-    selectVisibleComments(userId, reviews) {
-        for( const review of reviews) {
+    selectVisibleComments(userId, reviewDictionary) {
+        for( const [id, review] of Object.entries(reviewDictionary)) {
             for ( const thread of review.threads) {
                 thread.comments = thread.comments.filter((c) => {
                     return c.status == "posted" || c.userId == userId
@@ -107,7 +102,7 @@ module.exports = class ReviewDAO {
             }
             review.threads = review.threads.filter((t) => t.comments.length > 0)
         }
-        return reviews
+        return reviewDictionary 
     }
 
     async selectReviews(where, params) {
@@ -145,42 +140,40 @@ module.exports = class ReviewDAO {
         `
 
         const results = await this.database.query(sql, params)
-
-        if ( results.rows.count == 0) {
-            return null
-        }
-
         return this.hydrateReviews(results.rows)
     }
 
-    async countReviews(where, params) {
+    async countReviews(where, params, page) {
         where = ( where ? where : '' )
         params = ( params ? params : [])
 
         const sql = `
             SELECT
-                COUNT(reviews.id) as review_count, reviews.paper_id as "review_paperId", reviews.version as review_version
+                COUNT(reviews.id) as review_count
             FROM reviews
             ${where}
-            GROUP BY reviews.paper_id, reviews.version
        `
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rows.length <= 0 ) {
-            return {} 
+        if ( results.rows.length <= 0 || results.rows[0].review_count == 0 ) {
+            return { 
+                count: 0,
+                page: page ? page : 1,
+                pageSize: null,
+                numberOfPages: 1
+
+            }
         }
 
-        const counts = {} 
-        for(const row of results.rows) {
-            if ( ! counts[row.review_paperId] ) {
-                counts[row.review_paperId] = {}
-            }
-            if ( ! counts[row.review_paperId][row.review_version] ) {
-                counts[row.review_paperId][row.review_version] = row.review_count
-            }
+        const count = results.rows[0].review_count
+        return { 
+            count: count,
+            page: page ? page : 1,
+            pageSize: null,
+            numberOfPages: 1 
         }
-        return counts
+
     }
 
     async insertThreads(review) {

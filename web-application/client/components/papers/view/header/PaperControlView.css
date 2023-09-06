@@ -1,0 +1,6 @@
+.paper-controls { padding: 10px; text-align: right; }
+.paper-controls .author-controls { display: inline-block; }
+.paper-controls .version-controls { display: inline-block; }
+.paper-controls button, .paper-controls select, .paper-controls label {
+    margin: 5px;
+}

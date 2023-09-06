@@ -4,7 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { EllipsisVerticalIcon } from '@heroicons/react/24/solid'
 import { CheckCircleIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, XCircleIcon } from '@heroicons/react/24/outline'
 
-import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/reviews/timeline/Timeline'
+import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/generic/timeline/Timeline'
 
 import ReviewSummaryForm from '/components/reviews/widgets/ReviewSummaryForm'
 import ReviewSummaryView from '/components/reviews/widgets/ReviewSummaryView'
@@ -22,11 +22,11 @@ const ReviewView = function({ id, paperId, versionNumber }) {
     })
 
     const review = useSelector(function(state) {
-        if ( ! state.reviews.dictionary[paperId] ) {
+        if ( ! state.reviews.dictionary[id] ) {
             return null
         }
 
-        return state.reviews.dictionary[paperId][id]
+        return state.reviews.dictionary[id]
     })
 
     const user = useSelector(function(state) {
