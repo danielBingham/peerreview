@@ -96,9 +96,6 @@ ALTER TABLE paper_versions ALTER COLUMN review_count SET DEFAULT 0
                 await this.database.query(`DROP TYPE IF EXISTS paper_event_types`, [])
                 await this.database.query(`DROP TYPE IF EXISTS paper_event_visibility`, [])
 
-                await this.database.query(`ALTER TABLE journals DROP COLUMN IF EXISTS transparency`, [])
-                await this.database.query(`DROP TYPE IF EXISTS journal_transparency`, [])
-
             } catch (rollbackError) {
                 console.error(error)
                 console.error(rollbackError)
@@ -120,8 +117,6 @@ ALTER TABLE paper_versions ALTER COLUMN review_count SET DEFAULT 0
             await this.database.query(`DROP TYPE IF EXISTS paper_event_types`, [])
             await this.database.query(`DROP TYPE IF EXISTS paper_event_visibility`, [])
 
-            await this.database.query(`ALTER TABLE DROP COLUMN IF EXISTS transparency`, [])
-            await this.database.query(`DROP TYPE IF EXISTS journal_transparency`, [])
         } catch (error) {
             throw new MigrationError('no-rollback', error.message)
         }
