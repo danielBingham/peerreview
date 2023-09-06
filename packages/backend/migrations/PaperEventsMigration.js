@@ -82,22 +82,6 @@ CREATE TABLE paper_events (
             `, [])
 
             await this.database.query(`
-CREATE TYPE journal_transparency as ENUM('open', 'closed')
-            `, [])
-
-            await this.database.query(`
-ALTER TABLE journals ADD COLUMN transparency journal_transparency 
-            `, [])
-
-            await this.database.query(`
-ALTER TABLE journals ALTER COLUMN transparency SET DEFAULT 'closed'
-            `, [])
-
-            await this.database.query(`
-ALTER TABLE journals ALTER COLUMN transparency SET NOT NULL
-            `, [])
-
-            await this.database.query(`
 ALTER TABLE paper_versions ADD COLUMN review_count int 
             `, [])
 
