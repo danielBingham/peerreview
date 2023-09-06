@@ -6,9 +6,15 @@ import {  newReview, cleanupRequest as cleanupReviewRequest } from '/state/revie
 
 import Button from '/components/generic/button/Button'
 import Spinner from '/components/Spinner'
+import { FloatingMenu, FloatingMenuHeader, FloatingMenuTrigger, FloatingMenuBody, FloatingMenuItem } from '/components/generic/floating-menu/FloatingMenu'
+
+import UserTag from '/components/users/UserTag'
+import PaperVersionSelector from '/components/papers/view/controls/PaperVersionSelector'
 
 import ReviewSummaryView from './ReviewSummaryView'
 import ReviewSummaryForm from './ReviewSummaryForm'
+
+
 
 import './ReviewHeaderView.css'
 
@@ -21,6 +27,7 @@ import './ReviewHeaderView.css'
  */
 const ReviewHeaderView = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
+    const reviewId = searchParams.get('review')
 
     // ================= Request Tracking =====================================
     
@@ -43,6 +50,26 @@ const ReviewHeaderView = function(props) {
         return state.papers.dictionary[props.paperId]
     })
 
+    const reviews = useSelector(function(state) {
+        const results = []
+        if ( state.reviews.queries[props.paperId]?.list) {
+            for(const id of state.reviews.queries[props.paperId].list) {
+                if ( state.reviews.dictionary[id].version == props.versionNumber ) {
+                    results.push(state.reviews.dictionary[id])
+                }
+            }
+        }
+        return results
+    })
+
+    const selectedReview = useSelector(function(state) {
+        if ( reviewId && state.reviews.dictionary[reviewId] ) {
+            return state.reviews.dictionary[reviewId]
+        } else {
+            return null
+        }
+    })
+
     const reviewInProgress = useSelector(function(state) {
         if ( state.reviews.inProgress[props.paperId] ) {
             return state.reviews.inProgress[props.paperId][props.versionNumber]
@@ -61,6 +88,16 @@ const ReviewHeaderView = function(props) {
         }
     }
 
+    const setReview = function(review) {
+        if ( review ) {
+            searchParams.set('review', review.id)
+            setSearchParams(searchParams)
+        } else {
+            searchParams.delete('review')
+            setSearchParams(searchParams)
+        }
+    }
+
     // ======= Effect Handling ======================================
     
     // Request tracker cleanup.
@@ -74,24 +111,63 @@ const ReviewHeaderView = function(props) {
 
     // ======= Render ===============================================
     let content = null 
-    if ( paper.isDraft ) {
-        if ( reviewInProgress ) {
-            content = ( 
-                <>
-                    <div className="instructions">Currently reviewing version { props.versionNumber }.  Click anywhere on the document to add a comment.  Write review summary and make a recommentation below.  New comment threads will not be public until the review is submitted.  Comments added to existing threads are immediately public.</div>
-                    <ReviewSummaryForm paper={paper} versionNumber={props.versionNumber} selectedReview={reviewInProgress} /> 
-                </>
-            )
-        } else {
-            content = (
-                <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.  { currentUser && <span><Button onClick={startReview}>Start Review</Button> to begin a new review and add comments.</span> }</p>
+    if ( paper.isDraft && reviewInProgress ) {
+        content = ( 
+            <>
+                <div className="instructions">Currently reviewing version { props.versionNumber }.  Click anywhere on the document to add a comment.  Write review summary and make a recommentation below.  New comment threads will not be public until the review is submitted.  Comments added to existing threads are immediately public.</div>
+                <ReviewSummaryForm paper={paper} versionNumber={props.versionNumber} selectedReview={reviewInProgress} /> 
+            </>
+        )
+    } else {
+        const reviewViews = []
+        reviewViews.push(
+            <FloatingMenuItem key="all" className="review-option" onClick={(e) => setReview(null) }>
+                Comments from All Reviews
+            </FloatingMenuItem>
+        )
+        for(const review of reviews) {
+            reviewViews.push(
+                <FloatingMenuItem key={review.id} className="review-option" onClick={(e) => setReview(review) }>
+                    Review #{review.id} by <UserTag id={review.userId} link={false} />
+                </FloatingMenuItem>
             )
         }
-    } else {
+       
+        let selectedReviewView= null
+        if ( selectedReview ) {
+            selectedReviewView = (
+                <ReviewSummaryView paper={paper} versionNumber={props.versionNumber} selectedReview={selectedReview} />
+            )
+        }
+
+        let trigger = 'Comments from All Reviews'
+        if ( selectedReview ) {
+            trigger = (
+                <span>Review #{selectedReview.id} by <UserTag id={selectedReview.userId} link={false} /></span>
+            )
+        }
+
         content = (
-            <p style={{ textAlign: 'center' }}>Viewing full text of version { props.versionNumber } with comments from all reviews.</p>
+            <>
+                <div className="controls">
+                    <PaperVersionSelector paperId={props.paperId} />  
+                    <FloatingMenu className="review-selector" closeOnClick={true}>
+                        <FloatingMenuTrigger>Viewing: { trigger }</FloatingMenuTrigger>
+                        <FloatingMenuBody className="review-menu-body">
+                            <FloatingMenuHeader>
+                                Select a review to view
+                            </FloatingMenuHeader>
+                            { reviewViews }
+                        </FloatingMenuBody>
+                    </FloatingMenu>
+                </div>
+                { selectedReview && <div className="selected-review">
+                    { selectedReviewView }
+                </div> }
+            </>
         )
     }
+
     return (
         <div className="review-header">
             <div className="inner">

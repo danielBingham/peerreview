@@ -1,6 +1,12 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector} from 'react-redux'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+
+
+import { UserCircleIcon, EnvelopeIcon, Cog8ToothIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+
+import Spinner from '/components/Spinner'
+import { Page, PageBody, PageHeader, PageTabBar, PageTab } from '/components/generic/Page'
 
 import UserProfileEditForm from '/components/users/account/UserProfileEditForm'
 import UserAccountDetailsForm from '/components/users/account/UserAccountDetailsForm'
@@ -13,17 +19,11 @@ import ORCIDTag from '/components/authentication/ORCIDTag'
 import ORCIDAuthenticationButton from '/components/authentication/ORCIDAuthenticationButton'
 import TestOrcidForm from '/components/users/account/TestOrcidForm'
 
-import { UserCircleIcon, EnvelopeIcon, Cog8ToothIcon, LockClosedIcon } from '@heroicons/react/24/outline'
-
-import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
-import PageTab from '/components/generic/pagetabbar/PageTab'
-import Spinner from '/components/Spinner'
-
 import './UserAccountPage.css'
 
 const UserAccountPage = function(props) {
 
-    const { tab } = useParams()
+    const { pageTab } = useParams()
 
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
@@ -32,10 +32,16 @@ const UserAccountPage = function(props) {
     const configuration = useSelector(function(state) {
         return state.system.configuration
     })
-    
+   
+    const navigate = useNavigate()
+    useEffect(function() {
+        if ( ! currentUser ) {
+            navigate('/login')
+        }
+    }, [])
 
     // ======= Render =====================================
-    const selectedTab = ( tab ? tab : 'profile')
+    const selectedTab = ( pageTab ? pageTab : 'profile')
 
     const showTest = ( 
         configuration.environment != "production" || 
@@ -69,44 +75,35 @@ const UserAccountPage = function(props) {
             )
         }
         content = orcidIdConnection
-    } else if ( selectedTab == 'settings' ) {
-        content = ( <UserSettingsForm /> ) 
     } else if ( showTest && selectedTab == 'test-orcid') {
         content = ( <TestOrcidForm /> )
     }
 
     return (
-        <>
+        <Page id="user-account-page">
+            <PageHeader>
+            </PageHeader>
             <PageTabBar>
-                <PageTab url="/account/profile" selected={selectedTab == 'profile'}>
+                <PageTab url="/account/profile" tab="profile" initial={true}>
                     <UserCircleIcon /> Public Profile
                 </PageTab>
-                <PageTab url="/account/change-email" selected={selectedTab == 'change-email'}>
+                <PageTab url="/account/change-email" tab="change-email">
                     <EnvelopeIcon /> Change Email
                 </PageTab>
-                <PageTab url="/account/change-password" selected={selectedTab == 'change-password'}>
+                <PageTab url="/account/change-password" tab="change-password">
                     <LockClosedIcon /> Change Password
                 </PageTab>
-                <PageTab url="/account/orcid" selected={selectedTab == 'orcid'}>
+                <PageTab url="/account/orcid" tab="orcid">
                     <img src="/img/ORCID.svg" /> ORCID iD
                 </PageTab>
-                <PageTab url="/account/settings" selected={selectedTab == 'settings'}>
-                    <Cog8ToothIcon /> Settings
-                </PageTab>
-                { showTest && <PageTab url="/account/test-orcid" selected={selectedTab == 'test-orcid'}>
+                { showTest && <PageTab url="/account/test-orcid" tab="test-orcid">
                     Test ORCID
                 </PageTab> }
             </PageTabBar>
-            <div id="user-account-page" className="page">
+            <PageBody>
                 { currentUser && content }
-        
-                { ! currentUser && 
-                    <div className="login-notice">
-                        <p>You must be logged in to view the account page.</p>
-                        <p>Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</p>
-                    </div> }
-            </div>
-        </>
+            </PageBody>
+        </Page>
     )
 
 }

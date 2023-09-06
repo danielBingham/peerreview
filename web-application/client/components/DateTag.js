@@ -3,8 +3,8 @@ import React from 'react'
 import './DateTag.css'
 
 
-const DateTag = function(props) {
-    const date = new Date(props.timestamp)
+const DateTag = function({ timestamp, type }) {
+    const date = new Date(timestamp)
     const now = new Date()
 
     //TODO TECHDEBT The database is recording dates in a weird way that I don't
@@ -23,7 +23,15 @@ const DateTag = function(props) {
     } else if ( Math.floor(diff / (24*60*60)) < 30 ) {
         content = `${Math.floor(diff / (24*60*60))} days ago`
     } else {
-        content = `on ${date.toLocaleDateString('en-us')}`
+        if ( type == 'full' ) {
+            content = `at ${date.toLocaleTimeString('en-us')} on ${date.toLocaleDateString('en-us')}`
+        } else if ( type == 'date' ) {
+            content = `on ${date.toLocaleDateString('en-us')}`
+        } else if ( type == 'time' ) {
+            content = `at ${date.toLocaleTimeString('en-us')}`
+        } else {
+            content = `on ${date.toLocaleDateString('en-us')}`
+        }
     }
 
     return (

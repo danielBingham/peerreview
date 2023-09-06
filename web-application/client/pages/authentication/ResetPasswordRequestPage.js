@@ -4,6 +4,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { createToken, cleanupRequest } from '/state/authentication'
 
 import Spinner from '/components/Spinner'
+import { Page, PageBody } from '/components/generic/Page'
 
 import './ResetPasswordRequestPage.css'
 
@@ -70,9 +71,11 @@ const ResetPasswordRequestPage = function(props) {
     }
 
     return (
-        <div id="reset-password-request" className="page">
-            { content }
-        </div>
+        <Page id="reset-password-request">
+            <PageBody>
+                { content }
+            </PageBody>
+        </Page>
     )
 
 }

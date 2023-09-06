@@ -1,63 +1,53 @@
 import React, { useState, useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
+import { useParams, useNavigate } from 'react-router-dom'
 
-import { DocumentCheckIcon, DocumentIcon } from '@heroicons/react/24/outline'
+import { 
+    DocumentCheckIcon, 
+    DocumentArrowUpIcon,
+    DocumentIcon, 
+    BookOpenIcon, 
+    TagIcon, 
+    UserCircleIcon 
+} from '@heroicons/react/24/outline'
+
+import { 
+    Page, 
+    PageBody, 
+    PageTabBar, 
+    PageTab, 
+    PageHeader, 
+    PageHeaderGrid, 
+    PageHeaderControls 
+} from '/components/generic/Page'
+
+import Button from '/components/generic/button/Button'
+import Spinner from '/components/Spinner'
 
 import PaperList from '/components/papers/list/PaperList'
+import FieldListView from '/components/fields/list/FieldListView'
+import JournalList from '/components/journals/JournalList'
+import UserListView from '/components/users/list/UserListView'
 
 import PaperSearchView from '/components/papers/search/PaperSearchView'
 import WelcomeNotice from '/components/about/notices/WelcomeNotice'
 import SupportNotice from '/components/about/notices/SupportNotice'
 import WIPNotice from '/components/about/notices/WIPNotice'
 
-import PageTabBar from '/components/generic/pagetabbar/PageTabBar'
-import PageTab from '/components/generic/pagetabbar/PageTab'
-import PageHeader from '/components/generic/PageHeader'
-
-import Spinner from '/components/Spinner'
 
 import './HomePage.css'
 
 const HomePage = function(props) {
+   
+    const { pageTab } = useParams()
+
     const [ query, setQuery ] = useState({})
 
-    const fieldSettings = useSelector(function(state) {
-        if ( state.authentication.settings ) {
-            return state.authentication.settings.fields
-        } else {
-            return []
-        }
+    const currentUser = useSelector(function(state) {
+        return state.authentication.currentUser
     })
 
-    // Feature Flag: wip-notice
-    const wipNoticeFeature = useSelector(function(state) {
-        return state.features.dictionary['wip-notice']
-    })
-
-    useLayoutEffect(function() {
-        if (fieldSettings && fieldSettings.length > 0) {
-            let newQuery = { ...query } 
-
-            const ignored = []
-            const isolated = []
-
-            for (const settingField of fieldSettings) {
-                if( settingField.setting == 'isolated' ) {
-                    isolated.push(settingField.fieldId)
-                } else if (settingField.setting == 'ignored' ) {
-                    ignored.push(settingField.fieldId)
-                }
-            }
-
-            newQuery.fields = isolated
-            newQuery.excludeFields = ignored
-
-            setQuery(newQuery)
-        }
-    }, [ fieldSettings ])
-
-
-    const selectedTab = ( props.tab ? props.tab : 'papers')
+    const selectedTab = ( pageTab ? pageTab : 'papers')
 
     let content = ( <Spinner />)
     if ( selectedTab == 'papers' ) {
@@ -69,22 +59,50 @@ const HomePage = function(props) {
         )
     } else if ( selectedTab == 'preprints' ) {
         content = ( <PaperList type="preprint" /> )
+    } else if (selectedTab == 'journals' ) {
+        content = ( <JournalList /> )
+    } else if ( selectedTab == 'fields' ) {
+        content = ( <FieldListView title={ 'Taxonomy' } /> )
+    } else if ( selectedTab == 'users' ) {
+        content = ( <UserListView /> )
     }
 
+    const navigate = useNavigate()
     return (
-        <>
+        <Page id="home-page">
+            <PageHeader>
+                <PageHeaderGrid>
+                { currentUser && <PageHeaderControls>
+                    <Button type="secondary" onClick={(e) => navigate('/create')}>
+                        <BookOpenIcon/>New Journal
+                    </Button>
+                    <Button type="primary" onClick={(e) => navigate('/submit')}>
+                        <DocumentArrowUpIcon/>New Submission
+                    </Button>
+                </PageHeaderControls> }
+                </PageHeaderGrid>
+            </PageHeader>
             <PageTabBar>
-                <PageTab url="/papers" selected={selectedTab == 'papers'}>
+                <PageTab url="/papers" tab="papers" initial={true}>
                     <DocumentCheckIcon/>Papers 
                 </PageTab>
-                <PageTab url="/preprints" selected={selectedTab == 'preprints'}>
+                <PageTab url="/preprints" tab="preprints">
                     <DocumentIcon/>Preprints 
                 </PageTab>
+                <PageTab url="/journals" tab="journals">
+                    <BookOpenIcon/>Journals
+                </PageTab>
+                <PageTab url="/fields" tab="fields">
+                    <TagIcon/>Taxonomy
+                </PageTab>
+                <PageTab url="/users" tab="users">
+                    <UserCircleIcon/>Users
+                </PageTab>
             </PageTabBar>
-            <div id="home-page" className="page">
+            <PageBody>
                 { content }
-            </div>
-        </>
+            </PageBody>
+        </Page>
     )
 }
 

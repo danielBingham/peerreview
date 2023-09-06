@@ -7,6 +7,14 @@
     margin: 5px;
     cursor: pointer;
 }
+.button svg {
+    width: 1.2em;
+    height: 1.2em;
+    margin-bottom: -0.2em;
+    margin-right: 5px;
+}
+
+
 .button:hover {
     filter: opacity(80%);
 }

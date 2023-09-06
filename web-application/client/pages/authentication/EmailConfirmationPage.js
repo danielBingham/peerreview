@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { validateToken, cleanupRequest } from '/state/authentication'
 
 import Spinner from '/components/Spinner'
+import { Page, PageBody } from '/components/generic/Page'
 
 const EmailConfirmationPage = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
@@ -65,9 +66,11 @@ const EmailConfirmationPage = function(props) {
     }
     
     return (
-        <div className="email-confirmation page">
-            { content }
-        </div>
+        <Page id="email-confirmation">
+            <PageBody>
+                { content }
+            </PageBody>
+        </Page>
     )
 
 }

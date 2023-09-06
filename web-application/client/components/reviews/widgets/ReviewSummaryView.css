@@ -4,8 +4,8 @@
 .review-summary .reviewer {
     display: inline-block;
 }
-.review-summary .datetime {
-    display: inline-block;
+.review-summary .recommendation {
+    padding: 5px 10px;
 }
 .review-summary .summary-text {
     padding: 10px;

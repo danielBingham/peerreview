@@ -30,7 +30,7 @@ const SubmitDraftForm = function(props) {
     const [file, setFile] = useState(null)
     const [authors, setAuthors] = useState([])
     const [showPreprint, setShowPreprint] = useState(false)
-    const [journal, setJournal] = useState(null)
+    const [selectedJournalId, setSelectedJournalId] = useState(null)
 
     const [titleError, setTitleError] = useState(null)
     const [fieldsError, setFieldsError] = useState(null)
@@ -177,11 +177,11 @@ const SubmitDraftForm = function(props) {
 
     useEffect(function() {
         if ( postPapersRequest && postPapersRequest.state == 'fulfilled') {
-            if ( ! journal ) {
-                const path = "/draft/" + postPapersRequest.result.entity.id
+            if ( ! selectedJournalId) {
+                const path = "/paper/" + postPapersRequest.result.entity.id
                 navigate(path)
             } else {
-                setPostJournalSubmissionRequestId(dispatch(postJournalSubmissions(journal.id, { paperId: postPapersRequest.result.entity.id })))
+                setPostJournalSubmissionRequestId(dispatch(postJournalSubmissions(selectedJournalId, { paperId: postPapersRequest.result.entity.id })))
             }
         }
 
@@ -189,7 +189,7 @@ const SubmitDraftForm = function(props) {
 
     useEffect(function() {
         if ( postJournalSubmissionsRequest && postJournalSubmissionsRequest.state == 'fulfilled') {
-            const path = `/draft/${postPapersRequest.result.entity.id}`
+            const path = `/paper/${postPapersRequest.result.entity.id}`
             navigate(path)
         }
     }, [ postJournalSubmissionsRequest ])
@@ -303,8 +303,8 @@ const SubmitDraftForm = function(props) {
                     label={'Select a Journal'}
                     explanation={'Select a journal to submit this paper to.  You may leave this selection blank and submit this paper to a journal after collecting co-author and/or preprint feedback.'}
                     onBlur={ (event) => isValid('journal') }
-                    journal={journal}
-                    setJournal={setJournal}
+                    selectedJournalId={selectedJournalId}
+                    setSelectedJournalId={setSelectedJournalId}
                 />
 
                 { requestError }

@@ -349,6 +349,8 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowcount: 1, rows: [ { id: 1 } ] })
                 // Get inserted submission
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journalSubmissions[1] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -709,8 +711,11 @@ describe('JournalSubmissionController', function() {
         it('should return 200 and the patched submission', async function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1]  }) // journalDAO.selectJournals
+                .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] }) // journalSubmissionDAO.selectJournalSubmissions 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] }) // journalSubmissionDAO.updatePartialSubmission 
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] }) // journalSubmissionDAO.selectJournalSubmissions 
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
             const journalSubmissionController = new JournalSubmissionController(core)
 
@@ -862,7 +867,7 @@ describe('JournalSubmissionController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1]  }) // journalDAO.selectJournals
                 .mockReturnValueOnce({ rowCount: 1, rows: [] }) // journalSubmissionDAO.deleteSubmission()
-
+            
             const journalSubmissionController = new JournalSubmissionController(core)
 
             const request = {
@@ -1092,6 +1097,8 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 // selectJournalSubmissions
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
@@ -1127,6 +1134,8 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 // selectJournalSubmissions
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
@@ -1162,6 +1171,8 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 // selectJournalSubmissions
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
@@ -1363,6 +1374,8 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 // selectJournalSubmissions
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
@@ -1396,6 +1409,8 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 // selectJournalSubmissions
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
@@ -1429,6 +1444,8 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 // selectJournalSubmissions
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)

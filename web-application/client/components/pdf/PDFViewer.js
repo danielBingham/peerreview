@@ -11,16 +11,17 @@ import './PDFViewer.css'
 
 const PDFViewer = function(props) {
 
-    //const [pdf, setPdf] = useState(null)
+    const [pageValue, setPageValue] = useState('1')
     const [pageNumber, setPageNumber] = useState(1)
     const [totalPages, setTotalPages] = useState(1)
 
     const changePageNumber = function(event) {
-        let targetNumber = event.target.value
-        if ( targetNumber > pdf.numPages ) {
-            targetNumber = pdf.numPages
+        setPageValue(event.target.value)
+
+        if ( parseInt(event.target.value) > 0 && parseInt(event.target.value) <= totalPages) {
+            let targetNumber = parseInt(event.target.value)
+            setPageNumber(targetNumber)
         }
-        setPageNumber(targetNumber)
     }
 
     const prevPage = function(event) {
@@ -31,6 +32,7 @@ const PDFViewer = function(props) {
             targetNumber = 1
         }
         setPageNumber(targetNumber)
+        setPageValue(targetNumber)
     }
 
     const nextPage = function(event) {
@@ -41,6 +43,7 @@ const PDFViewer = function(props) {
             targetNumber = totalPages
         }
         setPageNumber(targetNumber)
+        setPageValue(targetNumber)
     }
 
     const onLoadSuccess = function({ numPages}) {
@@ -59,7 +62,7 @@ const PDFViewer = function(props) {
                 <div className="control">
                     <a href={props.url}><DocumentArrowDownIcon />Download</a>
                     <div className="page-control">
-                        <input type="text" value={pageNumber} onChange={changePageNumber} /> / { totalPages }
+                        <input type="text" value={pageValue} onChange={changePageNumber} /> / { totalPages }
                     </div>
                 </div>
                 <div className="control">

@@ -1,9 +1,0 @@
-.draft-paper-page-header {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    grid-template-rows: auto;
-}
-.draft-paper-page-header .submission-controls-wrapper {
-    margin: 20px;
-    padding: 10px;
-}

@@ -102,7 +102,7 @@ const UploadPaperVersionForm = function(props) {
             if ( props.close ) {
                 props.close()
             } else {
-                const draftUri = `/draft/${props.paper.id}/`
+                const draftUri = `/paper/${props.paper.id}/`
                 navigate(draftUri)
             }
         } else if ( request && request.state == 'failed' ) {

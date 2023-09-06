@@ -39,7 +39,7 @@ const MemberPermissionsWidget = function({ member }) {
         return state.journals.dictionary[member.journalId]
     })
 
-    const currentUserPermissions = currentUser.memberships.find((m) => m.journalId == member.journalId)?.permissions
+    const currentUserPermissions = currentUser?.memberships.find((m) => m.journalId == member.journalId)?.permissions
     const canModify = ( currentUserPermissions == 'owner' )
 
     // =========== Actions and Event Handling =====================================

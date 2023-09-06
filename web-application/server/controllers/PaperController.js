@@ -19,11 +19,11 @@ module.exports = class PaperController {
         this.logger = core.logger
 
         this.paperDAO = new backend.PaperDAO(core)
+        this.paperEventDAO = new backend.PaperEventDAO(core)
         this.fieldDAO = new backend.FieldDAO(core)
         this.userDAO = new backend.UserDAO(core)
         this.journalDAO = new backend.JournalDAO(core)
         this.journalSubmissionDAO = new backend.JournalSubmissionDAO(core)
-
 
         this.submissionPermissionService = new backend.SubmissionPermissionService(core)
         this.paperPermissionsService = new backend.PaperPermissionsService(core)
@@ -69,7 +69,7 @@ module.exports = class PaperController {
                         `, [])
 
             for(const row of visibleSubmissionResults.rows) {
-                visibleIds.push(row.id)
+                visibleIds.push(row.paper_id)
             }
         }
 
@@ -165,10 +165,18 @@ module.exports = class PaperController {
             and = ( count > 1 ? ' AND ' : '' )
 
             let visibleIds = []
+
+            // Preprints the session user can review.
             if ( query.type == 'preprint') {
                 visibleIds = await this.paperPermissionsService.getPreprints()
+
+            // Retrieves all of a  
             } else if (session.user && query.type == 'drafts' ) {
                 visibleIds = await this.paperPermissionsService.getDrafts(session.user.id)
+            } else if ( session.user && query.type == 'private-drafts' ) {
+                visibleIds = await this.paperPermissionsService.getPrivateDrafts(session.user.id)
+            } else if ( session.user && query.type == 'user-submissions' ) {
+                visibleIds = await this.paperPermissionsService.getUserSubmissions(session.user.id)
             } else if (session.user && query.type == 'submissions' ) {
                 visibleIds = await this.paperPermissionsService.getVisibleDraftSubmissions(session.user.id)
             } else if ( session.user && query.type == 'assigned-review' ) {
@@ -199,22 +207,6 @@ module.exports = class PaperController {
             result.params.push(false)
         }
 
-        // Query for papers published in a certain journal.  Only retrieve
-        // published papers.
-        if ( query.journalId ) {
-            const results = await this.database.query(`SELECT paper_id FROM journal_submissions WHERE journal_id = $1 AND status = 'published'`, [ query.journalId ])
-            if ( results.rows.length > 0 ) {
-                count += 1
-                and = ( count > 1 ? ' AND ' : '')
-
-                result.where += `${and} papers.id = ANY($${count}::bigint[])`
-                result.params.push(results.rows.map((r) => r.paper_id))
-            } else {
-                result.emptyResult = true
-                return result
-            }
-        }
-
         if ( query.journals ) {
             const results = await this.database.query(`
                 SELECT paper_id FROM journal_submissions WHERE journal_id = ANY($1::bigint[])
@@ -227,31 +219,6 @@ module.exports = class PaperController {
 
                 result.where += `${and} papers.id = ANY($${count}::bigint[])`
                 result.params.push(results.rows.map((r) => r.paper_id))
-            } else {
-                result.emptyResult = true
-                return result
-            }
-        }
-
-
-        // Query for papers by a certain author.  Currently we're only taking a
-        // single integer for `authorId`, so we can only query for a single
-        // author in each query.
-        //
-        // Generates an array of paperIds and compares `papers.id` against the
-        // array.
-        if ( query.authorId ) {
-            const results = await this.database.query('SELECT paper_id from paper_authors WHERE user_id=$1', [ query.authorId ])
-            if ( results.rows.length > 0) {
-                count += 1
-                and = ( count > 1 ? ' AND ' : '' )
-                result.where += `${and} papers.id = ANY($${count}::bigint[])`
-
-                const paper_ids = []
-                for(let row of results.rows) {
-                    paper_ids.push(row.paper_id)
-                }
-                result.params.push(paper_ids)
             } else {
                 result.emptyResult = true
                 return result
@@ -327,10 +294,10 @@ module.exports = class PaperController {
         }
 
         if ( query.status && query.status.length > 0 ) {
-            let privateDraft = query.status.includes('privateDraft') 
+            let privateDraft = query.status.includes('private-draft') 
             let preprint = query.status.includes('preprint') 
     
-            const searchStatuses = query.status.filter((s) => s !== 'privateDraft' && s !== 'preprint')
+            const searchStatuses = query.status.filter((s) => s !== 'private-draft' && s !== 'preprint')
 
             const results = await this.database.query(`
                 SELECT DISTINCT papers.id 
@@ -429,6 +396,8 @@ module.exports = class PaperController {
         if ( result.where.length > 0) {
             result.where = `WHERE ${result.where}` 
         }
+        console.log(result.where)
+        console.log(result.params)
 
 
         return result
@@ -627,26 +596,33 @@ module.exports = class PaperController {
         // TODO TECHDEBT Proper transactions: https://node-postgres.com/features/transactions
         //
         // See the note in the documentation above.
-        try {
-            paper.id = await this.paperDAO.insertPaper(paper) 
-            await this.paperDAO.insertAuthors(paper) 
-            await this.paperDAO.insertFields(paper)
-            await this.paperDAO.insertVersions(paper)
-        } catch (error) {
-            throw error
-        }
+        paper.id = await this.paperDAO.insertPaper(paper) 
+        await this.paperDAO.insertAuthors(paper) 
+        await this.paperDAO.insertFields(paper)
+        await this.paperDAO.insertVersions(paper)
 
-        const afterResults = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
-        if ( afterResults.list.length > 0 ) {
-            const relations = await this.getRelations(request.session.user, afterResults)
-
-            return response.status(201).json({ 
-                entity: afterResults.list[0],
-                relations: relations
-            })
-        } else {
+        
+        const results = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
+        const entity = results.dictionary[paper.id]
+        if ( ! entity ) {
             throw new ControllerError(500, `server-error`, `Paper ${paper.id} does not exist after insert!`)
         }
+        
+        const event = {
+            paperId: entity.id,
+            actorId: user.id,
+            version: entity.versions[0].version,
+            type: 'version-uploaded',
+            visibility: [ 'public' ]
+        }
+        await this.paperEventDAO.insertEvent(event)
+
+        const relations = await this.getRelations(request.session.user, results)
+        
+        return response.status(201).json({ 
+            entity: entity,
+            relations: relations
+        })
     }
 
     /**
@@ -748,23 +724,22 @@ module.exports = class PaperController {
 
         const user = request.session.user
 
-        const currentPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [ paper.id ])
+        const existingResults = await this.paperDAO.selectPapers('WHERE papers.id=$1', [ paper.id ])
+        const existing = existingResults.dictionary[paper.id] 
 
         // 2. Paper(:paper_id) must exist.
-        if ( currentPapers.list.length <= 0) {
+        if ( ! existing ) {
             throw new ControllerError(404, 'not-found', `Attempt to patch a paper(${paper.id}) that doesn't exist!`)
         }
 
-        const currentPaper = currentPapers.list[0]
-
         // 3. User must be an owning author on the Paper(:paper_id)
-        if ( ! currentPaper.authors.find((a) => a.userId == user.id && a.owner) ) {
+        if ( ! existing.authors.find((a) => a.userId == user.id && a.owner) ) {
             throw new ControllerError(403, 'not-authorized:not-owner', 
                 `Non-owner user(${user.id}) attempting to PATCH paper(${paper.id}).`)
         }
 
         // 4. Paper(:paper_id) must be a draft.
-        if ( ! currentPaper.isDraft ) {
+        if ( ! existing.isDraft ) {
             throw new ControllerError(403, `not-authorized:published`,
                 `User(${user.id}) attempting to PATCH a published paper.`)
         }
@@ -776,15 +751,29 @@ module.exports = class PaperController {
 
         await this.paperDAO.updatePartialPaper(paper)
 
-        const afterResults = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paper.id])
-        if ( ! afterResults.dictionary[paper.id]) {
+        const results = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paper.id])
+        const entity = results.dictionary[paper.id]
+
+        if ( ! entity ) {
             throw new ControllerError(500, `server-error`, `Failed to find paper(${paper.id}) after patching!`)
         } 
 
-        const relations = await this.getRelations(request.session.user, afterResults)
+        if ( entity.showPreprint && ! existing.showPreprint ) {
+            const event = {
+                paperId: entity.id,
+                actorId: user.id,
+                version: entity.versions[0].version,
+                type: 'preprint-posted',
+                visibility: [ 'public' ]
+            }
+
+            await this.paperEventDAO.insertEvent(event)
+        }
+
+        const relations = await this.getRelations(request.session.user, results)
 
         return response.status(201).json({ 
-            entity: afterResults.list[0],
+            entity: entity,
             relations: relations
         })
     }
@@ -891,24 +880,23 @@ module.exports = class PaperController {
 
         const user = request.session.user
 
-        const papers = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
+        const existingResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
+        const existing = existingResults.dictionary[paperId]
 
         // 2. Paper(:paper_id) must exist.
-        if ( papers.list.length <= 0 ) {
+        if ( ! existing ) {
             throw new ControllerError(404, 'not-found',
                 `User(${user.id}) attempted to post a new version of a paper that doesn't exist.`)
         }
 
-        const paper = papers.list[0]
-
         // 3. User must be an owning author on Paper(:paper_id)
-        if ( ! paper.authors.find((a) => a.userId == user.id && a.owner)) {
+        if ( ! existing.authors.find((a) => a.userId == user.id && a.owner)) {
             throw new ControllerError(403, 'not-owner', 
                 `Non-owner user(${user.id}) attempting to delete paper(${request.params.id}).`)
         }
 
         // 4. Paper(:paper_id) must be a draft.
-        if ( ! paper.isDraft ) {
+        if ( ! existing.isDraft ) {
             throw new ControllerError(403, 'not-authorized:not-draft',
                 `User(${user.id}) attempting to delete published Paper(${paperId}).`)
         }
@@ -938,17 +926,28 @@ module.exports = class PaperController {
          *      POST the new version.
          ********************************************************/
 
-        await this.paperDAO.insertVersion(paper, version)
+        await this.paperDAO.insertVersion(existing, version)
 
-        const afterResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paper.id ])
+        const results = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
+        const entity = results.dictionary[paperId]
 
-        if ( ! afterResults.dictionary[paper.id]) {
-            throw new ControllerError(500, 'server-error', `Paper(${paper.id}) not found after inserting a new version!`)
+        if ( ! entity ) {
+            throw new ControllerError(500, 'server-error', `Paper(${paperId}) not found after inserting a new version!`)
         }
-        const relations = await this.getRelations(request.session.user, afterResults)
+
+        const event = {
+            paperId: entity.id,
+            actorId: user.id,
+            version: entity.versions[0].version,
+            type: 'version-uploaded',
+            visibility: [ 'public' ]
+        }
+        await this.paperEventDAO.insertEvent(event)
+
+        const relations = await this.getRelations(request.session.user, results)
 
         return response.status(201).json({ 
-            entity: afterResults.dictionary[paper.id],
+            entity: entity,
             relations: relations
         })
     }

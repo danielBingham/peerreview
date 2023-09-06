@@ -34,27 +34,21 @@ import ResetPasswordPage from '/pages/authentication/ResetPasswordPage'
 import ResetPasswordRequestPage from '/pages/authentication/ResetPasswordRequestPage'
 import AcceptInvitationPage from '/pages/authentication/AcceptInvitationPage'
 
-import ReputationInitializationPage from '/pages/users/ReputationInitializationPage'
-import UsersListPage from '/pages/users/UsersListPage'
 import UserProfilePage from '/pages/users/UserProfilePage'
 import UserAccountPage from '/pages/users/UserAccountPage'
 import UserProfileEditForm from '/components/users/account/UserProfileEditForm'
 import UserAccountDetailsForm from '/components/users/account/UserAccountDetailsForm'
 
-import FieldsListPage from '/pages/fields/FieldsListPage'
 import FieldPage from '/pages/fields/FieldPage'
 
 import SubmitPage from '/pages/papers/SubmitPage'
-import DraftPaperPage from '/pages/papers/DraftPaperPage'
+import PaperPage from '/pages/papers/PaperPage'
+import PaperSearchPage from '/pages/papers/PaperSearchPage'
 
 import ReviewDashboardPage from '/pages/dashboards/ReviewDashboardPage'
 import AuthorDashboardPage from '/pages/dashboards/AuthorDashboardPage'
 import EditorDashboardPage from '/pages/dashboards/EditorDashboardPage'
 
-import PublishedPaperPage from '/pages/papers/PublishedPaperPage'
-import PaperSearchPage from '/pages/papers/PaperSearchPage'
-
-import JournalsListPage from '/pages/journals/JournalsListPage'
 import CreateJournalPage from '/pages/journals/CreateJournalPage'
 import JournalPage from '/pages/journals/JournalPage'
 
@@ -206,9 +200,10 @@ const App = function(props) {
                 <main>
                     { currentUser && currentUser.status == 'unconfirmed' && <NeedEmailConfirmationNotice /> }
                     <Routes>
-                        <Route path="/" element={ <HomePage /> } />
-                        <Route path="/papers" element={ <HomePage tab="papers" /> } />
-                        <Route path="/preprints" element={ <HomePage tab="preprints" /> } />
+                        <Route path="/">
+                            <Route path=":pageTab" element={ <HomePage /> } />
+                            <Route index element={ <HomePage /> } />
+                        </Route>
                         <Route path="/about" element={ <AboutPage />} />
                         <Route path="/tos" element={ <TermsOfServicePage /> } />
                         <Route path="/privacy" element={ <PrivacyPage /> } />
@@ -225,60 +220,46 @@ const App = function(props) {
                         <Route path="/accept-invitation" element={ <AcceptInvitationPage /> } />
 
                         { /* ========== Users ================================= */ }
-                        <Route path="/users" element={ <UsersListPage /> } />
                         <Route path="/user/:id">
-                            <Route path=":tab" element={ <UserProfilePage /> } />
+                            <Route path=":pageTab" element={ <UserProfilePage /> } />
                             <Route index element={ <UserProfilePage /> } />
                         </Route>
                         <Route path="/account">
-                            <Route path=":tab" element={ <UserAccountPage /> } />
+                            <Route path=":pageTab" element={ <UserAccountPage /> } />
                             <Route index element={ <UserAccountPage /> } />
                         </Route>
 
                         { /* ========== fields ================================= */ }
-                        <Route path="/fields" element={ <FieldsListPage /> } />
-                        <Route path="/field/:id" element={ <FieldPage /> } />
-                        <Route path="/field/:id/papers" element={ <FieldPage tab="papers" /> } />
-                        <Route path="/field/:id/parents" element={ <FieldPage tab="parents" /> } />
-                        <Route path="/field/:id/children" element={ <FieldPage tab="children" /> } />
+                        <Route path="/field/:id">
+                            <Route path=":pageTab" element={ <FieldPage /> } />
+                            <Route index element={ <FieldPage /> } />
+                        </Route>
                         
                         { /* ========= Dashboards ============================ */ }
                         <Route path="/review">
-                            <Route path=":tab" element={ <ReviewDashboardPage /> } />
+                            <Route path=":pageTab" element={ <ReviewDashboardPage /> } />
                             <Route index element={ <ReviewDashboardPage /> } />
                         </Route>
                         <Route path="/edit" element={ <EditorDashboardPage />} />
-                        <Route path="/author" element={ <AuthorDashboardPage /> } />
+                        <Route path="/author">
+                            <Route path=":pageTab" element={ <AuthorDashboardPage /> } />
+                            <Route index element={ <AuthorDashboardPage /> } />
+                        </Route>
 
-                        { /* ========= Draft Papers  ============================ */ }
+                        { /* ========= Papers ===================== */ }
                         <Route path="/submit" element={ <SubmitPage /> }  />
-                        <Route path="/draft/:id" element={ <DraftPaperPage tab="reviews" /> }  />
-                        <Route path="/draft/:id/reviews" element={ <DraftPaperPage tab="reviews" /> } />
-                        <Route path="/draft/:id/drafts" element={ <DraftPaperPage tab="drafts" /> } />
-                        <Route path="/draft/:id/version/:versionNumber" element={ <DraftPaperPage tab="reviews" /> } />
-                        <Route path="/draft/:id/version/:versionNumber/reviews" element={ <DraftPaperPage tab="reviews" /> } />
-                        <Route path="/draft/:id/version/:versionNumber/drafts" element={ <DraftPaperPage tab="drafts" /> } />
-
-                        { /* ========= Published Papers ===================== */ }
                         <Route path="/search" element={ <PaperSearchPage /> } />
-                        <Route path="/paper/:id" element={ <PublishedPaperPage tab="paper" /> } />
-                        <Route path="/paper/:id/responses" element={ <PublishedPaperPage tab="responses" /> } />
-                        <Route path="/paper/:id/reviews" element={ <PublishedPaperPage tab="reviews" /> } />
-                        <Route path="/paper/:id/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
-                        <Route path="/paper/:id/version/:versionNumber" element={ <PublishedPaperPage tab="drafts" /> } />
-                        <Route path="/paper/:id/version/:versionNumber/responses" element={ <PublishedPaperPage tab="responses" /> } />
-                        <Route path="/paper/:id/version/:versionNumber/reviews" element={ <PublishedPaperPage tab="reviews" /> } />
-                        <Route path="/paper/:id/version/:versionNumber/drafts" element={ <PublishedPaperPage tab="drafts" /> } />
+                        <Route path="/paper/:id">
+                            <Route path=":pageTab" element={ <PaperPage /> } />
+                            <Route index element={ <PaperPage /> } />
+                        </Route> 
 
                         { /* ========= Journals ============================= */ }
-                        <Route path="/journals" element={ <JournalsListPage /> } />
                         <Route path="/create" element={ <CreateJournalPage /> } />
-                        <Route path="/journal/:id" element={ <JournalPage /> } />
-                        <Route path="/journal/:id/papers" element={ <JournalPage tab="papers" /> } />
-                        <Route path="/journal/:id/submissions" element={ <JournalPage tab="submissions" /> } />
-                        <Route path="/journal/:id/members" element={ <JournalPage tab="members" /> } />
-                        <Route path="/journal/:id/about" element={ <JournalPage tab="about" /> } />
-                        <Route path="/journal/:id/settings" element={ <JournalPage tab="settings" /> } />
+                        <Route path="/journal/:id">
+                            <Route path=":pageTab" element={ <JournalPage /> } />
+                            <Route index element={ <JournalPage /> } />
+                        </Route>
                     </Routes>
                 </main>
                 <Footer />

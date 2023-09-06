@@ -4,8 +4,10 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 
 import { validateToken, cleanupRequest } from '/state/authentication'
 
-import ResetPasswordForm from '/components/authentication/ResetPasswordForm'
 import Spinner from '/components/Spinner'
+import { Page, PageBody } from '/components/generic/Page'
+
+import ResetPasswordForm from '/components/authentication/ResetPasswordForm'
 
 import './ResetPasswordPage.css'
 
@@ -62,9 +64,11 @@ const ResetPasswordPage = function(props) {
     }
 
     return (
-        <div id="reset-password" className="page">
+        <Page id="reset-password">
+            <PageBody>
             { content }
-        </div>
+            </PageBody>
+        </Page>
     )
 }
 

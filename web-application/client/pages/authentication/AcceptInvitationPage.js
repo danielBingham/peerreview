@@ -4,8 +4,9 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 
 import { validateToken, cleanupRequest } from '/state/authentication'
 
-import AcceptInvitationForm from '/components/authentication/AcceptInvitationForm'
 import Spinner from '/components/Spinner'
+import { Page, PageBody } from '/components/generic/Page'
+import AcceptInvitationForm from '/components/authentication/AcceptInvitationForm'
 
 import './AcceptInvitationPage.css'
 
@@ -71,9 +72,11 @@ const AcceptInvitationPage = function(props) {
     }
 
     return (
-        <div id="accept-invitation-page" className="page">
-            { content }
-        </div>
+        <Page id="accept-invitation-page">
+            <PageBody>
+                { content }
+            </PageBody>
+        </Page>
     )
 
 }

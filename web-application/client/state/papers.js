@@ -28,6 +28,9 @@ const cacheTTL = 5 * 1000 // 5 seconds
 export const papersSlice = createSlice({
     name: 'papers',
     initialState: {
+        
+        // ======== Standard State ============================================
+
         /**
          * A dictionary of requests in progress or that we've made and completed,
          * keyed with a uuid requestId.
@@ -37,14 +40,6 @@ export const papersSlice = createSlice({
         requests: {},
 
         /**
-         * A dictionary of recent requests keyed by method-endpoint to allow us
-         * to determine whether we've made a certain request recently.
-         *
-         * @type {object}
-         */
-        requestCache: {},
-
-        /**
          * A dictionary of papers we've retrieved from the backend, keyed by
          * paper.id.
          *
@@ -52,7 +47,27 @@ export const papersSlice = createSlice({
          */
         dictionary: {},
 
+        /**
+         *
+         * An object containing queries made to query supporting endpoints.
+         *
+         * Structure:
+         * {
+         *  queryName: {
+         *      meta: {
+         *          page: <int>,
+         *          count: <int>,
+         *          pageSize: <int>,
+         *          numberOfPages: <int>
+         *      },
+         *      list: [] 
+         *  },
+         *  ...
+         * }
+         */
         queries: {},
+
+        // ======== Specific State ============================================
 
         /**
          * The draft paper the current user is assembling.  It hasn't been

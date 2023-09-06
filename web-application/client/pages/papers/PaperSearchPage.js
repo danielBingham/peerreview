@@ -2,47 +2,22 @@ import React, { useState, useLayoutEffect } from 'react'
 import { useSelector } from 'react-redux'
 import { useLocation, useSearchParams } from 'react-router-dom'
 
+import { Page, PageBody } from '/components/generic/Page'
+
 import PaperSearchView from '/components/papers/search/PaperSearchView'
 import PaperList from '/components/papers/list/PaperList'
 
 import './PaperSearchPage.css'
 
 const PaperSearchPage = function(props) {
-    const [ query, setQuery ] = useState({})
-
-    const fieldSettings = useSelector(function(state) {
-        if ( state.authentication.settings ) {
-            return state.authentication.settings.fields
-        } else {
-            return []
-        }
-    })
-
-    useLayoutEffect(function() {
-        if (fieldSettings && fieldSettings.length > 0) {
-            const ignored = []
-            const isolated = []
-
-            for (const settingField of fieldSettings) {
-                if( settingField.setting == 'isolated' ) {
-                    isolated.push(settingField.fieldId)
-                } else if (settingField.setting == 'ignored' ) {
-                    ignored.push(settingField.fieldId)
-                }
-            }
-
-            const newQuery = { ...query }
-            newQuery.fields = isolated
-            newQuery.excludeFields = ignored
-            setQuery(newQuery)
-        }
-    }, [])
 
     return (
-        <div id="paper-search-page" className="page">
-            <PaperSearchView  />
-            <PaperList type="published" query={query} />
-        </div>
+        <Page id="paper-search-page">
+            <PageBody>
+                <PaperSearchView  />
+                <PaperList type="published" query={query} />
+            </PageBody>
+        </Page>
     )
 }
 

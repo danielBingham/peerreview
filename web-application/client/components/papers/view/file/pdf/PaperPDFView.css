@@ -1,0 +1,7 @@
+.paper-pdf {
+    position: relative;
+    width: 802px;
+}
+.paper-pdf .paper-pdf-document { 
+    width: 802px;
+}

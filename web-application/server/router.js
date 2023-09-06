@@ -462,6 +462,24 @@ module.exports = function(core) {
         })
     })
 
+    /**************************************************************************
+     *          Paper Event Routes
+     * ************************************************************************/
+    const PaperEventController = require('./controllers/PaperEventController')
+    const paperEventController = new PaperEventController(core)
+
+    router.get('/paper/:paperId/events', function(request, response, next) {
+        paperEventController.getEvents(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/paper/:paperId/event/:id', function(request, response, next) {
+        paperEventController.patchEvent(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
     /******************************************************************************
      *          Version REST Routes
      ******************************************************************************/

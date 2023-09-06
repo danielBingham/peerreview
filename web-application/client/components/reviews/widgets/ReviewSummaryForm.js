@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 
 import { CheckCircleIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, XCircleIcon } from '@heroicons/react/24/outline'
 
@@ -19,6 +20,8 @@ import './ReviewSummaryForm.css'
  * @param {Object} props.selectedReview The currently selected review.
  */
 const ReviewSummaryForm = function(props) {
+
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ======= Render State =========================================
 
@@ -87,12 +90,15 @@ const ReviewSummaryForm = function(props) {
         }
 
         setPatchReviewRequestId(dispatch(patchReview(props.paper.id, reviewPatch)))
+
+        searchParams.set('review', reviewInProgress.id)
+        setSearchParams(searchParams)
     }
 
     const cancel = function(event) {
         event.preventDefault()
 
-        setDeleteReviewRequestId(dispatch(deleteReview(reviewInProgress)))
+        setDeleteReviewRequestId(dispatch(deleteReview(reviewInProgress.id)))
     }
 
     const commitChange = function(event) {
@@ -174,7 +180,7 @@ const ReviewSummaryForm = function(props) {
                                 onChange={(e) => setRecommendation('commentary')}
                                 onBlur={commitChange}
                                 value="commentary" />
-                            <label htmlFor="commentary"><ChatBubbleLeftRightIcon/>Commentary</label>
+                            <label htmlFor="commentary" onClick={(e) => setRecommendation('commentary')} ><ChatBubbleLeftRightIcon/>Commentary</label>
                             <div className="explanation">Add commentary to the draft with out making an explicit recommendation.</div>
                         </div>
                         <div className="recommendation-option">
@@ -185,7 +191,7 @@ const ReviewSummaryForm = function(props) {
                                 onChange={(e) => setRecommendation('request-changes')}
                                 onBlur={commitChange}
                                 value="request-changes" />
-                            <label htmlFor="request-changes"><ClipboardDocumentListIcon/>Request Changes</label>
+                            <label htmlFor="request-changes" onClick={(e) => setRecommendation('request-changes')}><ClipboardDocumentListIcon/>Request Changes</label>
                             <div className="explanation">Recommend that authors make the changes outlined in this review.</div>
                         </div>
                         <div className="recommendation-option">
@@ -196,7 +202,7 @@ const ReviewSummaryForm = function(props) {
                                 onChange={(e) => setRecommendation('reject')}
                                 onBlur={commitChange}
                                 value="reject" />
-                            <label htmlFor="approve"><XCircleIcon/>Reject</label>
+                            <label htmlFor="approve" onClick={(e) => setRecommendation('reject')}><XCircleIcon/>Reject</label>
                             <div className="explanation">Recommend that the draft be rejected.</div>
                         </div>
                         <div className="recommendation-option">
@@ -207,7 +213,7 @@ const ReviewSummaryForm = function(props) {
                                 onChange={(e) => setRecommendation('approve')}
                                 onBlur={commitChange}
                                 value="approve" />
-                            <label htmlFor="approve"><CheckCircleIcon/>Approve</label>
+                            <label htmlFor="approve" onClick={(e) => setRecommendation('approve')}><CheckCircleIcon/>Approve</label>
                             <div className="explanation">Recommend that the draft be approved with out additional changes.</div>
                         </div>
                         <div className="submission-buttons">

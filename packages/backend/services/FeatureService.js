@@ -5,6 +5,7 @@ const ExampleMigration = require('../migrations/ExampleMigration')
 const WIPNoticeMigration = require('../migrations/WIPNoticeMigration')
 const CommentVersionsMigration = require('../migrations/CommentVersionsMigration')
 const JournalsMigration = require('../migrations/JournalsMigration')
+const PaperEventsMigration = require('../migrations/PaperEventsMigration')
 
 const ServiceError = require('../errors/ServiceError')
 const MigrationError = require('../errors/MigrationError')
@@ -37,21 +38,39 @@ module.exports = class FeatureService {
          */
         this.features = {
             'example':  {
+                dependsOn: [],
+                conflictsWith: [],
                 migration: new ExampleMigration(core)
             },
             'wip-notice': {
+                dependsOn: [],
+                conflictsWith: [],
                 migration: new WIPNoticeMigration(core)
             },
 
             // Issue #171 - Comment Versioning and Editing.
             'review-comment-versions-171': {
+                dependsOn: [],
+                conflictsWith: [],
                 migration: new CommentVersionsMigration(core)
             },
 
             // Issue #79 - Journals
             'journals-79': {
+                dependsOn: [],
+                conflictsWith: [],
                 migration: new JournalsMigration(core)
+            },
+
+            // Issue #189 - Paper Events
+            'paper-events-189': {
+                dependsOn: [ 'journals-79' ],
+                conflictsWith: [],
+                migration: new PaperEventsMigration(core)
             }
+
+
+
         }
     }
 
@@ -98,7 +117,10 @@ module.exports = class FeatureService {
                 name: name,
                 status: 'uncreated'
             }
-        }
+        } 
+
+        feature.conflictsWith = this.features[name].conflictsWith
+        feature.dependsOn = this.features[name].dependsOn
 
         return feature 
     }

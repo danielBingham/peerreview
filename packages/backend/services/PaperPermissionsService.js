@@ -52,5 +52,42 @@ module.exports = class PaperPermissionsService {
             
     }
 
+    /**
+     * Retrieves all ids of the user's current private drafts.
+     */
+    async getPrivateDrafts(userId) {
+        const results = await this.database.query(`
+            SELECT DISTINCT id FROM papers
+                LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = papers.id
+            WHERE paper_authors.user_id = $1 
+                AND papers.is_draft = true 
+                AND papers.show_preprint = false
+        `, [ userId ])
+
+        if ( results.rows.length <= 0 ) {
+            return []
+        }
+
+        return results.rows.map((r) => r.id)
+    }
+
+    /**
+     * Gets all of a user's submissions to journals. 
+     */
+    async getUserSubmissions(userId) {
+        const results = await this.database.query(`
+            SELECT DISTINCT id FROM papers
+                LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = papers.id
+            WHERE paper_authors.user_id = $1 
+                AND papers.is_draft = true 
+                AND papers.id IN ( SELECT paper_id FROM journal_submissions)
+        `, [ userId ])
+
+        if ( results.rows.length <= 0 ) {
+            return []
+        }
+
+        return results.rows.map((r) => r.id)
+    }
 
 }

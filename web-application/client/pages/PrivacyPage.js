@@ -1,16 +1,20 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 
+import { Page, PageBody } from '/components/generic/Page'
+
 import './PrivacyPage.css'
 
 const PrivacyPage = function(props) {
 
 
     return (
-        <article id="privacy" className="page">
-            <h1>Privacy Policy</h1>
-            <ReactMarkdown>
-                {`
+        <Page id="privacy">
+            <PageBody>
+                <article>
+                    <h1>Privacy Policy</h1>
+                    <ReactMarkdown>
+                        {`
 1. All content you provide is considered public with the exception of your
 email and password.  You retain ownership of your content and share it under a
 Creative Commons CC-By 4.0 license.
@@ -33,8 +37,10 @@ Our third party processors currently consist of:
 
 We may add additional providers as needed.
             `}
-            </ReactMarkdown>
-        </article>
+                    </ReactMarkdown>
+                </article>
+            </PageBody>
+        </Page>
     )
 
 }

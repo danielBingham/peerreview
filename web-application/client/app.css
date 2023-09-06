@@ -119,15 +119,6 @@ main {
     padding-bottom: 50px;
 }
 
-.page {
-    width: 1200px;
-    min-height: 400px;
-    margin: 50px auto;
-    background-color: var(--page-background-color);
-    color: var(--page-text-color);
-    padding: 50px 20px 20px 20px;
-}
-
 .maintenance-mode {
     width: 800px;
     margin: 100px auto;

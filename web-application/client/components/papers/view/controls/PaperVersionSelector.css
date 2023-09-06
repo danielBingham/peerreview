@@ -1,0 +1,8 @@
+.paper-version-selector {
+    display: inline-block;
+    font-weight: bold;
+}
+.paper-version-selector label {
+    display: inline-block;
+    margin-right: 5px;
+}

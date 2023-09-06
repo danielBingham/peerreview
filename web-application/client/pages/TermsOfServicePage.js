@@ -1,16 +1,20 @@
 import React from 'react'
 import ReactMarkdown from 'react-markdown'
 
+import { Page, PageBody } from '/components/generic/Page'
+
 import './TermsOfServicePage.css'
 
 const TermsOfServicePage = function(props) {
 
 
     return (
-        <article id="terms-of-service" className="page">
-            <h1>Terms of Service</h1>
-            <ReactMarkdown>
-                {`
+        <Page id="terms-of-service">
+            <PageBody>
+                <article >
+                    <h1>Terms of Service</h1>
+                    <ReactMarkdown>
+                        {`
 1. **Use at your own risk.** Peer Review is an experimental academic publishing
 platform that is currently in beta.  The platform is provided "as is" and we
 make no guarantees about its functioning.  We cannot gaurantee that data
@@ -34,8 +38,10 @@ perpetrate fraud.
 
 
                 `}
-            </ReactMarkdown>
-        </article>
+                    </ReactMarkdown>
+                </article>
+            </PageBody>
+        </Page>
     )
 
 }

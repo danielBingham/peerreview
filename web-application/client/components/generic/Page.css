@@ -1,0 +1,74 @@
+.page {}
+
+.page .page-body {
+    width: 1200px;
+    min-height: 400px;
+    margin: 50px auto;
+    background-color: var(--page-background-color);
+    color: var(--page-text-color);
+    padding: 50px 20px 20px 20px;
+}
+
+.page .page-header {
+    padding: 20px 60px 20px 40px;
+    background-color: var(--page-header-background-color);
+}
+.page .page-header .page-header-grid { 
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+}
+.page .page-header .page-header-grid .page-header-controls {
+    min-height: 39px;
+    grid-column: 2 / 3;
+    grid-row: 1 / 2;
+    text-align: right;
+}
+.page .page-header .page-header-grid .page-header-main {
+    grid-column: 1 / 2;
+    grid-row: 2 / 3;
+}
+
+.page .page-tab-bar {
+    width: 100%;
+    margin: 0 auto -50px auto;
+    padding: 30px 0 0 0;
+    background-color: var(--tab-bar-background-color);
+    border-bottom: thin solid var(--tab-bar-border-color);
+
+}
+.page .page-tab-bar .tabs-wrapper {
+    padding: 0 20px;
+}
+.page .page-tab-bar .page-tab {
+    display: inline-block;
+    padding: 5px 20px;
+    font-size: 16px;
+    line-height: 1.8em;
+    color: var(--tab-bar-text-color);
+}
+.page .page-tab-bar a.page-tab:link, 
+.page .page-tab-bar a.page-tab:visited, 
+.page .page-tab-bar a.page-tab:active, 
+.page .page-tab-bar a.page-tab:hover {
+    color: var(--tab-bar-text-color);
+}
+.page .page-tab-bar .page-tab.selected  {
+   background-color: white; 
+   padding-bottom: 7px;
+   margin-bottom: -1px;
+   border: thin solid var(--tab-bar-border-color);
+   border-bottom: none;
+}
+.page .page-tab-bar .page-tab img {
+    width: 20px;
+    margin-right: 5px;
+    margin-bottom: -5px;
+}
+.page .page-tab-bar .page-tab svg {
+    width: 20px;
+    margin-right: 5px;
+    margin-bottom: -5px;
+    color: var(--icon-color);
+}
+

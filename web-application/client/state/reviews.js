@@ -2,7 +2,17 @@ import { createSlice } from '@reduxjs/toolkit'
 
 import logger from '../logger'
 
-import { addUsers } from './users'
+import setRelationsInState from './helpers/relations'
+
+import {
+    setInDictionary,
+    removeEntity,
+    makeQuery,
+    setQueryResults,
+    clearQuery,
+    clearQueries
+} from './helpers/state'
+
 import { 
     makeTrackedRequest,
     makeSearchParams,
@@ -17,14 +27,9 @@ import {
 export const reviewsSlice = createSlice({
     name: 'reviews',
     initialState: {
-        /**
-         * A hash of reviews current in progress, keyed by paperId and version - one review
-         * for each paper version.
-         *
-         * @type {object}
-         */
-        inProgress: {},
-
+       
+        // ======== Standard State ============================================
+        
         /**
          * A dictionary of requests in progress or that we've made and completed,
          * keyed with a uuid requestId.
@@ -34,43 +39,58 @@ export const reviewsSlice = createSlice({
         requests: {},
 
         /**
-         * A two dimensional dictionary of reviews, the first layer is keyed by
-         * paper.id, the second by review.id
+         * A dictionary of reviews we've retrieved from the backend keyed by
+         * review.id.
          *
          * @type {object}
          */
         dictionary: {},
 
         /**
-         * A dictionary, keyed by paper.id and paper.version, of lists of
-         * reviews we've retrieved for each paper.  The lists preserve order.
+         *
+         * An object containing queries made to query supporting endpoints.
          *
          * Structure:
-         * ```
-         * { 
-         *  1: {
-         *      1: []
-         *      2: []
-         *      3: []
-         *      }
-         *  2: {
-         *      1: []
-         *      2: []
-         *     }
+         * {
+         *  queryName: {
+         *      meta: {
+         *          page: <int>,
+         *          count: <int>,
+         *          pageSize: <int>,
+         *          numberOfPages: <int>
+         *      },
+         *      list: [] 
+         *  },
+         *  ...
          * }
-         * ```
-         *
-         * @type {Object[]}
          */
-        list: {},
+        queries: {},
 
+        // ======== Specific State ============================================
+        
         /**
-         * A hash of review counts, keyed by paper.id and paper.version.
+         * A hash of reviews current in progress, keyed by paperId and version - one review
+         * for each paper version.
+         *
+         * @type {object}
          */
-        counts: {}
+        inProgress: {}
 
     },
     reducers: {
+
+        // ======== State Manipulation Helpers ================================
+        // @see ./helpers/state.js
+
+        setReviewsInDictionary: setInDictionary,
+        removeReview: removeEntity,
+        makeReviewQuery: makeQuery,
+        setReviewQueryResults: setQueryResults,
+        clearReviewQuery: clearQuery,
+        clearReviewQueries: clearQueries,
+
+        // ======== Review Specific State Manipulation =========================
+        
         setInProgress: function(state, action) {
             const review = action.payload
             if ( ! state.inProgress[review.paperId] ) {
@@ -89,79 +109,6 @@ export const reviewsSlice = createSlice({
             }
         },
 
-        replaceReview: function(state, action) {
-            const review = action.payload
-            if ( ! state.dictionary[review.paperId] ) {
-                state.dictionary[review.paperId] = {}
-            }
-            state.dictionary[review.paperId][review.id] = review
-
-            if ( ! state.list[review.paperId] ) {
-                state.list[review.paperId] = {} 
-            }
-            if ( ! state.list[review.paperId][review.version] ) {
-                state.list[review.paperId][review.version] = []
-            }
-
-            const index = state.list[review.paperId][review.version].findIndex((r) => r.id == review.id)
-            if ( index >= 0 ) {
-                state.list[review.paperId][review.version][index] = review
-            }
-        },
-
-        /**
-         * @param {object} state - The redux slice.
-         * @param {object} action - The redux action we're reducing.
-         * @param {object} action.payload - Either a single review object or a
-         * list of review objects.
-         */
-        addReviewsToDictionary: function(state, action) {
-            let reviews = ( action.payload.length ? action.payload : [ action.payload ] ) 
-
-            for(const review of reviews) {
-                if ( ! state.dictionary[review.paperId] ) {
-                    state.dictionary[review.paperId] = {}
-                }
-                state.dictionary[review.paperId][review.id] = review
-            }
-        },
-
-        appendReviewsToList: function(state, action) {
-            let reviews = (action.payload.length ? action.payload : [ action.payload ])
-
-            for ( const review of reviews) {
-                if ( ! state.list[review.paperId]) {
-                    state.list[review.paperId] = {} 
-                }
-                if ( ! state.list[review.paperId][review.version] ) {
-                    state.list[review.paperId][review.version] = [] 
-                }
-                state.list[review.paperId][review.version].push(review)
-            }
-        },
-
-        removeReview: function(state, action) {
-            const review = action.payload
-            if ( state.list[review.paperId] && state.list[review.paperId][review.version]) {
-                state.list[review.paperId][review.version] = state.list[review.paperId][review.version].filter((r) => r.id != review.id)
-            }
-            if ( state.dictionary[review.paperId] ) {
-                delete state.dictionary[review.paperId][review.id]
-            }
-
-            if ( state.inProgress[review.paperId] && state.inProgress[review.paperId][review.version] && state.inProgress[review.paperId][review.version].id == review.id) {
-                state.inProgress[review.paperId][review.version] = null
-            }
-        },
-
-        clearList: function(state, action) {
-            const paperId = action.payload
-            state.list[paperId] = {}
-        },
-
-        setCounts: function(state, action) {
-            state.counts = action.payload
-        },
 
         // ========== Request Tracking Methods =============
 
@@ -198,37 +145,18 @@ export const newReview = function(paperId, version, userId, threads) {
 
 export const updateReview = function(review) {
     return function(dispatch, getState) {
-        dispatch(reviewsSlice.actions.replaceReview(review))
+        dispatch(reviewsSlice.actions.setReviewsInDictionary({ entity: review }))
 
         const state = getState()
-        if ( state.authentication.currentUser && review.userId == state.authentication.currentUser.id && review.status == 'in-progress') {
+        if ( state.authentication.currentUser 
+            && review.userId == state.authentication.currentUser.id && review.status == 'in-progress') 
+        {
             dispatch(reviewsSlice.actions.setInProgress(review))
         } else if ( state.reviews.inProgress[review.paperId] && state.reviews.inProgress[review.paperId][review.version] 
             && review.id == state.reviews.inProgress[review.paperId][review.version].id && review.status != 'in-progress') 
         {
             dispatch(reviewsSlice.actions.clearInProgress({ paperId: review.paperId, version: review.version })) 
         }
-    }
-}
-
-/**
- * GET /reviews/count
- *
- * Get counts of reviews by paper.id and paper.version 
- *
- * Makes the request asynchronously and returns a id that can be used to track
- * the request and retreive the results from the state slice.
- *
- * @returns {string} A uuid requestId that can be used to track this request.
- */
-export const countReviews = function() {
-    return function(dispatch, getState) {
-        return makeTrackedRequest(dispatch, getState, reviewsSlice,
-            'GET', `/reviews/count`, null,
-            function(counts) {
-                dispatch(reviewsSlice.actions.setCounts(counts))
-            }
-        )
     }
 }
 
@@ -242,26 +170,27 @@ export const countReviews = function() {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getReviews = function(paperId) {
+export const getReviews = function(name, paperId) {
     return function(dispatch, getState) {
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'GET', `/paper/${paperId}/reviews`, null,
-            function(reviews) {
-                if ( reviews && reviews.length > 0) {
-                    dispatch(reviewsSlice.actions.addReviewsToDictionary(reviews))
-                    dispatch(reviewsSlice.actions.appendReviewsToList(reviews))
+            function(response) {
+                dispatch(reviewsSlice.actions.setReviewsInDictionary({ dictionary: response.dictionary }))
+                
+                dispatch(reviewsSlice.actions.setReviewQueryResults({ name: name, meta: response.meta, list: response.list }))
 
-                    const state = getState()
-                    if ( state.authentication.currentUser ) {
-                        for ( const review of reviews ) {
-                            if ( review.status == 'in-progress' && review.userId == state.authentication.currentUser.id) {
-                                dispatch(reviewsSlice.actions.setInProgress(review))
-                            } 
-                        }
+                dispatch(setRelationsInState(response.relations))
+
+                const state = getState()
+                if ( state.authentication.currentUser ) {
+                    for ( const [ id, review ] of Object.entries(response.dictionary)) {
+                        if ( review.status == 'in-progress' && review.userId == state.authentication.currentUser.id) {
+                            dispatch(reviewsSlice.actions.setInProgress(review))
+                        } 
                     }
                 }
-
             }
+
         )
     }
 }
@@ -284,9 +213,15 @@ export const postReviews = function(review) {
         dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'POST', `/paper/${review.paperId}/reviews`, review,
-            function(returnedReview) {
-                dispatch(updateReview(returnedReview))
-                dispatch(reviewsSlice.actions.appendReviewsToList(returnedReview))
+            function(response) {
+                dispatch(reviewsSlice.actions.setReviewsInDictionary({ entity: response.entity }))
+                dispatch(reviewsSlice.actions.clearReviewQueries())
+
+                dispatch(setRelationsInState(response.relations))
+
+                if ( response.entity.status == 'in-progress' ) {
+                    dispatch(reviewsSlice.actions.setInProgress(response.entity))
+                }
             }
         )
     }
@@ -308,14 +243,13 @@ export const getReview = function(paperId, id) {
     return function(dispatch, getState) {
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'GET', `/paper/${paperId}/review/${id}`, null,
-            function(review) {
-                if ( review ) {
-                    dispatch(updateReview(review))
+            function(response) {
+                dispatch(reviewsSlice.actions.setReviewsInDictionary({ entity: response.entity }))
 
-                    const state = getState()
-                    if ( ! state.reviews.list[review.paperId] || ! state.reviews.list[review.paperId].find((r) => r.id == review.id)) {
-                        dispatch(reviewsSlice.actions.appendReviewsToList(review))
-                    }
+                dispatch(setRelationsInState(response.relations))
+                
+                if ( response.entity.status == 'in-progress' ) {
+                    dispatch(reviewsSlice.actions.setInProgress(response.entity))
                 }
             }
         )
@@ -364,8 +298,22 @@ export const patchReview = function(paperId, review) {
         dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'PATCH', `/paper/${paperId}/review/${review.id}`, review,
-            function(returnedReview) {
-                dispatch(updateReview(returnedReview))
+            function(response) {
+                dispatch(reviewsSlice.actions.setReviewsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
+              
+                const state = getState()
+                // TODO FIX ME - this misses updates that change the status from 'in-progress' to not in-progres
+                if ( response.entity.status == 'in-progress' ) {
+                    dispatch(reviewsSlice.actions.setInProgress(response.entity))
+                }
+                else if( state.reviews.inProgress[paperId] 
+                    && state.reviews.inProgress[paperId][response.entity.version].id == response.entity.id
+                    && response.entity.status != 'in-progress')  
+                {
+                    dispatch(reviewsSlice.actions.clearInProgress({ paperId: paperId, version: response.entity.version })) 
+                }
             }
         )
     }
@@ -383,13 +331,20 @@ export const patchReview = function(paperId, review) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const deleteReview = function(review) {
+export const deleteReview = function(id) {
     return function(dispatch, getState) {
+        const state = getState()
+        const review = state.reviews.dictionary[id]
         dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'DELETE', `/paper/${review.paperId}/review/${review.id}`, null,
             function(response) {
-                dispatch(reviewsSlice.actions.removeReview(review))
+                dispatch(reviewsSlice.actions.removeReview({ entity: review }))
+                dispatch(reviewsSlice.actions.clearReviewQueries())
+        
+                if ( review.status == 'in-progress') {
+                    dispatch(reviewsSlice.actions.clearInProgress({ paperId: review.paperId, version: review.version }))
+                }
             }
         )
     }
@@ -414,8 +369,14 @@ export const postReviewThreads = function(paperId, reviewId, threads) {
         dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'POST', `/paper/${paperId}/review/${reviewId}/threads`, threads,
-            function(returned) {
-                dispatch(updateReview(returned.review))
+            function(response) {
+                dispatch(reviewsSlice.actions.setReviewsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
+                
+                if ( response.entity.status == 'in-progress' ) {
+                    dispatch(reviewsSlice.actions.setInProgress(response.entity))
+                }
             }
         )
     }
@@ -441,8 +402,14 @@ export const postReviewComments = function(paperId, reviewId, threadId, comments
         dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'POST', `/paper/${paperId}/review/${reviewId}/thread/${threadId}/comments`, comments,
-            function(returnedReview) {
-                dispatch(updateReview(returnedReview))
+            function(response) {
+                dispatch(reviewsSlice.actions.setReviewsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
+                
+                if ( response.entity.status == 'in-progress' ) {
+                    dispatch(reviewsSlice.actions.setInProgress(response.entity))
+                }
             }
         )
     }
@@ -487,13 +454,19 @@ export const patchReviewComment = function(paperId, reviewId, threadId, comment)
         dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'PATCH', endpoint, comment,
-            function(returnedReview) {
+            function(response) {
                 // Handle a race condition - see method comment.
                 if ( checkForDeleteRequest(paperId, reviewId, getState()) ) {
                     throw new Error('Review deleted mid patch.')
                 }
 
-                dispatch(updateReview(returnedReview))
+                dispatch(reviewsSlice.actions.setReviewsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
+                
+                if ( response.entity.status == 'in-progress' ) {
+                    dispatch(reviewsSlice.actions.setInProgress(response.entity))
+                }
             }
         )
     }
@@ -517,8 +490,14 @@ export const deleteReviewComment = function(paperId, reviewId, threadId, comment
         dispatch(reviewsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, reviewsSlice,
             'DELETE', endpoint, null,
-            function(returnedReview) {
-                dispatch(updateReview(returnedReview))
+            function(response) {
+                dispatch(reviewsSlice.actions.setReviewsInDictionary({ entity: response.entity }))
+
+                dispatch(setRelationsInState(response.relations))
+                
+                if ( response.entity.status == 'in-progress' ) {
+                    dispatch(reviewsSlice.actions.setInProgress(response.entity))
+                }
             }
         )
     }
@@ -526,10 +505,8 @@ export const deleteReviewComment = function(paperId, reviewId, threadId, comment
 
 
 export const {  
+    setReviewsInDictionary,
     setInProgress, clearInProgress,
-    replaceReview, 
-    appendReviewsToList, clearList, 
-    addReviewsToDictionary, 
     cleanupRequest 
 }  = reviewsSlice.actions
 

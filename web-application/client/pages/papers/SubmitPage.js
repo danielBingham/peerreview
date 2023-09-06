@@ -1,39 +1,39 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { useSelector } from 'react-redux'
-import { Link, useParams } from 'react-router-dom'
-
-import SubmitDraftForm from '/components/papers/draft/submit/SubmitDraftForm'
+import { useNavigate } from 'react-router-dom'
 
 import Spinner from '/components/Spinner'
+import { Page, PageBody } from '/components/generic/Page'
+
+import SubmitDraftForm from '/components/papers/draft/submit/SubmitDraftForm'
 
 import './SubmitPage.css'
 
 const SubmitPage = function(props) {
+
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
     })
 
-    let content = ( <Spinner /> )
-    // If we don't have a current user, then we're giving them the login
-    // notice, because they aren't allowed to submit.
-    if ( ! currentUser ) {
-        content = ( 
-            <div className="login-notice">
-                <p>You must be logged in to submit a paper for publication.</p>
-                <p>Please <Link to="/login">login</Link> or <Link to="/register">register</Link>.</p>
-            </div>
-        )
-    }
 
-    else {
+    const navigate = useNavigate()
+    useEffect(function() {
+        if ( ! currentUser ) {
+            navigate('/login')
+        }
+    }, [])
+
+    let content = ( <Spinner /> )
+    if ( currentUser ) {
         content = ( <SubmitDraftForm /> )
     }
 
-
     return (
-        <div id="publish-page" className="page">
-            { content }
-        </div>
+        <Page id="publish-page">
+            <PageBody>
+                { content }
+            </PageBody>
+        </Page>
     )
 }
 

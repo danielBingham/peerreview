@@ -3,6 +3,7 @@ import { setJournalsInDictionary } from '../journals'
 import { setJournalSubmissionsInDictionary } from '../journalSubmissions'
 import { setPapersInDictionary } from '../papers'
 import { setUsersInDictionary } from '../users'
+import { setReviewsInDictionary } from '../reviews'
 
 
 const setRelationsInState = function(relations) {
@@ -18,7 +19,9 @@ const setRelationsInState = function(relations) {
                 dispatch(setPapersInDictionary({ dictionary: dictionary }))
             } else if ( relation == 'users' ) {
                 dispatch(setUsersInDictionary({ dictionary: dictionary }))
-            } 
+            } else if ( relation == 'reviews' ) {
+                dispatch(setReviewsInDictionary({ dictionary: dictionary }))
+            }
         }
     }
 }

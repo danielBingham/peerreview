@@ -5,6 +5,7 @@ import { Link, useSearchParams, useNavigate, useLocation } from 'react-router-do
 import { postOrcidAuthentication, cleanupRequest } from '/state/authentication'
 
 import Spinner from '/components/Spinner'
+import { Page, PageBody } from '/components/generic/Page'
 
 import './OrcidAuthenticationPage.css'
 
@@ -167,9 +168,11 @@ to use at
 
     // Render the component
     return (
-        <div id="orcid-authentication" className="page">
-            { content }
-        </div>
+        <Page id="orcid-authentication">
+            <PageBody>
+                { content }
+            </PageBody>
+        </Page>
     )
 
 }

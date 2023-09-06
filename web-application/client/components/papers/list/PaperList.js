@@ -5,7 +5,6 @@ import { useParams, useSearchParams, Link } from 'react-router-dom'
 import { DocumentIcon, DocumentCheckIcon, InboxIcon } from '@heroicons/react/24/outline'
 
 import { getPapers, clearPaperQuery, cleanupRequest } from '/state/papers'
-import { countReviews, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 import { countResponses, cleanupRequest as cleanupResponseRequest } from '/state/responses'
 
 import Spinner from '/components/Spinner'
@@ -58,15 +57,6 @@ const PaperList = function(props) {
         }
     })
 
-    const [countReviewsRequestId, setCountReviewsRequestId] = useState(null)
-    const countReviewsRequest = useSelector(function(state) {
-        if ( countReviewsRequestId) {
-            return state.reviews.requests[countReviewsRequestId]
-        } else {
-            return null
-        }
-    })
-
     const [responseRequestId, setResponseRequestId ] = useState(null)
     const responseRequest = useSelector(function(state) {
         if (responseRequestId) {
@@ -91,39 +81,58 @@ const PaperList = function(props) {
     const dispatch = useDispatch()
 
     const queryForPapers = function({searchString, fields, status, authors, journals, sortBy, page}) {
-        let query = {}
-        if ( props.query ) {
-            query = {
-                ...props.query
+        let query = { }
+
+        // Make sure we capture the filters from props.
+        if ( props.fields ) {
+            query.fields = props.fields
+        } 
+        if ( props.status ) {
+            query.status = props.status
+        }
+        if ( props.authors) {
+            query.authors = props.authors
+        }
+        if ( props.journals ) {
+            query.journals = props.journals
+        }
+   
+        // Then merge them with the filters from the searchString.  Props
+        // override.
+        if ( fields.length > 0 ) {
+            if ( query.fields ) {
+                query.fields = [ ...fields, ...query.fields ]
+            } else {
+                query.fields = fields
+            }
+        }
+
+        if ( status.length > 0 ) {
+            if ( query.status ) {
+                query.status = [ ...status, ...query.status ]
+            } else {
+                query.status = status
+            }
+        }
+
+        if ( authors && authors.length > 0 ) {
+            if ( query.authors ) {
+                query.authors = [ ...authors, ...query.authors ]
+            } else {
+                query.authors = authors
+            }
+        }
+
+        if ( journals && journals.length > 0) {
+            if ( query.journals ) {
+                query.journals = [ ...journals, ...query.journals ]
+            } else {
+                query.journals = journals
             }
         }
 
         if ( searchString ) {
             query.searchString = searchString
-        }
-
-        if ( fields.length > 0 ) {
-            query.fields = fields 
-        }
-
-        if ( status.length > 0 ) {
-            query.status = status
-        }
-
-        if ( authors ) {
-            query.authors = authors
-        }
-
-        if ( journals ) {
-            query.journals = journals
-        }
-
-        if ( props.authorId ) {
-            query.authorId = props.authorId
-        }
-
-        if ( props.journalId ) {
-            query.journalId = props.journalId
         }
 
         if ( props.type ) {
@@ -155,8 +164,6 @@ const PaperList = function(props) {
 
         if ( props.type == 'published' ) {
             setResponseRequestId(dispatch(countResponses()))
-        } else {
-            setCountReviewsRequestId(dispatch(countReviews()))
         } 
     }
 
@@ -209,14 +216,6 @@ const PaperList = function(props) {
         }
     }, [ requestId ])
 
-    useEffect(function() {
-        return function cleanup() {
-            if ( countReviewsRequestId ) {
-                dispatch(cleanupReviewRequest({ requestId: countReviewsRequestId }))
-            }
-        }
-    }, [ countReviewsRequestId ])
-
     // Cleanup our request.
     useEffect(function() {
         return function cleanup() {
@@ -235,10 +234,7 @@ const PaperList = function(props) {
     let noContent = null
 
     if ( request && request.state == 'fulfilled' 
-        && (
-            (props.type == 'published' && responseRequest && responseRequest.state == 'fulfilled') 
-            || (countReviewsRequest && countReviewsRequest.state == 'fulfilled'))
-        ) 
+        && (props.type != 'published' || ( props.type == 'published' && responseRequest && responseRequest.state == 'fulfilled')))
     {
         content = []
         for (const paper of paperQuery.list) {
