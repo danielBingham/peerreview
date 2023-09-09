@@ -177,6 +177,47 @@ export const patchPaperEvent = function(paperId, event) {
     }
 }
 
+/**
+ * GET /feed/editor
+ *
+ * Get events for the current user's editor feed.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const getEditorFeed = function(name, params) {
+    return function(dispatch, getState) {
+        const queryString = makeSearchParams(params) 
+        const endpoint = `/feed/editor${( params ? '?' + queryString.toString() : '')}`
+
+        const state = getState()
+        if ( ! state.paperEvents.queries[name] ) {
+            dispatch(eventsSlice.actions.makePaperEventQuery({ name: name }))
+        }
+
+        return makeTrackedRequest(dispatch, getState, eventsSlice,
+            'GET', endpoint, null,
+            function(response) {
+                if ( ! params?.since ) {
+                    dispatch(eventsSlice.actions.setPaperEventsInDictionary({ dictionary: response.dictionary}))
+
+                    dispatch(eventsSlice.actions.setPaperEventQueryResults({ name: name, meta: response.meta, list: response.list }))
+                } else {
+                    if ( response.list.length > 0 ) {
+                        dispatch(eventsSlice.actions.setPaperEventsInDictionary({ dictionary: response.dictionary}))
+
+                        dispatch(eventsSlice.actions.appendToQuery({ name: name, list: response.list }))
+                    }
+                }
+
+                dispatch(setRelationsInState(response.relations))
+            }
+        )
+    }
+}
+
 
 
 

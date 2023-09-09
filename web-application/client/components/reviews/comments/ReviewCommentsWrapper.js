@@ -41,10 +41,12 @@ const ReviewCommentsWrapper = function(props) {
             return results
         } else if ( selectedReviewId ) {
             const results = []
-            results.push(...state.reviews.dictionary[selectedReviewId].threads)
-            results.sort((a,b) => {
-                return (a.page+a.pinY) - (b.page+b.pinY)
-            })
+            if ( state.reviews.dictionary[selectedReviewId].version == props.versionNumber ) {
+                results.push(...state.reviews.dictionary[selectedReviewId].threads)
+                results.sort((a,b) => {
+                    return (a.page+a.pinY) - (b.page+b.pinY)
+                })
+            }
             return results
         } else {
             return [] 

@@ -47,7 +47,8 @@ module.exports = class JournalSubmissionDAO {
 
             const reviewer = {
                 userId: row.reviewer_userId,
-                assignedDate: row.reviewer_assignedDate
+                assignedDate: row.reviewer_assignedDate,
+                reviews: []
             }
 
             if ( reviewer.userId != null 
@@ -55,6 +56,19 @@ module.exports = class JournalSubmissionDAO {
             {
                 dictionary[submission.id].reviewers.push(reviewer)
             }
+
+            const review = {
+                id: row.review_id,
+                version: row.review_version,
+                recommendation: row.review_recommendation,
+                userId: row.review_userId
+            }
+
+            // TODO Attach review to reviewer.
+            // Or consider a different approach, this seems like not the best approach.
+                
+
+
 
             const editor = {
                 userId: row.editor_userId,
@@ -81,7 +95,6 @@ module.exports = class JournalSubmissionDAO {
             FROM journal_submissions
                 LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submission_id
                 LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
-                LEFT OUTER JOIN journals ON journal_submissions.journal_id = journals.id
             ${where} 
         `
 
@@ -128,14 +141,17 @@ module.exports = class JournalSubmissionDAO {
                 journal_submission_reviewers.user_id as "reviewer_userId",
                 journal_submission_reviewers.created_date as "reviewer_assignedDate",
 
+                reviews.id as review_id, reviews.version as review_version,
+                reviews.recommendation as review_recommendation, reviews.user_id as "review_userId",
+
                 journal_submission_editors.submission_id as "editor_submissionId",
                 journal_submission_editors.user_id as "editor_userId",
                 journal_submission_editors.created_date as "editor_assignedDate"
 
             FROM journal_submissions
                 LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submission_id
+                LEFT OUTER JOIN reviews ON journal_submission_reviewers.user_id = reviews.user_id AND journal_submissions.paper_id = reviews.paper_id AND reviews.status='submitted'
                 LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
-                LEFT OUTER JOIN journals ON journal_submissions.journal_id = journals.id
 
             ${where}
 

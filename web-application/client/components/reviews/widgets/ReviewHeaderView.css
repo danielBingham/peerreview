@@ -21,7 +21,13 @@
     margin: 10px auto;
     padding: 10px;
 }
+.review-selector {
+    text-align: center;
+}
 .review-selector .review-menu-body {
     max-height: 600px;
     overflow: auto;
+}
+.review-header .start-review {
+    text-align: right;
 }

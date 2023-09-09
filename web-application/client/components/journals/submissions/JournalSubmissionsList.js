@@ -32,6 +32,8 @@ import DraftPapersListItemView from '/components/papers/list/DraftPapersListItem
 import SubmissionStatusWidget from '/components/journals/widgets/status/SubmissionStatusWidget'
 import AssignmentWidget from '/components/journals/widgets/assignments/AssignmentWidget'
 
+import JournalSubmissionsListItem from './JournalSubmissionsListItem'
+
 import './JournalSubmissionsList.css'
 
 /**
@@ -141,7 +143,7 @@ const JournalSubmissionsList = function(props) {
             sortBy: searchParams.get('sort')
         }
         queryForPapers(params)
-    }, [ searchParams ])
+    }, [ props.id, searchParams ])
 
     // Cleanup our request.
     useEffect(function() {
@@ -164,12 +166,7 @@ const JournalSubmissionsList = function(props) {
         for (const submission of submissionQuery.list) {
 
             content.push(
-                <div className="journal-submission" key={submission.id}>
-                    <DraftPapersListItemView paper={paperDictionary[submission.paperId]} />
-                    <div className="submission-controls-wrapper">
-                        <SubmissionControls submissionId={submission.id} />
-                    </div>
-                </div>
+                <JournalSubmissionsListItem submissionId={submission.id} />
             )
         }
 

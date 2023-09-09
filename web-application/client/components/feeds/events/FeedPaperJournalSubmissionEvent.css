@@ -1,0 +1,9 @@
+.feed-paper-journal-submission-event.timeline-item {
+    margin: 20px 0;
+}
+.feed-paper-journal-submission-event .header {
+    padding: 5px 0;
+}
+.feed-paper-journal-submission-event .event-body {
+    border: thin solid var(--main-border-color);
+}

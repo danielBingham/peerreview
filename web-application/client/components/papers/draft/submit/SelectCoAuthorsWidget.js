@@ -5,8 +5,9 @@ import { ArrowLongUpIcon, ArrowLongDownIcon, XMarkIcon } from '@heroicons/react/
 
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
-import AuthorsInput from './AuthorsInput'
 import Spinner from '/components/Spinner'
+
+import UserInput from '/components/users/input/UserInput'
 
 import './SelectCoAuthorsWidget.css'
 
@@ -31,6 +32,20 @@ const SelectCoAuthorsWidget = function(props) {
     })
 
     // =========== Actions and Event Handling =====================================
+
+    const selectAuthor = function(user) {
+        if ( props.authors.find((a) => a.userId == user.id) ) {
+            return 'That author has already been added.'
+        } 
+
+        const author = {
+            userId: user.id,
+            order: props.authors.length+1,
+            owner: false,
+            submitter: false
+        }
+        props.setAuthors([ ...props.authors,author])
+    }
 
     const assignPermissions = function(author, permissions) {
         if ( permissions == 'owner' ) {
@@ -121,7 +136,12 @@ const SelectCoAuthorsWidget = function(props) {
 
     return (
         <div id="select-co-authors-widget" className="select-co-authors-widget">
-            <AuthorsInput onBlur={props.onBlur} authors={props.authors} setAuthors={props.setAuthors} />
+            <UserInput
+               label={'Authors'}
+                explanation={'Select co-authors to add to this paper. Corresponding authors can edit the submission, post new versions, and submit to journals.  Authors can view and comment on all reviews.'}
+                onBlur={props.onBlur}
+                selectUser={selectAuthor}
+            />
             <div className="selected-authors">
                 {selectedAuthorViews}
             </div>

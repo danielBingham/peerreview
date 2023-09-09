@@ -10,6 +10,7 @@ import { FloatingMenu, FloatingMenuHeader, FloatingMenuTrigger, FloatingMenuBody
 
 import UserTag from '/components/users/UserTag'
 import PaperVersionSelector from '/components/papers/view/controls/PaperVersionSelector'
+import StartReviewButton from '/components/papers/view/controls/StartReviewButton'
 
 import ReviewSummaryView from './ReviewSummaryView'
 import ReviewSummaryForm from './ReviewSummaryForm'
@@ -63,7 +64,10 @@ const ReviewHeaderView = function(props) {
     })
 
     const selectedReview = useSelector(function(state) {
-        if ( reviewId && state.reviews.dictionary[reviewId] ) {
+        if ( reviewId 
+            && state.reviews.dictionary[reviewId] 
+            && state.reviews.dictionary[reviewId].version == props.versionNumber) 
+        {
             return state.reviews.dictionary[reviewId]
         } else {
             return null
@@ -81,12 +85,6 @@ const ReviewHeaderView = function(props) {
     // ================= User Action Handling  ================================
     
     const dispatch = useDispatch()
-
-    const startReview = function(event) {
-        if ( ! reviewInProgress ) {
-            setPostReviewRequestId(dispatch(newReview(props.paperId, props.versionNumber, currentUser.id)))
-        }
-    }
 
     const setReview = function(review) {
         if ( review ) {
@@ -160,6 +158,9 @@ const ReviewHeaderView = function(props) {
                             { reviewViews }
                         </FloatingMenuBody>
                     </FloatingMenu>
+                    <div className="start-review">
+                        <StartReviewButton id={paper.id} />
+                    </div>
                 </div>
                 { selectedReview && <div className="selected-review">
                     { selectedReviewView }

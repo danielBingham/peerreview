@@ -8,9 +8,9 @@ const {
     JournalDAO, 
     JournalSubmissionDAO,
     PaperDAO,
-    PaperEventDAO,
     UserDAO,
     FieldDAO,
+    PaperEventService,
     DAOError } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
@@ -23,9 +23,10 @@ module.exports = class JournalSubmissionController {
         this.journalSubmissionDAO = new JournalSubmissionDAO(this.core)
         this.journalDAO = new JournalDAO(this.core)
         this.paperDAO = new PaperDAO(this.core)
-        this.paperEventDAO = new PaperEventDAO(this.core)
         this.userDAO = new UserDAO(this.core)
         this.fieldDAO = new FieldDAO(this.core)
+
+        this.paperEventService = new PaperEventService(this.core)
     }
 
     /**
@@ -432,10 +433,9 @@ module.exports = class JournalSubmissionController {
             paperId: paperId,
             actorId: user.id,
             type: 'submitted-to-journal',
-            visibility: [ 'authors', 'managing-editor' ],
-            submission_id: id
+            submissionId: id
         }
-        await this.paperEventDAO.insertEvent(event)
+        await this.paperEventService.createEvent(request.session.user, event)
 
         const relations = await this.getRelations(results)
 
@@ -651,11 +651,10 @@ module.exports = class JournalSubmissionController {
                 paperId: entity.paperId,
                 actorId: user.id,
                 type: 'submission-status-changed',
-                visibility: [ 'public' ],
                 submissionId: entity.id,
                 newStatus: submissionPatch.status
             }
-            await this.paperEventDAO.insertEvent(event)
+            await this.paperEventService.createEvent(request.session.user, event)
         }
 
         const relations = await this.getRelations(results, requestedRelations)
@@ -845,11 +844,10 @@ module.exports = class JournalSubmissionController {
             paperId: entity.paperId,
             actorId: user.id,
             type: 'reviewer-assigned',
-            visibility: [ 'public' ],
             submissionId: entity.id,
             assigneeId: reviewer.userId
         }
-        await this.paperEventDAO.insertEvent(event)
+        await this.paperEventService.createEvent(request.session.user, event)
 
         const relations = await this.getRelations(results)
 
@@ -969,7 +967,7 @@ module.exports = class JournalSubmissionController {
             submissionId: entity.id,
             assigneeId: userId
         }
-        await this.paperEventDAO.insertEvent(event)
+        await this.paperEventService.createEvent(request.session.user, event)
 
         const relations = await this.getRelations(results)
 
@@ -1098,11 +1096,10 @@ module.exports = class JournalSubmissionController {
             paperId: entity.paperId,
             actorId: user.id,
             type: 'editor-assigned',
-            visibility: [ 'public' ],
             submissionId: entity.id,
             assigneeId: editor.userId
         }
-        await this.paperEventDAO.insertEvent(event)
+        await this.paperEventService.createEvent(request.session.user, event)
 
         const relations = await this.getRelations(results)
 
@@ -1218,11 +1215,10 @@ module.exports = class JournalSubmissionController {
             paperId: entity.paperId,
             actorId: user.id,
             type: 'editor-unassigned',
-            visibility: [ 'public' ],
             submissionId: entity.id,
             assigneeId: userId
         }
-        await this.paperEventDAO.insertEvent(event)
+        await this.paperEventService.createEvent(request.session.user, event)
 
         const relations = await this.getRelations(results)
 

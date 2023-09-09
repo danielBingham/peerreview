@@ -19,7 +19,6 @@ module.exports = class PaperController {
         this.logger = core.logger
 
         this.paperDAO = new backend.PaperDAO(core)
-        this.paperEventDAO = new backend.PaperEventDAO(core)
         this.fieldDAO = new backend.FieldDAO(core)
         this.userDAO = new backend.UserDAO(core)
         this.journalDAO = new backend.JournalDAO(core)
@@ -27,6 +26,7 @@ module.exports = class PaperController {
 
         this.submissionPermissionService = new backend.SubmissionPermissionService(core)
         this.paperPermissionsService = new backend.PaperPermissionsService(core)
+        this.paperEventService = new backend.PaperEventService(core)
 
     }
 
@@ -177,7 +177,7 @@ module.exports = class PaperController {
                 visibleIds = await this.paperPermissionsService.getPrivateDrafts(session.user.id)
             } else if ( session.user && query.type == 'user-submissions' ) {
                 visibleIds = await this.paperPermissionsService.getUserSubmissions(session.user.id)
-            } else if (session.user && query.type == 'submissions' ) {
+            } else if (session.user && query.type == 'review-submissions' ) {
                 visibleIds = await this.paperPermissionsService.getVisibleDraftSubmissions(session.user.id)
             } else if ( session.user && query.type == 'assigned-review' ) {
                 const assignedResults = await this.database.query(`
@@ -612,10 +612,9 @@ module.exports = class PaperController {
             paperId: entity.id,
             actorId: user.id,
             version: entity.versions[0].version,
-            type: 'version-uploaded',
-            visibility: [ 'public' ]
+            type: 'version-uploaded'
         }
-        await this.paperEventDAO.insertEvent(event)
+        await this.paperEventService.createEvent(request.session.user, event)
 
         const relations = await this.getRelations(request.session.user, results)
         
@@ -763,11 +762,9 @@ module.exports = class PaperController {
                 paperId: entity.id,
                 actorId: user.id,
                 version: entity.versions[0].version,
-                type: 'preprint-posted',
-                visibility: [ 'public' ]
+                type: 'preprint-posted'
             }
-
-            await this.paperEventDAO.insertEvent(event)
+            await this.paperEventService.createEvent(request.session.user, event)
         }
 
         const relations = await this.getRelations(request.session.user, results)
@@ -939,10 +936,9 @@ module.exports = class PaperController {
             paperId: entity.id,
             actorId: user.id,
             version: entity.versions[0].version,
-            type: 'version-uploaded',
-            visibility: [ 'public' ]
+            type: 'version-uploaded'
         }
-        await this.paperEventDAO.insertEvent(event)
+        await this.paperEventService.createEvent(request.session.user, event)
 
         const relations = await this.getRelations(request.session.user, results)
 

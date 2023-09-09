@@ -481,6 +481,16 @@ module.exports = function(core) {
     })
 
     /******************************************************************************
+     * Dashboard Feeds
+     * ***************************************************************************/
+
+    router.get('/feed/editor', function(request, response, next) {
+        paperEventController.getEditorFeed(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    /******************************************************************************
      *          Version REST Routes
      ******************************************************************************/
 

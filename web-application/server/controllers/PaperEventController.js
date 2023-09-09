@@ -1,4 +1,4 @@
-const { PaperEventDAO, UserDAO, ReviewDAO, JournalSubmissionDAO } = require('@danielbingham/peerreview-backend')
+const { PaperEventDAO, PaperDAO, UserDAO, ReviewDAO, JournalSubmissionDAO } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -9,6 +9,7 @@ module.exports = class PaperEventController {
         this.core = core
 
         this.paperEventDAO = new PaperEventDAO(core)
+        this.paperDAO = new PaperDAO(core)
         this.userDAO = new UserDAO(core)
         this.reviewDAO = new ReviewDAO(core)
         this.submissionDAO = new JournalSubmissionDAO(core)
@@ -60,6 +61,20 @@ module.exports = class PaperEventController {
             [ submissionIds ]
         )
         relations.submissions = submissionResults.dictionary
+
+        if ( requestedRelations ) {
+            for(const relation of requestedRelations ) {
+                if ( relation == 'papers' ) {
+                    const paperIds = []
+                    for(const [id, event] of Object.entries(results.dictionary)) {
+                        paperIds.push(event.paperId)
+                    }
+
+                    const paperResults = await this.paperDAO.selectPapers(`WHERE papers.id = ANY($1::bigint[])`, [ paperIds ])
+                    relations.papers = paperResults.dictionary
+                }
+            }
+        }
 
         return relations
     }
@@ -143,6 +158,108 @@ module.exports = class PaperEventController {
 
         // Not yet implemented.
         return response.status(501).send()
+    }
+
+    async getAuthorFeed(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User is authenticated.
+         * 
+         * **********************************************************/
+
+        // 1. User is authenticated.
+        if ( ! request.session || ! request.session.user ) {
+            throw new ControllerError(401, 'not-authenticated', 
+                `User must be authenticated to get feed!`)
+        }
+
+
+
+
+
+    }
+
+    async getReviewerFeed(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User is authenticated.
+         * 
+         * **********************************************************/
+
+        // 1. User is authenticated.
+        if ( ! request.session || ! request.session.user ) {
+            throw new ControllerError(401, 'not-authenticated', 
+                `User must be authenticated to get feed!`)
+        }
+    }
+
+    async getEditorFeed(request, response) {
+        /*************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User is authenticated.
+         * 
+         * **********************************************************/
+
+        // 1. User is authenticated.
+        if ( ! request.session || ! request.session.user ) {
+            throw new ControllerError(401, 'not-authenticated', 
+                `User must be authenticated to get feed!`)
+        }
+
+        const user = request.session.user
+
+        /**********************************************************************
+         * Permissions checks complete, return the events
+         *********************************************************************/
+
+        // For journals on which the user is a 'managing-editor' get all events.
+        const managingEditorResults = await this.core.database.query(`
+            SELECT journal_submissions.id FROM journal_submissions
+                LEFT OUTER JOIN journal_members ON journal_submissions.journal_id = journal_members.journal_id
+            WHERE journal_members.user_id = $1 AND journal_members.permissions = 'owner'
+        `, [ user.id ])
+
+        // For journals on which the user is an 'editor' only get events for
+        // the submissions the editor is assigned to.
+        const assignedEditorResults = await this.core.database.query(`
+            SELECT journal_submissions.id FROM journal_submissions
+                LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
+            WHERE journal_submission_editors.user_id = $1 
+        `, [ user.id ])
+        
+        const managingEditorPaperIds = managingEditorResults.rows.map((r) => r.id)
+        const assignedEditorPaperIds = assignedEditorResults.rows.map((r) => r.id)
+
+        const { where, params, order, emptyResult, requestedRelations } = await this.parseQuery(
+            request.session, 
+            request.query,
+            `
+            (paper_events.submission_id = ANY($1::bigint[]) 
+                OR paper_events.submission_id = ANY($2::bigint[]))
+            AND (paper_events.type = 'version-uploaded'
+                OR paper_events.type = 'review-posted'
+                OR paper_events.type = 'submitted-to-journal')
+            `,
+            [ managingEditorPaperIds, assignedEditorPaperIds ]
+        )
+
+        if ( emptyResult ) {
+            return response.status(200).json({
+                dictionary: {},
+                list: [],
+                relations: {}
+            })
+        }
+        
+        const results = await this.paperEventDAO.selectEvents(where, params, 'newest')
+
+        results.relations = await this.getRelations(request.session.user, results, requestedRelations)
+
+        return response.status(200).json(results)
+
     }
 
 }

@@ -1,0 +1,32 @@
+.feed-paper-review-view {
+    margin: 20px -5px 50px 0;
+}
+
+.feed-paper-review-view  svg.ellipsis {
+    display: block;
+    margin: 5px auto;
+    width: 24px;
+    height: 24px;
+    color: var(--main-icon-color);
+}
+.feed-paper-review-view-summary-wrapper {
+    border: thin solid var(--main-border-color);
+}
+.feed-paper-review-view .review-summary, .feed-paper-review-view .review-summary-form {
+    padding: 20px 50px;
+}
+
+.feed-paper-review-view .approved svg {
+    color: green !important;
+}
+.feed-paper-review-view .request-changes svg {
+    color: #c7a124 !important;
+}
+.feed-paper-review-view .rejected svg {
+    color: red !important;
+}
+.feed-paper-review-view .comments {
+    text-align: center;
+    padding: 10px;
+}
+

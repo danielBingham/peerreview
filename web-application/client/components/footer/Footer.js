@@ -10,12 +10,18 @@ const Footer = function(props) {
      <footer>
          <div className="wrapper">
             <div className="explanation-copyright">
-                <p className="explanation">Peer Review is an experiment in scholarly publishing. It is
-                a platform that enables crowdsourced peer review and public
-                dissemination of scientific and academic papers. For now, the
-                platform can only handle pre-prints. It is and will remain open
-                source and diamond open access. It is currently being
-                 maintained by a single developer as a side project.</p>
+                <p className="explanation">JournalHub is a universal scholarly
+                    publishing platform. It supports preprints, preprint
+                    review, journal review and publishing, and post publication
+                    review.  There are plans to support library publishing,
+                    university presses, and institutional publishing as well.
+                    It aims to be simple, clear, and cohesive, providing a
+                    consistent user experience while supporting many different
+                        approaches to review and publishing.</p><p className="explanation"> It is currently being
+                    developed by a single developer.  All
+                    publications must be Diamond Open Access.  The platform is
+                    open source and the intention is to become a non-profit,
+                democratically governed, multi-stakeholder cooperative.</p>
                 
                 <p>Site text (c) <a href="https://github.com/danielbingham">Daniel Bingham</a> 2022 - 2023</p>
                 <p>All user content (c) its authors.</p>

@@ -2,34 +2,33 @@ import React  from 'react'
 
 import './Timeline.css'
 
-export const Timeline = function({ children }) {
+export const Timeline = function({ className, children }) {
     return (
-            <div className="timeline">
-                { children }
-            </div>
-
+        <div className={`timeline ${className ? className : ''}`}>
+            { children }
+        </div>
     )
 
 }
 
-export const TimelineItem = function({ children }) {
+export const TimelineItem = function({ className, children }) {
     return (
-        <div className="timeline-item">
+        <div className={`timeline-item ${className ? className : ''}`}>
             { children }
         </div>
     )
 }
 
-export const TimelineIcon = function({ children }) {
+export const TimelineIcon = function({ className, children }) {
     return (
-        <div className="timeline-icon">
+        <div className={`timeline-icon ${className ? className : ''}`}>
             { children }
         </div>
     )
 }
-export const TimelineItemWrapper = function({ children }) {
+export const TimelineItemWrapper = function({ className, children }) {
     return (
-        <div className="timeline-item-wrapper">
+        <div className={`timeline-item-wrapper ${className ? className : ''}`}>
             { children }
         </div>
     )

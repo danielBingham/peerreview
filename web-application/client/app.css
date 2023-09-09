@@ -103,6 +103,13 @@ input[type="submit"]:hover {
     filter: opacity(80%);
 }
 
+svg.icon { 
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    margin-bottom: -0.2em;
+}
+
 #root {
     height: 100vh;
     width: 100%;

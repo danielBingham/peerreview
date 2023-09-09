@@ -1,4 +1,4 @@
-import React, {  useCallback } from 'react'
+import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
 
 import { Document } from 'react-pdf/dist/esm/entry.webpack'
@@ -29,14 +29,8 @@ const PaperVersionTimeline = function({ paperId, versionNumber }) {
 
     const onLoadError = useCallback((error) => console.log(error), [])
 
-    const onLoadSuccess = useCallback(() => {
-        // Scroll to the hash once the document has loaded.
-        if ( document.location.hash ) {
-            document.querySelector(document.location.hash).scrollIntoView()
-        }
-    }, [ document ])
-
     // ======= Effect Handling ======================================
+
 
     // ====== Render ===============================================
 
@@ -54,7 +48,6 @@ const PaperVersionTimeline = function({ paperId, versionNumber }) {
                 loading={loading} 
                 onSourceError={onSourceError}
                 onLoadError={onLoadError}
-                onLoadSuccess={onLoadSuccess}
             >
                 <PaperVersionTimelineEventsWrapper paperId={paperId} versionNumber={versionNumber} /> 
             </Document>

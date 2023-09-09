@@ -194,6 +194,7 @@ const JournalSelectionInput = function(props) {
         const journalId = searchParams.get('journal')
         if ( journalId ) {
             setSelectedJournalId(journalId)
+            props.setSelectedJournalId(journalId)
         }
     }, [ searchParams ])
 

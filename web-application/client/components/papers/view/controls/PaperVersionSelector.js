@@ -35,6 +35,9 @@ const PaperVersionSelector = function({ paperId }) {
     const changeVersion = function(event) {
         const versionNumber = event.target.value
         searchParams.set('version', versionNumber)
+        // If we're changing the version, clear the review since reviews are
+        // tied to version.
+        searchParams.delete('review')
         setSearchParams(searchParams)
     }
 

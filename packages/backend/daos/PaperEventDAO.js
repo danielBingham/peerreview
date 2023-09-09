@@ -41,7 +41,16 @@ module.exports = class PaperEventsDAO {
         return { dictionary: dictionary, list: list }
     }
 
-    async selectEvents(where, params) {
+    async selectEvents(where, params, order) {
+        where = where ? where : ''
+        params = params ? params : []
+        order = order ? order : 'oldest'
+
+        let orderSql = `paper_events.event_date asc`
+        if ( order == 'newest' ) {
+            orderSql = `paper_events.event_date desc`
+        }
+
         const sql = `
 SELECT 
     paper_events.id as event_id, 
@@ -60,7 +69,7 @@ SELECT
 
 FROM paper_events
 ${where}
-ORDER BY paper_events.event_date asc 
+ORDER BY ${orderSql}
         `
 
         const results = await this.database.query(sql, params)
@@ -72,15 +81,6 @@ ORDER BY paper_events.event_date asc
      *
      */
     async insertEvent(event) {
-        // If we don't have a version already, grab it from the database.
-        if ( ! event.version ) {
-            const versionResults = await this.database.query(
-                `SELECT version FROM paper_versions WHERE paper_id = $1 ORDER BY version desc`, 
-                [ event.paperId ]
-            )
-            event.version = versionResults.rows[0].version
-        }
-
         let columns = ``
         let values = ``
         let params = []

@@ -118,7 +118,7 @@ const ReviewSummaryView = function(props) {
         return (
             <div className="review-summary">
                 <div className="summary">
-                    <div className="reviewer"><UserTag id={props.selectedReview.userId}/> submitted <a href={`#review-${props.selectedReview.id}`}>review #{props.selectedReview.id}</a> <DateTag timestamp={props.selectedReview.updatedDate} type="full" /></div>
+                    <div className="reviewer"><UserTag id={props.selectedReview.userId}/> submitted <a href={`/paper/${props.paper.id}/timeline#review-${props.selectedReview.id}`}>review #{props.selectedReview.id}</a> <DateTag timestamp={props.selectedReview.updatedDate} type="full" /></div>
                     { recommendation }
                     <div className="summary-text"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div>
                 </div>

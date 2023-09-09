@@ -15,7 +15,8 @@ module.exports = class ReviewController {
 
         this.reviewDAO = new backend.ReviewDAO(core)
         this.userDAO = new backend.UserDAO(core)
-        this.paperEventDAO = new backend.PaperEventDAO(core)
+
+        this.paperEventService = new backend.PaperEventService(core)
     }
 
     async getRelations(currentUser, results, requestedRelations) {
@@ -263,10 +264,9 @@ module.exports = class ReviewController {
                 actorId: userId,
                 version: review.version,
                 type: 'review-posted',
-                visibility: [ 'public' ],
                 reviewId: review.id
             }
-            await this.paperEventDAO.insertEvent(event)
+            await this.paperEventService.createEvent(request.session.user, event)
         }
 
         this.reviewDAO.selectVisibleComments(userId, results.dictionary)
@@ -604,26 +604,28 @@ module.exports = class ReviewController {
                 `Failed to find Review(${review.id}) after User(${userId}) updated it.`)
         }
 
+        const entity = results.dictionary[review.id]
+
         if ( existing.review_status != 'submitted' && results.dictionary[review.id].status == 'submitted' ) {
             // Update the review count on the version
             await this.database.query(`
                 UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND version = $2
-            `, [ paperId, review.version ])
+            `, [ entity.paperId, entity.version ])
 
             const event = {
-                paperId: paperId,
-                actorId: userId,
+                paperId: entity.paperId,
+                actorId: entity.userId,
+                version: entity.version,
                 type: 'review-posted',
-                visibility: [ 'public' ],
-                reviewId: review.id
+                reviewId: entity.id
             }
-            await this.paperEventDAO.insertEvent(event)
+            await this.paperEventService.createEvent(request.session.user, event)
         }
 
         results.relations = await this.getRelations(request.session.user, results)
         this.reviewDAO.selectVisibleComments(userId, results.dictionary)
 
-        return response.status(200).json({ entity: results.dictionary[review.id], relations: results.relations })
+        return response.status(200).json({ entity: entity, relations: results.relations })
     }
 
     /**

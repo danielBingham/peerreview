@@ -139,7 +139,10 @@ const UserInput = function({ onBlur, selectUser, label, explanation }) {
             event.preventDefault()
             const suggestionsWrappers = document.getElementsByClassName('user-suggestions')
             const suggestions = suggestionsWrappers[0].children
-            if (suggestions.length > 0) {
+            if ( highlightedSuggestion == userSuggestions.length ) {
+                setShowInviteForm(true) 
+                clearSuggestions()
+            } else if (suggestions.length > 0) {
                 selectUserInternal(userSuggestions[highlightedSuggestion])
             }
         } else if ( event.key == "ArrowDown" ) {

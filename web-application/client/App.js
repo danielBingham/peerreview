@@ -240,7 +240,10 @@ const App = function(props) {
                             <Route path=":pageTab" element={ <ReviewDashboardPage /> } />
                             <Route index element={ <ReviewDashboardPage /> } />
                         </Route>
-                        <Route path="/edit" element={ <EditorDashboardPage />} />
+                        <Route path="/edit">
+                            <Route path=":pageTab" element={ <EditorDashboardPage /> } />
+                            <Route index element={ <EditorDashboardPage />} />
+                        </Route>
                         <Route path="/author">
                             <Route path=":pageTab" element={ <AuthorDashboardPage /> } />
                             <Route index element={ <AuthorDashboardPage /> } />

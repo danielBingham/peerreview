@@ -37,6 +37,13 @@ const ReviewView = function({ id, paperId, versionNumber }) {
         }
     })
 
+    useEffect(function() {
+        // Scroll to the hash once the document has loaded.
+        if ( document.location.hash == `#review-${review.id}`) {
+            document.querySelector(document.location.hash).scrollIntoView()
+        }
+    }, [])
+
     const pages = []
     const commentThreadViews = []
 
