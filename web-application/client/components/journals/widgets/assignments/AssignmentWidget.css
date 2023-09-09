@@ -10,3 +10,20 @@
 .assignment-widget .member, .assignment-widget .assigned-member {
     padding: 5px 20px;
 }
+
+.assignment-widget .assignee .recommendation svg {
+    width: 1.2em;
+    height: 1.2em;
+    margin-bottom: -0.2em;
+    margin-left: 5px;
+}
+.assignment-widget .assignee .request-changes svg {
+    color: #c7a124;
+}
+.assignment-widget .assignee .rejected svg  {
+    color: red;
+}
+.assignment-widget .assignee .approved svg {
+    color: green;
+}
+

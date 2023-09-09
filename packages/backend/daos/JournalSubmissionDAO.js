@@ -45,7 +45,7 @@ module.exports = class JournalSubmissionDAO {
                 list.push(submission)
             }
 
-            const reviewer = {
+            let reviewer = {
                 userId: row.reviewer_userId,
                 assignedDate: row.reviewer_assignedDate,
                 reviews: []
@@ -64,11 +64,12 @@ module.exports = class JournalSubmissionDAO {
                 userId: row.review_userId
             }
 
-            // TODO Attach review to reviewer.
-            // Or consider a different approach, this seems like not the best approach.
-                
-
-
+            reviewer = dictionary[submission.id].reviewers.find((r) => r.userId == review.userId)
+            if ( review.id != null && reviewer != null 
+                && ! reviewer.reviews.find((r) => r.id == review.id) ) 
+            {
+                reviewer.reviews.push(review)
+            }
 
             const editor = {
                 userId: row.editor_userId,
@@ -159,6 +160,7 @@ module.exports = class JournalSubmissionDAO {
         `
 
         const results = await this.database.query(sql, params)
+        console.log(results)
 
         if ( results.rows.length <= 0 ) {
             return { dictionary: {}, list: [] }

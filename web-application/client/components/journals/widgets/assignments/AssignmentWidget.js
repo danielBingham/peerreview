@@ -4,7 +4,8 @@ import { Link } from 'react-router-dom'
 
 import { postJournalSubmissionReviewers, deleteJournalSubmissionReviewer, postJournalSubmissionEditors, deleteJournalSubmissionEditor, cleanupRequest } from '/state/journalSubmissions'
 
-import { CheckIcon } from '@heroicons/react/24/outline'
+import { CheckCircleIcon, ClipboardDocumentListIcon, ChatBubbleLeftRightIcon, XCircleIcon } from '@heroicons/react/24/outline'
+import  { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid'
 
 import { FloatingMenu, FloatingMenuTrigger, FloatingMenuBody, FloatingMenuHeader, FloatingMenuItem } 
     from '/components/generic/floating-menu/FloatingMenu'
@@ -46,6 +47,14 @@ const AssignmentWidget = function(props) {
     const submission = useSelector(function(state) {
         if ( state.journalSubmissions.dictionary[props.id] ) {
             return state.journalSubmissions.dictionary[props.id]
+        } else {
+            return null
+        }
+    })
+
+    const paper = useSelector(function(state) {
+        if ( submission && state.papers.dictionary[submission.paperId] ) {
+            return state.papers.dictionary[submission.paperId]
         } else {
             return null
         }
@@ -110,9 +119,27 @@ const AssignmentWidget = function(props) {
  
     const assignees = (props.type == 'editor' ? submission.editors : submission.reviewers)
 
+    const version = paper.versions[0]
+
     let assignedMenuViews = []
     let assignedViews = []
     for(const assignee of assignees) {
+        let reviewRecommendation = null
+        if ( props.type == 'reviewer' ) {
+            const review = assignee.reviews.find((r) => r.version == version.version)
+            if ( review ) {
+                if ( review.recommendation == 'commentary' ) {
+                    reviewRecommendation = (<span className="commentary"><ChatBubbleLeftRightIcon /> </span>)
+                } else if ( review.recommendation == 'approve' ) {
+                    reviewRecommendation = (<span className="approved"><CheckCircleIcon /></span>)
+                } else if ( review.recommendation == 'request-changes' ) {
+                    reviewRecommendation = (<span className="request-changes"><ClipboardDocumentListIcon/></span>)
+                } else if ( review.recommendation == 'reject' ) {
+                    reviewRecommendation = (<span className="rejected"><XCircleIcon /></span> )
+                }
+            }
+        }
+
         assignedMenuViews.push(
             <FloatingMenuItem 
                 key={assignee.userId}
@@ -127,7 +154,7 @@ const AssignmentWidget = function(props) {
 
         assignedViews.push(
             <div key={assignee.userId} className="assignee">
-                 <UserTag id={assignee.userId} link={false} />
+                <UserTag id={assignee.userId} link={false} /> <span className="recommendation">{reviewRecommendation}</span>
             </div>
         )
     }

@@ -309,11 +309,13 @@ const journalSubmissions = {
         reviewers: [
             {
                 userId: 1,
-                assignedDate: 'TIMESTAMP'
+                assignedDate: 'TIMESTAMP',
+                reviews: []
             },
             {
                 userId: 2,
-                assignedDate: 'TIMESTAMP'
+                assignedDate: 'TIMESTAMP',
+                reviews: []
             }
         ],
         editors: [
