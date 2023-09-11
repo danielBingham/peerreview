@@ -116,8 +116,6 @@ ORDER BY ${orderSql}
 
         let sql = `INSERT INTO paper_events (${columns}) VALUES (${values})`
 
-        console.log(sql)
-
         const results = await this.database.query(sql, params)
         
         if ( results.rowCount <= 0 ) {

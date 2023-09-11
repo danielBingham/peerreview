@@ -47,12 +47,20 @@ const EditorDashboardPage = function(props) {
     // ============ Effect Handling ===========================================
     
     const dispatch = useDispatch()
+    const navigate = useNavigate()
 
     useLayoutEffect(function() {
         if ( ! currentUser ) {
             navigate('/login')
         }
     }, [])
+
+    useEffect(function() {
+        const journalId = pageTab
+        if ( ! currentUser.memberships.find((m) => m.journalId == journalId && (m.permissions == 'owner' || m.permissions == 'editor')) ) {
+            navigate('/edit/')
+        }
+    }, [ pageTab ])
 
     useEffect(function() {
         setRequestId(dispatch(getJournals('EditorsDashboard', { userId: currentUser.id })))
@@ -89,12 +97,17 @@ const EditorDashboardPage = function(props) {
     if ( selectedTab == 'feed' ) {
         content = ( <EditorEventFeed /> )
     } else {
-        content = ( 
-            <>
-                <div><Link to={`/journal/${pageTab}`}>Go to Journal -></Link></div>
-                <JournalSubmissionsList id={pageTab} /> 
-            </>
-        )
+        const journalId = pageTab
+        if ( currentUser.memberships.find((m) => m.journalId == journalId && (m.permissions == 'owner' || m.permissions == 'editor')) ) {
+            content = ( 
+                <>
+                    <div><Link to={`/journal/${journalId}`}>Go to Journal -></Link></div>
+                    <JournalSubmissionsList id={journalId} /> 
+                </>
+            )
+        } else {
+            content = ( <Spinner local={true} /> )
+        }
     }
 
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
+import { refreshAuthentication } from '/state/authentication'
 import { postJournals, cleanupRequest } from '/state/journals'
 
 import AddJournalMembersWidget from '/components/journals/widgets/AddJournalMembersWidget'
@@ -121,6 +122,7 @@ const CreateJournalForm = function(props) {
 
     useEffect(function() {
         if ( postJournalsRequest && postJournalsRequest.state == 'fulfilled') {
+            dispatch(refreshAuthentication())
             const path = "/journal/" + postJournalsRequest.result.entity.id
             navigate(path)
         }

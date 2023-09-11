@@ -45,8 +45,6 @@ const AssignmentFilterMenu = function(props) {
             return null
         }
     })
-    console.log(props.id)
-    console.log(journal)
 
     const userDictionary = useSelector(function(state) {
         return state.users.dictionary

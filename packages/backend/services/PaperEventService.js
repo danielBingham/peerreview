@@ -52,7 +52,6 @@ module.exports = class PaperEventService {
 
         event.visibility = await this.getEventVisibility(user, event)
 
-        console.log(event)
         await this.paperEventDAO.insertEvent(event)
     }
 

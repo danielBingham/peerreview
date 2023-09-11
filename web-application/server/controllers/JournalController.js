@@ -5,7 +5,14 @@
  *
  ******************************************************************************/
 
-const { JournalDAO, JournalSubmissionDAO, PaperDAO, UserDAO, DAOError } = require('@danielbingham/peerreview-backend')
+const { 
+    JournalDAO, 
+    JournalSubmissionDAO, 
+    PaperDAO, 
+    UserDAO, 
+    DAOError,
+    SessionService
+} = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -18,6 +25,8 @@ module.exports = class JournalController {
         this.journalSubmissionDAO = new JournalSubmissionDAO(this.core)
         this.paperDAO = new PaperDAO(this.core)
         this.userDAO = new UserDAO(this.core)
+
+        this.sessionService = new SessionService(this.core)
     }
 
     async getRelations(results, requestedRelations) {
@@ -266,10 +275,21 @@ module.exports = class JournalController {
         }
 
         const results  = await this.journalDAO.selectJournals('WHERE journals.id=$1', [ journal.id ])
-
-        if (  ! results.dictionary[journal.id]) {
+        const entity = results.dictionary[journal.id]
+        if (  ! entity ) {
             throw new ControllerError(500, 'server-error', `Journal(${journal.id}) does not exist after creation!`)
         } 
+
+
+        // Update the session of all the members to include the new journal membership.
+        for( const member of entity.members ) {
+            const session = await this.sessionService.getSession(member.userId)
+            if ( session ) {
+                const userResults = await this.userDAO.selectUsers('WHERE users.id = $1', [ member.userId ])
+                session.data.user = userResults.dictionary[member.userId]
+                await this.sessionService.setSession(session)
+            }
+        }
             
         const relations = await this.getRelations(results) 
         return response.status(201).json({ entity: results.dictionary[journal.id], relations: relations })
@@ -487,10 +507,9 @@ module.exports = class JournalController {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempting to post Member to Journal(${journalId}).`)
         }
-
-        // 2. Journal(:id) must exist
         const user = request.session.user
 
+        // 2. Journal(:id) must exist
         const existingJournal = await this.journalDAO.selectJournals('WHERE journals.id = $1', [ journalId ])
 
         if ( existingJournal.list.length <= 0 ) {
@@ -518,9 +537,18 @@ module.exports = class JournalController {
         await this.journalDAO.insertJournalMember(journalId, member)
 
         const results = await this.journalDAO.selectJournals(`WHERE journals.id = $1`, [ journalId ])
+        const entity = results.dictionary[journalId]
 
         if ( ! results.dictionary[journalId] ) {
             throw new ControllerError(500, 'server-error', `Failed to find Journal(${journalID}) after adding new member.`)
+        }
+
+        // Update the session of all the members to include the new journal membership.
+        const session = await this.sessionService.getSession(member.userId)
+        if ( session ) {
+            const userResults = await this.userDAO.selectUsers('WHERE users.id = $1', [ member.userId ])
+            session.data.user = userResults.dictionary[member.userId]
+            await this.sessionService.setSession(session)
         }
 
         const relations = await this.getRelations(results)
@@ -650,6 +678,14 @@ module.exports = class JournalController {
             throw new ControllerError(500, 'server-error', `Failed to find Journal(${journalID}) after adding new member.`)
         }
 
+        // Update the session of all the members to include the new journal membership.
+        const session = await this.sessionService.getSession(member.userId)
+        if ( session ) {
+            const userResults = await this.userDAO.selectUsers('WHERE users.id = $1', [ member.userId ])
+            session.data.user = userResults.dictionary[member.userId]
+            await this.sessionService.setSession(session)
+        }
+
         const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
@@ -739,9 +775,18 @@ module.exports = class JournalController {
         await this.journalDAO.deleteJournalMember(journalId, userId)
 
         const results = await this.journalDAO.selectJournals(`WHERE journals.id = $1`, [ journalId ])
+        const entity = results.dictionary[journalId]
 
         if ( ! results.dictionary[journalId] ) {
             throw new ControllerError(500, 'server-error', `Failed to find Journal(${journalID}) after adding new member.`)
+        }
+
+        // Update the session of all the members to include the new journal membership.
+        const session = await this.sessionService.getSession(userId)
+        if ( session ) {
+            const userResults = await this.userDAO.selectUsers('WHERE users.id = $1', [ userId ])
+            session.data.user = userResults.dictionary[userId]
+            await this.sessionService.setSession(session)
         }
 
         const relations = await this.getRelations(results)

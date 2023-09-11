@@ -160,7 +160,6 @@ module.exports = class JournalSubmissionDAO {
         `
 
         const results = await this.database.query(sql, params)
-        console.log(results)
 
         if ( results.rows.length <= 0 ) {
             return { dictionary: {}, list: [] }

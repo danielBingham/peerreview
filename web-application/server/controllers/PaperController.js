@@ -396,9 +396,6 @@ module.exports = class PaperController {
         if ( result.where.length > 0) {
             result.where = `WHERE ${result.where}` 
         }
-        console.log(result.where)
-        console.log(result.params)
-
 
         return result
     }

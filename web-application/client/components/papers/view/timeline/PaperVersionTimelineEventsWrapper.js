@@ -84,7 +84,6 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
         if ( paper.versions[0].version == versionNumber && request?.state == 'fulfilled') {
             if ( timeoutRef.current == null ) { 
                 timeoutRef.current = setTimeout(function() {
-                    console.log('polling.')
                     if ( events.length > 0 ) {
                         const last = events[events.length - 1]
                         setRequestId(dispatch(getPaperEvents(`${paperId}-${versionNumber}`, paperId, { version: versionNumber, since: last.eventDate })))

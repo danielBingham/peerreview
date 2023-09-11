@@ -147,8 +147,6 @@ module.exports = class PaperEventController {
         
         const results = await this.paperEventDAO.selectEvents(where, params)
 
-        console.log(results)
-
         results.relations = await this.getRelations(request.session.user, results, requestedRelations)
 
         return response.status(200).json(results)

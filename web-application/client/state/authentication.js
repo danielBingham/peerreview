@@ -71,6 +71,21 @@ export const authenticationSlice = createSlice({
 })
 
 /**
+ * Call getAuthentication and cleanup the created request as soon as it
+ * returns.  
+ *
+ * Use this to refresh authentication in contexts where we don't need to track
+ * the request.
+ */
+export const refreshAuthentication = function() {
+    return function(dispatch, getState) {
+        const requestId = dispatch(getAuthentication(function() {
+            dispatch(authenticationSlice.actions.cleanupRequest({ requestId: requestId }))
+        }))
+    }
+}
+
+/**
  * GET /authentication
  *
  * Retrieve the currently authenticated user from the backend's session.
@@ -80,7 +95,7 @@ export const authenticationSlice = createSlice({
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getAuthentication = function() {
+export const getAuthentication = function(onCompletion) {
     return function(dispatch, getState) {
         const endpoint = '/authentication'
 
@@ -97,6 +112,10 @@ export const getAuthentication = function() {
                 } else if ( responseBody ) {
                     dispatch(authenticationSlice.actions.setCurrentUser(null))
                     dispatch(authenticationSlice.actions.setSettings(responseBody.settings))
+                }
+
+                if ( onCompletion ) {
+                    onCompletion()
                 }
             }
         )
