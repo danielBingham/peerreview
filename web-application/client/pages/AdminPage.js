@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
+import { Page, PageBody } from '/components/generic/Page'
+
 import FeatureFlags from '/components/admin/features/FeatureFlags'
 
 import './AdminPage.css'
@@ -29,9 +31,11 @@ const AdminPage = function(props) {
     // ======= Render ===============================================
 
     return (
-        <div id="admin" className="page">
-            <FeatureFlags />
-        </div>
+        <Page id="admin">
+            <PageBody>
+                <FeatureFlags />
+            </PageBody>
+        </Page>
     )
 }
 
