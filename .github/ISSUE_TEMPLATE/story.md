@@ -1,11 +1,12 @@
 ---
 name: Story 
 about: This is the issue template for the usual agile-style story.
-
 ---
 
-## Story Description 
-*What are we trying to accomplish in plain english?*
+User Story: As a [user profile], I...
+
+## Story Description and Background 
+*What are we trying to accomplish? What context do we need to know?*
 
 ## Acceptance Criteria
 *At what point is this story considered "done"?*
@@ -14,5 +15,5 @@ about: This is the issue template for the usual agile-style story.
 - Criteria 2
 
 ## Dependencies
-*What stories does this one depend on?  What do we need to do first before we can call this one done?*
+*What stories does this one depend on?*
 
