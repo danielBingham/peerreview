@@ -1,6 +1,7 @@
 ---
 name: Epic
 about: This is for epics, that tie together multiple stories into a single feature, or feature set.
+labels: epic
 ---
 
 ## Epic Description and Background
