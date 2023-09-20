@@ -417,6 +417,11 @@ module.exports = {
             pageSize: 20,
             numberOfPages: 1
         },
-        relations: {}
+        relations: {
+            journals: {
+                1: journals[1],
+                2: journals[2]
+            }
+        }
     }
 }

@@ -1030,11 +1030,13 @@ module.exports = class JournalSubmissionController {
             [ submissionId ]
         )
         const entity = results.dictionary[submissionId]
-
         if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
                 `Unable to find Submission(${submissionId}) after unassigning Reviewer(${userId}).`)
         }
+        const relations = await this.getRelations(results)
+
+        // ======== Paper Events ==============================================
 
         const event = {
             paperId: entity.paperId,
@@ -1045,6 +1047,8 @@ module.exports = class JournalSubmissionController {
             assigneeId: userId
         }
         await this.paperEventService.createEvent(request.session.user, event)
+
+        // ======== END Paper Events ==========================================
         
         // ==== Notifications =============================================
         // reviewer 
@@ -1068,8 +1072,6 @@ module.exports = class JournalSubmissionController {
         )
 
         // ======== END Notifications =========================================
-
-        const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
             entity: entity,
