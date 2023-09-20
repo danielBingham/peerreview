@@ -56,9 +56,7 @@ const JournalSubmissionsTags = function(props) {
 
     if ( paper.isDraft && paper.showPreprint ) {
         content.push( <div key={'preprint'} className="preprint-tag">Preprint</div> )
-    } else if ( paper.isDraft ) {
-        content.push( <div key={'private-draft'} className="private-draft-tag">Private Draft</div> )
-    }
+    } 
     
     if ( paper ) {
         if ( submissions && submissions.length) {

@@ -11,7 +11,8 @@ const {
     PaperDAO, 
     UserDAO, 
     DAOError,
-    SessionService
+    SessionService,
+    NotificationService
 } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
@@ -27,6 +28,7 @@ module.exports = class JournalController {
         this.userDAO = new UserDAO(this.core)
 
         this.sessionService = new SessionService(this.core)
+        this.notificationService = new NotificationService(this.core)
     }
 
     async getRelations(results, requestedRelations) {
@@ -280,7 +282,6 @@ module.exports = class JournalController {
             throw new ControllerError(500, 'server-error', `Journal(${journal.id}) does not exist after creation!`)
         } 
 
-
         // Update the session of all the members to include the new journal membership.
         for( const member of entity.members ) {
             const session = await this.sessionService.getSession(member.userId)
@@ -290,6 +291,21 @@ module.exports = class JournalController {
                 await this.sessionService.setSession(session)
             }
         }
+
+        // ======== Notifications =============================================
+
+        for ( const member of entity.members ) {
+            await this.notificationService.createNotification(
+                member.userId,
+                'journal-member:invited',
+                {
+                    user: request.session.user,
+                    journal: entity 
+                }
+            )
+        }
+
+        // ======== END Notifications =========================================
             
         const relations = await this.getRelations(results) 
         return response.status(201).json({ entity: results.dictionary[journal.id], relations: relations })
@@ -551,6 +567,19 @@ module.exports = class JournalController {
             await this.sessionService.setSession(session)
         }
 
+        // ======== Notifications =============================================
+
+        await this.notificationService.createNotification(
+            member.userId,
+            'journal-member:invited',
+            {
+                user: request.session.user,
+                journal: entity
+            }
+        )
+
+        // ======== END Notifications =========================================
+
         const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
@@ -686,6 +715,8 @@ module.exports = class JournalController {
             await this.sessionService.setSession(session)
         }
 
+        // TODO Notification: role-changed
+
         const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
@@ -788,6 +819,8 @@ module.exports = class JournalController {
             session.data.user = userResults.dictionary[userId]
             await this.sessionService.setSession(session)
         }
+
+        // TODO Notification: removed.
 
         const relations = await this.getRelations(results)
 

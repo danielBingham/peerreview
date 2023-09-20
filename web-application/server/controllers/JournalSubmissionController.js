@@ -11,6 +11,7 @@ const {
     UserDAO,
     FieldDAO,
     PaperEventService,
+    NotificationService,
     DAOError } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
@@ -27,6 +28,7 @@ module.exports = class JournalSubmissionController {
         this.fieldDAO = new FieldDAO(this.core)
 
         this.paperEventService = new PaperEventService(this.core)
+        this.notificationService = new NotificationService(this.core)
     }
 
     /**
@@ -35,6 +37,18 @@ module.exports = class JournalSubmissionController {
     async getRelations(results, requestedRelations) {
         const relations = {}
 
+        // ======== Journals ==================================================
+        const journalIds = []
+        for(const submission of results.list) {
+            if ( submission.journalId ) {
+                journalIds.push(submission.journalId)
+            }
+        }
+
+        const journalResults = await this.journalDAO.selectJournals('WHERE journals.id = ANY($1::bigint[])', [ journalIds ])
+        relations.journals = journalResults.dictionary
+
+        // ======== Relations we only pull when requested =====================
         if ( requestedRelations ) {
             for(const relation of requestedRelations) {
                 if ( relation == 'papers' ) {
@@ -64,17 +78,7 @@ module.exports = class JournalSubmissionController {
 
                     const userResults = await this.userDAO.selectUsers('WHERE users.id = ANY($1::bigint[])', [ userIds ])
                     relations.users = userResults.dictionary
-                } else if ( relation == 'journals' ) {
-                    const journalIds = []
-                    for(const submission of results.list) {
-                        if ( submission.journalId ) {
-                            journalIds.push(submission.journalId)
-                        }
-                    }
-
-                    const journalResults = await this.journalDAO.selectJournals('WHERE journals.id = ANY($1::bigint[])', [ journalIds ])
-                    relations.journals = journalResults.dictionary
-                }
+                } 
             }
         }
 
@@ -381,7 +385,7 @@ module.exports = class JournalSubmissionController {
         const user = request.session.user
 
         const authorResults = await this.core.database.query(`
-            SELECT papers.id, paper_authors.user_id, paper_authors.owner 
+            SELECT papers.id, papers.title, paper_authors.user_id, paper_authors.owner 
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = papers.id
                 WHERE papers.id = $1
@@ -423,12 +427,14 @@ module.exports = class JournalSubmissionController {
 
         const results = await this.journalSubmissionDAO.selectJournalSubmissions('WHERE journal_submissions.id = $1', [id])
         const entity = results.dictionary[id]
-
         if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
                 `Submission(${id}) of Paper(${paperId}) to Journal(${journalId}) not found after insert!`)
         }
+        const relations = await this.getRelations(results)
 
+        // ======== Paper Events ==============================================
+        
         const event = {
             paperId: paperId,
             actorId: user.id,
@@ -437,7 +443,47 @@ module.exports = class JournalSubmissionController {
         }
         await this.paperEventService.createEvent(request.session.user, event)
 
-        const relations = await this.getRelations(results)
+        // ======== END Paper Events ==========================================
+      
+        // ======== Notifications =============================================
+
+        const journal = relations.journals[entity.journalId]
+        const paperTitle = authorResults.rows[0].title
+
+        // Authors
+        for(const row of authorResults.rows) {
+            await this.notificationService.createNotification(
+                row.user_id,
+                'author:new-submission',
+                {
+                    correspondingAuthor: request.session.user,
+                    paper: {
+                        id: paperId,
+                        title: paperTitle 
+                    },
+                    journal: journal
+                }
+            )
+        }
+
+        // Editors
+        for(const member of journal.members) {
+            if ( member.permissions == 'owner' ) {
+                await this.notificationService.createNotification(
+                    member.userId,
+                    'editor:new-submission',
+                    {
+                        correspondingAuthor: request.session.user,
+                        paper: {
+                            id: paperId,
+                            title: paperTitle 
+                        },
+                        journal: journal
+                    }
+                )
+            }
+        }
+        // ======== END Notifications =========================================
 
         return response.status(201).json({ 
             entity: entity,
@@ -647,6 +693,8 @@ module.exports = class JournalSubmissionController {
 
         // If the status changed, we need to post an event.
         if ( existing.status != submissionPatch.status ) {
+            // ==== Paper Events ===============================================
+            
             const event = {
                 paperId: entity.paperId,
                 actorId: user.id,
@@ -655,6 +703,9 @@ module.exports = class JournalSubmissionController {
                 newStatus: submissionPatch.status
             }
             await this.paperEventService.createEvent(request.session.user, event)
+
+            // ==== END Paper Events ==========================================
+
         }
 
         const relations = await this.getRelations(results, requestedRelations)
@@ -840,6 +891,9 @@ module.exports = class JournalSubmissionController {
                 `Unable to find Submission(${submissionId}) after assigning Reviewer(${reviewer.userId}).`)
         }
 
+        const relations = await this.getRelations(results)
+
+        // ======== Paper Events ===============================================
         const event = {
             paperId: entity.paperId,
             actorId: user.id,
@@ -849,7 +903,30 @@ module.exports = class JournalSubmissionController {
         }
         await this.paperEventService.createEvent(request.session.user, event)
 
-        const relations = await this.getRelations(results)
+        // ======== END Paper Events ==========================================
+
+        // ==== Notifications =================================================
+
+        const notificationResults = await this.core.database.query(`
+            SELECT papers.title FROM papers WHERE papers.id = $1
+        `, [ entity.paperId ])
+        const title = notificationResults.rows[0].title
+
+        // reviewer 
+        await this.notificationService.createNotification(
+            reviewer.userId,
+            'reviewer:submission-assigned',
+            {
+                editor: request.session.user,
+                paper: {
+                    id: entity.paperId,
+                    title: title
+                },
+                journal: journal
+            }
+        )
+
+        // ======== END Notifications =========================================
 
         return response.status(200).json({ 
             entity: entity,
@@ -968,6 +1045,29 @@ module.exports = class JournalSubmissionController {
             assigneeId: userId
         }
         await this.paperEventService.createEvent(request.session.user, event)
+        
+        // ==== Notifications =============================================
+        // reviewer 
+        const notificationResults = await this.core.database.query(`
+            SELECT papers.title FROM papers WHERE papers.id = $1
+        `, [ entity.paperId ])
+        const title = notificationResults.rows[0].title
+
+        await this.notificationService.createNotification(
+            userId,
+            'reviewer:submission-unassigned',
+            {
+                editor: request.session.user,
+                paper: {
+                    id: entity.paperId,
+                    title: title
+                },
+                journal: journal
+
+            }
+        )
+
+        // ======== END Notifications =========================================
 
         const relations = await this.getRelations(results)
 
@@ -1101,6 +1201,30 @@ module.exports = class JournalSubmissionController {
         }
         await this.paperEventService.createEvent(request.session.user, event)
 
+
+        // ==== Notifications =============================================
+        // reviewer 
+        const notificationResults = await this.core.database.query(`
+            SELECT papers.title FROM papers WHERE papers.id = $1
+        `, [ entity.paperId ])
+        const title = notificationResults.rows[0].title
+
+        await this.notificationService.createNotification(
+            editor.userId,
+            'editor:submission-assigned',
+            {
+                editor: request.session.user,
+                paper: {
+                    id: entity.paperId,
+                    title: title
+                },
+                journal: journal
+            }
+
+        )
+
+        // ======== END Notifications =========================================
+
         const relations = await this.getRelations(results)
 
         return response.status(200).json({ 
@@ -1205,11 +1329,12 @@ module.exports = class JournalSubmissionController {
             [ submissionId ]
         )
         const entity = results.dictionary[submissionId]
-
         if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
                 `Unable to find Submission(${submissionId}) after assigning Assignee(${editor.userId}).`)
         }
+
+        const relations = await this.getRelations(results)
 
         const event = {
             paperId: entity.paperId,
@@ -1220,7 +1345,28 @@ module.exports = class JournalSubmissionController {
         }
         await this.paperEventService.createEvent(request.session.user, event)
 
-        const relations = await this.getRelations(results)
+        // ==== Notifications =============================================
+        // reviewer 
+        const notificationResults = await this.core.database.query(`
+            SELECT papers.title FROM papers WHERE papers.id = $1
+        `, [ entity.paperId ])
+        const title = notificationResults.rows[0].title
+
+        await this.notificationService.createNotification(
+            userId,
+            'editor:submission-unassigned',
+            {
+                editor: request.session.user,
+                paper: {
+                    id: entity.paperId,
+                    title: title
+                },
+                journal: journal
+            }
+        )
+
+        // ======== END Notifications =========================================
+
 
         return response.status(200).json({ 
             entity: entity,

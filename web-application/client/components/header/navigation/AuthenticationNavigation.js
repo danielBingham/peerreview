@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import {  Link, useNavigate } from 'react-router-dom'
 
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid'
+
 import Button from '/components/generic/button/Button'
 
 import UserTag from '/components/users/UserTag'
 import UserMenu from './UserMenu'
-
-import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid'
 
 import './AuthenticationNavigation.css'
 

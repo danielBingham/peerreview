@@ -40,6 +40,8 @@ const logThreads = function(threads, infoToLog) {
  * @return {int} The number of theads that were collapsed.
  */
 export const reflowThreads = function(threads, centeredThreadId, shouldFocus) {
+    console.log(`reflowThreads()`)
+    console.log(threads)
     // NOTE: This positioning algorithm assumes that `threads` has been
     // sorted and the threads are in the order they appear on the document,
     // from top to bottom.

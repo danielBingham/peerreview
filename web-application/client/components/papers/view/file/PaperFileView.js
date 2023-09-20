@@ -25,7 +25,8 @@ import './PaperFileView.css'
 const PaperFileView = function({ id }) {
 
     const [ searchParams, setSearchParams ] = useSearchParams()
-    
+    console.log(`\n### PaperFileView(${id})`) 
+
     // ================= Request Tracking =====================================
 
     const [ reviewsRequestId, setReviewsRequestId ] = useState(null)

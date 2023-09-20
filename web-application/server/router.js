@@ -152,6 +152,25 @@ module.exports = function(core) {
     })
 
     /**************************************************************************
+     *      User Notification REST Routes
+     *************************************************************************/
+    const NotificationController = require('./controllers/NotificationController')
+    const notificationController = new NotificationController(core)
+
+    router.get('/notifications', function(request, response, next) {
+        notificationController.getNotifications(request, response).catch(function(error) {
+            next(error)
+        })
+
+    })
+
+    router.patch('/notification/:id', function(request, response, next) {
+        notificationController.patchNotification(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    /**************************************************************************
      *  Reputation Routes 
      **************************************************************************
 

@@ -38,8 +38,10 @@ const EditorDashboardPage = function(props) {
 
     const journalDictionary = useSelector(function(state) {
         const dictionary = {}
-        for(const membership of currentUser.memberships) {
-            dictionary[membership.journalId] = state.journals.dictionary[membership.journalId]
+        if ( currentUser ) {
+            for(const membership of currentUser.memberships) {
+                dictionary[membership.journalId] = state.journals.dictionary[membership.journalId]
+            }
         }
         return dictionary
     })
@@ -49,7 +51,7 @@ const EditorDashboardPage = function(props) {
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
-    useLayoutEffect(function() {
+    useEffect(function() {
         if ( ! currentUser ) {
             navigate('/login')
         }
@@ -57,13 +59,15 @@ const EditorDashboardPage = function(props) {
 
     useEffect(function() {
         const journalId = pageTab
-        if ( ! currentUser.memberships.find((m) => m.journalId == journalId && (m.permissions == 'owner' || m.permissions == 'editor')) ) {
+        if ( journalId && currentUser && ! currentUser.memberships.find((m) => m.journalId == journalId && (m.permissions == 'owner' || m.permissions == 'editor')) ) {
             navigate('/edit/')
         }
     }, [ pageTab ])
 
     useEffect(function() {
-        setRequestId(dispatch(getJournals('EditorsDashboard', { userId: currentUser.id })))
+        if ( currentUser ) {
+            setRequestId(dispatch(getJournals('EditorsDashboard', { userId: currentUser.id })))
+        }
     }, [ ])
 
     useEffect(function() {

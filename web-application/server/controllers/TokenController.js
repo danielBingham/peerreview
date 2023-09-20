@@ -145,7 +145,7 @@ module.exports = class TokenController {
             token.userId = user.id
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendPasswordReset(user, token)
+            await this.emailService.sendPasswordReset(user, token)
 
             return response.status(200).json(null)
         } else {

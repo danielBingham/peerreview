@@ -39,6 +39,9 @@ describe('JournalController', function() {
             query: jest.fn()
         },
         queue: null,
+        postmarkClient: {
+            sendEmail: jest.fn()
+        },
         features: new FeatureFlags() 
     }
 
@@ -168,6 +171,23 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 0, rows: [] }) // COMMIT
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Notifications
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 2 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 3 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+                
+                // Relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -199,8 +219,6 @@ describe('JournalController', function() {
                 entity: expectedJournals.dictionary[1],
                 relations: expectedJournals.relations 
             })
-
-
         })
     })
 
@@ -680,6 +698,21 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Notifications
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 2 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 3 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+                
+                // relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -710,6 +743,21 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Notifications
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 2 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 3 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+                
+                // relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -740,6 +788,21 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Notifications
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 2 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 3 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+                
+                // relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -770,6 +833,21 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Notifications
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 2 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 3 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
+                
+                // relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -983,6 +1061,11 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+                
+                // relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -1194,6 +1277,10 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -1221,6 +1308,11 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -1248,6 +1340,10 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
@@ -1275,6 +1371,11 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
+                
+                // getSession 
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // Relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)

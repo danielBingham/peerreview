@@ -1,15 +1,35 @@
-const Postmark = require('postmark')
+const ServiceError = require('../errors/ServiceError')
 
 module.exports = class EmailService {
 
     constructor(core) {
+        this.core = core 
+
         this.logger = core.logger
         this.config = core.config
-
-        this.postmarkClient = new Postmark.ServerClient(core.config.postmark.api_token)
     }
 
-    sendEmailConfirmation(user, token) {
+    async sendEmail(data) {
+        try {
+            await this.core.postmarkClient.sendEmail(data)
+        } catch (error) {
+            console.error(error)
+            throw new ServiceError('email-failed', 
+                `Attempt to send an email failed with message: ${error.message}.`)
+        }
+    }
+
+    async sendNotificationEmail(address, subject, body) {
+        await this.sendEmail({
+            "From": "no-reply@peer-review.io",
+            "To": address,
+            "Subject": subject,
+            "TextBody": body,
+            "MessageStream": "notifications"
+        })
+    }
+
+    async sendEmailConfirmation(user, token) {
         const confirmationLink = this.config.host + `email-confirmation?token=${token.token}`
 
 
@@ -19,7 +39,7 @@ Please confirm your email address by following the link below:
 ${confirmationLink}`
 
 
-        this.postmarkClient.sendEmail({
+        await this.sendEmail({
             "From": "no-reply@peer-review.io",
             "To": user.email,
             "Subject": "Peer Review(io) - Email Confirmation",
@@ -28,7 +48,7 @@ ${confirmationLink}`
         })
     }
 
-    sendPasswordReset(user, token) {
+    async sendPasswordReset(user, token) {
         const resetLink = this.config.host + `reset-password?token=${token.token}`
 
         const emailTextBody = `Hello ${user.name},
@@ -37,7 +57,7 @@ ${confirmationLink}`
 ${resetLink}`
 
 
-        this.postmarkClient.sendEmail({
+        await this.sendEmail({
             "From": "no-reply@peer-review.io",
             "To": user.email,
             "Subject": "Peer Review(io) - Password Reset",
@@ -46,7 +66,7 @@ ${resetLink}`
         })
     }
 
-    sendInvitation(inviter, user, token) {
+    async sendInvitation(inviter, user, token) {
         const invitationLink = this.config.host + `accept-invitation?token=${token.token}`
 
         const emailTextBody = `Hello ${user.name},
@@ -65,7 +85,7 @@ ${resetLink}`
         To accept the invitation click the following link : ${invitationLink}`
 
 
-        this.postmarkClient.sendEmail({
+        await this.sendEmail({
             "From": "no-reply@peer-review.io",
             "To": user.email,
             "Subject": `${inviter.name} invites you to join Peer Review`,
@@ -73,6 +93,8 @@ ${resetLink}`
             "MessageStream": "invitation"
         })
     }
+
+
 
 }
 

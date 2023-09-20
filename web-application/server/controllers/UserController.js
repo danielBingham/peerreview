@@ -265,13 +265,13 @@ module.exports = class UserController {
             token.userId = createdUser.id
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendInvitation(loggedInUser, createdUser, token)
+            await this.emailService.sendInvitation(loggedInUser, createdUser, token)
         } else {
             const token = this.tokenDAO.createToken('email-confirmation')
             token.userId = createdUser.id
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendEmailConfirmation(createdUser, token)
+            await this.emailService.sendEmailConfirmation(createdUser, token)
         }
 
         await this.settingsDAO.initializeSettingsForUser(createdUser)
@@ -588,7 +588,7 @@ module.exports = class UserController {
             token.userId = results.dictionary[user.id].id
             token.id = await this.tokenDAO.insertToken(token)
 
-            this.emailService.sendEmailConfirmation(results.dictionary[user.id], token)
+            await this.emailService.sendEmailConfirmation(results.dictionary[user.id], token)
         }
 
 

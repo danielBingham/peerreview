@@ -10,6 +10,7 @@ import MainNavigation from './navigation/MainNavigation'
 import CreationNavigation from './navigation/CreationNavigation'
 import AuthenticationNavigation from './navigation/AuthenticationNavigation'
 import DashboardsNavigation from './navigation/DashboardsNavigation'
+import NotificationMenu from '/components/notifications/NotificationMenu'
 
 import './Header.css'
 
@@ -34,6 +35,7 @@ const Header = function(props) {
                 <MainNavigation />
                 { currentUser && <CreationNavigation /> }
                 { currentUser && <DashboardsNavigation /> }
+                { currentUser && <NotificationMenu /> }
                 <AuthenticationNavigation />
             </div>
         </header>

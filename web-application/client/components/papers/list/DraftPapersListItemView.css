@@ -37,7 +37,7 @@
 }
 
 .draft-paper-list-item .title {
-    font-size: 22px; 
+    font-size: 20px; 
     padding: 5px;
 }
 .draft-paper-list-item .title a:link, .draft-paper-list-item .title a:active, .draft-paper-list-item .title a:visited {
@@ -52,7 +52,7 @@
     margin-bottom: -0.2em;
 }
 .draft-paper-list-item .authors {
-    font-size: 16px;
+    font-size: 12px;
     padding: 5px;
 }
 .draft-paper-list-item .fields {

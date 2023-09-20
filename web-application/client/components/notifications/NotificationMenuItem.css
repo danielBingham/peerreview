@@ -1,0 +1,19 @@
+.notification {
+    width: 250px;
+    padding: 20px;
+    font-size: 14px;
+    background-color: white;
+    border-bottom: thin solid var(--main-border-color);
+    font-weight: bold;
+}
+.notification.read {
+    background-color: var(--page-header-background-color);
+    font-weight: normal;
+}
+.floating-menu.notification-menu .menu-body .menu-item.notification {
+    white-space: normal;
+}
+.notification:hover {
+    background-color: var(--input-highlight-color);
+    color: white;
+}

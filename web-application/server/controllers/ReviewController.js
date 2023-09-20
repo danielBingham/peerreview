@@ -15,8 +15,10 @@ module.exports = class ReviewController {
 
         this.reviewDAO = new backend.ReviewDAO(core)
         this.userDAO = new backend.UserDAO(core)
+        this.paperDAO = new backend.PaperDAO(core)
 
         this.paperEventService = new backend.PaperEventService(core)
+        this.notificationService = new backend.NotificationService(core)
     }
 
     async getRelations(currentUser, results, requestedRelations) {
@@ -178,23 +180,16 @@ module.exports = class ReviewController {
 
         const userId = request.session.user.id
 
-        const paperResults = await this.database.query(`
-            SELECT MAX(paper_versions.version) as "paper_currentVersion", papers.is_draft as "paper_isDraft" 
-            FROM papers 
-                JOIN paper_versions on papers.id = paper_versions.paper_id
-            WHERE papers.id = $1
-            GROUP BY papers.id
-        `, [ paperId ])
-
+        const paperResults = await this.paperDAO.selectPapers(`WHERE papers.id = $1`, [ paperId ])
+        const paper = paperResults.dictionary[paperId]
+        
         // 3. Paper(:paper_id) exists and has at least one version.
-        if ( paperResults.rows.length <= 0) {
+        if ( ! paper ) {
             throw new ControllerError(404, 'no-resource', `No Paper(${review.paperId}) to return reviews for.`)
         }
 
-        const existing = paperResults.rows[0]
-
         // 4. Paper(:paper_id) must be a draft.
-        if ( ! existing.paper_isDraft ) {
+        if ( ! paper.isDraft ) {
             throw new ControllerError(403, 'not-authorized:published-paper', 
                 `User(${userId}) attempted to add a review to published Paper(${review.paperId}).`)
         }
@@ -206,12 +201,13 @@ module.exports = class ReviewController {
 
         // 5. If review.version is provided, it must be the most recent version for
         //      Paper(:paper_id).
-        
-        if ( review.version && (review.version < 0 || review.version > existing.paper_currentVersion) ) {
+       
+        const currentVersion = paper.versions[0].version
+        if ( review.version && (review.version < 0 || review.version > currentVersion) ) {
             throw new ControllerError(400, 'invalid-version',
                 `User(${userId}) attempting to create review for invalid Version(${review.version}) of Paper(${paperId}).`)
         } else if ( ! review.version ) {
-            review.version = existing.paper_currentVersion
+             review.version = currentVersion
         }
 
         // 6. If review.number is provided, it must be the next increment for
@@ -260,13 +256,49 @@ module.exports = class ReviewController {
         
             
             const event = {
-                paperId: paperId,
+                paperId: entity.paperId,
                 actorId: userId,
-                version: review.version,
+                version: entity.version,
                 type: 'review-posted',
-                reviewId: review.id
+                reviewId: entity.id
             }
             await this.paperEventService.createEvent(request.session.user, event)
+
+            // ==== Notifications =============================================
+            
+            for(const author of paper.authors) {
+                await this.notificationService.createNotification(
+                    author.userId,
+                    'author:new-review',
+                    {
+                        paper: paper,
+                        review: entity,
+                        reviewer: request.session.user
+                    }
+
+                )
+            }
+
+            const editorResults = await this.database.query(`
+                SELECT user_id 
+                    FROM journal_submission_editors 
+                        LEFT OUTER JOIN journal_submissions ON journal_submission_editors.submission_id = journal_submissions.id
+                    WHERE journal_submissions.paper_id = $1
+            `, [ entity.paperId ])
+
+            for ( const row of editorResults.rows ) {
+                await this.notificationService.createNotification(
+                    row.user_id,
+                    'editor:new-review',
+                    {
+                        paper: paper,
+                        review: entity,
+                        reviewer: request.session.user
+                    }
+                )
+            }
+
+            // ==== END Notifications =========================================
         }
 
         this.reviewDAO.selectVisibleComments(userId, results.dictionary)
@@ -612,6 +644,8 @@ module.exports = class ReviewController {
                 UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND version = $2
             `, [ entity.paperId, entity.version ])
 
+            // ==== Paper Events ==============================================
+            
             const event = {
                 paperId: entity.paperId,
                 actorId: entity.userId,
@@ -620,6 +654,47 @@ module.exports = class ReviewController {
                 reviewId: entity.id
             }
             await this.paperEventService.createEvent(request.session.user, event)
+
+            const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ review.paperId ])
+            const paper = paperResults.dictionary[review.paperId]
+
+            // ==== Notifications =============================================
+            
+            for(const author of paper.authors) {
+                await this.notificationService.createNotification(
+                    author.userId,
+                    'author:new-review',
+                    {
+                        paper: paper,
+                        review: entity,
+                        reviewer: request.session.user
+                    }
+
+                )
+            }
+
+            const editorResults = await this.database.query(`
+                SELECT user_id 
+                    FROM journal_submission_editors 
+                        LEFT OUTER JOIN journal_submissions ON journal_submission_editors.submission_id = journal_submissions.id
+                    WHERE journal_submissions.paper_id = $1
+            `, [ entity.paperId ])
+
+            for ( const row of editorResults.rows ) {
+                await this.notificationService.createNotification(
+                    row.user_id,
+                    'editor:new-review',
+                    {
+                        paper: paper,
+                        review: entity,
+                        reviewer: request.session.user
+                    }
+                )
+            }
+
+            // ==== END Notifications =========================================
+
+
         }
 
         results.relations = await this.getRelations(request.session.user, results)

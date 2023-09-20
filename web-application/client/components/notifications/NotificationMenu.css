@@ -1,0 +1,35 @@
+.notification-menu {
+    color: var(--header-text-color);
+}
+.notification-menu .menu-trigger svg {
+    color: var(--header-text-color);
+    width: 24px;
+    height: 24px;
+    margin-bottom: -6px;
+    padding: 0 5px;
+}
+.notification-menu .empty-list {
+    padding: 10px 20px;
+    white-space: nowrap;
+    color: black;
+}
+.notification-menu .notification-trigger {
+    position: relative;
+}
+.notification-menu .notification-trigger .unread-indicator {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 10px;
+    padding: 2px 4px;
+
+    color: white;
+
+    border-radius: 14px;
+    background-color: var(--input-highlight-color);
+}
+.notification-menu .notification-body {
+    max-height: 400px;
+    overflow: auto;
+}
+
