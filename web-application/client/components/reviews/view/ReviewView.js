@@ -42,7 +42,7 @@ const ReviewView = function({ id, paperId, versionNumber }) {
         if ( document.location.hash == `#review-${review.id}`) {
             document.querySelector(document.location.hash).scrollIntoView()
         }
-    }, [])
+    }, [ document.location.hash ])
 
     const pages = []
     const commentThreadViews = []

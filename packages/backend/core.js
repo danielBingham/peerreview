@@ -1,5 +1,6 @@
 const { Client, Pool } = require('pg')
 const BullQueue = require('bull')
+const Postmark = require('postmark')
 
 const Logger = require('./logger')
 
@@ -33,6 +34,12 @@ module.exports = class Core {
          * running jobs for pickup by the workers.
          */
         this.queue = null
+
+        /**
+         * Our Postmark server client for sending emails to using the Postmark
+         * API.
+         */
+        this.postmarkClient = null
 
         /**
          * Our configuration values.  
@@ -93,6 +100,8 @@ module.exports = class Core {
 
         // TECHDEBT - Are we even using this?
         this.queue = new BullQueue('peer-review', { redis: this.config.redis })
+
+        this.postmarkClient = new Postmark.ServerClient(this.config.postmark.api_token)
     }
 
     async shutdown() {

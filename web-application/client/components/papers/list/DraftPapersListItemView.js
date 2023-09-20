@@ -7,6 +7,7 @@ import { ArrowLeftOnRectangleIcon } from '@heroicons/react/24/solid'
 import JournalSubmissionsTags from '/components/journals/JournalSubmissionsTags'
 import UserTag from '/components/users/UserTag'
 import Field from '/components/fields/Field'
+import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 
 import './DraftPapersListItemView.css'
@@ -53,7 +54,7 @@ const DraftPapersListItemView = function(props) {
             <div className="wrapper">
                 <JournalSubmissionsTags id={props.paper.id} />
                 <div className="title"> <Link to={paperPath}>{props.paper.title}<ArrowLeftOnRectangleIcon /></Link></div>
-                <div className="authors">by {authors}</div>
+                <div className="authors">submitted on <DateTag timestamp={props.paper.createdDate} /> by {authors}</div>
                 <div className="fields"> {fields}</div>
             </div>
         </div>

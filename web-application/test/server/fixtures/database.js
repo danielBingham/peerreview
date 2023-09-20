@@ -188,40 +188,60 @@ const journals = [
 ]
 
 const journal_members = [
-    // 0
+    // Journal(1)
     {
         member_userId: 1,
-        member_permissions: 'owner'
+        member_permissions: 'owner',
+        member_order: 1,
+        member_journalId: 1
+
     },
-    // 1
-    {
-        member_userId: 2,
-        member_permissions: 'owner'
-    },
-    // 2
-    {
-        member_userId: 1,
-        member_permissions: 'editor',
-    },
-    // 3
     {
         member_userId: 2,
         member_permissions: 'editor',
+        member_order: 2,
+        member_journalId: 1
     },
-    // 4
-    {
-        member_userId: 1,
-        member_permissions: 'reviewer'
-    },
-    // 5
-    {
-        member_userId: 2,
-        member_permissions: 'reviewer'
-    },
-    // 6
     {
         member_userId: 3,
-        member_permissions: 'reviewer'
+        member_permissions: 'reviewer',
+        member_order: 3,
+        member_journalId: 1
+    },
+
+    // Journal(2)
+    {
+        member_userId: 2,
+        member_permissions: 'owner',
+        member_order: 1,
+        member_journalId: 2
+    },
+    {
+        member_userId: 1,
+        member_permissions: 'editor',
+        member_order: 2,
+        member_journalId: 2
+    },
+    {
+        member_userId: 3,
+        member_permissions: 'reviewer',
+        member_order: 3,
+        member_journalId: 2
+    },
+
+    // Journal(3)
+    {
+        member_userId: 1,
+        member_permissions: 'owner',
+        member_order: 1,
+        member_journalId: 3
+
+    },
+    {
+        member_userId: 3,
+        member_permissions: 'reviewer',
+        member_order: 2,
+        member_journalId: 3
     }
 
 ]
@@ -320,17 +340,17 @@ const database = {
     journals: {
         1: [
             { ...journals[0], ...journal_members[0] },
-            { ...journals[0], ...journal_members[3] },
-            { ...journals[0], ...journal_members[6] }
+            { ...journals[0], ...journal_members[1] },
+            { ...journals[0], ...journal_members[2] }
         ],
         2: [
-            { ...journals[1], ...journal_members[1] },
-            { ...journals[1], ...journal_members[2] },
-            { ...journals[1], ...journal_members[6] }
+            { ...journals[1], ...journal_members[3] },
+            { ...journals[1], ...journal_members[4] },
+            { ...journals[1], ...journal_members[5] }
         ],
         3: [
-            { ...journals[2], ...journal_members[0] },
-            { ...journals[2], ...journal_members[6] }
+            { ...journals[2], ...journal_members[6] },
+            { ...journals[2], ...journal_members[7] }
         ]
     },
     journalSubmissions: {

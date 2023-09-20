@@ -6,6 +6,7 @@ import featuresReducer from './features'
 import jobsReducer from './jobs'
 import authenticationReducer from './authentication'
 import usersReducer from './users'
+import notificationsReducer from './notifications'
 import papersReducer from './papers'
 import paperEventsReducer from './paperEvents'
 import reviewsReducer from './reviews'
@@ -24,6 +25,7 @@ const reducers = combineReducers({
     jobs: jobsReducer,
     authentication: authenticationReducer,
     users: usersReducer,
+    notifications: notificationsReducer,
     papers: papersReducer,
     paperEvents: paperEventsReducer,
     reviews: reviewsReducer,

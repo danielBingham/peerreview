@@ -71,7 +71,7 @@ export const FloatingMenu = function({ children, className, closeOnClick }) {
  *
  * @param {object} props    The standard React props object - empty.
  */
-export const FloatingMenuTrigger = function(props) {
+export const FloatingMenuTrigger = function({ className, children, showArrow }) {
 
     // ======= Render State =========================================
 
@@ -88,10 +88,12 @@ export const FloatingMenuTrigger = function(props) {
     // ======= Effect Handling ======================================
 
     // ======= Render ===============================================
-   
+ 
+    const doNotShowArrow = showArrow === false 
+
     return (
-        <div className={visible ? "menu-trigger active" : "menu-trigger" } >
-            <a href="" onClick={(e) => { e.preventDefault(); toggleMenu(); }}>{ props.children } { visible ? <ChevronUpIcon /> : <ChevronDownIcon /> }</a>
+        <div className={`menu-trigger ${visible ? 'active' : '' } ${className ? className : ''}`} >
+            <a href="" onClick={(e) => { e.preventDefault(); toggleMenu(); }}>{ children } { ! doNotShowArrow && (visible ? <ChevronUpIcon /> : <ChevronDownIcon />) }</a>
         </div>
     )
 

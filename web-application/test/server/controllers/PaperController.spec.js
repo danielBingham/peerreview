@@ -41,6 +41,9 @@ describe('PaperController', function() {
             query: jest.fn()
         },
         queue: null,
+        postmarkClient: {
+            sendEmail: jest.fn()
+        },
         features: new FeatureFlags() 
     }
 

@@ -155,8 +155,11 @@ const ReviewCommentsWrapper = function(props) {
             if ( ! event.target.matches('.comment-thread-pin') &&  ! event.target.matches('.comment-thread') 
                 && ! event.target.matches('.comment-thread-pin :scope') && ! event.target.matches('.comment-thread :scope') ) 
             {
+                console.log(`Delete Thread`)
+                console.log(document.location)
                 searchParams.delete('thread')
                 setSearchParams(searchParams)
+                console.log(document.location)
             } 
         }
         document.body.addEventListener('click', onBodyClick)
@@ -164,7 +167,7 @@ const ReviewCommentsWrapper = function(props) {
         return function cleanup() {
             document.body.removeEventListener('click', onBodyClick)
         }
-    }, [ searchParams, props.versionNumber ])
+    }, [ searchParams, props.versionNumber, props.paperId ])
     
     // ======= Render =========================================================
 

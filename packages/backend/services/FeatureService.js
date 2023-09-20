@@ -6,6 +6,7 @@ const WIPNoticeMigration = require('../migrations/WIPNoticeMigration')
 const CommentVersionsMigration = require('../migrations/CommentVersionsMigration')
 const JournalsMigration = require('../migrations/JournalsMigration')
 const PaperEventsMigration = require('../migrations/PaperEventsMigration')
+const NotificationsMigration = require('../migrations/NotificationsMigration')
 
 const ServiceError = require('../errors/ServiceError')
 const MigrationError = require('../errors/MigrationError')
@@ -67,6 +68,14 @@ module.exports = class FeatureService {
                 dependsOn: [ 'journals-79' ],
                 conflictsWith: [],
                 migration: new PaperEventsMigration(core)
+            },
+
+
+            // Issue #75 - Notification System
+            'notification-system-75': {
+                dependsOn: [],
+                conflictsWith: [],
+                migration: new NotificationsMigration(core)
             }
 
 

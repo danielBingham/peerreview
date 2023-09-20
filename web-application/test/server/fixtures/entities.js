@@ -226,15 +226,22 @@ const journals = {
         members: [
             {
                 userId: 1,
-                permissions: 'owner'
+                permissions: 'owner',
+                order: 1,
+                journalId: 1
+
             },
             {
                 userId: 2,
-                permissions: 'editor'
+                permissions: 'editor',
+                order: 2,
+                journalId: 1
             },
             {
                 userId: 3,
-                permissions: 'reviewer'
+                permissions: 'reviewer',
+                order: 3,
+                journalId: 1
             }
         ]
     },
@@ -247,15 +254,21 @@ const journals = {
         members: [
             {
                 userId: 2,
-                permissions: 'owner'
+                permissions: 'owner',
+                order: 1,
+                journalId: 2
             },
             {
                 userId: 1,
-                permissions: 'editor'
+                permissions: 'editor',
+                order: 2,
+                journalId: 2
             },
             { 
                 userId: 3,
-                permissions: 'reviewer'
+                permissions: 'reviewer',
+                order: 3,
+                journalId: 2
             }
         ]
     },
@@ -268,11 +281,16 @@ const journals = {
         members: [
             {
                 userId: 1,
-                permissions: 'owner'
+                permissions: 'owner',
+                order: 1,
+                journalId: 3
+
             },
             {
                 userId: 3,
-                permissions: 'reviewer'
+                permissions: 'reviewer',
+                order: 2,
+                journalId: 3
             }
         ]
     }
@@ -399,6 +417,11 @@ module.exports = {
             pageSize: 20,
             numberOfPages: 1
         },
-        relations: {}
+        relations: {
+            journals: {
+                1: journals[1],
+                2: journals[2]
+            }
+        }
     }
 }
