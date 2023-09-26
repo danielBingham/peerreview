@@ -1,14 +1,38 @@
 /***
- * Submissions are visible if:
+ * Manages Submission Visibility
  *
- * The authenticated user is:
- * - An editor of Journal(submission.journalId)
- * - An author of Paper(submission.paperId)
- * - A reviewer for Journal(submission.journalId) and Submission.status == 'review'
  *
- * OR
+ * == Public == 
  *
- * Submission.status == 'published'
+ * Status: any
+ *  - public
+ *
+ * == Open-Public == 
+ *
+ * Status: ! published or rejected
+ * - authors, corresponding-authors, managing-editors, editors, reviewers
+ *
+ * Status: published or rejected
+ * - public
+ *
+ * == Open == 
+ *
+ * Status: any
+ * - authors, corresponding-authors, managing-editors, editors, reviewers
+ * 
+ * == Closed == 
+ *
+ * Status: submitted
+ * - authors, corresponding-authors, managing-editors, assigned-editors
+ *
+ * Status: review
+ * - authors, corresponding-authors, managing-editors, assigned-editors, assigned-reviewers
+ *
+ * Status: proofing, rejected, retracted
+ * - authors, corresponding-authors, managing-editors, assigned-editors
+ *
+ * Status: published
+ * - public
  *
  */
 module.exports = class SubmissionPermissionService {

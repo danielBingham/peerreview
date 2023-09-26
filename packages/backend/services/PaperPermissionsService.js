@@ -1,4 +1,18 @@
 
+/**
+ * Manages Paper Visibility
+ *
+ * == Drafts ==
+ * - authors
+ * - corresponding-authors
+ *
+ * == Preprints ==
+ * - public
+ *
+ * == Submissions ==
+ * If the submission is visible, paper is visible
+ *
+ */
 module.exports = class PaperPermissionsService {
 
     constructor(core)  {

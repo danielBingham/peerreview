@@ -166,7 +166,7 @@ const JournalSubmissionsList = function(props) {
         for (const submission of submissionQuery.list) {
 
             content.push(
-                <JournalSubmissionsListItem submissionId={submission.id} />
+                <JournalSubmissionsListItem key={submission.id} submissionId={submission.id} />
             )
         }
 

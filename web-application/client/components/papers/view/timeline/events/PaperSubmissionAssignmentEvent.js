@@ -9,6 +9,8 @@ import DateTag from '/components/DateTag'
 import UserTag from '/components/users/UserTag'
 import JournalTag from '/components/journals/JournalTag'
 
+import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
+
 import './PaperSubmissionAssignmentEvent.css'
 
 const PaperSubmissionAssignmentEvent = function({ eventId }) {
@@ -38,7 +40,8 @@ const PaperSubmissionAssignmentEvent = function({ eventId }) {
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <UserTag id={event.actorId} /> { eventTypeMap[event.type] } <UserTag id={event.assigneeId}/> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />. 
+                <div><UserTag id={event.actorId} /> { eventTypeMap[event.type] } <UserTag id={event.assigneeId}/> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />.</div>
+                <VisibilityControl eventId={eventId} />
             </TimelineItemWrapper>
         </TimelineItem> 
     )

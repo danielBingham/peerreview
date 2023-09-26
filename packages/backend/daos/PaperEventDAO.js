@@ -58,7 +58,7 @@ SELECT
     paper_events.actor_id as "event_actorId",
     paper_events.version as event_version,
     paper_events.type as event_type,
-    paper_events.visibility as event_visibility, 
+    paper_events.visibility::text[] as event_visibility, 
     paper_events.event_date as "event_eventDate",
 
     paper_events.assignee_id as "event_assigneeId", 

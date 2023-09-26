@@ -4,6 +4,7 @@ import { setJournalSubmissionsInDictionary } from '../journalSubmissions'
 import { setPapersInDictionary } from '../papers'
 import { setUsersInDictionary } from '../users'
 import { setReviewsInDictionary } from '../reviews'
+import { setPaperEventsInDictionary } from '../paperEvents'
 
 
 const setRelationsInState = function(relations) {
@@ -21,6 +22,8 @@ const setRelationsInState = function(relations) {
                 dispatch(setUsersInDictionary({ dictionary: dictionary }))
             } else if ( relation == 'reviews' ) {
                 dispatch(setReviewsInDictionary({ dictionary: dictionary }))
+            } else if ( relation == 'events' ) {
+                dispatch(setPaperEventsInDictionary({ dictionary: dictionary }))
             }
         }
     }

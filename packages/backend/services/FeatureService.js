@@ -7,6 +7,7 @@ const CommentVersionsMigration = require('../migrations/CommentVersionsMigration
 const JournalsMigration = require('../migrations/JournalsMigration')
 const PaperEventsMigration = require('../migrations/PaperEventsMigration')
 const NotificationsMigration = require('../migrations/NotificationsMigration')
+const JournalTransparencyModelsMigration = require('../migrations/JournalTransparencyModelsMigration')
 
 const ServiceError = require('../errors/ServiceError')
 const MigrationError = require('../errors/MigrationError')
@@ -76,6 +77,13 @@ module.exports = class FeatureService {
                 dependsOn: [],
                 conflictsWith: [],
                 migration: new NotificationsMigration(core)
+            },
+
+            // Issue #194 - Journal Permission Model
+            'journal-permission-models-194': {
+                dependsOn: [ 'paper-events-189', 'journals-79' ],
+                conflictsWith: [],
+                migration: new JournalTransparencyModelsMigration(core)
             }
 
 

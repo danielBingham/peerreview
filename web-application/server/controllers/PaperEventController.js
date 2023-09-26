@@ -1,4 +1,11 @@
-const { PaperEventDAO, PaperDAO, UserDAO, ReviewDAO, JournalSubmissionDAO } = require('@danielbingham/peerreview-backend')
+const { 
+    PaperEventDAO, 
+    PaperDAO, 
+    UserDAO, 
+    ReviewDAO, 
+    JournalSubmissionDAO,
+    PaperEventService
+} = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -13,6 +20,8 @@ module.exports = class PaperEventController {
         this.userDAO = new UserDAO(core)
         this.reviewDAO = new ReviewDAO(core)
         this.submissionDAO = new JournalSubmissionDAO(core)
+
+        this.paperEventService = new PaperEventService(core)
     }
 
     async getRelations(currentUser, results, requestedRelations) {
@@ -79,8 +88,7 @@ module.exports = class PaperEventController {
         return relations
     }
 
-    async parseQuery(session, query, where, params) {
-
+    async parseQuery(paperId, session, query, where, params) {
         const result = {
             where: (where ? where : '' ),
             params: ( params ? params : []),
@@ -91,6 +99,18 @@ module.exports = class PaperEventController {
 
         let count = params.length 
         let and = ''
+
+        // ======== Handle Visibility ========================================
+        
+        const visibleEventIds = await this.paperEventService.getVisibleEventIds(session.user.id, paperId)
+
+        count += 1
+        and = ( count > 1 ? ' AND ' : '')
+
+        result.where += `${and} paper_events.id = ANY($${count}::bigint[])`
+        result.params.push(visibleEventIds)
+
+        // ======== END Visibility ============================================
 
         if ( query.version ) {
             count += 1
@@ -131,6 +151,7 @@ module.exports = class PaperEventController {
         const paperId = request.params.paperId
 
         const { where, params, order, emptyResult, requestedRelations } = await this.parseQuery(
+            paperId,
             request.session, 
             request.query,
             'paper_events.paper_id = $1',
@@ -153,7 +174,6 @@ module.exports = class PaperEventController {
     }
 
     async patchEvent(request, response) {
-
         // Not yet implemented.
         return response.status(501).send()
     }
@@ -171,11 +191,6 @@ module.exports = class PaperEventController {
             throw new ControllerError(401, 'not-authenticated', 
                 `User must be authenticated to get feed!`)
         }
-
-
-
-
-
     }
 
     async getReviewerFeed(request, response) {
@@ -257,7 +272,6 @@ module.exports = class PaperEventController {
         results.relations = await this.getRelations(request.session.user, results, requestedRelations)
 
         return response.status(200).json(results)
-
     }
 
 }

@@ -15,7 +15,7 @@ import Spinner from '/components/Spinner'
 
 import './ReviewView.css'
 
-const ReviewView = function({ id, paperId, versionNumber }) {
+const ReviewView = function({ id, eventId, paperId, versionNumber }) {
     
     const paper = useSelector(function(state) {
         return state.papers.dictionary[paperId]
@@ -63,7 +63,7 @@ const ReviewView = function({ id, paperId, versionNumber }) {
         )
     } else {
         summary = (
-            <ReviewSummaryView paper={paper} versionNumber={versionNumber} selectedReview={review} />
+            <ReviewSummaryView eventId={eventId} paper={paper} versionNumber={versionNumber} selectedReview={review} />
         )
     }
 

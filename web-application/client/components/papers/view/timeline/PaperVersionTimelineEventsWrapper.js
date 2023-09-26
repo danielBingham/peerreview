@@ -146,7 +146,7 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
     for(const event of events) {
         if ( event.type == 'review-posted' ) {
             eventViews.push(
-                <ReviewView key={event.id} id={event.reviewId} paperId={paperId} versionNumber={versionNumber} />
+                <ReviewView key={event.id} id={event.reviewId} eventId={event.id} paperId={paperId} versionNumber={versionNumber} />
             )
         }
 

@@ -103,6 +103,7 @@ app.use(function(request, response, next) {
 const FeatureFlags = require('./features')
 // Setup FeatureFlags and make it available through the core.
 app.use(function(request, response, next) {
+    console.log('Setting up feature flags...')
     const featureService = new FeatureService(core)
     featureService.getEnabledFeatures().then(function(features) {
         core.features = new FeatureFlags(features)

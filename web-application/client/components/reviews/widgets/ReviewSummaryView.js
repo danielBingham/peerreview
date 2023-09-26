@@ -11,6 +11,7 @@ import  { CheckIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import UserTag from '/components/users/UserTag'
 import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
+import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
 
 import './ReviewSummaryView.css'
 
@@ -36,6 +37,10 @@ const ReviewSummaryView = function(props) {
     
     const currentUser = useSelector(function(state) {
         return state.authentication.currentUser
+    })
+
+    const event = useSelector(function(state) {
+        return state.paperEvents.dictionary[props.eventId]
     })
 
     const isAuthor = (currentUser && props.paper.authors.find((a) => a.userId == currentUser.id) ? true : false)
@@ -120,6 +125,7 @@ const ReviewSummaryView = function(props) {
                 <div className="summary">
                     <div className="reviewer"><UserTag id={props.selectedReview.userId}/> submitted <a href={`/paper/${props.paper.id}/timeline#review-${props.selectedReview.id}`}>review #{props.selectedReview.id}</a> <DateTag timestamp={props.selectedReview.updatedDate} type="full" /></div>
                     { recommendation }
+                    <VisibilityControl eventId={props.eventId} /> 
                     <div className="summary-text"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div>
                 </div>
             </div>

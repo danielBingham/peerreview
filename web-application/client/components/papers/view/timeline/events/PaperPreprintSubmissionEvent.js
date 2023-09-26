@@ -7,6 +7,7 @@ import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/gen
 import DateTag from '/components/DateTag'
 
 import UserTag from '/components/users/UserTag'
+import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
 
 import './PaperPreprintSubmissionEvent.css'
 
@@ -26,7 +27,8 @@ const PaperPreprintSubmissionEvent = function({ eventId }) {
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <UserTag id={event.actorId} /> submitted preprint <DateTag timestamp={event.eventDate} type="full" />. 
+                <div><UserTag id={event.actorId} /> submitted preprint <DateTag timestamp={event.eventDate} type="full" />.</div>
+                <VisibilityControl eventId={eventId} />
             </TimelineItemWrapper>
         </TimelineItem> 
     )

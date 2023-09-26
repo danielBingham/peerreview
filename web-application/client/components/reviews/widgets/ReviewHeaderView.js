@@ -74,6 +74,19 @@ const ReviewHeaderView = function(props) {
         }
     })
 
+    const event = useSelector(function(state) {
+        if ( selectedReview ) {
+            for( const [id, event] of Object.entries(state.paperEvents.dictionary)) {
+                if ( event.reviewId == selectedReview.id ) {
+                    return event
+                }
+            }
+            throw new Error(`Failed to find associated event for Review(${selectedReview.id}).`)
+        } else {
+            return null
+        }
+    })
+
     const reviewInProgress = useSelector(function(state) {
         if ( state.reviews.inProgress[props.paperId] ) {
             return state.reviews.inProgress[props.paperId][props.versionNumber]
@@ -134,7 +147,7 @@ const ReviewHeaderView = function(props) {
         let selectedReviewView= null
         if ( selectedReview ) {
             selectedReviewView = (
-                <ReviewSummaryView paper={paper} versionNumber={props.versionNumber} selectedReview={selectedReview} />
+                <ReviewSummaryView eventId={event.id} paper={paper} versionNumber={props.versionNumber} selectedReview={selectedReview} />
             )
         }
 

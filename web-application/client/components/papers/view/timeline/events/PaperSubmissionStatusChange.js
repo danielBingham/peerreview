@@ -8,6 +8,7 @@ import DateTag from '/components/DateTag'
 
 import UserTag from '/components/users/UserTag'
 import JournalTag from '/components/journals/JournalTag'
+import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
 
 import './PaperSubmissionStatusChange.css'
 
@@ -42,7 +43,8 @@ const PaperSubmissionStatusChange = function({ eventId }) {
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <UserTag id={event.actorId} /> changed status to <strong>{ statuses[event.newStatus] }</strong> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />. 
+                <div><UserTag id={event.actorId} /> changed status to <strong>{ statuses[event.newStatus] }</strong> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />.</div> 
+                <VisibilityControl eventId={eventId} />
             </TimelineItemWrapper>
         </TimelineItem> 
     )

@@ -161,17 +161,6 @@ const ReviewSummaryForm = function(props) {
                         </textarea>
                     </div>
                     <div className="recommendation-wrapper">
-                        { /*<select name="recommendation-field" 
-                            onChange={(e) => setRecommendation(e.target.value)}
-                            onBlur={commitChange} 
-                            value={recommendation} 
-                        >
-
-                                <option value="commentary">Commentary (No recommendation)</option>
-                                <option value="request-changes">Recommend Changes</option>
-                                <option value="approve">Recommend Approval</option>
-                                <option value="reject">Recommend Rejection</option>
-                        </select> */ }
                         <div className="recommendation-option">
                             <input 
                                 type="radio" 
@@ -202,7 +191,7 @@ const ReviewSummaryForm = function(props) {
                                 onChange={(e) => setRecommendation('reject')}
                                 onBlur={commitChange}
                                 value="reject" />
-                            <label htmlFor="approve" onClick={(e) => setRecommendation('reject')}><XCircleIcon/>Reject</label>
+                            <label htmlFor="reject" onClick={(e) => setRecommendation('reject')}><XCircleIcon/>Reject</label>
                             <div className="explanation">Recommend that the draft be rejected.</div>
                         </div>
                         <div className="recommendation-option">
