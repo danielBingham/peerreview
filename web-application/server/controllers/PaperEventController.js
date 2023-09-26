@@ -88,7 +88,7 @@ module.exports = class PaperEventController {
         return relations
     }
 
-    async parseQuery(paperId, session, query, where, params) {
+    async parseQuery(session, query, where, params) {
         const result = {
             where: (where ? where : '' ),
             params: ( params ? params : []),
@@ -97,12 +97,12 @@ module.exports = class PaperEventController {
             requestedRelations: ( query.relations ? query.relations : [] )
         }
 
-        let count = params.length 
+        let count = result.params.length 
         let and = ''
 
         // ======== Handle Visibility ========================================
-        
-        const visibleEventIds = await this.paperEventService.getVisibleEventIds(session.user.id, paperId)
+
+        const visibleEventIds = await this.paperEventService.getVisibleEventIds(session.user?.id)
 
         count += 1
         and = ( count > 1 ? ' AND ' : '')
@@ -151,7 +151,6 @@ module.exports = class PaperEventController {
         const paperId = request.params.paperId
 
         const { where, params, order, emptyResult, requestedRelations } = await this.parseQuery(
-            paperId,
             request.session, 
             request.query,
             'paper_events.paper_id = $1',
@@ -174,8 +173,61 @@ module.exports = class PaperEventController {
     }
 
     async patchEvent(request, response) {
-        // Not yet implemented.
-        return response.status(501).send()
+        /**********************************************************************
+         * Permissions Checking and Input Validation
+         *
+         * 1. User must be authenticated.
+         * 2. Ability to update visibility is controlled by event-type and
+         * journal model.  This is managed in PaperEventService.
+         *
+         * These constraints are enforced in `PaperController::buildQuery()`.
+         * 
+         * ********************************************************************/
+
+        const user = request.session.user
+        const paperId = request.params.paperId
+        const eventId = request.params.eventId
+
+        const event = request.body
+        event.id = eventId
+
+        if ( ! user ) {
+            throw new ControllerError(401, 'not-authenticated',
+                `Only authenticated users may update event visibility.`)
+        }
+
+       
+        const canEdit = await this.paperEventService.canEditEvent(eventId, user.id)
+        if ( ! canEdit ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${user.id}) attempted to edit visibility on an event they're not authorized to edit.`)
+        }
+
+        if ( ! event.visibility ) {
+            throw new ControllerError(400, 'no-visibility',
+                `User(${user.id}) attempted to update Event(${event.id}), but failed to include visibility.`)
+        }
+
+        /**********************************************************************
+         * Permissions Checking and Validation Complete
+         *  Execute the Patch 
+         **********************************************************************/
+
+         await this.paperEventDAO.updateEvent(event)
+
+        const results = await this.paperEventDAO.selectEvents('WHERE paper_events.id = $1', [ event.id ])
+        if ( ! results.dictionary[event.id] ) { 
+            throw new ControllerError(500, 'server-error',
+                `Event(${event.id}) not found after update!`)
+        }
+        const entity = results.dictionary[event.id]
+
+        const relations = await this.getRelations(user, results)
+
+        return response.status(200).json({
+            entity: entity,
+            relations: relations
+        })
     }
 
     async getAuthorFeed(request, response) {

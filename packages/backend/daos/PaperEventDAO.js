@@ -52,24 +52,24 @@ module.exports = class PaperEventsDAO {
         }
 
         const sql = `
-SELECT 
-    paper_events.id as event_id, 
-    paper_events.paper_id as "event_paperId",
-    paper_events.actor_id as "event_actorId",
-    paper_events.version as event_version,
-    paper_events.type as event_type,
-    paper_events.visibility::text[] as event_visibility, 
-    paper_events.event_date as "event_eventDate",
+            SELECT 
+                paper_events.id as event_id, 
+                paper_events.paper_id as "event_paperId",
+                paper_events.actor_id as "event_actorId",
+                paper_events.version as event_version,
+                paper_events.type as event_type,
+                paper_events.visibility::text[] as event_visibility, 
+                paper_events.event_date as "event_eventDate",
 
-    paper_events.assignee_id as "event_assigneeId", 
-    paper_events.review_id as "event_reviewId",
-    paper_events.review_comment_id as "event_reviewCommentId",
-    paper_events.submission_id as "event_submissionId", 
-    paper_events.new_status as "event_newStatus"
+                paper_events.assignee_id as "event_assigneeId", 
+                paper_events.review_id as "event_reviewId",
+                paper_events.review_comment_id as "event_reviewCommentId",
+                paper_events.submission_id as "event_submissionId", 
+                paper_events.new_status as "event_newStatus"
 
-FROM paper_events
-${where}
-ORDER BY ${orderSql}
+            FROM paper_events
+            ${where}
+            ORDER BY ${orderSql}
         `
 
         const results = await this.database.query(sql, params)
@@ -131,7 +131,8 @@ ORDER BY ${orderSql}
             throw new DAOError(`Only visibility may be updated.`)
         }
 
-        const results = await this.database.query(`UPDATE paper_events SET visibility = $1 WHERE id = $2`, [ event.visibility, event.id])
+        const results = await this.database.query(
+            `UPDATE paper_events SET visibility = $1 WHERE id = $2`, [ event.visibility, event.id])
 
         if ( results.rowCount <= 0 ) {
             throw DAOError(`Attempt to update event failed.`)

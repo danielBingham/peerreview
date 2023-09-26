@@ -81,7 +81,7 @@ const ReviewHeaderView = function(props) {
                     return event
                 }
             }
-            throw new Error(`Failed to find associated event for Review(${selectedReview.id}).`)
+            return null
         } else {
             return null
         }
@@ -145,9 +145,13 @@ const ReviewHeaderView = function(props) {
         }
        
         let selectedReviewView= null
-        if ( selectedReview ) {
+        if ( selectedReview && event ) {
             selectedReviewView = (
                 <ReviewSummaryView eventId={event.id} paper={paper} versionNumber={props.versionNumber} selectedReview={selectedReview} />
+            )
+        } else if ( selectedReview && ! event ) {
+            selectedReviewView = (
+                <Spinner local={true} />
             )
         }
 

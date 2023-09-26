@@ -420,18 +420,16 @@ module.exports = class PaperEventService {
     // Event Acessing 
     // ========================================================================
     
-    async getVisibleEventIds(userId, paperId) {
+    async getVisibleEventIds(userId) {
         const userRoles = ['public']
 
-        
-        // TODO handle post-publish open models
-
         let submissionMap = {}
+        let authorMap = {}
 
-        // ======== Collect Roles for the current user ========================
+        // ======== Collect Journal Roles for the current user ========================
 
         if ( this.core.features.hasFeature('journal-permission-models-194') ) {
-            const journalResults = await this.core.database.query(`
+            const sql = `
                 SELECT 
                         journals.id as "journalId", 
                         journal_submissions.id as "submissionId", 
@@ -447,15 +445,17 @@ module.exports = class PaperEventService {
                         LEFT OUTER JOIN journal_submission_reviewers 
                             ON journal_submission_reviewers.submission_id = journal_submissions.id
                                 AND journal_submission_reviewers.user_id = journal_members.user_id
-                    WHERE journal_submissions.paper_id = $2 
-                        AND (
-                            journal_members.user_id = $1 
-                                OR  ( 
-                                    journal_submissions.status = 'published' 
-                                        AND (journals.model = 'public' OR journals.model = 'open-public')
-                                )
-                        )
-            `, [ userId, paperId ])
+                    WHERE (journal_submissions.status = 'published' AND (journals.model = 'public' OR journals.model = 'open-public'))
+                             ${ userId ? 'OR journal_members.user_id = $1' : '' }
+                        
+            `
+            const params = []
+            if ( userId ) {
+                params.push(userId)
+            }
+
+            console.log(sql)
+            const journalResults = await this.core.database.query(sql, params)
 
             if ( journalResults.rows.length > 0 ) {
                 submissionMap = journalResults.rows.reduce(function(map, row) {
@@ -477,26 +477,48 @@ module.exports = class PaperEventService {
             }
         }
 
-        // ========  Authors, Corresponding-Authors ===========================
-        
+        // ========  Collect Author Roles for the current user ===========================
+      
+        console.log(authorMap)
         if ( userId ) {
             const authorResults = await this.core.database.query(`
-                SELECT owner FROM paper_authors WHERE user_id = $1 AND paper_id = $2
-            `, [ userId, paperId ])
+                SELECT paper_id, owner FROM paper_authors WHERE user_id = $1
+            `, [ userId ])
 
             if ( authorResults.rows.length > 0 ) {
-                if ( authorResults.rows[0].owner ) {
-                    userRoles.push('corresponding-author')
-                } 
-                userRoles.push('authors')
+                authorMap = authorResults.rows.reduce(function(map, row) {
+                    if ( ! map[row.paper_id] ) {
+                        map[row.paper_id] = row.owner ? [ 'corresponding-author', 'authors' ] : [ 'authors' ]
+                    }
+                    return map
+                }, {})
             }
         }
+        console.log(authorMap)
             
-
+        // ======== start with public =========================================
+        
         let eventConditions = 'paper_events.visibility && $1'
         const params = [ userRoles ]
         let count = 2
-        
+
+        // ======== Paper Roles ===============================================
+        // ======== authors, corresponding-authors ============================
+       
+        for(const [paperId, paperRoles] of Object.entries(authorMap)) {
+            const roles = [ ...userRoles, ...paperRoles ]
+            eventConditions += ` OR (
+                paper_events.paper_id = $${count}
+                    AND paper_events.visibility && $${count+1}
+                )
+            `
+            
+            count += 2
+            params.push(paperId)
+            params.push(roles)
+        }
+
+        // ======== Submission Roles =========================================================
         // ======== managing-editors, editors, reviewers, assigned-editors, assigned-reviewers 
       
         const permissionsToRoleMap = {
@@ -534,6 +556,9 @@ module.exports = class PaperEventService {
                 FROM paper_events
             WHERE ${eventConditions}
         `
+
+        console.log(sql)
+        console.log(params)
         const results = await this.core.database.query(sql, params)
 
         const visibleEventIds = results.rows.map((r) => r.id)

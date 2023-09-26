@@ -78,6 +78,7 @@ module.exports = class ReviewController {
          *
          * 1. Paper(:paper_id) exists.
          * 2. Visibility is controlled on the PaperEvent.
+         * 2a. Except for the users reviews in progress.
          * 
          * **********************************************************/
 
@@ -101,6 +102,8 @@ module.exports = class ReviewController {
         `, [ visibleIds ])
 
         const reviewIds = eventResults.rows.map((r) => r.review_id)
+
+
        
         /********************************************************
          * Permission Checks Complete
@@ -111,10 +114,10 @@ module.exports = class ReviewController {
         let params = []
         
         if ( userId ) {
-            where = `WHERE reviews.id = ANY($1::bigint[]) AND (reviews.status != 'in-progress' OR reviews.user_id = $2)`
+            where = `WHERE reviews.id = ANY($1::bigint[]) OR reviews.user_id = $2`
             params = [ reviewIds, userId ]
         } else {
-            where = `WHERE reviews.id = ANY($1::bigint[]) AND reviews.status != 'in-progress'`
+            where = `WHERE reviews.id = ANY($1::bigint[])`
             params = [ reviewIds ]
         }
 
