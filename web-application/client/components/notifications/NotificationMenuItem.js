@@ -33,8 +33,6 @@ const NotificationMenu = function({ notificationId}) {
     const navigate = useNavigate()
 
     const notificationClicked = function(notification) {
-        console.log(`NotificationClicked: ${notification.id}`)
-        console.log(notification)
 
         if ( notification.isRead == false ) {
             const patchedNotification = { ...notification }
@@ -43,7 +41,6 @@ const NotificationMenu = function({ notificationId}) {
             setRequestId(dispatch(patchNotification(patchedNotification)))
         }
 
-        console.log(`Navigate: ${notification.path}`)
         navigate(notification.path)
     }
 

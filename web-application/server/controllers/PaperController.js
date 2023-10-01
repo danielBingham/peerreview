@@ -610,7 +610,7 @@ module.exports = class PaperController {
             paperId: entity.id,
             actorId: user.id,
             version: entity.versions[0].version,
-            type: 'version-uploaded'
+            type: 'paper:new-version'
         }
         await this.paperEventService.createEvent(request.session.user, event)
 
@@ -778,7 +778,7 @@ module.exports = class PaperController {
                 paperId: entity.id,
                 actorId: user.id,
                 version: entity.versions[0].version,
-                type: 'preprint-posted'
+                type: 'paper:preprint-posted'
             }
             await this.paperEventService.createEvent(request.session.user, event)
 
@@ -963,7 +963,7 @@ module.exports = class PaperController {
             paperId: entity.id,
             actorId: user.id,
             version: entity.versions[0].version,
-            type: 'version-uploaded'
+            type: 'paper:new-version'
         }
         await this.paperEventService.createEvent(request.session.user, event)
 

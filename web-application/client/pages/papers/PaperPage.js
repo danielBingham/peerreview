@@ -79,7 +79,6 @@ const PaperPage = function({}) {
     }
 
     const selectedTab = ( pageTab ? pageTab : (paper.isDraft ? 'file' :  'paper'))
-    console.log(`selectedTab: ${selectedTab}`)
     
     let content = ( <Spinner local={true} /> )
     if ( request && request.state == 'fulfilled') {

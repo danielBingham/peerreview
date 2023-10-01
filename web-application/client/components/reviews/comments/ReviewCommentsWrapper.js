@@ -134,6 +134,9 @@ const ReviewCommentsWrapper = function(props) {
 
         const reviewId = searchParams.get('review')
         if ( reviewId ) {
+            if ( reviewId != selectedReviewId ) {
+                reflow()
+            }
             setSelectedReviewId(reviewId)
         }
     }, [ searchParams ])
@@ -155,11 +158,8 @@ const ReviewCommentsWrapper = function(props) {
             if ( ! event.target.matches('.comment-thread-pin') &&  ! event.target.matches('.comment-thread') 
                 && ! event.target.matches('.comment-thread-pin :scope') && ! event.target.matches('.comment-thread :scope') ) 
             {
-                console.log(`Delete Thread`)
-                console.log(document.location)
                 searchParams.delete('thread')
                 setSearchParams(searchParams)
-                console.log(document.location)
             } 
         }
         document.body.addEventListener('click', onBodyClick)

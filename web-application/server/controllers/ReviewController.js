@@ -96,7 +96,7 @@ module.exports = class ReviewController {
         const showPreprint = paperResults.rows[0].showPreprint
 
         // 2. Visibility is controlled on the event.
-        const visibleIds = await this.paperEventService.getVisibleEventIds(userId, paperId)
+        const visibleIds = await this.paperEventService.getVisibleEventIds(userId)
         const eventResults = await this.database.query(`
             SELECT review_id FROM paper_events WHERE id = ANY($1::bigint[])
         `, [ visibleIds ])
@@ -114,11 +114,11 @@ module.exports = class ReviewController {
         let params = []
         
         if ( userId ) {
-            where = `WHERE reviews.id = ANY($1::bigint[]) OR reviews.user_id = $2`
-            params = [ reviewIds, userId ]
+            where = `WHERE reviews.paper_id = $1 AND (reviews.id = ANY($2::bigint[]) OR reviews.user_id = $3)`
+            params = [ paperId, reviewIds, userId ]
         } else {
-            where = `WHERE reviews.id = ANY($1::bigint[])`
-            params = [ reviewIds ]
+            where = `WHERE reviews.paper_id = $1 AND reviews.id = ANY($2::bigint[])`
+            params = [ paperId, reviewIds ]
         }
 
         const results = await this.reviewDAO.selectReviews(where, params)
@@ -264,7 +264,7 @@ module.exports = class ReviewController {
                 paperId: entity.paperId,
                 actorId: userId,
                 version: entity.version,
-                type: 'review-posted',
+                type: 'new-review',
                 reviewId: entity.id
             }
             await this.paperEventService.createEvent(request.session.user, event)
@@ -655,7 +655,7 @@ module.exports = class ReviewController {
                 paperId: entity.paperId,
                 actorId: entity.userId,
                 version: entity.version,
-                type: 'review-posted',
+                type: 'new-review',
                 reviewId: entity.id
             }
             await this.paperEventService.createEvent(request.session.user, event)

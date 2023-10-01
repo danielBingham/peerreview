@@ -132,10 +132,15 @@ module.exports = class PaperEventsDAO {
         }
 
         const results = await this.database.query(
-            `UPDATE paper_events SET visibility = $1 WHERE id = $2`, [ event.visibility, event.id])
+            `UPDATE paper_events SET visibility = $1 WHERE id = $2`,
+            [ event.visibility, event.id]
+        )
+
+        console.log(event)
+        console.log(results)
 
         if ( results.rowCount <= 0 ) {
-            throw DAOError(`Attempt to update event failed.`)
+            throw new DAOError('update-failure', `Attempt to update event failed.`)
         }
     }
 }

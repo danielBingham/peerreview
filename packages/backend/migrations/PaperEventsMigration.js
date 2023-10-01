@@ -36,28 +36,29 @@ module.exports = class PaperEventsMigration {
 
             await this.database.query(`
 CREATE TYPE paper_event_types AS ENUM(
-    'version-uploaded', 
-    'preprint-posted',
-    'review-posted', 
-    'review-comment-reply-posted',
-    'comment-posted',
-    'submitted-to-journal', 
-    'submission-status-changed',
-    'reviewer-assigned',
-    'reviewer-unassigned',
-    'editor-assigned',
-    'editor-unassigned'
+    'paper:new-version', 
+    'paper:preprint-posted',
+    'paper:new-review', 
+    'paper:comment-posted',
+    'review:comment-reply-posted',
+    'submission:new', 
+    'submission:new-review',
+    'submission:status-changed',
+    'submission:reviewer-assigned',
+    'submission:reviewer-unassigned',
+    'submission:editor-assigned',
+    'submission:editor-unassigned'
 )
             `, [])
 
             await this.database.query(`
 CREATE TYPE paper_event_visibility AS ENUM(
-    'managing-editor',
+    'managing-editors',
     'editors',
     'assigned-editors',
     'reviewers',
     'assigned-reviewers',
-    'corresponding-author',
+    'corresponding-authors',
     'authors',
     'public'
 )
@@ -70,7 +71,7 @@ CREATE TABLE paper_events (
     actor_id bigint REFERENCES users(id) NOT NULL,
     version int NOT NULL,
     type paper_event_types NOT NULL,
-    visibility paper_event_visibility[] NOT NULL DEFAULT '{"managing-editor"}',
+    visibility paper_event_visibility[] NOT NULL DEFAULT '{"managing-editors"}',
     event_date timestamptz,
 
     assignee_id bigint REFERENCES users(id) DEFAULT NULL,
@@ -82,7 +83,7 @@ CREATE TABLE paper_events (
             `, [])
 
             await this.database.query(`
-ALTER TABLE paper_versions ADD COLUMN review_count int 
+ALTER TABLE paper_versions ADD COLUMN IF NOT EXISTS review_count int 
             `, [])
 
             await this.database.query(`
@@ -95,6 +96,8 @@ ALTER TABLE paper_versions ALTER COLUMN review_count SET DEFAULT 0
                 await this.database.query(`DROP TABLE IF EXISTS paper_events`, [])
                 await this.database.query(`DROP TYPE IF EXISTS paper_event_types`, [])
                 await this.database.query(`DROP TYPE IF EXISTS paper_event_visibility`, [])
+
+                await this.database.query(`ALTER TABLE paper_versions DROP COLUMN review_count`, [])
 
             } catch (rollbackError) {
                 console.error(error)
@@ -117,6 +120,7 @@ ALTER TABLE paper_versions ALTER COLUMN review_count SET DEFAULT 0
             await this.database.query(`DROP TYPE IF EXISTS paper_event_types`, [])
             await this.database.query(`DROP TYPE IF EXISTS paper_event_visibility`, [])
 
+            await this.database.query(`ALTER TABLE paper_versions DROP COLUMN review_count`, [])
         } catch (error) {
             throw new MigrationError('no-rollback', error.message)
         }
@@ -142,13 +146,13 @@ UPDATE paper_authors SET submitter = true WHERE author_order = 1
 
             await this.database.query(`
 INSERT INTO paper_events (paper_id, actor_id, version, type, event_date, review_id)
-    SELECT paper_id, user_id as actor_id, version, 'review-posted' as type, updated_date as event_date, id as review_id FROM reviews
+    SELECT paper_id, user_id as actor_id, version, 'paper:new-review' as type, updated_date as event_date, id as review_id FROM reviews
             `, [])
 
             await this.database.query(`
 INSERT INTO paper_events (paper_id, actor_id, version, type, event_date)
     SELECT 
-        paper_versions.paper_id, paper_authors.user_id, paper_versions.version, 'version-uploaded', paper_versions.created_date
+        paper_versions.paper_id, paper_authors.user_id, paper_versions.version, 'paper:new-version', paper_versions.created_date
     FROM paper_versions
         LEFT OUTER JOIN paper_authors ON paper_versions.paper_id = paper_authors.paper_id
     WHERE paper_authors.author_order = 1
@@ -157,7 +161,7 @@ INSERT INTO paper_events (paper_id, actor_id, version, type, event_date)
             await this.database.query(`
 INSERT INTO paper_events (paper_id, actor_id, version, type, event_date)
     SELECT
-        papers.id, paper_authors.user_id, 1, 'preprint-posted', papers.created_date
+        papers.id, paper_authors.user_id, 1, 'paper:preprint-posted', papers.created_date
     FROM papers
         LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
     WHERE paper_authors.author_order = 1 AND papers.show_preprint = true

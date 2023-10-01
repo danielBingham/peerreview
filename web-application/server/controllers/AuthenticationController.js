@@ -391,7 +391,6 @@ module.exports = class AuthenticationController {
         // The user has registered multiple accounts with different emails
         // - We get multiple users, merge them.
         if ( userResults.rows.length > 1 ) {
-            console.log('Multiple users.  Merging them.')
             throw new ControllerError(501, 'multiple-user-merging-unimplemented', `Found multiple user accounts, but we haven't implemented merging yet!`)
         }
     

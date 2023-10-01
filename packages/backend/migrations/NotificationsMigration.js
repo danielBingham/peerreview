@@ -134,7 +134,7 @@ CREATE INDEX user_notifications__user_id ON user_notifications (user_id)
             try {
                 await this.database.query(`DROP INDEX IF EXISTS user_notifications__user_id`, [])
                 await this.database.query(`DROP TABLE IF EXISTS user_notifications`, [])
-                await this.database.query(`DROP TYPE IF EXISTS user_notifications_type`, [])
+                await this.database.query(`DROP TYPE IF EXISTS user_notification_type`, [])
             } catch (rollbackError) {
                 console.error(error)
                 console.error(rollbackError)
@@ -153,7 +153,7 @@ CREATE INDEX user_notifications__user_id ON user_notifications (user_id)
         try {
             await this.database.query(`DROP INDEX IF EXISTS user_notifications__user_id`, [])
             await this.database.query(`DROP TABLE IF EXISTS user_notifications`, [])
-            await this.database.query(`DROP TYPE IF EXISTS user_notifications_type`, [])
+            await this.database.query(`DROP TYPE IF EXISTS user_notification_type`, [])
         } catch (error) {
             console.error(error)
             throw new MigrationError('no-rollback', error.message)

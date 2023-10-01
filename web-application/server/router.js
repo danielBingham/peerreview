@@ -493,7 +493,7 @@ module.exports = function(core) {
         })
     })
 
-    router.patch('/paper/:paperId/event/:id', function(request, response, next) {
+    router.patch('/paper/:paperId/event/:eventId', function(request, response, next) {
         paperEventController.patchEvent(request, response).catch(function(error) {
             next(error)
         })

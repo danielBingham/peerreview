@@ -475,12 +475,12 @@ CREATE TYPE paper_event_types AS ENUM(
 );
 
 CREATE TYPE paper_event_visibility AS ENUM(
-    'managing-editor',
+    'managing-editors',
     'editors',
     'assigned-editors',
     'reviewers',
     'assigned-reviewers',
-    'corresponding-author',
+    'corresponding-authors',
     'authors',
     'public'
 );

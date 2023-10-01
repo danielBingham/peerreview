@@ -64,255 +64,281 @@ module.exports = class PaperEventService {
 
         this.visibilityByModelAndEvent = {
             'public': {
-                'version-uploaded': [ 'public' ],
-                'preprint-posted': [ 'public' ],
-                'review-posted': [ 'public' ], 
-                'review-comment-reply-posted': [ 'public' ],
-                'comment-posted': [ 'public' ],
-                'submitted-to-journal': [ 'public' ], 
-                'submission-status-changed': [ 'public' ],
-                'reviewer-assigned': [ 'public' ],
-                'reviewer-unassigned': [ 'public' ],
-                'editor-assigned': [ 'public' ],
-                'editor-unassigned': [ 'public' ]
+                'paper:new-version': [ 'public' ],
+                'paper:preprint-posted': [ 'public' ],
+                'paper:new-review': [ 'public' ], 
+                'paper:comment-posted': [ 'public' ],
+                'review:comment-reply-posted': [ 'public' ],
+                'submission:new': [ 'public' ], 
+                'submission:new-review': [ 'public' ],
+                'submission:status-changed': [ 'public' ],
+                'submission:submission:reviewer-assigned': [ 'public' ],
+                'submission:submission:reviewer-unassigned': [ 'public' ],
+                'submission:submission:editor-assigned': [ 'public' ],
+                'submission:submission:editor-unassigned': [ 'public' ]
             }, 
             'open-public': {
-                'version-uploaded': [ 
-                    'managing-editor',
+                'paper:new-version': [ 
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'preprint-posted': [ 
-                    'managing-editor',
+                'paper:preprint-posted': [ 
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'review-posted': [
-                    'managing-editor',
+                'paper:new-review': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ], 
-                'comment-posted': [
-                    'managing-editor',
+                'paper:comment-posted': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'submitted-to-journal': [
-                    'managing-editor',
+                'submission:new': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ], 
-                'submission-status-changed': [
-                    'managing-editor',
+                'submission:new-review': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
+                    'authors'
+                ], 
+                'submission:status-changed': [
+                    'managing-editors',
+                    'editors',
+                    'assigned-editors',
+                    'reviewers',
+                    'assigned-reviewers',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'reviewer-assigned': [
-                    'managing-editor',
+                'submission:reviewer-assigned': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'reviewer-unassigned': [
-                    'managing-editor',
+                'submission:reviewer-unassigned': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'editor-assigned': [
-                    'managing-editor',
+                'submission:editor-assigned': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],                
-                'editor-unassigned': [
-                    'managing-editor',
+                'submission:editor-unassigned': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ]
             }, 
             'open-closed': {
-                'version-uploaded': [ 
-                    'managing-editor',
+                'paper:new-version': [ 
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'preprint-posted': [ 
-                    'managing-editor',
+                'paper:preprint-posted': [ 
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'review-posted': [
-                    'managing-editor',
+                'paper:new-review': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ], 
-                'comment-posted': [
-                    'managing-editor',
+                'paper:comment-posted': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'submitted-to-journal': [
-                    'managing-editor',
+                'submission:new': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ], 
-                'submission-status-changed': [
-                    'managing-editor',
+                'submission:new-review': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
+                    'authors'
+                ], 
+                'submission:status-changed': [
+                    'managing-editors',
+                    'editors',
+                    'assigned-editors',
+                    'reviewers',
+                    'assigned-reviewers',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'reviewer-assigned': [
-                    'managing-editor',
+                'submission:reviewer-assigned': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'reviewer-unassigned': [
-                    'managing-editor',
+                'submission:reviewer-unassigned': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'editor-assigned': [
-                    'managing-editor',
+                'submission:editor-assigned': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],                
-                'editor-unassigned': [
-                    'managing-editor',
+                'submission:editor-unassigned': [
+                    'managing-editors',
                     'editors',
                     'assigned-editors',
                     'reviewers',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ]
             },
             'closed': {
-                'version-uploaded': [ 
-                    'managing-editor',
+                'paper:new-version': [ 
+                    'managing-editors',
                     'assigned-editors',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'preprint-posted': [ 
-                    'managing-editor',
+                'paper:preprint-posted': [ 
+                    'managing-editors',
                     'assigned-editors',
                     'assigned-reviewers',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ],
-                'review-posted': [
-                    'managing-editor',
-                    'assigned-editors',
-                ], 
-                'comment-posted': [
-                    'managing-editor',
+                'paper:new-review': [
+                    'managing-editors',
                     'assigned-editors',
                     'assigned-reviewers',
-                    'corresponding-author',
-                    'authors'
-                ],
-                'submitted-to-journal': [
-                    'managing-editor',
-                    'corresponding-author',
+                    'corresponding-authors',
                     'authors'
                 ], 
-                'submission-status-changed': [
-                    'managing-editor',
+                'paper:comment-posted': [
+                    'managing-editors',
+                    'assigned-editors',
+                    'assigned-reviewers',
+                    'corresponding-authors',
+                    'authors'
+                ],
+                'submission:new': [
+                    'managing-editors',
+                    'corresponding-authors',
+                    'authors'
+                ], 
+                'submission:new-review': [
+                    'managing-editors',
+                    'assigned-editors',
+                ], 
+                'submission:status-changed': [
+                    'managing-editors',
                     'assigned-editors'
                 ],
-                'reviewer-assigned': [
-                    'managing-editor',
+                'submission:reviewer-assigned': [
+                    'managing-editors',
                     'assigned-editors',
                     'assigned-reviewers'
                     
                 ],
-                'reviewer-unassigned': [
-                    'managing-editor',
+                'submission:reviewer-unassigned': [
+                    'managing-editors',
                     'assigned-editors',
                     'assigned-reviewers'
 
                 ],
-                'editor-assigned': [
-                    'managing-editor',
+                'submission:editor-assigned': [
+                    'managing-editors',
                     'assigned-editors'
                 ],                
-                'editor-unassigned': [
-                    'managing-editor',
+                'submission:editor-unassigned': [
+                    'managing-editors',
                     'assigned-editors'
                 ]
             }
@@ -404,6 +430,12 @@ module.exports = class PaperEventService {
             event.submissionId = activeSubmissionInfo.id
         }
 
+        if ( event.type == 'new-review' && activeSubmissionInfo !== null) {
+            event.type = 'submission:new-review'
+        } else if ( event.type == 'new-review' && activeSubmissionInfo === null ) {
+            event.type = 'paper:new-review'
+        }
+
         const paperInfo = await this.getCurrentPaperInfo(event.paperId)
         if ( ! event.version ) {
             event.version = paperInfo.version
@@ -454,7 +486,6 @@ module.exports = class PaperEventService {
                 params.push(userId)
             }
 
-            console.log(sql)
             const journalResults = await this.core.database.query(sql, params)
 
             if ( journalResults.rows.length > 0 ) {
@@ -479,7 +510,6 @@ module.exports = class PaperEventService {
 
         // ========  Collect Author Roles for the current user ===========================
       
-        console.log(authorMap)
         if ( userId ) {
             const authorResults = await this.core.database.query(`
                 SELECT paper_id, owner FROM paper_authors WHERE user_id = $1
@@ -488,19 +518,18 @@ module.exports = class PaperEventService {
             if ( authorResults.rows.length > 0 ) {
                 authorMap = authorResults.rows.reduce(function(map, row) {
                     if ( ! map[row.paper_id] ) {
-                        map[row.paper_id] = row.owner ? [ 'corresponding-author', 'authors' ] : [ 'authors' ]
+                        map[row.paper_id] = row.owner ? [ 'corresponding-authors', 'authors' ] : [ 'authors' ]
                     }
                     return map
                 }, {})
             }
         }
-        console.log(authorMap)
             
         // ======== start with public =========================================
         
-        let eventConditions = 'paper_events.visibility && $1'
-        const params = [ userRoles ]
-        let count = 2
+        let eventConditions = 'paper_events.actor_id = $1 OR paper_events.visibility && $2'
+        const params = [ userId, userRoles ]
+        let count = 3
 
         // ======== Paper Roles ===============================================
         // ======== authors, corresponding-authors ============================
@@ -522,7 +551,7 @@ module.exports = class PaperEventService {
         // ======== managing-editors, editors, reviewers, assigned-editors, assigned-reviewers 
       
         const permissionsToRoleMap = {
-            'owner': 'managing-editor',
+            'owner': 'managing-editors',
             'editor': 'editors',
             'reviewer': 'reviewers'
         }
@@ -557,8 +586,6 @@ module.exports = class PaperEventService {
             WHERE ${eventConditions}
         `
 
-        console.log(sql)
-        console.log(params)
         const results = await this.core.database.query(sql, params)
 
         const visibleEventIds = results.rows.map((r) => r.id)
@@ -569,7 +596,82 @@ module.exports = class PaperEventService {
 
     }
 
-    async canEditEvent(eventId, userId) {
+    /**
+     *
+    'paper:new-version', 
+    'paper:preprint-posted',
+    'paper:new-review', 
+    'paper:comment-posted',
+    'review:comment-reply-posted',
+    'submission:new', 
+    'submission:new-review',
+    'submission:status-changed',
+    'submission:reviewer-assigned',
+    'submission:reviewer-unassigned',
+    'submission:editor-assigned',
+    'submission:editor-unassigned'
+     */
+    async canEditEvent(user, eventId) {
+        const eventResults = await this.paperEventDAO.selectEvents('WHERE paper_events.id = $1', [ eventId ])
+        if ( ! eventResults.dictionary[eventId] ) {
+            return false
+        }
 
+        const event = eventResults.dictionary[eventId]
+
+        // Actors can edit their own events.
+        if ( event.actorId == user.id ) {
+            return true
+        }
+
+        // If they are a corresponding author for the paper.
+        const paperEvents = [ 
+            'paper:new-version', 
+            'paper:preprint-posted'
+        ]
+        if ( paperEvents.includes(event.type) ) {
+            const authorResults = await this.database.query(`
+                SELECT owner FROM paper_authors WHERE paper_authors.paper_id = $1 AND paper_authors.user_id = $2
+            `, [ event.paperId, user.id])
+
+            if ( authorResults.rows.length > 0 && authorResults.rows[0].owner) {
+                return true
+            } 
+        }
+
+        // If they are a managing editor or assigned editor for this
+        // submission.
+        const submissionEvents = [
+            'submission:new', 
+            'submission:new-review',
+            'submission:status-changed',
+            'submission:reviewer-assigned',
+            'submission:reviewer-unassigned',
+            'submission:editor-assigned',
+            'submission:editor-unassigned'
+        ]
+        if ( submissionEvents.includes(event.type) ) {
+            const submissionResults = await this.database.query(`
+                SELECT journal_submissions.journal_id, journal_submission_editors.user_id
+                    FROM journal_submissions 
+                        LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
+                    WHERE journal_submissions.id = $1
+            `, [ event.submissionId ])
+            if ( submissionResults.rows.length > 0 ) {
+                const membership = user.memberships.find((m) => m.journalId == submissionResults.rows[0].journal_id)
+                // Managing editor
+                if ( membership.permissions == 'owner' ) {
+                    return true
+                // assigned editor
+                } else if ( membership.permissions == 'editor' ) {
+                    const userAssigned = submissionResults.rows.find((r) => r.user_id == user.id)
+                    if ( userAssigned ) {
+                        return true
+                    }
+                }
+            }
+        }
+
+        return false 
     }
 }

@@ -28,10 +28,10 @@ const PaperSubmissionAssignmentEvent = function({ eventId }) {
     // ================= Render ===============================================
    
     const eventTypeMap = {
-        'reviewer-assigned': 'assigned reviewer',
-        'reviewer-unassigned': 'unassigned reviewer',
-        'editor-assigned': 'assigned editor',
-        'editor-unassigned': 'unassigned editor'
+        'submission:reviewer-assigned': 'assigned reviewer',
+        'submission:reviewer-unassigned': 'unassigned reviewer',
+        'submission:editor-assigned': 'assigned editor',
+        'submission:editor-unassigned': 'unassigned editor'
     }
 
     return (

@@ -196,8 +196,7 @@ module.exports = class PaperEventController {
                 `Only authenticated users may update event visibility.`)
         }
 
-       
-        const canEdit = await this.paperEventService.canEditEvent(eventId, user.id)
+        const canEdit = await this.paperEventService.canEditEvent(user, eventId)
         if ( ! canEdit ) {
             throw new ControllerError(403, 'not-authorized',
                 `User(${user.id}) attempted to edit visibility on an event they're not authorized to edit.`)
@@ -304,9 +303,9 @@ module.exports = class PaperEventController {
             `
             (paper_events.submission_id = ANY($1::bigint[]) 
                 OR paper_events.submission_id = ANY($2::bigint[]))
-            AND (paper_events.type = 'version-uploaded'
-                OR paper_events.type = 'review-posted'
-                OR paper_events.type = 'submitted-to-journal')
+            AND (paper_events.type = 'paper:new-version'
+                OR paper_events.type = 'submission:new-review'
+                OR paper_events.type = 'submission:new')
             `,
             [ managingEditorPaperIds, assignedEditorPaperIds ]
         )
