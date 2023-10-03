@@ -630,7 +630,7 @@ module.exports = class PaperEventService {
             'paper:preprint-posted'
         ]
         if ( paperEvents.includes(event.type) ) {
-            const authorResults = await this.database.query(`
+            const authorResults = await this.core.database.query(`
                 SELECT owner FROM paper_authors WHERE paper_authors.paper_id = $1 AND paper_authors.user_id = $2
             `, [ event.paperId, user.id])
 
@@ -651,7 +651,7 @@ module.exports = class PaperEventService {
             'submission:editor-unassigned'
         ]
         if ( submissionEvents.includes(event.type) ) {
-            const submissionResults = await this.database.query(`
+            const submissionResults = await this.core.database.query(`
                 SELECT journal_submissions.journal_id, journal_submission_editors.user_id
                     FROM journal_submissions 
                         LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id

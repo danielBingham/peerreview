@@ -86,7 +86,7 @@ const PaperPDFPageView = function(props) {
                 results.push(...state.reviews.dictionary[id].threads.filter((t) => t.page == props.pageNumber))
             }
             return results
-        } else if ( selectedReviewId ) {
+        } else if ( selectedReviewId && selectedReviewId != 'none' ) {
             const results = []
             if ( state.reviews.dictionary[selectedReviewId].version == props.versionNumber ) {
                 results.push(...state.reviews.dictionary[selectedReviewId].threads.filter((t) => t.page == props.pageNumber))

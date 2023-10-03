@@ -10,11 +10,11 @@ import './ReviewCommentsWrapper.css'
 
 const ReviewCommentsWrapper = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
+    const selectedReviewId = searchParams.get('review')
 
     // ======= Render State =========================================
     
     const [ threadReflowRequests, setThreadReflowRequests ] = useState(0)
-    const [ selectedReviewId, setSelectedReviewId ] = useState(null)
 
     // ======= Redux State ==========================================
     
@@ -27,7 +27,7 @@ const ReviewCommentsWrapper = function(props) {
     })
 
     const threads = useSelector(function(state) {
-        if ( state.reviews.queries[props.paperId]?.list  && ! selectedReviewId) {
+        if ( state.reviews.queries[props.paperId]?.list && ! selectedReviewId) {
             const reviewIds = state.reviews.queries[props.paperId].list.filter((id) => state.reviews.dictionary[id].version == props.versionNumber)
             const results = []
             for (const id of reviewIds) {
@@ -39,7 +39,7 @@ const ReviewCommentsWrapper = function(props) {
                 return (a.page+a.pinY) - (b.page+b.pinY)
             })
             return results
-        } else if ( selectedReviewId ) {
+        } else if ( selectedReviewId && selectedReviewId != 'none') {
             const results = []
             if ( state.reviews.dictionary[selectedReviewId].version == props.versionNumber ) {
                 results.push(...state.reviews.dictionary[selectedReviewId].threads)
@@ -122,7 +122,7 @@ const ReviewCommentsWrapper = function(props) {
         // spreading from the centered thread assumes the threads have already
         // been spread from the top.
         reflow()
-    }, [ props.loadedVersion, props.renderedPages, props.renderedVersion, selectedReviewId ])
+    }, [ props.loadedVersion, props.renderedPages, props.renderedVersion])
 
     // An effect to trigger whenever searchParams changes - since that likely
     // means the selected thread has also changed.  Triggers a reflow.
@@ -137,7 +137,6 @@ const ReviewCommentsWrapper = function(props) {
             if ( reviewId != selectedReviewId ) {
                 reflow()
             }
-            setSelectedReviewId(reviewId)
         }
     }, [ searchParams ])
 

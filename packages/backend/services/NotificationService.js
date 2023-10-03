@@ -116,7 +116,7 @@ module.exports = class NotificationService {
                     `)
                 },
                 text: Handlebars.compile(`{{reviewer.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
-                path: Handlebars.compile(`{{host}}paper/{{paper.id}}/timeline#review-{{review.id}}`)
+                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#review-{{review.id}}`)
             },
 
             /**
