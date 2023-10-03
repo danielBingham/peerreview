@@ -363,22 +363,18 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journalSubmissions[1] })
                 // Relations
                 .mockReturnValueOnce({ rowCount: database.journals[1], rows: database.journals[1] })
-                // Event
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // Notifications
-                // Author
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
-                // Author
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
-                // Journal Owner
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
+
+            // Mock Event service and Notification Service
+            // We'll give these services their own unit tests.  
+            journalSubmissionController.paperEventService = {
+                createEvent: jest.fn()
+            }
+            journalSubmissionController.notificationService = {
+                createNotification: jest.fn()
+            }
 
             const request = {
                 session: {
@@ -406,6 +402,9 @@ describe('JournalSubmissionController', function() {
                     }
                 }
             })
+
+            // TODO Confirm we called `createEvent` and `createNotification` an
+            // appropriate number of times with appropriate data.
         })
     })
 
@@ -754,13 +753,19 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [] }) 
                 // journalSubmissionDAO.selectJournalSubmissions 
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] }) 
-                // Create event
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 // Relations
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] })
 
             const journalSubmissionController = new JournalSubmissionController(core)
+
+            // Mock Event service and Notification Service
+            // We'll give these services their own unit tests.  
+            journalSubmissionController.paperEventService = {
+                createEvent: jest.fn()
+            }
+            journalSubmissionController.notificationService = {
+                createNotification: jest.fn()
+            }
 
             const request = {
                 session: {
@@ -789,6 +794,8 @@ describe('JournalSubmissionController', function() {
                     }
                 }
             })
+
+            // TODO Confirm we called our event and notification mocks.
         })
     })
 
@@ -1146,16 +1153,19 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
                 // Relations
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] })
-                // Events
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // notifications
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
+            
+            // Mock Event service and Notification Service
+            // We'll give these services their own unit tests.  
+            journalSubmissionController.paperEventService = {
+                createEvent: jest.fn()
+            }
+            journalSubmissionController.notificationService = {
+                createNotification: jest.fn()
+            }
 
             const request = {
                 session: {
@@ -1176,6 +1186,8 @@ describe('JournalSubmissionController', function() {
             await journalSubmissionController.postReviewers(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
+
+            // TODO confirm event and notification mocks we called.
         })
 
         it('should return 200 when owners assign reviewers', async function() {
@@ -1190,16 +1202,19 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
                 // Relations
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] })
-                // Events
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // notifications
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
+            
+            // Mock Event service and Notification Service
+            // We'll give these services their own unit tests.  
+            journalSubmissionController.paperEventService = {
+                createEvent: jest.fn()
+            }
+            journalSubmissionController.notificationService = {
+                createNotification: jest.fn()
+            }
 
             const request = {
                 session: {
@@ -1220,6 +1235,7 @@ describe('JournalSubmissionController', function() {
             await journalSubmissionController.postReviewers(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
+            // TODO confirm event and notification mocks were called.
         })
 
         it('should return 200 when editors assign reviewers', async function() {
@@ -1234,16 +1250,18 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
                 // Relations
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] })
-                // Events
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // notifications
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
-
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] })
 
             const journalSubmissionController = new JournalSubmissionController(core)
+            
+            // Mock Event service and Notification Service
+            // We'll give these services their own unit tests.  
+            journalSubmissionController.paperEventService = {
+                createEvent: jest.fn()
+            }
+            journalSubmissionController.notificationService = {
+                createNotification: jest.fn()
+            }
 
             const request = {
                 session: {
@@ -1264,6 +1282,7 @@ describe('JournalSubmissionController', function() {
             await journalSubmissionController.postReviewers(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
+            // TODO confirm event and notification mocks were called.
         })
     })
 
@@ -1444,16 +1463,19 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
                 // Relations
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] })
-                // Events
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // notifications
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
+
+            // Mock Event service and Notification Service
+            // We'll give these services their own unit tests.  
+            journalSubmissionController.paperEventService = {
+                createEvent: jest.fn()
+            }
+            journalSubmissionController.notificationService = {
+                createNotification: jest.fn()
+            }
 
             const request = {
                 session: {
@@ -1472,6 +1494,7 @@ describe('JournalSubmissionController', function() {
             await journalSubmissionController.deleteReviewer(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
+            // TODO confirm mocks were called.
         })
 
         it('should return 200 when owners unassign reviewers', async function() {
@@ -1486,16 +1509,18 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
                 // Relations
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] })
-                // Events
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // notifications
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
-
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] })
 
             const journalSubmissionController = new JournalSubmissionController(core)
+
+            // Mock Event service and Notification Service
+            // We'll give these services their own unit tests.  
+            journalSubmissionController.paperEventService = {
+                createEvent: jest.fn()
+            }
+            journalSubmissionController.notificationService = {
+                createNotification: jest.fn()
+            }
 
             const request = {
                 session: {
@@ -1514,6 +1539,7 @@ describe('JournalSubmissionController', function() {
             await journalSubmissionController.deleteReviewer(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
+            // TODO confirm mocks were called.
         })
 
         it('should return 200 when editors unassign reviewers', async function() {
@@ -1528,16 +1554,19 @@ describe('JournalSubmissionController', function() {
                 .mockReturnValueOnce({ rowCount: database.journalSubmissions[1].length, rows: database.journalSubmissions[1] })
                 // Relations
                 .mockReturnValueOnce({ rowCount: database.journals[1].length, rows: database.journals[1] })
-                // Events
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { version: 1 } ] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // notifications
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] }) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: 'test' }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ title: 'test' }] })
 
 
             const journalSubmissionController = new JournalSubmissionController(core)
+            
+            // Mock Event service and Notification Service
+            // We'll give these services their own unit tests.  
+            journalSubmissionController.paperEventService = {
+                createEvent: jest.fn()
+            }
+            journalSubmissionController.notificationService = {
+                createNotification: jest.fn()
+            }
 
             const request = {
                 session: {
@@ -1556,6 +1585,7 @@ describe('JournalSubmissionController', function() {
             await journalSubmissionController.deleteReviewer(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
+            // TODO confirm mocks were called.
         })
     })
 
