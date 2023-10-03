@@ -438,7 +438,7 @@ module.exports = class JournalSubmissionController {
         const event = {
             paperId: paperId,
             actorId: user.id,
-            type: 'submitted-to-journal',
+            type: 'submission:new',
             submissionId: id
         }
         await this.paperEventService.createEvent(request.session.user, event)
@@ -698,7 +698,7 @@ module.exports = class JournalSubmissionController {
             const event = {
                 paperId: entity.paperId,
                 actorId: user.id,
-                type: 'submission-status-changed',
+                type: 'submission:status-changed',
                 submissionId: entity.id,
                 newStatus: submissionPatch.status
             }
@@ -897,7 +897,7 @@ module.exports = class JournalSubmissionController {
         const event = {
             paperId: entity.paperId,
             actorId: user.id,
-            type: 'reviewer-assigned',
+            type: 'submission:reviewer-assigned',
             submissionId: entity.id,
             assigneeId: reviewer.userId
         }
@@ -1041,8 +1041,7 @@ module.exports = class JournalSubmissionController {
         const event = {
             paperId: entity.paperId,
             actorId: user.id,
-            type: 'reviewer-unassigned',
-            visibility: [ 'public' ],
+            type: 'submission:reviewer-unassigned',
             submissionId: entity.id,
             assigneeId: userId
         }
@@ -1197,7 +1196,7 @@ module.exports = class JournalSubmissionController {
         const event = {
             paperId: entity.paperId,
             actorId: user.id,
-            type: 'editor-assigned',
+            type: 'submission:editor-assigned',
             submissionId: entity.id,
             assigneeId: editor.userId
         }
@@ -1341,7 +1340,7 @@ module.exports = class JournalSubmissionController {
         const event = {
             paperId: entity.paperId,
             actorId: user.id,
-            type: 'editor-unassigned',
+            type: 'submission:editor-unassigned',
             submissionId: entity.id,
             assigneeId: userId
         }

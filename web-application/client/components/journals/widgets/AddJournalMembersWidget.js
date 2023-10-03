@@ -108,7 +108,7 @@ const AddJournalMembersWidget = function(props) {
         <div className="add-members-widget">
             <UserInput
                label={'Add Members'}
-                explanation={'Add members to your journal.  These could be additional managing editors, editors, or scholars you are adding to the reviewer pool. You can add additional members, update member permissions, or remove members at any time after creation.'}
+                explanation={'Add members to your journal.  These could be additional managing editors, editors, or scholars you are adding to a standing active reviewer pool. You can add additional members, update member permissions, or remove members at any time after creation.  [WIP: You can also build a database of non-member reviewers who you can invite to review on a case by case basis.]'}
                 onBlur={onBlur}
                 selectUser={selectMember}
             />

@@ -2,7 +2,7 @@
     position: relative;
     margin: 0 auto;
     width: 802px;
-    cursor: crosshair;
+    cursor: copy;
 }
 
 .paper-pdf-page .react-pdf__Page {

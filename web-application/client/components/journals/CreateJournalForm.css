@@ -55,5 +55,31 @@
     height: 24px;
     color: red;
 }
-
+.create-journal-form .model-wrapper {
+    text-align: left;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: auto;
+    padding: 10px;
+}
+.create-journal-form .model-wrapper .model-option {
+    padding: 5px;
+}
+.create-journal-form .model-wrapper .model-option label {
+    display: inline-block;
+    font-size: 18px;
+    padding-left: 5px;
+    width: auto;
+}
+.create-journal-form .model-wrapper .model-option label svg {
+    width: 1em;
+    height: 1em;
+    margin-right: 0.2em;
+    margin-bottom: -0.2em;
+}
+.create-journal-form .model-wrapper .model-option .explanation {
+    padding: 2px;
+    font-size: 0.8em;
+    color: #333;
+}
 

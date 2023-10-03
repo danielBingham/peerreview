@@ -8,6 +8,7 @@ import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/gen
 import DateTag from '/components/DateTag'
 
 import UserTag from '/components/users/UserTag'
+import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
 
 import './PaperVersionEvent.css'
 
@@ -34,7 +35,8 @@ const PaperVersionEvent = function({ eventId }) {
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <UserTag id={event.actorId} /> uploaded <strong><Link to={`/paper/${event.paperId}/file?version=${version.version}`}>version { version.version}</Link></strong> <DateTag timestamp={event.eventDate} type="full" />. 
+                <div><UserTag id={event.actorId} /> uploaded <strong><Link to={`/paper/${event.paperId}/file?version=${version.version}`}>version { version.version}</Link></strong> <DateTag timestamp={event.eventDate} type="full" />.</div> 
+                <VisibilityControl eventId={eventId} />
             </TimelineItemWrapper>
         </TimelineItem> 
     )

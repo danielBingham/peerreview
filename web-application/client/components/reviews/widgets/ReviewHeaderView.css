@@ -21,6 +21,12 @@
     margin: 10px auto;
     padding: 10px;
 }
+.review-header .review-in-progress {
+    border: thin solid var(--main-border-color);
+    margin: 10px auto;
+    padding: 10px;
+}
+
 .review-selector {
     text-align: center;
 }

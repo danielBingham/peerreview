@@ -304,7 +304,6 @@ export const patchReview = function(paperId, review) {
                 dispatch(setRelationsInState(response.relations))
               
                 const state = getState()
-                // TODO FIX ME - this misses updates that change the status from 'in-progress' to not in-progres
                 if ( response.entity.status == 'in-progress' ) {
                     dispatch(reviewsSlice.actions.setInProgress(response.entity))
                 }

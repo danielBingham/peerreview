@@ -285,11 +285,11 @@ CREATE TABLE paper_fields (
  * Journals
  ******************************************************************************/
 
-CREATE TYPE journal_transparency as ENUM('open', 'closed');
+CREATE TYPE journal_model as ENUM('public', 'open-open', 'open-closed', 'closed');
 CREATE TABLE journals (
     id      bigserial PRIMARY KEY,
     name    varchar(1024) NOT NULL,
-    transparency journal_transparency NOT NULL DEFAULT 'closed', 
+    model journal_model NOT NULL DEFAULT 'closed', 
     description text,
     created_date    timestamptz,
     updated_date    timestamptz
@@ -459,13 +459,28 @@ CREATE TYPE paper_event_types AS ENUM(
     'editor-unassigned'
 );
 
+CREATE TYPE paper_event_types AS ENUM(
+    'paper:new-version', 
+    'paper:preprint-posted',
+    'paper:new-review', 
+    'paper:comment-posted',
+    'review:comment-reply-posted',
+    'submission:new', 
+    'submission:new-review',
+    'submission:status-changed',
+    'submission:reviewer-assigned',
+    'submission:reviewer-unassigned',
+    'submission:editor-assigned',
+    'submission:editor-unassigned'
+);
+
 CREATE TYPE paper_event_visibility AS ENUM(
-    'managing-editor',
+    'managing-editors',
     'editors',
     'assigned-editors',
     'reviewers',
     'assigned-reviewers',
-    'corresponding-author',
+    'corresponding-authors',
     'authors',
     'public'
 );
@@ -480,7 +495,7 @@ CREATE TABLE paper_events (
     actor_id bigint REFERENCES users(id) NOT NULL,
     version int NOT NULL,
     type paper_event_types NOT NULL,
-    visibility paper_event_visibility[] NOT NULL DEFAULT '{"public"}',
+    visibility paper_event_visibility[] NOT NULL DEFAULT '{"authors"}',
     event_date timestamptz,
 
     assignee_id bigint REFERENCES users(id) DEFAULT NULL,

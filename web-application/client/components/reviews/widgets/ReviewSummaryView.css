@@ -16,7 +16,7 @@
 .review-summary .author-controls button {
     margin: 0px 10px;
 }
-.review-summary svg {
+.review-summary .recommendation svg {
     width: 24px;
     height: 24px;
     margin-bottom: -7px;

@@ -1,0 +1,13 @@
+.event-visibility-control {
+    padding-left: 30px;
+    font-size: 12px;
+}
+.event-visibility-control svg {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-bottom: -5px;
+}
+.event-visibility-control .visibility {
+    padding: 10px 20px;
+}

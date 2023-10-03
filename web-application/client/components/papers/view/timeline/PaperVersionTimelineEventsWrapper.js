@@ -130,54 +130,55 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
     /**
      * Event Types
      *
-     * 'version-uploaded', 
-     * 'preprint-posted',
-     * 'review-posted', 
-     * 'review-comment-reply-posted',
-     * 'comment-posted',
-     * 'submitted-to-journal', 
-     * 'submission-status-changed',
-     * 'reviewer-assigned',
-     * 'reviewer-unassigned',
-     * 'editor-assigned',
-     * 'editor-unassigned'
-    */
+     * 'paper:new-version', 
+     * 'paper:preprint-posted',
+     * 'paper:new-review', 
+     * 'paper:comment-posted',
+     * 'review:comment-reply-posted',
+     * 'submission:new', 
+     * 'submission:new-review',
+     * 'submission:status-changed',
+     * 'submission:reviewer-assigned',
+     * 'submission:reviewer-unassigned',
+     * 'submission:editor-assigned',
+     * 'submission:editor-unassigned'
+     ***/
     const eventViews = []
     for(const event of events) {
-        if ( event.type == 'review-posted' ) {
+        if ( event.type == 'paper:new-review' || event.type == 'submission:new-review') {
             eventViews.push(
-                <ReviewView key={event.id} id={event.reviewId} paperId={paperId} versionNumber={versionNumber} />
+                <ReviewView key={event.id} id={event.reviewId} eventId={event.id} paperId={paperId} versionNumber={versionNumber} />
             )
         }
 
-        else if ( event.type =='version-uploaded' ) {
+        else if ( event.type =='paper:new-version' ) {
             eventViews.push(
                 <PaperVersionEvent key={event.id} eventId={event.id} />
             )
         }
 
-        else if ( event.type == 'preprint-posted' ) {
+        else if ( event.type == 'paper:preprint-posted' ) {
             eventViews.push(
                 <PaperPreprintSubmissionEvent key={event.id} eventId={event.id} />
             )
         }
 
-        else if ( event.type == 'submitted-to-journal') {
+        else if ( event.type == 'submission:new') {
             eventViews.push(
                 <PaperJournalSubmissionEvent key={event.id} eventId={event.id} />
             )
         }
 
-        else if ( event.type == 'submission-status-changed' ) {
+        else if ( event.type == 'submission:status-changed' ) {
             eventViews.push(
                 <PaperSubmissionStatusChange key={event.id} eventId={event.id} />
             )
         }
 
-        else if ( event.type == 'reviewer-assigned'
-            || event.type == 'reviewer-unassigned'
-            || event.type == 'editor-assigned'
-            || event.type == 'editor-unassigned' )
+        else if ( event.type == 'submission:reviewer-assigned'
+            || event.type == 'submission:reviewer-unassigned'
+            || event.type == 'submission:editor-assigned'
+            || event.type == 'submission:editor-unassigned' )
         {
             eventViews.push(
                 <PaperSubmissionAssignmentEvent key={event.id} eventId={event.id} />

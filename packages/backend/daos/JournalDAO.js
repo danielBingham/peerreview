@@ -16,11 +16,29 @@ module.exports = class JournalDAO {
         //
         // TECHDEBT - there's probably a better way to do this.
         this.database = ( database ? database : this.core.database )
+    }
 
-        this.selectionString = `
+    getSelectionString() {
+        return `
             journals.id as journal_id, journals.name as journal_name, journals.description as journal_description,
+            ${ this.core.features.hasFeature('journal-permission-models-194') ? 'journals.model as journal_model, ' : '' }
             journals.created_date as "journal_createdDate", journals.updated_date as "journal_updatedDate",
         `
+    }
+
+    hydrateJournal(row) {
+        const journal = {
+            id: row.journal_id,
+            name: row.journal_name,
+            description: row.journal_description,
+            createdDate: row.journal_createdDate,
+            updatedDate: row.journal_updatedDate,
+            members: []
+        }
+        if ( this.core.features.hasFeature('journal-permission-models-194') ) {
+            journal.model = row.journal_model
+        }
+        return journal
     }
 
     hydrateJournals(rows) {
@@ -52,17 +70,6 @@ module.exports = class JournalDAO {
         return { dictionary: dictionary, list: list }
     }
 
-    hydrateJournal(row) {
-        return {
-            id: row.journal_id,
-            name: row.journal_name,
-            description: row.journal_description,
-            createdDate: row.journal_createdDate,
-            updatedDate: row.journal_updatedDate,
-            members: []
-        }
-    }
-
     async countJournals(where, params, page) {
         params = params ? params : []
         where = where ? where : ''
@@ -92,7 +99,6 @@ module.exports = class JournalDAO {
             pageSize: PAGE_SIZE,
             numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
         }
-
     }
 
     async selectJournals(where, inputParams, order, page) {
@@ -122,7 +128,7 @@ module.exports = class JournalDAO {
 
         const sql = `
             SELECT 
-                ${ this.selectionString }
+                ${ this.getSelectionString() }
 
                 journal_members.journal_id as "member_journalId", journal_members.user_id as "member_userId", 
                 journal_members.member_order as member_order, journal_members.permissions as member_permissions
@@ -145,12 +151,18 @@ module.exports = class JournalDAO {
 
     async insertJournal(journal) {
         const sql = `
-            INSERT INTO journals (name, description, created_date, updated_date)
-                VALUES ($1, $2, now(), now())
+            INSERT INTO journals (name, description, ${ this.core.features.hasFeature('journal-permission-models-194') ? 'model, ' : ''} created_date, updated_date)
+                VALUES ($1, $2, ${ this.core.features.hasFeature('journal-permission-models-194') ? '$3, ' : ''} now(), now())
                 RETURNING id
         `
 
-        const results = await this.database.query(sql, [ journal.name, journal.description ])
+        const params = [ journal.name, journal.description ]
+
+        if ( this.core.features.hasFeature('journal-permission-models-194') ) {
+            params.push(journal.model)
+        }
+
+        const results = await this.database.query(sql, params)
 
         if ( results.rowCount <= 0 || results.rows.length <= 0 ) {
             throw new DAOError('failed-insertion', `Attempt to insert journal "${journal.name}" failed.`)

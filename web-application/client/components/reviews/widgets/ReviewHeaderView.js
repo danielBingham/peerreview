@@ -63,12 +63,25 @@ const ReviewHeaderView = function(props) {
         return results
     })
 
-    const selectedReview = useSelector(function(state) {
-        if ( reviewId 
+    let selectedReview = useSelector(function(state) {
+        if ( reviewId && reviewId !== 'none'
             && state.reviews.dictionary[reviewId] 
             && state.reviews.dictionary[reviewId].version == props.versionNumber) 
         {
             return state.reviews.dictionary[reviewId]
+        } else {
+            return null
+        }
+    })
+
+    const event = useSelector(function(state) {
+        if ( selectedReview ) {
+            for( const [id, event] of Object.entries(state.paperEvents.dictionary)) {
+                if ( event.reviewId == selectedReview.id ) {
+                    return event
+                }
+            }
+            return null
         } else {
             return null
         }
@@ -82,13 +95,17 @@ const ReviewHeaderView = function(props) {
         }
     })
 
+    if ( selectedReview && reviewInProgress && selectedReview.id == reviewInProgress.id ) {
+        selectedReview = null
+    }
+
     // ================= User Action Handling  ================================
     
     const dispatch = useDispatch()
 
-    const setReview = function(review) {
-        if ( review ) {
-            searchParams.set('review', review.id)
+    const setReview = function(reviewId) {
+        if ( reviewId ) {
+            searchParams.set('review', reviewId)
             setSearchParams(searchParams)
         } else {
             searchParams.delete('review')
@@ -97,7 +114,7 @@ const ReviewHeaderView = function(props) {
     }
 
     // ======= Effect Handling ======================================
-    
+
     // Request tracker cleanup.
     useEffect(function() {
         return function cleanup() {
@@ -109,65 +126,87 @@ const ReviewHeaderView = function(props) {
 
     // ======= Render ===============================================
     let content = null 
-    if ( paper.isDraft && reviewInProgress ) {
-        content = ( 
+
+    const reviewViews = []
+    reviewViews.push(
+        <FloatingMenuItem key="all" className="review-option" onClick={(e) => setReview(null) }>
+            Comments from All Reviews
+        </FloatingMenuItem>
+    )
+    reviewViews.push(
+        <FloatingMenuItem key="none" className="review-option" onClick={(e) => setReview('none') }>
+            No Comments 
+        </FloatingMenuItem>
+    )
+    for(const review of reviews) {
+        if ( reviewInProgress && review.id == reviewInProgress.id ) {
+            continue
+        }
+
+        reviewViews.push(
+            <FloatingMenuItem key={review.id} className="review-option" onClick={(e) => setReview(review.id) }>
+                Review #{review.id} by <UserTag id={review.userId} link={false} />
+            </FloatingMenuItem>
+        )
+    }
+
+    let selectedReviewView = null
+    let reviewInProgressView = null
+
+    if ( reviewInProgress ) {
+        reviewInProgressView = ( 
             <>
-                <div className="instructions">Currently reviewing version { props.versionNumber }.  Click anywhere on the document to add a comment.  Write review summary and make a recommentation below.  New comment threads will not be public until the review is submitted.  Comments added to existing threads are immediately public.</div>
                 <ReviewSummaryForm paper={paper} versionNumber={props.versionNumber} selectedReview={reviewInProgress} /> 
             </>
         )
-    } else {
-        const reviewViews = []
-        reviewViews.push(
-            <FloatingMenuItem key="all" className="review-option" onClick={(e) => setReview(null) }>
-                Comments from All Reviews
-            </FloatingMenuItem>
-        )
-        for(const review of reviews) {
-            reviewViews.push(
-                <FloatingMenuItem key={review.id} className="review-option" onClick={(e) => setReview(review) }>
-                    Review #{review.id} by <UserTag id={review.userId} link={false} />
-                </FloatingMenuItem>
-            )
-        }
-       
-        let selectedReviewView= null
-        if ( selectedReview ) {
+    }
+
+    if ( selectedReview && event ) {
             selectedReviewView = (
-                <ReviewSummaryView paper={paper} versionNumber={props.versionNumber} selectedReview={selectedReview} />
+                <ReviewSummaryView eventId={event.id} paper={paper} versionNumber={props.versionNumber} selectedReview={selectedReview} />
             )
-        }
-
-        let trigger = 'Comments from All Reviews'
-        if ( selectedReview ) {
-            trigger = (
-                <span>Review #{selectedReview.id} by <UserTag id={selectedReview.userId} link={false} /></span>
-            )
-        }
-
-        content = (
-            <>
-                <div className="controls">
-                    <PaperVersionSelector paperId={props.paperId} />  
-                    <FloatingMenu className="review-selector" closeOnClick={true}>
-                        <FloatingMenuTrigger>Viewing: { trigger }</FloatingMenuTrigger>
-                        <FloatingMenuBody className="review-menu-body">
-                            <FloatingMenuHeader>
-                                Select a review to view
-                            </FloatingMenuHeader>
-                            { reviewViews }
-                        </FloatingMenuBody>
-                    </FloatingMenu>
-                    <div className="start-review">
-                        <StartReviewButton id={paper.id} />
-                    </div>
-                </div>
-                { selectedReview && <div className="selected-review">
-                    { selectedReviewView }
-                </div> }
-            </>
+    } else if ( selectedReview && ! event && selectedReview.id != reviewInProgress.id) {
+        selectedReviewView = (
+            <Spinner local={true} />
         )
     }
+
+    let trigger = (<span>Comments from All Reviews</span>)
+    if ( selectedReview ) {
+        trigger = (
+            <span>Review #{selectedReview.id} by <UserTag id={selectedReview.userId} link={false} /></span>
+        )
+    } else if ( reviewId == 'none' ) {
+        trigger = (
+            <span>No comments</span>
+        )
+    }
+
+    content = (
+        <>
+            <div className="controls">
+                <PaperVersionSelector paperId={props.paperId} />  
+                <FloatingMenu className="review-selector" closeOnClick={true}>
+                    <FloatingMenuTrigger>Viewing: { trigger }</FloatingMenuTrigger>
+                    <FloatingMenuBody className="review-menu-body">
+                        <FloatingMenuHeader>
+                            Select a review to view
+                        </FloatingMenuHeader>
+                        { reviewViews }
+                    </FloatingMenuBody>
+                </FloatingMenu>
+                <div className="start-review">
+                    <StartReviewButton id={paper.id} />
+                </div>
+            </div>
+            { selectedReview && <div className="selected-review">
+                { selectedReviewView }
+            </div> }
+            { reviewInProgress && <div className="review-in-progress">
+                { reviewInProgressView }
+            </div> }
+        </>
+    )
 
     return (
         <div className="review-header">

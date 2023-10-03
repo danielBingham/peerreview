@@ -16,6 +16,7 @@ module.exports = class ReviewController {
         this.reviewDAO = new backend.ReviewDAO(core)
         this.userDAO = new backend.UserDAO(core)
         this.paperDAO = new backend.PaperDAO(core)
+        this.paperEventDAO = new backend.PaperEventDAO(core)
 
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
@@ -26,6 +27,12 @@ module.exports = class ReviewController {
 
         // ======== Default Relations =========================================
         // These are relations we always retrieve and return.
+
+        // ======== Events ====================================================
+
+        const eventResults = await this.paperEventDAO.selectEvents(
+            'WHERE paper_events.review_id = ANY($1::bigint[])', [ results.list ]) 
+        relations.events = eventResults.dictionary
 
         // ======== users =====================================================
         const userIds = []
@@ -70,8 +77,8 @@ module.exports = class ReviewController {
          * Permission checking on this endpoint is pretty simple:
          *
          * 1. Paper(:paper_id) exists.
-         * 2. Paper(:paper_id) is a draft AND User is logged in AND User has Review on Paper(:paper_id)
-         * 3. Paper(:paper_id) is not a draft. (Anyone can view reviews.)
+         * 2. Visibility is controlled on the PaperEvent.
+         * 2a. Except for the users reviews in progress.
          * 
          * **********************************************************/
 
@@ -88,17 +95,15 @@ module.exports = class ReviewController {
         const isDraft = paperResults.rows[0].isDraft
         const showPreprint = paperResults.rows[0].showPreprint
 
-        // 2. Paper(:paper_id) is a draft preprint OR User is logged in AND User has
-        // Review on Paper(:paper_id)
-        if ( isDraft ) {
-            if ( ! userId && ! showPreprint ) {
-                throw new ControllerError(401, 'not-authenticated', 
-                    `Unauthenticated user attempting to view reviews for draft Paper(${paperId}).`)
-            }
-        }
+        // 2. Visibility is controlled on the event.
+        const visibleIds = await this.paperEventService.getVisibleEventIds(userId)
+        const eventResults = await this.database.query(`
+            SELECT review_id FROM paper_events WHERE id = ANY($1::bigint[])
+        `, [ visibleIds ])
 
-        // At this point, we've confirmed that they are allowed to be here.
-        // Either 3. Paper(:paper_id) is not a draft is true, or 2. is true.
+        const reviewIds = eventResults.rows.map((r) => r.review_id)
+
+
        
         /********************************************************
          * Permission Checks Complete
@@ -109,11 +114,11 @@ module.exports = class ReviewController {
         let params = []
         
         if ( userId ) {
-            where = `WHERE reviews.paper_id=$1 AND (reviews.status != 'in-progress' OR reviews.user_id = $2)`
-            params = [ paperId, userId ]
+            where = `WHERE reviews.paper_id = $1 AND (reviews.id = ANY($2::bigint[]) OR reviews.user_id = $3)`
+            params = [ paperId, reviewIds, userId ]
         } else {
-            where = `WHERE reviews.paper_id=$1 AND reviews.status != 'in-progress'`
-            params = [ paperId ]
+            where = `WHERE reviews.paper_id = $1 AND reviews.id = ANY($2::bigint[])`
+            params = [ paperId, reviewIds ]
         }
 
         const results = await this.reviewDAO.selectReviews(where, params)
@@ -259,7 +264,7 @@ module.exports = class ReviewController {
                 paperId: entity.paperId,
                 actorId: userId,
                 version: entity.version,
-                type: 'review-posted',
+                type: 'new-review',
                 reviewId: entity.id
             }
             await this.paperEventService.createEvent(request.session.user, event)
@@ -650,7 +655,7 @@ module.exports = class ReviewController {
                 paperId: entity.paperId,
                 actorId: entity.userId,
                 version: entity.version,
-                type: 'review-posted',
+                type: 'new-review',
                 reviewId: entity.id
             }
             await this.paperEventService.createEvent(request.session.user, event)

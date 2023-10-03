@@ -24,8 +24,6 @@ const PaperPage = function({}) {
 
     const { id, pageTab } = useParams()
 
-    console.log(`\n\n ### PaperPage(${id}, ${pageTab})`)
-
     // ================= Request Tracking =====================================
     
     const [ requestId, setRequestId] = useState(null)
@@ -47,8 +45,6 @@ const PaperPage = function({}) {
         return state.papers.dictionary[id]
     })
     const mostRecentVersion = paper?.versions[0].version
-    console.log(`Paper: `)
-    console.log(paper)
 
     // ======= Actions ====================================
 
@@ -62,7 +58,6 @@ const PaperPage = function({}) {
      * retrieve it from the paper endpoint to get full and up to date data.
      */
     useEffect(function() {
-        console.log(`getPaper(${id})`)
         setRequestId(dispatch(getPaper(id)))
     }, [ id ])
 
@@ -84,7 +79,6 @@ const PaperPage = function({}) {
     }
 
     const selectedTab = ( pageTab ? pageTab : (paper.isDraft ? 'file' :  'paper'))
-    console.log(`selectedTab: ${selectedTab}`)
     
     let content = ( <Spinner local={true} /> )
     if ( request && request.state == 'fulfilled') {

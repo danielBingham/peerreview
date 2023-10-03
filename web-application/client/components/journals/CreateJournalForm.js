@@ -2,6 +2,8 @@ import React, { useState, useEffect, useLayoutEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
+import { GlobeAltIcon, BookOpenIcon, LockOpenIcon, LockClosedIcon } from '@heroicons/react/24/outline'
+
 import { refreshAuthentication } from '/state/authentication'
 import { postJournals, cleanupRequest } from '/state/journals'
 
@@ -21,6 +23,7 @@ const CreateJournalForm = function(props) {
     const [name, setName] = useState('')
     const [description, setDescription] = useState('')
     const [members, setMembers] = useState([])
+    const [model, setModel] = useState('public')
 
     const [nameError, setNameError] = useState(null)
     const [descriptionError, setDescriptionError] = useState(null)
@@ -101,7 +104,8 @@ const CreateJournalForm = function(props) {
         const journal = {
             name: name,
             description: description,
-            members: members
+            members: members,
+            model: model
         }
         setPostJournalsRequestId(dispatch(postJournals(journal)))
 
@@ -191,6 +195,53 @@ const CreateJournalForm = function(props) {
                 </div>
 
                 <AddJournalMembersWidget members={members} setMembers={setMembers} />
+
+                <div className="model field-wrapper">
+                    <label htmlFor="model">Select a Model</label>
+                    <div className="explanation">Choose an operating model for your journal.</div>
+                    <div className="model-wrapper">
+                        <div className="model-option">
+                            <input 
+                                type="radio" 
+                                name="model" 
+                                checked={ model == 'public' }
+                                onChange={(e) => setModel('public')}
+                                value="public" />
+                            <label htmlFor="public" onClick={(e) => setModel('public')}><GlobeAltIcon/>Public</label>
+                            <div className="explanation">A journal that operates entirely transparently.  Everything will be public.</div>
+                        </div>
+                        <div className="model-option">
+                            <input 
+                                type="radio" 
+                                name="model" 
+                                checked={ model == 'open-public' }
+                                onChange={(e) => setModel('open-public')}
+                                value="open-public" />
+                            <label htmlFor="open-public" onClick={(e) => setModel('open-public')}><LockOpenIcon/>Open -> <GlobeAltIcon/>Public</label>
+                            <div className="explanation">Unpublished submissions will be viewable to the journal's membership, allowing for a high-trust self-organizing journal.  Once submissions are published, everything becomes public.</div>
+                        </div>
+                        <div className="model-option">
+                            <input 
+                                type="radio" 
+                                name="model" 
+                                checked={ model == 'open-closed' }
+                                onChange={(e) => setModel('open-closed')}
+                                value="open-closed" />
+                            <label htmlFor="open-closed" onClick={(e) => setModel('open-closed')}><LockOpenIcon/>Open</label>
+                            <div className="explanation">Unpublished submissions are viewable to the journal's membership, allowing for a high-trust self-organizing journal.  Publishing doesn't change visibility.</div>
+                        </div>
+                        <div className="model-option">
+                            <input 
+                                type="radio" 
+                                name="model" 
+                                checked={ model == 'closed' }
+                                onChange={(e) => setModel('closed')}
+                                value="closed" />
+                            <label htmlFor="closed" onClick={(e) => setModel('closed')}><LockClosedIcon/>Closed</label>
+                            <div className="explanation">The traditional closed journal model.  Submissions are viewable by managing editors, assigned editors, and assigned reviewers.</div>
+                        </div>
+                    </div>
+                </div>
 
                 { requestError }
                 <div className="submit field-wrapper">
