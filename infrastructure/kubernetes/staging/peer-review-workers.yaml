@@ -25,7 +25,7 @@ spec:
       terminationGracePeriodSeconds: 600 
       containers:
         - name: peer-review-workers-container
-          image: ghcr.io/danielbingham/peerreview-worker:0.3.1
+          image: ghcr.io/danielbingham/peerreview-worker:0.3.2
           resources:
             requests:
               cpu: 100m
