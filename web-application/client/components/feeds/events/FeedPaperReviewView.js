@@ -68,7 +68,7 @@ const FeedPaperReviewView = function({ eventId }) {
 
     let summary = null
     summary = (
-        <ReviewSummaryView paper={paper} versionNumber={event.version} selectedReview={review} />
+        <ReviewSummaryView eventId={eventId} paper={paper} versionNumber={event.version} selectedReview={review} />
     )
 
     let timelineIcon = null
