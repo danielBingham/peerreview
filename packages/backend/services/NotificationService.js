@@ -2,8 +2,14 @@
 const Handlebars = require('handlebars')
 
 const NotificationDAO = require('../daos/NotificationDAO')
+const PaperEventDAO = require('../daos/PaperEventDAO')
+const PaperDAO = require('../daos/PaperDAO')
 
-const EmailService = require('../services/EmailService')
+const EmailService = require('./EmailService')
+const SubmissionService = require('./SubmissionService')
+const PaperEventService = require('./PaperEventService')
+
+const ServiceError = require('../errors/ServiceError')
 
 
 module.exports = class NotificationService {
@@ -13,11 +19,14 @@ module.exports = class NotificationService {
         this.core = core
 
         this.notificationDAO = new NotificationDAO(core)
+        this.paperEventDAO = new PaperEventDAO(core)
+        this.paperDAO = new PaperDAO(core)
 
         this.emailService = new EmailService(core)
+        this.submissionService = new SubmissionService(core)
+        this.paperEventService = new PaperEventService(core)
 
         this.notificationDefinitions = {
-
             /* User was added to a paper as an author. */
             'author:paper-submitted': {
                 email: {
@@ -315,6 +324,516 @@ module.exports = class NotificationService {
                 path: Handlebars.compile(`/edit`)
             }
         }
+
+        this.notificationMap = {
+            // Notifications that affect multiple objects.
+            'new-review': this.sendNewReview.bind(this),
+            'new-version': this.sendNewVersion.bind(this),
+
+            // Paper notifications.
+            'paper:submitted': this.sendPaperSubmitted.bind(this),
+            'paper:preprint-posted': this.sendPaperPreprintPosted.bind(this),
+            'paper:review-comment-reply': this.sendPaperReviewCommentReply.bind(this),
+            'paper:new-comment': this.sendPaperNewComment.bind(this),
+
+            // Journal notifications.
+            'journal:invited': this.sendJournalInvited.bind(this),
+            'journal:role-changed': this.sendJournalRoleChanged.bind(this),
+            'journal:removed': this.sendJournalRemoved.bind(this),
+
+            // Submission notifications.
+            'submission:new': this.sendSubmissionNew.bind(this),
+            'submission:review-comment-reply': this.sendSubmissionReviewCommentReply.bind(this),
+            'submission:new-comment': this.sendSubmissionNewComment.bind(this),
+            'submission:status-changed': this.sendSubmissionStatusChanged.bind(this),
+            'submission:reviewer-assigned': this.sendSubmissionReviewerAssigned.bind(this),
+            'submission:reviewer-unassigned': this.sendSubmissionReviewerUnassigned.bind(this),
+            'submission:editor-assigned': this.sendSubmissionEditorAssigned.bind(this),
+            'submission:editor-unassigned': this.sendSubmissionEditorUnassigned.bind(this)
+        }
+    }
+
+    async sendNewReview(currentUser, context) {
+        let object = 'paper'
+
+        const eventResults = await this.paperEventDAO.selectEvents(`WHERE paper_events.review_id = $1`, [ context.review.id ])
+        if ( eventResults.list.length <= 0 ) {
+            throw new ServiceError('missing-event', 
+                `Event missing for Review(${context.review.id}).`)
+        }
+        const event = eventResults.dictionary[eventResults.list[0]]
+
+        // There will only be activeSubmissionInfo if the currentUser (who is
+        // also the review submitter) is associated with submission through its
+        // journal or is an author.  Otherwise, this will be `null` indicating
+        // that this is a preprint review.
+        //
+        // TODO If authors are giving reviews to a closed journal and we count
+        // that as part of the submission... they'll lose visibility into their
+        // own review.  We need to think about how to handle author reviews in
+        // this context - maybe default is author only visibility.
+        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(currentUser, context.paper.id)
+        if ( activeSubmissionInfo ) {
+            object = 'submission'
+            
+            // ==== Editors ===================================================
+            
+            if ( event.visibility.includes('editors') || event.visibility.includes('assigned-editors') ) {
+                const assignedEditorResults = await this.core.database.query(`
+                    SELECT user_id FROM journal_submission_editors WHERE submission_id = $1
+                `, [ activeSubmissionInfo.id ])
+
+                for(const row of assignedEditorResults.rows) {
+                    if ( row.user_id == currentUser.id ) {
+                        continue
+                    }
+
+                    await this.createNotification(
+                        row.user_id,
+                        `editor:${object}:new-review`,
+                        {
+                            paper: context.paper,
+                            review: context.review,
+                            reviewer: currentUser
+                        }
+                    )
+                }
+            }
+        }
+
+        // ======== Authors ===================================================
+
+        if ( event.visibility.includes('public') || event.visibility.includes('authors') ) {
+            for(const author of context.paper.authors) {
+                if ( author.userId == currentUser.id ) {
+                    continue
+                }
+
+                await this.createNotification(
+                    author.userId,
+                    `author:${object}:new-review`,
+                    {
+                        paper: context.paper,
+                        review: context.review,
+                        reviewer: currentUser 
+                    }
+                )
+            }
+        } else if ( event.visibility.includes('corresponding-authors') ) {
+            for(const author of context.paper.authors) {
+                if ( author.userId == currentUser.id ) {
+                    continue
+                }
+                if ( ! author.owner ) {
+                    continue
+                }
+
+                await this.createNotification(
+                    author.userId,
+                    `author:${object}:new-review`,
+                    {
+                        paper: context.paper,
+                        review: context.review,
+                        reviewer: currentUser 
+                    }
+                )
+            }
+        }
+    }
+
+    async sendNewVersion(currentUser, context) {
+        const eventResults = await this.paperEventDAO.selectEvents(
+            `WHERE paper_events.type = 'paper:new-version' AND paper_events.paper_id = $1 AND paper_events.version = $2`,
+            [ context.paper.id, context.paper.versions[0].version ]
+        )
+        if ( eventResults.list.length <= 0 ) {
+            throw new ServiceError('missing-event', 
+                `Missing submission event for Submission(${context.submission.id}).`)
+        }
+        const event = eventResults.dictionary[eventResults.list[0]]
+
+        // There will only be activeSubmissionInfo if the currentUser (who is
+        // also the review submitter) is associated with submission through its
+        // journal or is an author.  Otherwise, this will be `null` indicating
+        // that this is a preprint review.
+        //
+        // TODO If authors are giving reviews to a closed journal and we count
+        // that as part of the submission... they'll lose visibility into their
+        // own review.  We need to think about how to handle author reviews in
+        // this context - maybe default is author only visibility.
+        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(currentUser, context.paper.id)
+
+        // ======== Authors ===================================================
+
+        const isVisibleToAuthors = event.visibility.includes('authors') || event.visibility.includes('public')
+        const isVisibleToCorrespondingAuthors = event.visibility.includes('corresponding-authors') 
+            || event.visibility.includes('authors') || event.visibility.includes('public')
+
+        if ( isVisibleToAuthors || isVisibleToCorrespondingAuthors ) {
+            for ( const author of context.paper.authors) {
+                if ( author.userId == currentUser.id ) {
+                    continue
+                }
+                if ( ! author.owner && ! isVisibleToAuthors ) {
+                    continue
+                }
+
+                await this.createNotification(
+                    author.userId,
+                    'author:paper:new-version',
+                    {
+                        correspondingAuthor: currentUser,
+                        paper: context.paper 
+                    }
+                )
+            }
+        }
+
+        let assignedReviewerIds = []
+        let assignedEditorIds = []
+        if ( activeSubmissionInfo ) {
+            // ==== Assigned Reviewers ========================================
+
+            const isVisibleToAssignedReviewers = event.visibility.includes('assigned-reviewers') 
+                || event.visibility.includes('reviewers') || event.visibility.includes('public')
+
+            if ( isVisibleToAssignedReviewers ) {
+                const assignedReviewerResults = await this.core.database.query(`
+                    SELECT journal_submission_reviewers.user_id 
+                        FROM journal_submission_reviewers 
+                        WHERE journal_submission_reviewers.submission_id = $1
+                `, [ activeSubmissionInfo.id ])
+
+                assignedReviewerIds = assignedReviewerResults.rows.length > 0 ? assignedReviewerResults.rows.map((r) => r.user_id) : []
+                for ( const id of assignedReviewerIds) {  
+                    if ( id == currentUser.id ) {
+                        continue
+                    }
+
+                    await this.createNotification(
+                        id,
+                        'reviewer:submission:new-version',
+                        {
+                            correspondingAuthor: currentUser, 
+                            paper: context.paper 
+                        }
+                    )
+                }
+            }
+
+          
+            // ==== Assigned Editors ==========================================
+            
+            const isVisibleToAssignedEditors = event.visibility.includes('assigned-editors')
+                || event.visibility.includes('editors') || event.visibility.includes('public')
+            if ( isVisibleToAssignedEditors ) {
+                const assignedEditorResults = await this.core.database.query(`
+                    SELECT user_id FROM journal_submission_editors
+                        LEFT OUTER JOIN journal_submissions ON journal_submission_editors.submission_id = journal_submisisons.id
+                    WHERE journal_submissions.paper_id = $1
+                `, [ context.paper.id ])
+
+                assignedEditorIds = assignedEditorResults.rows.length > 0 ? assignedEditorResults.rows.map((r) => r.user_id) : []
+                assignedEditorIds = assignedEditorIds.filter((id) => ! assignedReviewerIds.includes(id) && id !== currentUser.id)
+
+                for ( const id of assignedEditorIds) {  
+                    await this.createNotification(
+                        id,
+                        'editor:submission:new-version',
+                        {
+                            correspondingAuthor: currentUser,
+                            paper: context.paper 
+                        }
+                    )
+                }
+            }
+        }
+
+        // ======== Preprint Reviewers ========================================
+        
+        if ( event.visibility.includes('public') ) {
+            // TODO Figure out where preprint reviewers fit in all this.
+            //
+            // Reviewers who reviewed a preprint
+            const reviewerResults = await this.core.database.query(`
+                SELECT user_id FROM reviews WHERE paper_id = $1
+            `, [ context.paper.id ])
+
+            // O(n^2) Okay here, because this will rarely even reach n=100.  Most
+            // of the time n will be single digit.
+            let reviewerIds = reviewerResults.rows.length > 0 ? reviewerResults.rows.map((r) => r.user_id) : []
+            reviewerIds = reviewerIds.filter((id) => ! assignedReviewerIds.includes(id) && id !== currentUser.id)
+
+            for(const id of reviewerIds) {
+                await this.createNotification(
+                    id,
+                    'reviewer:paper:new-version',
+                    {
+                        correspondingAuthor: currentUser,
+                        paper: context.paper
+                    }
+                )
+            }
+        }
+    }
+    
+    async sendPaperSubmitted(currentUser, context) {
+        // authors 
+        for ( const author of context.paper.authors) {
+            if ( author.userId == currentUser.id ) {
+                continue
+            }
+
+            await this.createNotification(
+                author.userId,
+                'author:paper:submitted',
+                {
+                    correspondingAuthor: currentUser,
+                    paper: context.paper
+                }
+            )
+        }
+    }
+
+    async sendPaperPreprintPosted(currentUser, context) {
+        for(const author of context.paper.authors) {
+            if ( author.userId == currentUser.id ) {
+                continue
+            }
+
+            await this.createNotification(
+                author.userId,
+                'author:paper:preprint-posted',
+                {
+                    correspondingAuthor: currentUser,
+                    paper: context.paper 
+                }
+            )
+        }
+    }
+
+    async sendPaperReviewCommentReply(currentUser, context) {
+        throw new ServiceError('not-implemented', `Not yet implemented.`)
+    }
+
+    async sendPaperNewComment(currentUser, context) {
+        throw new ServiceError('not-implemented', 'Not yet implemented.')
+    }
+
+    async sendJournalInvited(currentUser, context) {
+        // Don't notify the user of their own actions.
+        if ( currentUser.id == context.member.userId ) {
+            return
+        }
+
+        await this.createNotification(
+            context.member.userId,
+            'journal-member:journal:invited',
+            {
+                user: currentUser,
+                journal: context.journal 
+            }
+        )
+    }
+
+    async sendJournalRoleChanged(currentUser, context) {
+        throw new ServiceError('not-implemented', 'Not yet implemented.')
+    }
+
+    async sendJournalRemoved(currentUser, context) {
+        throw new ServiceError('not-implemented', 'Not yet implemented.')
+    }
+
+    async sendSubmissionNew(currentUser, context) {
+        const eventResults = await this.paperEventDAO.selectEvents(
+            `WHERE paper_events.type='submission:new' AND paper_events.submission_id = $1`,
+            [ context.submission.id ]
+        )
+        if ( eventResults.list.length <= 0 ) {
+            throw new ServiceError('missing-event', 
+                `Missing submission event for Submission(${context.submission.id}).`)
+        }
+        const event = eventResults.dictionary[eventResults.list[0]]
+
+        const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ context.paperId ])
+        if ( paperResults.list.length <= 0 ) {
+            throw new ServiceError('missing-paper',
+                `Missing Paper(${context.paperId}).`)
+        }
+        const paper = paperResults.list[0]
+
+        // ======== Authors ===================================================
+       
+        let notifiedAuthors = []
+        if ( event.visibility.includes('authors') || event.visibility.includes('public') ) {
+            for(const author of paper.authors) {
+                if ( author.userId == currentUser.id) {
+                    continue
+                }
+
+                notifiedAuthors.push(author.userId)
+                await this.createNotification(
+                    author.userId,
+                    'author:submission:new',
+                    {
+                        correspondingAuthor: currentUser,
+                        paper: context.paper,
+                        journal: context.journal
+                    }
+                )
+            }
+        }
+
+        // ======== Editors ===================================================
+
+        const visibleToEditors = event.visibility.includes('editors') || event.visibility.includes('public')
+        const visibleToManagingEditors = event.visibility.includes('managing-editors') 
+            || event.visibility.includes('editors') || event.visibility.includes('public')
+        
+        for(const member of context.journal.members) {
+            if ( member.userId == currentUser.id ) {
+                continue
+            }
+            if ( member.permissions == 'editor' && ! visibleToEditors ) {
+                continue
+            }
+            if ( member.permissions == 'owner' && ! visibleToManagingEditors ) {
+                continue
+            }
+            if ( member.permissions == 'reviewer') {
+                continue
+            }
+            if ( notifiedAuthors.includes(member.userId)) {
+                continue
+            }
+
+            await this.createNotification(
+                member.userId,
+                'editor:submission:new',
+                {
+                    correspondingAuthor: currentUser,
+                    paper: paper,
+                    journal: context.journal
+                }
+            )
+        }
+    }
+
+    async sendSubmissionReviewCommentReply(currentUser, context) {
+        throw new ServiceError('not-implemented', 'Not yet implemented.')
+    }
+
+    async sendSubmissionNewComment(currentUser, context) {
+        throw new ServiceError('not-implemented', 'Not yet implemented.')
+    }
+
+    async sendSubmissionStatusChanged(currentUser, context) {
+        throw new ServiceError('not-implemented', 'Not yet implemented.')
+
+    }
+
+    async sendSubmissionReviewerAssigned(currentUser, context) {
+        if ( currentUser.id == context.reviewer.userId ) {
+            return
+        }
+
+        const paperResults = await this.core.database.query(`
+            SELECT papers.title FROM papers WHERE papers.id = $1
+        `, [ context.paperId ])
+        const title = paperResults.rows[0].title
+
+        // reviewer 
+        await this.createNotification(
+            context.reviewer.userId,
+            'reviewer:submission:reviewer-assigned',
+            {
+                editor: currentUser,
+                paper: {
+                    id: context.paperId,
+                    title: title
+                },
+                journal: context.journal
+            }
+        )
+    }
+
+    async sendSubmissionReviewerUnassigned(currentUser, context) {
+        if ( currentUser.id == context.reviewerId ) {
+            return
+        }
+
+        const notificationResults = await this.core.database.query(`
+            SELECT papers.title FROM papers WHERE papers.id = $1
+        `, [ context.paperId ])
+        const title = notificationResults.rows[0].title
+
+        await this.createNotification(
+            context.reviewerId,
+            'reviewer:submission:reviewer-unassigned',
+            {
+                editor: currentUser,
+                paper: {
+                    id: context.paperId,
+                    title: title
+                },
+                journal: context.journal
+
+            }
+        )
+    }
+
+    async sendSubmissionEditorAssigned(currentUser, context) {
+        if ( currentUser.id == context.editor.userId ) {
+            return
+        }
+
+        const notificationResults = await this.core.database.query(`
+            SELECT papers.title FROM papers WHERE papers.id = $1
+        `, [ context.paperId ])
+        const title = notificationResults.rows[0].title
+
+        await this.createNotification(
+            context.editor.userId,
+            'editor:submission:editor-assigned',
+            {
+                editor: currentUser,
+                paper: {
+                    id: context.paperId,
+                    title: title
+                },
+                journal: context.journal
+            }
+
+        )
+    }
+
+    async sendSubmissionEditorUnassigned(currentUser, context) {
+        if ( currentUser.id == context.editorId ) {
+            return
+        }
+
+        const notificationResults = await this.core.database.query(`
+            SELECT papers.title FROM papers WHERE papers.id = $1
+        `, [ context.paperId ])
+        const title = notificationResults.rows[0].title
+
+        await this.createNotification(
+            context.editorId,
+            'editor:submission:editor-unassigned',
+            {
+                editor: currentUser,
+                paper: {
+                    id: context.paperId,
+                    title: title
+                },
+                journal: context.journal
+            }
+        )
+
+    }
+
+    async sendNotifications(currentUser, type, context) {
+        return await this.notificationMap[type](currentUser, context)
     }
 
     /**

@@ -2,22 +2,17 @@ const backend = require('@danielbingham/peerreview-backend')
 const AuthenticationService = backend.AuthenticationService
 const DAOError = backend.DAOError
 
-const FeatureFlags = require('../../../server/features')
-
 const UserController = require('../../../server/controllers/UserController')
 
 const ControllerError = require('../../../server/errors/ControllerError')
-
-const DatabaseFixtures = require('../fixtures/database')
-const ExpectedFixtures = require('../fixtures/entities')
 
 xdescribe('UserController', function() {
     
     // ====================== Fixture Data ====================================
 
-    const database = DatabaseFixtures.database 
-    const expectedUsers = ExpectedFixtures.users 
-    const expectedUncleanUsers = ExpectedFixtures.usersUnclean
+    const database = backend.DatabaseFixtures.database 
+    const expectedUsers = backend.EntityFixtures.users 
+    const expectedUncleanUsers = backend.EntityFixtures.usersUnclean
 
     // ====================== Mocks ===========================================
 
@@ -41,7 +36,7 @@ xdescribe('UserController', function() {
         postmarkClient: {
             sendEmail: jest.fn()
         },
-        features: new FeatureFlags() 
+        features: new backend.FeatureFlags() 
     }
 
     const auth = new AuthenticationService(core)

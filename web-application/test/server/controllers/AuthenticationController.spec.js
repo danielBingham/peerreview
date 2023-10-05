@@ -1,7 +1,6 @@
 const backend = require('@danielbingham/peerreview-backend')
 const AuthenticationService = backend.AuthenticationService
 
-const FeatureFlags = require('../../../server/features')
 const AuthenticationController = require('../../../server/controllers/AuthenticationController')
 
 /*************
@@ -84,7 +83,7 @@ describe('AuthenticationController', function() {
         postmarkClient: {
             sendEmail: jest.fn()
         },
-        features: new FeatureFlags() 
+        features: new backend.FeatureFlags() 
     }
 
     // Disable logging.

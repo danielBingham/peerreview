@@ -64,7 +64,6 @@ const FeedPaperReviewView = function({ eventId }) {
     // ======= Effect Handling ======================================
 
     // ====== Render ===============================================
-    
 
     let summary = null
     summary = (

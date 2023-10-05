@@ -295,12 +295,12 @@ module.exports = class JournalController {
         // ======== Notifications =============================================
 
         for ( const member of entity.members ) {
-            await this.notificationService.createNotification(
-                member.userId,
-                'journal-member:invited',
+            await this.notificationService.sendNotifications(
+                request.session.user,
+                'journal:invited',
                 {
-                    user: request.session.user,
-                    journal: entity 
+                    member: member,
+                    journal: entity
                 }
             )
         }
@@ -569,11 +569,11 @@ module.exports = class JournalController {
 
         // ======== Notifications =============================================
 
-        await this.notificationService.createNotification(
-            member.userId,
-            'journal-member:invited',
+        await this.notificationService.sendNotifications(
+            request.session.user,
+            'journal:invited',
             {
-                user: request.session.user,
+                member: member,
                 journal: entity
             }
         )

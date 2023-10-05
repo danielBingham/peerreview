@@ -22,7 +22,7 @@ const path = require('path')
 const fs = require('fs')
 const Uuid = require('uuid')
 
-const { Core, FeatureService, ServerSideRenderingService, PageMetadataService } = require('@danielbingham/peerreview-backend')
+const { Core, FeatureFlags, FeatureService, ServerSideRenderingService, PageMetadataService } = require('@danielbingham/peerreview-backend')
 const ControllerError = require('./errors/ControllerError')
 
 /**********************************************************************
@@ -100,7 +100,6 @@ app.use(function(request, response, next) {
 })
 
 
-const FeatureFlags = require('./features')
 // Setup FeatureFlags and make it available through the core.
 app.use(function(request, response, next) {
     const featureService = new FeatureService(core)

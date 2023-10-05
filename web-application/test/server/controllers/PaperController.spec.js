@@ -1,14 +1,9 @@
 const backend = require('@danielbingham/peerreview-backend')
 const DAOError = backend.DAOError
 
-const FeatureFlags = require('../../../server/features')
-
 const PaperController = require('../../../server/controllers/PaperController')
 
 const ControllerError = require('../../../server/errors/ControllerError')
-
-const DatabaseFixtures = require('../fixtures/database')
-const ExpectedFixtures = require('../fixtures/entities')
 
 const fs = require('fs')
 
@@ -16,8 +11,8 @@ describe('PaperController', function() {
 
     // ====================== Fixture Data ====================================
 
-    const database = DatabaseFixtures.database
-    const expectedPapers = ExpectedFixtures.papers
+    const database = backend.DatabaseFixtures.database
+    const expectedPapers = backend.EntityFixtures.papers
 
     // ====================== Mocks ===========================================
 
@@ -44,7 +39,7 @@ describe('PaperController', function() {
         postmarkClient: {
             sendEmail: jest.fn()
         },
-        features: new FeatureFlags() 
+        features: new backend.FeatureFlags() 
     }
 
     // Disable logging.

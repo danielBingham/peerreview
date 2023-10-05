@@ -35,81 +35,111 @@ module.exports = class NotificationsMigration {
             await this.database.query(`
 CREATE TYPE user_notification_type AS ENUM(
 
+    /* ============ Paper Notifications ======================================= */
     /* User was added to a paper as an author. */
-    'author:paper-submitted', 
+    'author:paper:submitted', 
     
     /* 
      * A new version was uploaded for a paper the user is an author, editor, or
      * reviewer on. 
      */
-    'author:new-version', 
-    'reviewer:new-version',
-    'editor:new-version',
+    'author:paper:new-version', 
+    'reviewer:paper:new-version',
 
     /**
      * A paper the user is an author of was submitted as a preprint.
      */
-    'author:preprint-posted',
+    'author:paper:preprint-posted',
 
     /**
-     * A review was posted to a paper that the user is an author or editor of.
+     * A review was posted to a paper that the user is an author of.
      */
-    'author:new-review',
-    'editor:new-review',
+    'author:paper:new-review',
 
     /**
      * A reply was posted to a comment thread the user is participating in. TODO
      */
-    'author:review-comment-reply',
-    'reviewer:review-comment-reply',
-    'editor:review-comemnt-reply',
+    'author:paper:review-comment-reply',
+    'reviewer:paper:review-comment-reply',
 
     /**
      * A comment was posted to the timeline of a paper the user is an author,
      * reviewer, or editor for. TODO
      */
-    'author:new-comment',
-    'reviewer:new-comment',
-    'editor:new-comment',
-    
+    'author:paper:new-comment',
+    'reviewer:paper:new-comment',
+   
+    /* ============ Journal Notifications ===================================== */
     /**
      * User has been added to a journal's team.
      */
-    'journal-member:invited',
+    'journal-member:journal:invited',
 
     /**
      * Role in journal changed. TODO
      */
-    'journal-member:role-changed',
+    'journal-member:journal:role-changed',
 
     /**
      * User removed from journal's team. TODO
      */
-    'journal-member:removed',
+    'journal-member:journal:removed',
+
+    /* ============ Submission Notifications ================================== */
+    
 
     /**
      * A paper the user is an author of was submitted to a journal.
      * A journal the user is a managing editor of received a new submission.
      */
-    'author:new-submission', 
-    'editor:new-submission',
+    'author:submission:new', 
+    'editor:submission:new',
+
+    /* 
+     * A new version was uploaded for a submission the user is an editor, or
+     * reviewer on. 
+     */
+    'author:submission:new-version',
+    'reviewer:submission:new-version',
+    'editor:submission:new-version',
+
+    /**
+     * A new review was submitted for a submission the user is editing.
+     */ 
+    'author:submission:new-review',
+    'editor:submission:new-review',
+
+    /**
+     * A reply was posted to a comment thread the user is participating in. TODO
+     */
+    'author:submission:review-comment-reply',
+    'reviewer:submission:review-comment-reply',
+    'editor:submission:review-comment-reply',
+
+    /**
+     * A new timeline comment on a paper the user is a reviewer or editor for.
+     */
+    'author:submission:new-comment',
+    'reviewer:submission:new-comment',
+    'editor:submission:new-comment',
 
     /**
      * The status of a submission the user is an author of changed.
      */
-    'author:submission-status-changed',
+    'author:submission:status-changed',
+    'editor:submission:status-changed',
 
     /**
      * A user was (un)assigned as a reviewer to a paper. 
      */
-    'reviewer:submission-assigned',
-    'reviewer:submission-unassigned',
+    'reviewer:submission:assigned',
+    'reviewer:submission:unassigned',
 
     /**
      * A user was (un)assigned as an editor to a paper.
      */
-    'editor:submission-assigned',
-    'editor:submission-unassigned'
+    'editor:submission:assigned',
+    'editor:submission:unassigned'
 );
             `, [])
 

@@ -1,15 +1,24 @@
-// Tables
+/******************************************************************************
+ * Database fixtures.
+ *
+ * These are mock database row results.  They can be returned from  mock of
+ * `database.query` in the DAO to test the DAO's hydration methods, or to mock
+ * the DAO's `selectResource` method.
+ *
+ ******************************************************************************/
 
 const paper_authors = [
     {
-        author_id: 1,
+        author_userId: 1,
         author_order: 1,
-        author_owner: true
+        author_owner: true,
+        author_submitter: true
     },
     {
-        author_id: 2,
+        author_userId: 2,
         author_order: 2,
         author_owner: false,
+        author_submitter: false 
     }
 ]
 

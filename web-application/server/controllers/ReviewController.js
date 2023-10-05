@@ -271,18 +271,6 @@ module.exports = class ReviewController {
 
             // ==== Notifications =============================================
             
-            for(const author of paper.authors) {
-                await this.notificationService.createNotification(
-                    author.userId,
-                    'author:new-review',
-                    {
-                        paper: paper,
-                        review: entity,
-                        reviewer: request.session.user
-                    }
-
-                )
-            }
 
             const editorResults = await this.database.query(`
                 SELECT user_id 

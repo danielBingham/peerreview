@@ -36,4 +36,8 @@ exports.SessionService = require('./services/SessionService')
 exports.SubmissionPermissionService = require('./services/SubmissionPermissionService')
 
 exports.Logger = require('./logger')
+exports.FeatureFlags = require('./features')
 exports.Core = require('./core')
+
+exports.DatabaseFixtures = require('./test/fixtures/database')
+exports.EntityFixtures = require('./test/fixtures/entities')

@@ -385,7 +385,7 @@ module.exports = class JournalSubmissionController {
         const user = request.session.user
 
         const authorResults = await this.core.database.query(`
-            SELECT papers.id, papers.title, paper_authors.user_id, paper_authors.owner 
+            SELECT paper_authors.user_id, paper_authors.owner 
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = papers.id
                 WHERE papers.id = $1
@@ -448,41 +448,17 @@ module.exports = class JournalSubmissionController {
         // ======== Notifications =============================================
 
         const journal = relations.journals[entity.journalId]
-        const paperTitle = authorResults.rows[0].title
-
-        // Authors
-        for(const row of authorResults.rows) {
-            await this.notificationService.createNotification(
-                row.user_id,
-                'author:new-submission',
-                {
-                    correspondingAuthor: request.session.user,
-                    paper: {
-                        id: paperId,
-                        title: paperTitle 
-                    },
-                    journal: journal
-                }
-            )
-        }
-
-        // Editors
-        for(const member of journal.members) {
-            if ( member.permissions == 'owner' ) {
-                await this.notificationService.createNotification(
-                    member.userId,
-                    'editor:new-submission',
-                    {
-                        correspondingAuthor: request.session.user,
-                        paper: {
-                            id: paperId,
-                            title: paperTitle 
-                        },
-                        journal: journal
-                    }
-                )
+        
+        this.notificationService.sendNotifications(
+            request.session.user,
+            'submission:new',
+            {
+                submission: entity,
+                paperId: paperId, 
+                journal: journal
             }
-        }
+        )
+
         // ======== END Notifications =========================================
 
         return response.status(201).json({ 
@@ -906,22 +882,13 @@ module.exports = class JournalSubmissionController {
         // ======== END Paper Events ==========================================
 
         // ==== Notifications =================================================
-
-        const notificationResults = await this.core.database.query(`
-            SELECT papers.title FROM papers WHERE papers.id = $1
-        `, [ entity.paperId ])
-        const title = notificationResults.rows[0].title
-
-        // reviewer 
-        await this.notificationService.createNotification(
-            reviewer.userId,
-            'reviewer:submission-assigned',
+    
+        this.notificationService.sendNotifications(
+            request.session.user,
+            'submission:reviewer-assigned',
             {
-                editor: request.session.user,
-                paper: {
-                    id: entity.paperId,
-                    title: title
-                },
+                reviewer: reviewer,
+                paperId: entity.paperId,
                 journal: journal
             }
         )
@@ -1050,25 +1017,17 @@ module.exports = class JournalSubmissionController {
         // ======== END Paper Events ==========================================
         
         // ==== Notifications =============================================
-        // reviewer 
-        const notificationResults = await this.core.database.query(`
-            SELECT papers.title FROM papers WHERE papers.id = $1
-        `, [ entity.paperId ])
-        const title = notificationResults.rows[0].title
-
-        await this.notificationService.createNotification(
-            userId,
-            'reviewer:submission-unassigned',
+        
+        this.notificationService.sendNotifications(
+            request.session.user,
+            'submission:reviewer-unassigned',
             {
-                editor: request.session.user,
-                paper: {
-                    id: entity.paperId,
-                    title: title
-                },
+                reviewerId: userId,
+                paperId: entity.paperId,
                 journal: journal
-
             }
         )
+
 
         // ======== END Notifications =========================================
 
@@ -1204,26 +1163,16 @@ module.exports = class JournalSubmissionController {
 
 
         // ==== Notifications =============================================
-        // reviewer 
-        const notificationResults = await this.core.database.query(`
-            SELECT papers.title FROM papers WHERE papers.id = $1
-        `, [ entity.paperId ])
-        const title = notificationResults.rows[0].title
 
-        await this.notificationService.createNotification(
-            editor.userId,
-            'editor:submission-assigned',
+        this.notificationService.sendNotifications(
+            request.session.user,
+            'submission:editor-assigned',
             {
-                editor: request.session.user,
-                paper: {
-                    id: entity.paperId,
-                    title: title
-                },
+                editor: editor,
+                paperId: entity.paperId,
                 journal: journal
             }
-
         )
-
         // ======== END Notifications =========================================
 
         const relations = await this.getRelations(results)
@@ -1347,27 +1296,18 @@ module.exports = class JournalSubmissionController {
         await this.paperEventService.createEvent(request.session.user, event)
 
         // ==== Notifications =============================================
-        // reviewer 
-        const notificationResults = await this.core.database.query(`
-            SELECT papers.title FROM papers WHERE papers.id = $1
-        `, [ entity.paperId ])
-        const title = notificationResults.rows[0].title
 
-        await this.notificationService.createNotification(
-            userId,
-            'editor:submission-unassigned',
+        this.notificationService.sendNotifications(
+            request.session.user,
+            'submission:editor-unassigned',
             {
-                editor: request.session.user,
-                paper: {
-                    id: entity.paperId,
-                    title: title
-                },
+                editorId: userId,
+                paperId: entity.paperId,
                 journal: journal
             }
         )
 
         // ======== END Notifications =========================================
-
 
         return response.status(200).json({ 
             entity: entity,

@@ -35,11 +35,52 @@
  * - public
  *
  */
-module.exports = class SubmissionPermissionService {
+module.exports = class SubmissionService {
 
     constructor(core) {
         this.database = core.database
         this.logger = core.logger
+    }
+
+    async getActiveSubmission(user, paperId) {
+        // Get the currently active submission for the paper.
+        const results = await this.database.query(`
+            SELECT journal_submissions.id, journal_submissions.journal_id as "journalId"
+                FROM journal_submissions
+                WHERE journal_submissions.status != 'published' 
+                    AND journal_submissions.status != 'rejected'
+                    AND journal_submissions.status != 'retracted'
+                    AND journal_submissions.paper_id = $1
+                LIMIT 1
+        `, [ paperId ])
+
+        if ( results.rows.length <= 0 ) {
+            return null 
+        }
+
+        // Determine whether the user is an author or a member of the journal
+        // with the active submission.
+        const userResults = await this.database.query(`
+            SELECT journal_members.journal_id, paper_authors.paper_id
+                FROM journal_submissions
+                    LEFT OUTER JOIN journal_members ON journal_submissions.journal_id = journal_members.journal_id
+                    LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = journal_submissions.paper_id
+                WHERE ( paper_authors.user_id = $1 OR journal_members.user_id = $1 ) 
+                    AND journal_submissions.paper_id = $2
+                    AND journal_submissions.journal_id = $3
+        `, [ user.id, paperId, results.rows[0].journalId ])
+
+        // If the user is neither a member, nor an author, then there is no
+        // active submission for this event.
+        if ( userResults.rows.length <= 0 ) {
+            return null
+        }
+
+        if ( userResults.rows[0].journal_id === null && userResults.rows[0].paper_id === null) {
+            return null
+        }
+
+        return results.rows[0]
     }
 
     async getVisibleSubmissionIds(userId) {

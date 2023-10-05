@@ -1,4 +1,17 @@
+/******************************************************************************
+ * Entity Fixtures for use in tests.
+ *
+ * These are the entities constructed by the DAOs and returned from our REST
+ * endpoints.  These are also what our REST endpoints expect to recieve when
+ * constructing resources.
+ *
+ ******************************************************************************/
 
+/**
+ * Field Entities
+ *
+ * @see packages/backend/daos/FieldDAO.js -> hydrateFields()
+ */
 const fields = {
     1: {
         id: 1,
@@ -23,6 +36,13 @@ const fields = {
 
 }
 
+/**
+ * Unclean User Entities
+ *
+ * These are users that have all of their data, including private data.
+ *
+ * @see packages/backend/daos/UserDAO.js -> hydrateUsers()
+ */
 const usersUnclean = {
     1: {
         id: 1,
@@ -74,7 +94,13 @@ const usersUnclean = {
     }
 }
 
-
+/**
+ * Cleaned User Entities
+ *
+ * These are users that have been stripped of private data.
+ *
+ * @see packages/backend/daos/UserDAO.js -> hydrateUsers()
+ */
 const usersCleaned = {
     1: {
         id: 1,
@@ -117,6 +143,11 @@ const usersCleaned = {
     }
 }
 
+/**
+ * File Entities
+ *
+ * @see packages/backend/daos/FileDAO.js -> hydrateFiles()
+ */
 const files = {
     1: { 
         id: 1,
@@ -139,6 +170,11 @@ const files = {
     }
 }
 
+/**
+ * Paper Entities
+ *
+ * @see packages/backend/daos/PaperDAO.js -> hydratePapers()
+ */
 const papers = {
     1: {
         id: 1,
@@ -148,12 +184,12 @@ const papers = {
         updatedDate: 'TIMESTAMP',
         authors: [
             {
-                user: usersCleaned[0],
+                userId: 1,
                 order: 1,
                 owner: true
             },
             {
-                user: usersCleaned[1],
+                userId: 2,
                 order: 2,
                 owner: false 
             }
@@ -185,12 +221,12 @@ const papers = {
         updatedDate: 'TIMESTAMP',
         authors: [
             {
-                user: usersCleaned[0],
+                userId: 1,
                 order: 1,
                 owner: true
             },
             {
-                user: usersCleaned[1],
+                userId: 2,
                 order: 2,
                 owner: false 
             }
@@ -216,6 +252,105 @@ const papers = {
     }
 }
 
+/**
+ * Review Entities
+ *
+ * @see packages/backend/daos/ReviewDAO.js -> hydrateReviews()
+ */
+const reviews = {
+    1: {
+        id: 1,
+        paperId: 1,
+        userId: 3,
+        version: 1,
+        summary: 'Text.',
+        recommendation: 'commentary',
+        status: 'posted',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        threads: [
+            {
+                id: 1,
+                reviewId: 1,
+                pageg: 1,
+                pinX: 10,
+                pinY: 10,
+                comments: [
+                    {
+                        id: 1,
+                        threadId: 1,
+                        userId: 3,
+                        threadOrder: 1,
+                        status: 'posted',
+                        content: 'Text.',
+                        createdDate: 'TIMESTAMP',
+                        updatedDate: 'TIMETAMP'
+                    },
+                    {
+                        id: 2,
+                        threadId: 1,
+                        userId: 1,
+                        threadOrder: 2,
+                        status: 'posted',
+                        content: 'More text.',
+                        createdDate: 'TIMETAMP',
+                        updatedDate: 'TIMESTAMP'
+                    }
+                ]
+            }
+
+        ]
+    },
+    2: {
+        id: 2,
+        paperId: 2,
+        userId: 1,
+        version: 1,
+        summary: 'Text.',
+        recommendation: 'commentary',
+        status: 'posted',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        threads: [
+            {
+                id: 1,
+                reviewId: 1,
+                pageg: 1,
+                pinX: 10,
+                pinY: 10,
+                comments: [
+                    {
+                        id: 1,
+                        threadId: 1,
+                        userId: 1,
+                        threadOrder: 1,
+                        status: 'posted',
+                        content: 'Text.',
+                        createdDate: 'TIMESTAMP',
+                        updatedDate: 'TIMETAMP'
+                    },
+                    {
+                        id: 2,
+                        threadId: 1,
+                        userId: 3,
+                        threadOrder: 2,
+                        status: 'posted',
+                        content: 'More text.',
+                        createdDate: 'TIMETAMP',
+                        updatedDate: 'TIMESTAMP'
+                    }
+                ]
+            }
+
+        ]
+    }
+}
+
+/**
+ * Journal Entities
+ *
+ * @see packages/backend/daos/JournalDAO.js -> hydrateJournals()
+ */
 const journals = {
     1: {
         id: 1,
@@ -293,9 +428,42 @@ const journals = {
                 journalId: 3
             }
         ]
+    },
+    4: {
+        id: 4,
+        name: 'Journal Four',
+        description: 'A fourth test journal.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        members: [
+            {
+                userId: 4,
+                permissions: 'owner',
+                order: 1,
+                journalId: 4
+
+            },
+            {
+                userId: 5,
+                permissions: 'editor',
+                order: 2,
+                journalId: 4
+            },
+            {
+                userId: 6,
+                permissions: 'reviewer',
+                order: 3,
+                journalId: 4
+            }
+        ]
     }
 }
 
+/**
+ * Journal Submission Entities
+ *
+ * @see packages/backend/daos/JournalSubmissionDAO.js -> hydrateJournalSubmissions()
+ */
 const journalSubmissions = {
     1: {
         id: 1,
@@ -350,6 +518,10 @@ const journalSubmissions = {
 }
 
 
+/**
+ * Export the entities in the form of the `results` objects returned by our 
+ * GET /resources endpoints.
+ */
 module.exports = {
     fields: {
         dictionary: fields,
@@ -389,6 +561,17 @@ module.exports = {
         list: Object.values(papers),
         meta: {
             count: Object.keys(papers).length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
+    },
+    reviews: {
+        dictionary: reviews,
+        list: Object.values(reviews),
+        meta: {
+            count: Object.keys(reviews).length,
             page: 1,
             pageSize: 20,
             numberOfPages: 1

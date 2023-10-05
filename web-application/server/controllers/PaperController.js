@@ -615,22 +615,14 @@ module.exports = class PaperController {
         await this.paperEventService.createEvent(request.session.user, event)
 
         // ==== Notifications =============================================
-        // authors 
 
-        for ( const author of entity.authors) {
-            if ( author.userId != request.session.user.id ) {
-
-                await this.notificationService.createNotification(
-                    author.userId,
-                    'author:paper-submitted',
-                    {
-                        correspondingAuthor: request.session.user,
-                        paper: entity
-                    }
-                )
+        this.notificationService.sendNotifications(
+            request.session.user, 
+            'paper:submitted', 
+            {
+                paper: entity
             }
-        }
-
+        )
 
         const relations = await this.getRelations(request.session.user, results)
         
@@ -782,16 +774,13 @@ module.exports = class PaperController {
             }
             await this.paperEventService.createEvent(request.session.user, event)
 
-            for(const author of entity.authors) {
-                await this.notificationService.createNotification(
-                    author.userId,
-                    'author:preprint-posted',
-                    {
-                        correspondingAuthor: user,
-                        paper: entity
-                    }
-                )
-            }
+            this.notificationService.sendNotifications(
+                request.session.user,
+                'paper:preprint-posted',
+                {
+                    paper: entity
+                }
+            )
         }
 
         const relations = await this.getRelations(request.session.user, results)
@@ -968,58 +957,14 @@ module.exports = class PaperController {
         await this.paperEventService.createEvent(request.session.user, event)
 
         // ==== Notifications =============================================
-        // authors 
-
-        for ( const author of entity.authors) {
-            await this.notificationService.createNotification(
-                author.userId,
-                'author:new-version',
-                {
-                    correspondingAuthor: request.session.user,
-                    paper: entity
-                }
-            )
-        }
-
-        // Reviewers
-        const reviewerResults = await this.database.query(`
-            SELECT user_id FROM journal_submission_reviewers 
-                LEFT OUTER JOIN journal_submissions ON journal_submission_reviewers.submission_id = journal_submisisons.id
-            WHERE journal_submissions.paper_id = $1
-        `, [ entity.id ])
-
-        if ( reviewerResults.rows.length > 0 ) {
-            for ( const row of reviewerResults.rows) {  
-                await this.notificationService.createNotification(
-                    row.user_id,
-                    'reviewer:new-version',
-                    {
-                        correspondingAuthor: request.session.user,
-                        paper: entity
-                    }
-                )
-            }
-        }
         
-        // Editor
-        const editorResults = await this.database.query(`
-            SELECT user_id FROM journal_submission_editors
-                LEFT OUTER JOIN journal_submissions ON journal_submission_editors.submission_id = journal_submisisons.id
-            WHERE journal_submissions.paper_id = $1
-        `, [ entity.id ])
-
-        if ( editorResults.rows.length > 0 ) {
-            for ( const row of editorResults.rows) {  
-                await this.notificationService.createNotification(
-                    row.user_id,
-                    'editor:new-version',
-                    {
-                        correspondingAuthor: request.session.user,
-                        paper: entity
-                    }
-                )
+        this.notificationService.sendNotifications(
+            request.session.user,
+            'new-version',
+            {
+                paper: entity
             }
-        }
+        )
 
         const relations = await this.getRelations(request.session.user, results)
 

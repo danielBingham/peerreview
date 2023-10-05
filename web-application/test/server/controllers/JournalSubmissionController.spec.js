@@ -1,21 +1,16 @@
 const backend = require('@danielbingham/peerreview-backend')
 const DAOError = backend.DAOError
 
-const FeatureFlags = require('../../../server/features')
-
 const JournalSubmissionController = require('../../../server/controllers/JournalSubmissionController')
 
 const ControllerError = require('../../../server/errors/ControllerError')
-
-const DatabaseFixtures = require('../fixtures/database')
-const ExpectedFixtures = require('../fixtures/entities')
 
 describe('JournalSubmissionController', function() {
 
     // ====================== Fixture Data ====================================
 
-    const database = DatabaseFixtures.database
-    const expectedSubmissions = ExpectedFixtures.journalSubmissions
+    const database = backend.DatabaseFixtures.database
+    const expectedSubmissions = backend.EntityFixtures.journalSubmissions
 
     // ====================== Mocks ===========================================
 
@@ -42,7 +37,7 @@ describe('JournalSubmissionController', function() {
         postmarkClient: {
             sendEmail: jest.fn()
         },
-        features: new FeatureFlags() 
+        features: new backend.FeatureFlags() 
     }
 
     // Disable logging.
