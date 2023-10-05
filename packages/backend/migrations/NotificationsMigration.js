@@ -132,14 +132,14 @@ CREATE TYPE user_notification_type AS ENUM(
     /**
      * A user was (un)assigned as a reviewer to a paper. 
      */
-    'reviewer:submission:assigned',
-    'reviewer:submission:unassigned',
+    'reviewer:submission:reviewer-assigned',
+    'reviewer:submission:reviewer-unassigned',
 
     /**
      * A user was (un)assigned as an editor to a paper.
      */
-    'editor:submission:assigned',
-    'editor:submission:unassigned'
+    'editor:submission:editor-assigned',
+    'editor:submission:editor-unassigned'
 );
             `, [])
 

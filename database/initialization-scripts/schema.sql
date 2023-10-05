@@ -171,7 +171,7 @@ CREATE TYPE user_notification_type AS ENUM(
      * A user was (un)assigned as an editor to a paper.
      */
     'editor:submission:editor-assigned',
-    'editor:submission:editor-unassigned',
+    'editor:submission:editor-unassigned'
 );
     
 CREATE TABLE user_notifications (

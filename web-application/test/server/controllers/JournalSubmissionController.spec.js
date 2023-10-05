@@ -368,7 +368,7 @@ describe('JournalSubmissionController', function() {
                 createEvent: jest.fn()
             }
             journalSubmissionController.notificationService = {
-                createNotification: jest.fn()
+                sendNotifications: jest.fn()
             }
 
             const request = {
@@ -398,7 +398,7 @@ describe('JournalSubmissionController', function() {
                 }
             })
 
-            // TODO Confirm we called `createEvent` and `createNotification` an
+            // TODO Confirm we called `createEvent` and `sendNotifications` an
             // appropriate number of times with appropriate data.
         })
     })
@@ -759,7 +759,7 @@ describe('JournalSubmissionController', function() {
                 createEvent: jest.fn()
             }
             journalSubmissionController.notificationService = {
-                createNotification: jest.fn()
+                sendNotifications: jest.fn()
             }
 
             const request = {
@@ -1159,7 +1159,7 @@ describe('JournalSubmissionController', function() {
                 createEvent: jest.fn()
             }
             journalSubmissionController.notificationService = {
-                createNotification: jest.fn()
+                sendNotifications: jest.fn()
             }
 
             const request = {
@@ -1208,7 +1208,7 @@ describe('JournalSubmissionController', function() {
                 createEvent: jest.fn()
             }
             journalSubmissionController.notificationService = {
-                createNotification: jest.fn()
+                sendNotifications: jest.fn()
             }
 
             const request = {
@@ -1255,7 +1255,7 @@ describe('JournalSubmissionController', function() {
                 createEvent: jest.fn()
             }
             journalSubmissionController.notificationService = {
-                createNotification: jest.fn()
+                sendNotifications: jest.fn()
             }
 
             const request = {
@@ -1469,7 +1469,7 @@ describe('JournalSubmissionController', function() {
                 createEvent: jest.fn()
             }
             journalSubmissionController.notificationService = {
-                createNotification: jest.fn()
+                sendNotifications: jest.fn()
             }
 
             const request = {
@@ -1514,7 +1514,7 @@ describe('JournalSubmissionController', function() {
                 createEvent: jest.fn()
             }
             journalSubmissionController.notificationService = {
-                createNotification: jest.fn()
+                sendNotifications: jest.fn()
             }
 
             const request = {
@@ -1560,7 +1560,7 @@ describe('JournalSubmissionController', function() {
                 createEvent: jest.fn()
             }
             journalSubmissionController.notificationService = {
-                createNotification: jest.fn()
+                sendNotifications: jest.fn()
             }
 
             const request = {

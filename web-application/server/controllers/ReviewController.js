@@ -270,26 +270,15 @@ module.exports = class ReviewController {
             await this.paperEventService.createEvent(request.session.user, event)
 
             // ==== Notifications =============================================
-            
-
-            const editorResults = await this.database.query(`
-                SELECT user_id 
-                    FROM journal_submission_editors 
-                        LEFT OUTER JOIN journal_submissions ON journal_submission_editors.submission_id = journal_submissions.id
-                    WHERE journal_submissions.paper_id = $1
-            `, [ entity.paperId ])
-
-            for ( const row of editorResults.rows ) {
-                await this.notificationService.createNotification(
-                    row.user_id,
-                    'editor:new-review',
-                    {
-                        paper: paper,
-                        review: entity,
-                        reviewer: request.session.user
-                    }
-                )
-            }
+           
+            this.notificationService.sendNotifications(
+                request.session.user,
+                'new-review',
+                {
+                    paper: paper,
+                    review: entity
+                }
+            )
 
             // ==== END Notifications =========================================
         }
@@ -653,37 +642,14 @@ module.exports = class ReviewController {
 
             // ==== Notifications =============================================
             
-            for(const author of paper.authors) {
-                await this.notificationService.createNotification(
-                    author.userId,
-                    'author:new-review',
-                    {
-                        paper: paper,
-                        review: entity,
-                        reviewer: request.session.user
-                    }
-
-                )
-            }
-
-            const editorResults = await this.database.query(`
-                SELECT user_id 
-                    FROM journal_submission_editors 
-                        LEFT OUTER JOIN journal_submissions ON journal_submission_editors.submission_id = journal_submissions.id
-                    WHERE journal_submissions.paper_id = $1
-            `, [ entity.paperId ])
-
-            for ( const row of editorResults.rows ) {
-                await this.notificationService.createNotification(
-                    row.user_id,
-                    'editor:new-review',
-                    {
-                        paper: paper,
-                        review: entity,
-                        reviewer: request.session.user
-                    }
-                )
-            }
+            this.notificationService.sendNotifications(
+                request.session.user,
+                'new-review',
+                {
+                    paper: paper,
+                    review: entity
+                }
+            )
 
             // ==== END Notifications =========================================
 

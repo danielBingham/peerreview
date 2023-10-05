@@ -948,6 +948,10 @@ module.exports = class NotificationService {
      */
     async createNotification(userId, type, context) {
         const definition = this.notificationDefinitions[type]
+        if ( ! definition ) {
+            throw new ServiceError('missing-definition',
+                `Failed to find notification definitions for type '${type}'.`)
+        }
         
         context.host = this.core.config.host
 
