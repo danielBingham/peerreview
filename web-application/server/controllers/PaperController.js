@@ -24,7 +24,7 @@ module.exports = class PaperController {
         this.journalDAO = new backend.JournalDAO(core)
         this.journalSubmissionDAO = new backend.JournalSubmissionDAO(core)
 
-        this.submissionPermissionService = new backend.SubmissionPermissionService(core)
+        this.submissionPermissionService = new backend.SubmissionService(core)
         this.paperPermissionsService = new backend.PaperPermissionsService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)

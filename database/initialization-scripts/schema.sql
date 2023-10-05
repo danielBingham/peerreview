@@ -164,18 +164,14 @@ CREATE TYPE user_notification_type AS ENUM(
     /**
      * A user was (un)assigned as a reviewer to a paper. 
      */
-    'author:submission:reviewer-assigned',
-    'editor:submission:reviewer-assigned'
-    'author:submission:reviewer-unassigned',
-    'editor:submission:reviewer-unassigned',
+    'reviewer:submission:reviewer-assigned',
+    'reviewer:submission:reviewer-unassigned',
 
     /**
      * A user was (un)assigned as an editor to a paper.
      */
-    'author:submission:editor-assigned',
     'editor:submission:editor-assigned',
-    'author:submission:editor-unassigned',
-    'editor:submission:editor-unassigned'
+    'editor:submission:editor-unassigned',
 );
     
 CREATE TABLE user_notifications (

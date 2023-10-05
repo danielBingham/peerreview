@@ -27,10 +27,12 @@ module.exports = class NotificationService {
         this.paperEventService = new PaperEventService(core)
 
         this.notificationDefinitions = {
+            
+            /* ============ Paper Notifications ======================================= */
             /* User was added to a paper as an author. */
-            'author:paper-submitted': {
+            'author:paper:submitted': {
                 email: {
-                    subject: Handlebars.compile('Your co-author, {{correspondingAuthor.name}}, submitted "{{paper.title}}" to JournalHub'), 
+                    subject: Handlebars.compile('[JournalHub] Your co-author, {{correspondingAuthor.name}}, submitted "{{paper.title}}"'), 
                     body: Handlebars.compile(`
                         Your co-author, {{correspondingAuthor.name}}, submitted "{{paper.title}}" on which you are listed as a co-author to JournalHub.  You can find the paper, collaborate with your co-authors, solicit preprint review, submit to journals, communicate with your reviewers and more on JournalHub.
 
@@ -45,9 +47,9 @@ module.exports = class NotificationService {
              * A new version was uploaded for a paper the user is an author, editor, or
              * reviewer on. 
              */
-            'author:new-version': {
+            'author:paper:new-version': {
                 email: {
-                    subject: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of "{{paper.title}}"`),
+                    subject: Handlebars.compile(`[JournalHub] {{correspondingAuthor.name}} uploaded a new version of "{{paper.title}}"`),
                     body: Handlebars.compile(`
                     Your co-author, {{correspondingAuthor.name}} uploaded a new version of "{{paper.title}}".
 
@@ -57,39 +59,25 @@ module.exports = class NotificationService {
                 text: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of {{paper.title}}.`),
                 path: Handlebars.compile(`/paper/{{paper.id}}/file`)
             }, 
-            'reviewer:new-version': {
+            'reviewer:paper:new-version': {
                 email: {
-                    subject: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of you review assignment, "{{paper.title}}"`),
+                    subject: Handlebars.compile(`[JournalHub] {{correspondingAuthor.name}} uploaded a new version of "{{paper.title}}"`),
                     body: Handlebars.compile(`
-                    {{correspondingAuthor.name}} uploaded a new version of "{{paper.title}}", which you are assigned to review.
+                    {{correspondingAuthor.name}} uploaded a new version of "{{paper.title}}" which you previously reviewed.
 
                     You can go here to view the version: {{host}}paper/{{paper.id}}/file
                     `)
                 },
-                text: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of your review assignment, {{paper.title}}.`),
+                text: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of {{paper.title}}, which you previously reviewed.`),
                 path: Handlebars.compile(`/paper/{{paper.id}}/file`)
-
-            },
-            'editor:new-version': {
-                email: {
-                    subject: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of your editorial assignment, "{{paper.title}}"`),
-                    body: Handlebars.compile(`
-                    {{correspondingAuthor.name}} uploaded a new version of your editoral assignment, "{{paper.title}}".
-
-                    You can go here to view the version: {{host}}paper/{{paper.id}}/file
-                    `)
-                },
-                text: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of your editorial assignment, "{{paper.title}}".`),
-                path: Handlebars.compile(`/paper/{{paper.id}}/file`)
-
-            },
+            }, 
 
             /**
              * A paper the user is an author of was submitted as a preprint.
              */
-            'author:preprint-posted': {
+            'author:paper:preprint-posted': {
                 email: {
-                    subject: Handlebars.compile(`{{correspondingAuthor.name}} submitted a preprint of "{{paper.title}}"`),
+                    subject: Handlebars.compile(`[JournalHub] {{correspondingAuthor.name}} submitted a preprint of "{{paper.title}}"`),
                     body: Handlebars.compile(`
                     Your co-author, {{correspondingAuthor.name}} submitted a preprint of "{{paper.title}}".
 
@@ -103,9 +91,9 @@ module.exports = class NotificationService {
             /**
              * A review was posted to a paper that the user is an author or editor of.
              */
-            'author:new-review': {
+            'author:paper:new-review': {
                 email: {
-                    subject: Handlebars.compile(`A new review of "{{paper.title}}" has been posted`),
+                    subject: Handlebars.compile(`[JournalHub] A new review of "{{paper.title}}" has been posted`),
                     body: Handlebars.compile(`
                     A new review of "{{paper.title}}" has been posted. 
 
@@ -115,23 +103,11 @@ module.exports = class NotificationService {
                 text: Handlebars.compile(`A new review of "{{paper.title}}" has been posted`),
                 path: Handlebars.compile(`/paper/{{paper.id}}/timeline#review-{{review.id}}`)
             },
-            'editor:new-review': {
-                email: {
-                    subject: Handlebars.compile(`{{reviewer.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
-                    body: Handlebars.compile(`
-                    {{reviewer.name}} posted a new review of "{{paper.title}}", which you are assigned to edit.
-
-                    Read the review: {{host}}paper/{{paper.id}}/timeline#review-{{review.id}}
-                    `)
-                },
-                text: Handlebars.compile(`{{reviewer.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
-                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#review-{{review.id}}`)
-            },
 
             /**
              * A reply was posted to a comment thread the user is participating in. TODO
              */
-            'author:review-comment-reply': {
+            'author:paper:review-comment-reply': {
                 email: {
                     subject: Handlebars.compile(`TODO`),
                     body: Handlebars.compile(`TODO`)
@@ -139,15 +115,7 @@ module.exports = class NotificationService {
                 text: Handlebars.compile(`TODO`),
                 path: Handlebars.compile(`TODO`)
             },
-            'reviewer:review-comment-reply': {
-                email: {
-                    subject: Handlebars.compile(`TODO`),
-                    body: Handlebars.compile(`TODO`)
-                },
-                text: Handlebars.compile(`TODO`),
-                path: Handlebars.compile(`TODO`)
-            },
-            'editor:review-comment-reply': {
+            'reviewer:paper:review-comment-reply': {
                 email: {
                     subject: Handlebars.compile(`TODO`),
                     body: Handlebars.compile(`TODO`)
@@ -160,7 +128,7 @@ module.exports = class NotificationService {
              * A comment was posted to the timeline of a paper the user is an author,
              * reviewer, or editor for. TODO
              */
-            'author:new-comment': {
+            'author:paper:new-comment': {
                 email: {
                     subject: Handlebars.compile(`TODO`),
                     body: Handlebars.compile(`TODO`)
@@ -168,15 +136,7 @@ module.exports = class NotificationService {
                 text: Handlebars.compile(`TODO`),
                 path: Handlebars.compile(`TODO`)
             },
-            'reviewer:new-comment': {
-                email: {
-                    subject: Handlebars.compile(`TODO`),
-                    body: Handlebars.compile(`TODO`)
-                },
-                text: Handlebars.compile(`TODO`),
-                path: Handlebars.compile(`TODO`)
-            },
-            'editor:new-comment': {
+            'reviewer:paper:new-comment': {
                 email: {
                     subject: Handlebars.compile(`TODO`),
                     body: Handlebars.compile(`TODO`)
@@ -185,12 +145,14 @@ module.exports = class NotificationService {
                 path: Handlebars.compile(`TODO`)
             },
 
+            /* ============ Journal Notifications ===================================== */
+            
             /**
              * User has been added to a journal's team.
              */
-            'journal-member:invited': {
+            'journal-member:journal:invited': {
                 email: {
-                    subject: Handlebars.compile(`{{user.name}} invited you to join {{journal.name}}`),
+                    subject: Handlebars.compile(`[JournalHub] {{user.name}} invited you to join {{journal.name}}`),
                     body: Handlebars.compile(`
                     You have been invited by {{user.name}} to join {{journal.name}}.
 
@@ -204,25 +166,25 @@ module.exports = class NotificationService {
             /**
              * Role in journal changed. TODO
              */
-            'journal-member:role-changed': {
+            'journal-member:journal:role-changed': {
                 email: {
-                    subject: Handlebars.compile(`{{user.name}} changed your role for {{journal.name}} to {{role}}`),
+                    subject: Handlebars.compile(`[JournalHub] {{user.name}} changed your role for {{journal.name}} to {{role}}`),
                     body: Handlebars.compile(`
                     Your co-author, {{correspondingAuthor.name}} submitted a preprint of "{{paper.title}}".
 
                     You can go here to view the preprint: {{host}}paper/{{paper.id}}/file
                     `)
                 },
-                text: Handlebars.compile(`{{correspondingAuthor.name}} submitted a preprint of "{{paper.title}}".`),
+                text: Handlebars.compile(`{{user.name}} changed your role for {{journal.name}} to {{role}}`),
                 path: Handlebars.compile(`/paper/{{paper.id}}/file`)
             },
 
             /**
              * User removed from journal's team. TODO
              */
-            'journal-member:removed': {
+            'journal-member:journal:removed': {
                 email: {
-                    subject: Handlebars.compile(`{{user.name}} removed you from {{journal.name}}`),
+                    subject: Handlebars.compile(`[JournalHub] {{user.name}} removed you from {{journal.name}}`),
                     body: Handlebars.compile(`
                     You have been removed from the membership of {{journal.name}}.
                     `)
@@ -231,13 +193,15 @@ module.exports = class NotificationService {
                 path: Handlebars.compile(`/journal/{{journal.id}}`)
             },
 
+            /* ============ Submission Notifications ================================== */
+
             /**
              * A paper the user is an author of was submitted to a journal.
              * A journal the user is a managing editor of received a new submission.
              */
-            'author:new-submission': {
+            'author:submission:new': {
                 email: {
-                    subject: Handlebars.compile(`Your co-author, {{correspondingAuthor.name}}, submitted "{{paper.title}}" to {{journal.name}}`),
+                    subject: Handlebars.compile(`[JournalHub] Your co-author, {{correspondingAuthor.name}}, submitted "{{paper.title}}" to {{journal.name}}`),
                     body: Handlebars.compile(`
                     Your co-author, {{correspondingAuthor.name}}, submitted "{{paper.title}}" to {{journal.name}}.
 
@@ -247,9 +211,9 @@ module.exports = class NotificationService {
                 text: Handlebars.compile(`{{correspondingAuthor.name}} submitted "{{paper.title}}" to {{journal.name}}.`),
                 path: Handlebars.compile(`/paper/{{paper.id}}/file`)
             }, 
-            'editor:new-submission': {
+            'editor:submission:new': {
                 email: {
-                    subject: Handlebars.compile(`{{correspondingAuthor.name}} submitted "{{paper.title}}" to {{journal.name}}`),
+                    subject: Handlebars.compile(`[JournalHub] {{correspondingAuthor.name}} submitted "{{paper.title}}" to {{journal.name}}`),
                     body: Handlebars.compile(`
                     {{correspondingAuthor.name}} submitted "{{paper.title}}" to {{journal.name}}.
 
@@ -261,9 +225,141 @@ module.exports = class NotificationService {
             },
 
             /**
+             * A new version of a paper associated with a submission has been submitted.
+             */
+            'author:submission:new-version': {
+                email: {
+                    subject: Handlebars.compile(`[JournalHub] {{correspondingAuthor.name}} uploaded a new version of your paper, "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                    {{correspondingAuthor.name}} uploaded a new version of your "{{paper.title}}".
+
+                    You can go here to view the version: {{host}}paper/{{paper.id}}/file
+                    `)
+                },
+                text: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of your paper, {{paper.title}}.`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/file`)
+            },
+            'reviewer:submission:new-version': {
+                email: {
+                    subject: Handlebars.compile(`[JournalHub] {{correspondingAuthor.name}} uploaded a new version of you review assignment, "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                    {{correspondingAuthor.name}} uploaded a new version of "{{paper.title}}", which you are assigned to review.
+
+                    You can go here to view the version: {{host}}paper/{{paper.id}}/file
+                    `)
+                },
+                text: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of your review assignment, {{paper.title}}.`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/file`)
+            },
+            'editor:submission:new-version': {
+                email: {
+                    subject: Handlebars.compile(`[JournalHub] {{correspondingAuthor.name}} uploaded a new version of your editorial assignment, "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                    {{correspondingAuthor.name}} uploaded a new version of your editoral assignment, "{{paper.title}}".
+
+                    You can go here to view the version: {{host}}paper/{{paper.id}}/file
+                    `)
+                },
+                text: Handlebars.compile(`{{correspondingAuthor.name}} uploaded a new version of your editorial assignment, "{{paper.title}}".`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/file`)
+            },
+
+            /**
+             * A new review has been submitted for a submission.
+             */
+            'author:submission:new-review': {
+                email: {
+                    subject: Handlebars.compile(`[JournalHub] {{reviewer.name}} posted a new review of your paper, "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                    {{reviewer.name}} posted a new review of "{{paper.title}}".
+
+                    Read the review: {{host}}paper/{{paper.id}}/timeline#review-{{review.id}}
+                    `)
+                },
+                text: Handlebars.compile(`{{reviewer.name}} posted a new review of your paper, "{{paper.title}}"`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#review-{{review.id}}`)
+            },
+            'editor:submission:new-review': {
+                email: {
+                    subject: Handlebars.compile(`[JournalHub] {{reviewer.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                    {{reviewer.name}} posted a new review of "{{paper.title}}", which you are assigned to edit.
+
+                    Read the review: {{host}}paper/{{paper.id}}/timeline#review-{{review.id}}
+                    `)
+                },
+                text: Handlebars.compile(`{{reviewer.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#review-{{review.id}}`)
+            },
+
+            /**
+             * Submission Review Comment Reply TODO
+             */
+            'author:submission:review-comment-reply': {
+                email: {
+                    subject: Handlebars.compile(`TODO`),
+                    body: Handlebars.compile(`TODO`)
+                },
+                text: Handlebars.compile(`TODO`),
+                path: Handlebars.compile(`TODO`)
+            },
+            'reviewer:submission:review-comment-reply': {
+                email: {
+                    subject: Handlebars.compile(`TODO`),
+                    body: Handlebars.compile(`TODO`)
+                },
+                text: Handlebars.compile(`TODO`),
+                path: Handlebars.compile(`TODO`)
+            },
+            'editor:submission:review-comment-reply': {
+                email: {
+                    subject: Handlebars.compile(`TODO`),
+                    body: Handlebars.compile(`TODO`)
+                },
+                text: Handlebars.compile(`TODO`),
+                path: Handlebars.compile(`TODO`)
+            },
+
+            /**
+             * Submission New Comment TODO
+             */
+            'author:submission:new-comment': {
+                email: {
+                    subject: Handlebars.compile(`TODO`),
+                    body: Handlebars.compile(`TODO`)
+                },
+                text: Handlebars.compile(`TODO`),
+                path: Handlebars.compile(`TODO`)
+            },
+            'reviewer:submission:new-comment': {
+                email: {
+                    subject: Handlebars.compile(`TODO`),
+                    body: Handlebars.compile(`TODO`)
+                },
+                text: Handlebars.compile(`TODO`),
+                path: Handlebars.compile(`TODO`)
+            },
+            'editor:submission:new-comment': {
+                email: {
+                    subject: Handlebars.compile(`TODO`),
+                    body: Handlebars.compile(`TODO`)
+                },
+                text: Handlebars.compile(`TODO`),
+                path: Handlebars.compile(`TODO`)
+            },
+
+            /**
              * The status of a submission the user is an author of changed.
              */
-            'author:submission-status-changed': {
+            'author:submission:status-changed': {
+                email: {
+                    subject: Handlebars.compile(`TODO`),
+                    body: Handlebars.compile(`TODO`)
+                },
+                text: Handlebars.compile(`TODO`),
+                path: Handlebars.compile(`TODO`)
+            },
+            'editor:submission:status-changed': {
                 email: {
                     subject: Handlebars.compile(`TODO`),
                     body: Handlebars.compile(`TODO`)
@@ -275,9 +371,9 @@ module.exports = class NotificationService {
             /**
              * A user was (un)assigned as a reviewer to a paper. 
              */
-            'reviewer:submission-assigned': {
+            'reviewer:submission:reviewer-assigned': {
                 email: {
-                    subject: Handlebars.compile(`{{editor.name}} assigned you to review "{{paper.title}}" for {{journal.name}}.`),
+                    subject: Handlebars.compile(`[JournalHub] {{editor.name}} assigned you to review "{{paper.title}}" for {{journal.name}}.`),
                     body: Handlebars.compile(`
                     {{editor.name}} assigned you to review "{{paper.title}}" for {{journal.name}}.
 
@@ -287,11 +383,11 @@ module.exports = class NotificationService {
                 text: Handlebars.compile(`{{editor.name}} assigned you to review "{{paper.title}}" for {{journal.name}}.`),
                 path: Handlebars.compile(`/paper/{{paper.id}}/file`)
             },
-            'reviewer:submission-unassigned': {
+            'reviewer:submission:reviewer-unassigned': {
                 email: {
-                    subject: Handlebars.compile(`{{editor.name}} unassigned you from "{{paper.title}}".`),
+                    subject: Handlebars.compile(`[JournalHub] {{editor.name}} unassigned you from "{{paper.title}}".`),
                     body: Handlebars.compile(`
-                    {{editor.name}} unassigned you from "{{paper.title}}".  You are off the hook!
+                    {{editor.name}} unassigned you from "{{paper.title}}".
                     `)
                 },
                 text: Handlebars.compile(`{{editor.name}} unassigned you from "{{paper.title}}".`),
@@ -301,9 +397,9 @@ module.exports = class NotificationService {
             /**
              * A user was (un)assigned as an editor to a paper.
              */
-            'editor:submission-assigned': {
+            'editor:submission:editor-assigned': {
                 email: {
-                    subject: Handlebars.compile(`{{editor.name}} assigned you to edit "{{paper.title}}" for {{journal.name}}`),
+                    subject: Handlebars.compile(`[JournalHub] {{editor.name}} assigned you to edit "{{paper.title}}" for {{journal.name}}`),
                     body: Handlebars.compile(`
                     {{editor.name}} assigned you to edit "{{paper.title}}" for {{journal.name}}
 
@@ -313,11 +409,11 @@ module.exports = class NotificationService {
                 text: Handlebars.compile(`{{editor.name}} assigned you to edit "{{paper.title}}" for {{journal.name}}`),
                 path: Handlebars.compile(`/paper/{{paper.id}}/file`)
             },
-            'editor:submission-unassigned': {
+            'editor:submission:editor-unassigned': {
                 email: {
-                    subject: Handlebars.compile(`{{editor.name}} unassigned you from "{{paper.title}}"`),
+                    subject: Handlebars.compile(`[JournalHub] {{editor.name}} unassigned you from "{{paper.title}}"`),
                     body: Handlebars.compile(`
-                    {{editor.name}} unassigned you from "{{paper.title}}".  You are off the hook!
+                    {{editor.name}} unassigned you from "{{paper.title}}".
                         `)
                 },
                 text: Handlebars.compile(`{{editor.name}} unassigned you from "{{paper.title}}"`),
