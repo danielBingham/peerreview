@@ -51,8 +51,8 @@ describe('JournalController', function() {
     describe('.getJournals()', function() {
         it('should return 200 and the list of journals', async function() {
             core.database.query.mockReturnValue(undefined)
-                .mockReturnValueOnce({ rowCount: 8, rows: [ ...database.journals[1], ...database.journals[2], ...database.journals[3] ]}) 
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { count: 3 } ]})
+                .mockReturnValueOnce({ rowCount: 11, rows: [ ...database.journals[1], ...database.journals[2], ...database.journals[3], ...database.journals[4] ]}) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { count: 4 } ]})
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
 
@@ -172,20 +172,14 @@ describe('JournalController', function() {
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
-                // Notifications
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
-
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 2 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
-
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 3 }] })
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ email: '' }] })
-                
                 // Relations
                 .mockReturnValueOnce({ rowCount: 6, rows: [ ...database.users[1], ...database.users[2], ...database.users[3] ]}) 
 
             const journalController = new JournalController(core)
+
+            journalController.notificationService = {
+                sendNotifications: jest.fn()
+            }
 
             const request = {
                 session: {

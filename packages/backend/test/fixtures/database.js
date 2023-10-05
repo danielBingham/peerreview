@@ -193,7 +193,15 @@ const journals = [
         journal_description: 'A third test journal.',
         journal_createdDate: 'TIMESTAMP',
         journal_updatedDate: 'TIMESTAMP'
+    },
+    {
+        journal_id: 4,
+        journal_name: 'Journal Four',
+        journal_description: 'A fourth test journal.',
+        journal_createdDate: 'TIMESTAMP',
+        journal_updatedDate: 'TIMESTAMP'
     }
+
 ]
 
 const journal_members = [
@@ -251,6 +259,26 @@ const journal_members = [
         member_permissions: 'reviewer',
         member_order: 2,
         member_journalId: 3
+    },
+    
+    // Journal(4)
+    {
+        member_userId: 4,
+        member_permissions: 'owner',
+        member_order: 1,
+        member_journalId: 4
+    },
+    {
+        member_userId: 5,
+        member_permissions: 'editor',
+        member_order: 2,
+        member_journalId: 4
+    },
+    {
+        member_userId: 6,
+        member_permissions: 'reviewer',
+        member_order: 3,
+        member_journalId: 4
     }
 
 ]
@@ -360,6 +388,11 @@ const database = {
         3: [
             { ...journals[2], ...journal_members[6] },
             { ...journals[2], ...journal_members[7] }
+        ],
+        4: [
+            { ...journals[3], ...journal_members[8] },
+            { ...journals[3], ...journal_members[9] },
+            { ...journals[3], ...journal_members[10] }
         ]
     },
     journalSubmissions: {
