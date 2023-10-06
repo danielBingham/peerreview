@@ -57,6 +57,8 @@ const PaperEventDAO = require('../daos/PaperEventDAO')
 
 const SubmissionService = require('./SubmissionService')
 
+const ServiceError = require('../errors/ServiceError')
+
 module.exports = class PaperEventService { 
 
     constructor(core) {
@@ -76,10 +78,10 @@ module.exports = class PaperEventService {
                 'submission:new': [ 'public' ], 
                 'submission:new-review': [ 'public' ],
                 'submission:status-changed': [ 'public' ],
-                'submission:submission:reviewer-assigned': [ 'public' ],
-                'submission:submission:reviewer-unassigned': [ 'public' ],
-                'submission:submission:editor-assigned': [ 'public' ],
-                'submission:submission:editor-unassigned': [ 'public' ]
+                'submission:reviewer-assigned': [ 'public' ],
+                'submission:reviewer-unassigned': [ 'public' ],
+                'submission:editor-assigned': [ 'public' ],
+                'submission:editor-unassigned': [ 'public' ]
             }, 
             'open-public': {
                 'paper:new-version': [ 
@@ -380,6 +382,10 @@ module.exports = class PaperEventService {
 
             const journalModel = journalResults.rows[0].model
             visibility = this.visibilityByModelAndEvent[journalModel][event.type]
+            if ( ! visibility ) {
+                throw new ServiceError('missing-visibility',
+                    `model: ${journalModel}, type: ${event.type}, Visibility: ${this.visibilityByModelAndEvent[journalModel][event.type]}`)
+            }
         } else if ( paperInfo.showPreprint ) {
             visibility = [ 'public' ]
         }
