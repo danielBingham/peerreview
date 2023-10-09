@@ -252,22 +252,25 @@ module.exports = class ReviewController {
         if ( ! entity ) {
             throw new ControllerError(500, 'server-error', `Failed to find newly inserted review ${review.id}.`)
         }
+           
+        
+        const event = {
+            paperId: entity.paperId,
+            actorId: userId,
+            version: entity.version,
+            status : entity.status == 'submitted' ? 'committed' : 'in-progress',
+            type: 'new-review',
+            reviewId: entity.id
+        }
+        await this.paperEventService.createEvent(request.session.user, event)
 
         if ( entity.status == 'submitted' ) {
+
             // Update the review count on the version
             await this.database.query(`
                 UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND version = $2
             `, [ paperId, review.version ])
-        
-            
-            const event = {
-                paperId: entity.paperId,
-                actorId: userId,
-                version: entity.version,
-                type: 'new-review',
-                reviewId: entity.id
-            }
-            await this.paperEventService.createEvent(request.session.user, event)
+
 
             // ==== Notifications =============================================
            
@@ -275,7 +278,6 @@ module.exports = class ReviewController {
                 request.session.user,
                 'new-review',
                 {
-                    paper: paper,
                     review: entity
                 }
             )
@@ -627,18 +629,12 @@ module.exports = class ReviewController {
             `, [ entity.paperId, entity.version ])
 
             // ==== Paper Events ==============================================
-            
-            const event = {
-                paperId: entity.paperId,
-                actorId: entity.userId,
-                version: entity.version,
-                type: 'new-review',
-                reviewId: entity.id
-            }
-            await this.paperEventService.createEvent(request.session.user, event)
 
-            const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ review.paperId ])
-            const paper = paperResults.dictionary[review.paperId]
+            // Update the event to 'committed'
+            await this.database.query(`
+                UPDATE paper_events SET status = 'committed' WHERE review_id = $1
+            `, [ entity.id ])
+
 
             // ==== Notifications =============================================
             
@@ -652,8 +648,6 @@ module.exports = class ReviewController {
             )
 
             // ==== END Notifications =========================================
-
-
         }
 
         results.relations = await this.getRelations(request.session.user, results)

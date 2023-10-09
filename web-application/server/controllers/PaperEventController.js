@@ -153,7 +153,7 @@ module.exports = class PaperEventController {
         const { where, params, order, emptyResult, requestedRelations } = await this.parseQuery(
             request.session, 
             request.query,
-            'paper_events.paper_id = $1',
+            `paper_events.paper_id = $1 AND paper_events.status = 'committed'`,
             [ paperId ]
         )
 
@@ -203,7 +203,7 @@ module.exports = class PaperEventController {
         }
 
         if ( ! event.visibility ) {
-            throw new ControllerError(400, 'no-visibility',
+            throw new ControllerError(400, 'missing-fields',
                 `User(${user.id}) attempted to update Event(${event.id}), but failed to include visibility.`)
         }
 
@@ -301,11 +301,13 @@ module.exports = class PaperEventController {
             request.session, 
             request.query,
             `
-            (paper_events.submission_id = ANY($1::bigint[]) 
-                OR paper_events.submission_id = ANY($2::bigint[]))
-            AND (paper_events.type = 'paper:new-version'
-                OR paper_events.type = 'submission:new-review'
-                OR paper_events.type = 'submission:new')
+            paper_events.status = 'committed' AND (
+                (paper_events.submission_id = ANY($1::bigint[]) 
+                    OR paper_events.submission_id = ANY($2::bigint[]))
+                AND (paper_events.type = 'paper:new-version'
+                    OR paper_events.type = 'submission:new-review'
+                    OR paper_events.type = 'submission:new')
+            )
             `,
             [ managingEditorPaperIds, assignedEditorPaperIds ]
         )

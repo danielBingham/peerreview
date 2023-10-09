@@ -452,6 +452,9 @@ module.exports = class NotificationService {
     async sendNewReview(currentUser, context) {
         let object = 'paper'
 
+        const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ context.review.paperId ])
+        const paper = paperResults.dictionary[context.review.paperId]
+
         const eventResults = await this.paperEventDAO.selectEvents(`WHERE paper_events.review_id = $1`, [ context.review.id ])
         if ( eventResults.list.length <= 0 ) {
             throw new ServiceError('missing-event', 
@@ -468,7 +471,7 @@ module.exports = class NotificationService {
         // that as part of the submission... they'll lose visibility into their
         // own review.  We need to think about how to handle author reviews in
         // this context - maybe default is author only visibility.
-        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(currentUser, context.paper.id)
+        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(currentUser, paper.id)
         if ( activeSubmissionInfo ) {
             object = 'submission'
             
@@ -488,7 +491,7 @@ module.exports = class NotificationService {
                         row.user_id,
                         `editor:${object}:new-review`,
                         {
-                            paper: context.paper,
+                            paper: paper,
                             review: context.review,
                             reviewer: currentUser
                         }
@@ -500,7 +503,7 @@ module.exports = class NotificationService {
         // ======== Authors ===================================================
 
         if ( event.visibility.includes('public') || event.visibility.includes('authors') ) {
-            for(const author of context.paper.authors) {
+            for(const author of paper.authors) {
                 if ( author.userId == currentUser.id ) {
                     continue
                 }
@@ -509,14 +512,14 @@ module.exports = class NotificationService {
                     author.userId,
                     `author:${object}:new-review`,
                     {
-                        paper: context.paper,
+                        paper: paper,
                         review: context.review,
                         reviewer: currentUser 
                     }
                 )
             }
         } else if ( event.visibility.includes('corresponding-authors') ) {
-            for(const author of context.paper.authors) {
+            for(const author of paper.authors) {
                 if ( author.userId == currentUser.id ) {
                     continue
                 }
@@ -528,7 +531,7 @@ module.exports = class NotificationService {
                     author.userId,
                     `author:${object}:new-review`,
                     {
-                        paper: context.paper,
+                        paper: paper,
                         review: context.review,
                         reviewer: currentUser 
                     }

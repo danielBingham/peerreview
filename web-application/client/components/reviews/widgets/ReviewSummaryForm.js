@@ -9,6 +9,8 @@ import { patchReview, deleteReview, cleanupRequest} from '/state/reviews'
 import Button from '/components/generic/button/Button'
 import Spinner from '/components/Spinner'
 
+import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
+
 import './ReviewSummaryForm.css'
 
 /**
@@ -62,6 +64,18 @@ const ReviewSummaryForm = function(props) {
             return null
         }
         return state.reviews.inProgress[props.paper.id][props.versionNumber]
+    })
+
+    const event = useSelector(function(state) {
+        let result = null
+        if ( reviewInProgress) {
+            for(const [id, event] of Object.entries(state.paperEvents.dictionary)) {
+                if ( event.reviewId == reviewInProgress.id ) {
+                    result = event
+                }
+            }
+        }
+        return result
     })
 
     // ======= Actions and Event Handling ===========================
@@ -205,6 +219,11 @@ const ReviewSummaryForm = function(props) {
                             <label htmlFor="approve" onClick={(e) => setRecommendation('approve')}><CheckCircleIcon/>Approve</label>
                             <div className="explanation">Recommend that the draft be approved with out additional changes.</div>
                         </div>
+                        { event &&
+                            <div className="visibility-chooser"> 
+                                <VisibilityControl eventId={event.id} /> 
+                            </div>
+                        }
                         <div className="submission-buttons">
                             <Button type="secondary-warn" onClick={cancel} >Cancel Review</Button>
                             <Button type="primary" onClick={finish} >Finish Review</Button>

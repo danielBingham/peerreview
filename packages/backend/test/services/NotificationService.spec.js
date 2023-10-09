@@ -192,9 +192,11 @@ describe('NotificationService', function() {
     
     describe('sendNewReview()', function() {
         it('should notify authors', async function() {
-            /* core.database.query.mockReturnValue(undefined)
-                // select paper_events 
-                .mockReturnValueOnce({ rowCount: 1, rows: [ { visibility: [ 'authors' ] } ]  }) */
+            core.database.query.mockReturnValue(undefined)
+                .mockReturnValueOnce({ 
+                    rowCount: DatabaseFixtures.database.papers[1].length, 
+                    rows: DatabaseFixtures.database.papers[1]
+                })
 
             const notificationService = new NotificationService(core)
 
@@ -215,7 +217,6 @@ describe('NotificationService', function() {
                 EntityFixtures.usersUnclean.dictionary[1],
                 'new-review',
                 {
-                    paper: EntityFixtures.papers.dictionary[1],
                     review: EntityFixtures.reviews.dictionary[1]
                 }
             )
@@ -227,6 +228,10 @@ describe('NotificationService', function() {
     
         it('should notify editors when review is on submission', async function() {
              core.database.query.mockReturnValue(undefined)
+                .mockReturnValueOnce({ 
+                    rowCount: DatabaseFixtures.database.papers[1].length, 
+                    rows: DatabaseFixtures.database.papers[1]
+                })
                 // select journal_submission_editors 
                 .mockReturnValueOnce({ rowCount: 2, rows: [ { user_id: 3 }, { user_id: 4 } ]  }) 
 
@@ -252,7 +257,6 @@ describe('NotificationService', function() {
                 EntityFixtures.usersUnclean.dictionary[1],
                 'new-review',
                 {
-                    paper: EntityFixtures.papers.dictionary[1],
                     review: EntityFixtures.reviews.dictionary[1]
                 }
             )
@@ -268,6 +272,10 @@ describe('NotificationService', function() {
     
         it('should not notify authors if visibility does not allow it', async function() {
              core.database.query.mockReturnValue(undefined)
+                .mockReturnValueOnce({ 
+                    rowCount: DatabaseFixtures.database.papers[1].length, 
+                    rows: DatabaseFixtures.database.papers[1]
+                })
                 // select journal_submission_editors 
                 .mockReturnValueOnce({ rowCount: 2, rows: [ { user_id: 3 }, { user_id: 4 } ]  }) 
 
@@ -293,7 +301,6 @@ describe('NotificationService', function() {
                 EntityFixtures.usersUnclean.dictionary[1],
                 'new-review',
                 {
-                    paper: EntityFixtures.papers.dictionary[1],
                     review: EntityFixtures.reviews.dictionary[1]
                 }
             )
