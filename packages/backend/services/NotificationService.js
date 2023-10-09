@@ -452,6 +452,9 @@ module.exports = class NotificationService {
     async sendNewReview(currentUser, context) {
         let object = 'paper'
 
+        const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ context.review.paperId ])
+        const paper = paperResults.dictionary[context.review.paperId]
+
         const eventResults = await this.paperEventDAO.selectEvents(`WHERE paper_events.review_id = $1`, [ context.review.id ])
         if ( eventResults.list.length <= 0 ) {
             throw new ServiceError('missing-event', 

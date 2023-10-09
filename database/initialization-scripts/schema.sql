@@ -482,20 +482,6 @@ CREATE TABLE review_comment_versions (
  ******************************************************************************/
 
 CREATE TYPE paper_event_types AS ENUM(
-    'version-uploaded', 
-    'preprint-posted',
-    'review-posted', 
-    'review-comment-reply-posted',
-    'comment-posted',
-    'submitted-to-journal', 
-    'submission-status-changed',
-    'reviewer-assigned',
-    'reviewer-unassigned',
-    'editor-assigned',
-    'editor-unassigned'
-);
-
-CREATE TYPE paper_event_types AS ENUM(
     'paper:new-version', 
     'paper:preprint-posted',
     'paper:new-review', 
@@ -521,6 +507,11 @@ CREATE TYPE paper_event_visibility AS ENUM(
     'public'
 );
 
+CREATE TYPE paper_event_status AS ENUM(
+    'in-progress',
+    'committed'
+);
+
 /** 
  * Bottom section is sparsely populated links to other entities related to this
  * particular event.  Each event type will populate a subset of these. 
@@ -530,12 +521,13 @@ CREATE TABLE paper_events (
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE NOT NULL,
     actor_id bigint REFERENCES users(id) NOT NULL,
     version int NOT NULL,
+    status paper_event_status DEFAULT 'committed',
     type paper_event_types NOT NULL,
     visibility paper_event_visibility[] NOT NULL DEFAULT '{"authors"}',
     event_date timestamptz,
 
     assignee_id bigint REFERENCES users(id) DEFAULT NULL,
-    review_id bigint REFERENCES reviews(id) DEFAULT NULL,
+    review_id bigint REFERENCES reviews(id) DEFAULT NULL ON DELETE CASCADE,
     review_comment_id bigint REFERENCES review_comments(id) DEFAULT NULL,
     submission_id bigint REFERENCES journal_submissions(id) DEFAULT NULL,
     new_status journal_submission_status DEFAULT NULL

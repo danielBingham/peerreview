@@ -21,6 +21,7 @@ module.exports = class PaperEventsDAO {
                 paperId: row.event_paperId,
                 actorId: row.event_actorId,
                 version: row.event_version,
+                status: row.event_status,
                 type: row.event_type,
                 visibility: row.event_visibility,
                 eventDate: row.event_eventDate,
@@ -57,6 +58,7 @@ module.exports = class PaperEventsDAO {
                 paper_events.paper_id as "event_paperId",
                 paper_events.actor_id as "event_actorId",
                 paper_events.version as event_version,
+                paper_events.status as event_status,
                 paper_events.type as event_type,
                 paper_events.visibility::text[] as event_visibility, 
                 paper_events.event_date as "event_eventDate",
@@ -71,7 +73,7 @@ module.exports = class PaperEventsDAO {
             ${where}
             ORDER BY ${orderSql}
         `
-
+        
         const results = await this.database.query(sql, params)
 
         return this.hydrateEvents(results.rows)
@@ -85,8 +87,17 @@ module.exports = class PaperEventsDAO {
         let values = ``
         let params = []
 
+        const validFields = [ 
+            'paperId', 'actorId', 'version', 'status', 'type', 
+            'visibility', 'eventDate', 'assigneeId', 'reviewId', 
+            'reviewCommentId', 'submissionId', 'newStatus' 
+        ]
+
         let count = 1
         for(const [key, value] of Object.entries(event)) {
+            if ( ! validFields.includes(key) ) {
+                continue
+            }
             
             if ( key == 'paperId' ) {
                 columns += `paper_id, `
@@ -127,20 +138,31 @@ module.exports = class PaperEventsDAO {
      *
      */
     async updateEvent(event) {
-        if ( ! event.visibility ) {
-            throw new DAOError(`Only visibility may be updated.`)
+        if ( ! event.visibility && ! event.status ) {
+            throw new DAOError(`Only visibility or status may be updated.`)
         }
 
-        const results = await this.database.query(
-            `UPDATE paper_events SET visibility = $1 WHERE id = $2`,
-            [ event.visibility, event.id]
-        )
+        if ( event.visibility ) {
+            const results = await this.database.query(
+                `UPDATE paper_events SET visibility = $1 WHERE id = $2`,
+                [ event.visibility, event.id]
+            )
 
-        console.log(event)
-        console.log(results)
-
-        if ( results.rowCount <= 0 ) {
-            throw new DAOError('update-failure', `Attempt to update event failed.`)
+            if ( results.rowCount <= 0 ) {
+                throw new DAOError('update-failure', `Attempt to update event failed.`)
+            }
         }
+
+        if ( event.status ) {
+            const results = await this.database.query(
+                `UPDATE paper_events SET status = $1 WHERE id = $2`,
+                [ event.status, event.id]
+            )
+
+            if ( results.rowCount <= 0 ) {
+                throw new DAOError('update-failure', `Attempt to update event failed.`)
+            }
+        }
+
     }
 }

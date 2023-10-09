@@ -8,6 +8,7 @@ const JournalsMigration = require('../migrations/JournalsMigration')
 const PaperEventsMigration = require('../migrations/PaperEventsMigration')
 const NotificationsMigration = require('../migrations/NotificationsMigration')
 const JournalTransparencyModelsMigration = require('../migrations/JournalTransparencyModelsMigration')
+const PaperEventStatusMigration = require('../migrations/PaperEventStatusMigration')
 
 const ServiceError = require('../errors/ServiceError')
 const MigrationError = require('../errors/MigrationError')
@@ -84,10 +85,14 @@ module.exports = class FeatureService {
                 dependsOn: [ 'paper-events-189', 'journals-79' ],
                 conflictsWith: [],
                 migration: new JournalTransparencyModelsMigration(core)
+            },
+
+            // Issue #215 - Paper Events in Progress
+            'paper-event-status-215': {
+                dependsOn: [ 'paper-events-189', 'journals-79' ],
+                conflictsWith: [],
+                migration: new PaperEventStatusMigration(core)
             }
-
-
-
         }
     }
 
