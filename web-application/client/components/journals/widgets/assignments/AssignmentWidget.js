@@ -117,6 +117,7 @@ const AssignmentWidget = function(props) {
 
     // ======= Render ===============================================
  
+
     const assignees = (props.type == 'editor' ? submission.editors : submission.reviewers)
 
     const version = paper.versions[0]
@@ -191,6 +192,23 @@ const AssignmentWidget = function(props) {
     }
     if ( assignedViews.length <= 0 ) {
         assignedViews = (<div>No {props.type} currently assigned.</div>)
+    }
+
+    const membership = currentUser.memberships.find((m) => m.journalId == submission.journalId)
+
+    const isEditor =  membership && ( membership.permissions == 'owner' || membership.permissions == 'editor' ) ? true : false
+    const isManagingEditor = membership && membership.permissions == 'owner' ? true : false
+    const isAssignedEditor = submission.editors.find((e) => e.userId == currentUser.id) ? true : false 
+
+    if ( journal.model == 'closed' && ( ! isManagingEditor && ! isAssignedEditor )) {
+        return (
+        <div className="assignment-widget">
+            <div>Assigned { props.type == 'editor' ? 'Editors' : 'Reviewers' }</div>
+            <div className="assigned-members">
+                { assignedViews}                
+            </div>
+        </div>
+        )
     }
 
     return (

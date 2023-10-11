@@ -40,6 +40,22 @@ const EditorControls = function({ paperId }) {
             ) ? true : false 
         )
     ) 
+
+    let showDecisionControls = true
+    if ( currentUser && submission ) {
+        const journal = journalDictionary[submission.journalId]
+
+        const membership = currentUser.memberships.find((m) => m.journalId == submission.journalId)
+
+        const isEditor =  membership && ( membership.permissions == 'owner' || membership.permissions == 'editor' ) ? true : false
+        const isManagingEditor = membership && membership.permissions == 'owner' ? true : false
+        const isAssignedEditor = submission.editors.find((e) => e.userId == currentUser.id) ? true : false 
+
+        if ( journal.model == 'closed' && ( ! isManagingEditor && ! isAssignedEditor )) {
+            return null
+        }
+    }
+
     return (
         <>
             { submission && <ButtonWithModal className="editor-controls">
@@ -47,7 +63,7 @@ const EditorControls = function({ paperId }) {
                 <ButtonModal className="editor-controls-modal"> 
                     <div className="header">Editing for { journalDictionary[submission.journalId].name }</div>
                     <SubmissionControls submissionId={submission.id} />
-                    <ReviewDecisionControls submission={submission} />
+                    { showDecisionControls && <ReviewDecisionControls submission={submission} /> }
                 </ButtonModal>
             </ButtonWithModal> }
         </>

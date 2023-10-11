@@ -642,7 +642,6 @@ module.exports = class ReviewController {
                 request.session.user,
                 'new-review',
                 {
-                    paper: paper,
                     review: entity
                 }
             )

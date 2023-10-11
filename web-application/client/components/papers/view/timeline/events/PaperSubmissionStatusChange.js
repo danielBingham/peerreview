@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 
-import { InboxArrowDownIcon } from '@heroicons/react/24/outline'
+import { ArrowPathRoundedSquareIcon } from '@heroicons/react/24/outline'
 
 import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/generic/timeline/Timeline'
 import DateTag from '/components/DateTag'
@@ -40,7 +40,7 @@ const PaperSubmissionStatusChange = function({ eventId }) {
     return (
         <TimelineItem>
             <TimelineIcon>
-                <InboxArrowDownIcon />
+                <ArrowPathRoundedSquareIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
                 <div><UserTag id={event.actorId} /> changed status to <strong>{ statuses[event.newStatus] }</strong> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />.</div> 

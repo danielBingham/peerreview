@@ -41,6 +41,14 @@ const SubmissionStatusWidget = function(props) {
         }
     })
 
+    const journal = useSelector(function(state) {
+        if ( submission ) {
+            return state.journals.dictionary[submission.journalId]
+        } else {
+            return null
+        }
+    })
+
     // ======= Actions and Event Handling ===========================
 
     const dispatch = useDispatch()
@@ -66,6 +74,21 @@ const SubmissionStatusWidget = function(props) {
 
     // ======= Render ===============================================
     //
+  
+    const membership = currentUser.memberships.find((m) => m.journalId == submission.journalId)
+
+    const isEditor =  membership && ( membership.permissions == 'owner' || membership.permissions == 'editor' ) ? true : false
+    const isManagingEditor = membership && membership.permissions == 'owner' ? true : false
+    const isAssignedEditor = submission.editors.find((e) => e.userId == currentUser.id) ? true : false 
+
+    if ( journal.model == 'closed' && ( ! isManagingEditor && ! isAssignedEditor )) {
+        return (
+            <div className="submission-status-widget">
+                <strong>Status</strong>: { submission.status } 
+            </div>
+        )
+    }
+    
     const statusMenuItemViews = []
     const statuses = [ 'submitted', 'review', 'proofing' ]
     for(const status of statuses ) {

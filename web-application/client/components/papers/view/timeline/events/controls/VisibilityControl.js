@@ -64,6 +64,34 @@ const canEditEvent = function(user, event, paper, submission) {
     return false
 }
 
+const generateMinimalVisibility = function(user, event, paper, submission) {
+    // If they are a corresponding author for the paper.
+    const paperEvents = [ 
+        'paper:new-version', 
+        'paper:preprint-posted'
+    ]
+    if ( paperEvents.includes(event.type) && paper ) {
+        return 'corresponding-authors' 
+    }
+
+    // If they are a managing editor or assigned editor for this
+    // submission.
+    const submissionEvents = [
+        'submission:new', 
+        'submission:new-review',
+        'submission:status-changed',
+        'submission:reviewer-assigned',
+        'submission:reviewer-unassigned',
+        'submission:editor-assigned',
+        'submission:editor-unassigned'
+    ]
+    if ( submissionEvents.includes(event.type) && submission ) {
+        return 'managing-editors'
+    }
+
+    return 'corresponding-authors'
+}
+
 const VisibilityControl = function({ eventId }) {
 
     // ============ Request Tracking ==========================================
@@ -106,10 +134,52 @@ const VisibilityControl = function({ eventId }) {
     
     const changeVisibility = function(visibility) {
         let newVisibility = [ ...event.visibility ]
+        
+        let toggleOn = false
         if ( newVisibility.includes(visibility) ) {
             newVisibility = newVisibility.filter((v) => v != visibility)
         } else {
+            toggleOn = true
             newVisibility.push(visibility)
+        }
+
+        const minimalVisibility = generateMinimalVisibility(currentUser, event, paper, submission)
+        if ( ! newVisibility.includes(minimalVisibility) ) {
+            if ( minimalVisibility == 'corresponding-authors' && ! newVisibility.includes('authors') ) {
+                newVisibility.push(minimalVisibility)
+            } else if ( minimalVisibility == 'managing-editors' && ! newVisibility.includes('editors') ) {
+                newVisibility.push(minimalVisibility)
+            }
+        }
+
+        if ( toggleOn && visibility == 'public' ) {
+            newVisibility = [ 'public' ]
+        } else if ( toggleOn && visibility != 'public' ) {
+            newVisibility = newVisibility.filter((v) => v != 'public')
+
+            // "authors" includes "corresponding-authors".  If you add one, remove
+            // the other.
+            if ( toggleOn && visibility == 'authors' ) {
+                newVisibility = newVisibility.filter((v) => v != 'corresponding-authors')
+            }
+
+            if ( toggleOn && visibility == 'corresponding-authors' ) {
+                newVisibility = newVisibility.filter((v) => v != 'authors')
+            }
+
+            if ( toggleOn && (visibility == 'managing-editors' || visibility == 'assigned-editors' ) ) {
+                newVisibility = newVisibility.filter((v) => v != 'editors')
+            }
+            if ( toggleOn && visibility == 'editors' ) {
+                newVisibility = newVisibility.filter((v) => v != 'managing-editors' && v != 'assigned-editors')
+            }
+
+            if ( toggleOn && visibility == 'assigned-reviewers' ) {
+                newVisibility = newVisibility.filter((v) => v != 'reviewers')
+            }
+            if( toggleOn && visibility == 'reviewers' ) {
+                newVisibility = newVisibility.filter((v) => v != 'assigned-reviewers')
+            }
         }
 
         const newEvent = { 
@@ -139,32 +209,41 @@ const VisibilityControl = function({ eventId }) {
             </div>
         )
     } else {
-        const visibilities = [
-            'corresponding-authors',
-            'authors',
-            'public'
-        ]
+        const visibilities = {
+            'public': false,
+            'authors': [ 'corresponding-authors' ]
+        }
 
         if ( submission ) {
-            visibilities.push('managing-editors', 'editors', 'assigned-editors', 'reviewers', 'assigned-reviewers')
+            visibilities['editors'] = [ 'managing-editors', 'assigned-editors' ]
+            visibilities['reviewers'] = [ 'assigned-reviewers' ]
         }
-            
-
+           
+        const generateVisibilityMenuItem = function(visibility, selected) {
+            return (
+                <FloatingMenuItem className="visibility" key={visibility} onClick={(e) => changeVisibility(visibility)}>
+                    { selected && <CheckIcon/>} { ! selected && <span className="check-placeholder"></span> } { visibility }
+                </FloatingMenuItem>
+            )
+        }
 
         const menuItemViews = []
-        for(const visibility of visibilities) {
-            if ( event.visibility.includes(visibility) ) {
+        for(const [ visibility, children ] of Object.entries(visibilities)) {
+            if ( children ) {
+                const childGroup = []
+                for(const child of children) {
+                    childGroup.push(generateVisibilityMenuItem(child, event.visibility.includes(child)))
+                }
                 menuItemViews.push(
-                    <FloatingMenuItem className="visibility" key={visibility} onClick={(e) => changeVisibility(visibility)}>
-                        <CheckIcon/> { visibility }
-                    </FloatingMenuItem>
+                    <div key={visibility} className="visibility-group">
+                        { generateVisibilityMenuItem(visibility, event.visibility.includes(visibility)) }
+                        <div className="visibility-group-children">
+                            { childGroup }
+                        </div>
+                    </div>
                 )
             } else {
-                menuItemViews.push(
-                    <FloatingMenuItem className="visibility" key={visibility} onClick={(e) => changeVisibility(visibility)}>
-                         { visibility }
-                    </FloatingMenuItem>
-                )
+                menuItemViews.push(generateVisibilityMenuItem(visibility, event.visibility.includes(visibility)))
             }
         }
 

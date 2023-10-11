@@ -1,7 +1,7 @@
 import React from 'react'
 import { useSelector } from 'react-redux'
 
-import { InboxArrowDownIcon } from '@heroicons/react/24/outline'
+import { UserPlusIcon, UserMinusIcon } from '@heroicons/react/24/outline'
 
 import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/generic/timeline/Timeline'
 import DateTag from '/components/DateTag'
@@ -28,19 +28,20 @@ const PaperSubmissionAssignmentEvent = function({ eventId }) {
     // ================= Render ===============================================
    
     const eventTypeMap = {
-        'submission:reviewer-assigned': 'assigned reviewer',
-        'submission:reviewer-unassigned': 'unassigned reviewer',
-        'submission:editor-assigned': 'assigned editor',
-        'submission:editor-unassigned': 'unassigned editor'
+        'submission:reviewer-assigned': { name: 'assigned reviewer', icon: ( <UserPlusIcon /> ) },
+        'submission:reviewer-unassigned': { name: 'unassigned reviewer', icon: ( <UserMinusIcon /> ) },
+        'submission:editor-assigned': { name: 'assigned editor', icon: ( <UserPlusIcon /> ) },
+        'submission:editor-unassigned': { name: 'unassigned editor', icon: ( <UserMinusIcon /> ) }
     }
+
 
     return (
         <TimelineItem>
             <TimelineIcon>
-                <InboxArrowDownIcon />
+                { eventTypeMap[event.type].icon } 
             </TimelineIcon>
             <TimelineItemWrapper>
-                <div><UserTag id={event.actorId} /> { eventTypeMap[event.type] } <UserTag id={event.assigneeId}/> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />.</div>
+                <div><UserTag id={event.actorId} /> { eventTypeMap[event.type].name } <UserTag id={event.assigneeId}/> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />.</div>
                 <VisibilityControl eventId={eventId} />
             </TimelineItemWrapper>
         </TimelineItem> 
