@@ -315,7 +315,29 @@ CREATE TABLE paper_fields (
     PRIMARY KEY (paper_id, field_id)
 );
 
+CREATE TYPE paper_comments_status AS ENUM('in-progress', 'committed', 'edit-in-progress');
+CREATE TABLE paper_comments (
+    id          bigserial PRIMARY KEY,
+    paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+    user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
+    status      paper_comments_status,
+    content     text,
+    created_date    timestamptz,
+    updated_date    timestamptz,
+    committed_date  timestamptz DEFAULT NULL
+);
+CREATE INDEX paper_comments__paper_id ON paper_comments (paper_id);
+CREATE INDEX paper_comments__user_id ON paper_comments (user_id);
 
+CREATE TABLE paper_comment_versions (
+    paper_comment_id    bigint REFERENCES paper_comments(id) ON DELETE CASCADE,
+    version             int DEFAULT 1,
+    content             text,
+    created_date        timestamptz,
+    updated_date        timestamptz
+);
+CREATE INDEX paper_comment_versions__paper_comment_id ON paper_comment_versions (paper_comment_id);
+CREATE INDEX paper_comment_versions__version ON paper_comment_versions (version);
 
 /******************************************************************************
  * Journals
@@ -530,7 +552,8 @@ CREATE TABLE paper_events (
     review_id bigint REFERENCES reviews(id) DEFAULT NULL ON DELETE CASCADE,
     review_comment_id bigint REFERENCES review_comments(id) DEFAULT NULL,
     submission_id bigint REFERENCES journal_submissions(id) DEFAULT NULL,
-    new_status journal_submission_status DEFAULT NULL
+    new_status journal_submission_status DEFAULT NULL,
+    paper_comment_id bigint REFERENCES paper_comments(id) DEFAULT NULL ON DELETE CASCADE
 );
 
 /******************************************************************************

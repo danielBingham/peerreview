@@ -500,6 +500,31 @@ module.exports = function(core) {
     })
 
     /******************************************************************************
+     *          Paper Comment Routes
+     ******************************************************************************/
+
+    const PaperCommentController = require('./controllers/PaperCommentController')
+    const paperCommentController = new PaperCommentController(core)
+
+    router.post('/paper/:paperId/comments', function(request, response, next) {
+        paperCommentController.postPaperComments(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/paper/:paperId/comment/:paperCommentId', function(request, response, next) {
+        paperCommentController.patchPaperComment(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.delete('/paper/:paperId/comment/:paperCommentId', function(request, response, next) {
+        paperCommentController.deletePaperComment(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    /******************************************************************************
      * Dashboard Feeds
      * ***************************************************************************/
 
