@@ -90,6 +90,10 @@ module.exports = class PaperTimelineCommentsMigration {
                 ALTER TABLE paper_events ALTER COLUMN paper_comment_id SET DEFAULT NULL
             `, [])
 
+            await this.database.query(`
+                ALTER TYPE paper_event_types ADD VALUE IF NOT EXISTS 'paper:new-comment'
+            `, [])
+
         } catch (error) {
             try {
                 await this.database.query(`ALTER TABLE paper_events DROP COLUMN IF EXISTS paper_comment_id`, [])

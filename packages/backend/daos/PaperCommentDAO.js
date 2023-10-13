@@ -65,41 +65,17 @@ module.exports = class PaperCommentDAO {
         const results = await this.database.query(`
             INSERT INTO paper_comments (paper_id, user_id, status, content, created_date, updated_date )
                 VALUES ( $1, $2, 'in-progress', $3, now(), now())
+                RETURNING id
         `, [ paperComment.paperId, paperComment.userId, paperComment.content ])
 
         if ( results.rowCount <= 0 ) {
             throw new DAOError('insert-failure', 
                 `Failed to insert PaperComment() for Paper(${paperComment.paperId}) and User(${paperComment.userId}).`)
         }
+
+        return results.rows[0].id
     }
 
-    /**
-     * Insert new Paper Comment Version
-     *
-     * Create a new version of a comment.    We return the inserted version.
-     *
-     * @param {Object} comment  The comment we want to insert a version for.
-     * @param {int} existingVersion The current version.
-     *
-     * @return {int} The version number of the inserted version.
-     */
-    async insertPaperCommentVersion(paperComment, existingVersion) {
-        this.logger.debug(`Creating a version for PaperComment(${paperComment.id}) with verison ${existingVersion}`)
-        this.logger.debug(paperComment)
-
-        const sql = `
-            INSERT INTO paper_comment_versions (paper_comment_id, version, content, created_date, updated_date)
-                VALUES ($1, $2, $3, now(), now()) 
-        `
-        const version = existingVersion ? existingVersion+1 : 1
-        const results = await this.database.query(sql, [ paperComment.id, version, paperComment.content ])
-
-        if ( results.rowCount == 0 ) {
-            throw new DAOError('version-insert-failed', `Failed to insert PaperCommentVersion for PaperComment(${id}).`)
-        }
-
-        return version
-    }
 
     async updatePaperComment(paperComment) {
         const validFields = [ 'status', 'content', 'committedDate' ]
@@ -140,5 +116,54 @@ module.exports = class PaperCommentDAO {
             throw new DAOError('delete-failed',
                 `Failed to delete PaperComment(${id}).`)
         }
+    }
+
+    /**
+     * Insert new Paper Comment Version
+     *
+     * Create a new version of a comment.    We return the inserted version.
+     *
+     * @param {Object} comment  The comment we want to insert a version for.
+     * @param {int} existingVersion The current version.
+     *
+     * @return {int} The version number of the inserted version.
+     */
+    async insertPaperCommentVersion(paperComment) {
+        // Determine the next version.
+        let version = 1
+
+        const versionResults = await this.database.query(`
+            SELECT version FROM paper_comment_versions WHERE paper_comment_id = $1 ORDER BY version desc
+        `, [ paperComment.id ])
+
+        if ( versionResults.rows.length > 0 ) {
+            version = versionResults.rows[0].version+1
+        }
+
+        // Insert that version.
+        const sql = `
+            INSERT INTO paper_comment_versions (paper_comment_id, version, content, created_date, updated_date)
+                VALUES ($1, $2, $3, now(), now()) 
+        `
+        const results = await this.database.query(sql, [ paperComment.id, version, paperComment.content ])
+
+        if ( results.rowCount == 0 ) {
+            throw new DAOError('version-insert-failed', `Failed to insert PaperCommentVersion for PaperComment(${id}).`)
+        }
+
+        return version 
+    }
+
+    async revertVersion(paperCommentId) {
+        const results = await this.database.query(`
+            SELECT content FROM paper_comment_versions WHERE paper_comment_id = $1 ORDER BY version DESC
+        `, [ paperCommentId ])
+
+        if ( results.rows.length <= 0 ) {
+            throw new DAOError('failed-revert',
+                `Attempt to revert PaperComment(${paperCommentId}) but no previous version exists!`)
+        }
+
+        await this.updatePaperComment({ id: paperCommentId, status: 'committed', content: results.rows[0].content })
     }
 }

@@ -1,4 +1,6 @@
 
+const SubmissionService = require('./SubmissionService')
+
 /**
  * Manages Paper Visibility
  *
@@ -13,11 +15,74 @@
  * If the submission is visible, paper is visible
  *
  */
-module.exports = class PaperPermissionsService {
+module.exports = class PaperService {
 
     constructor(core)  {
         this.database = core.database
         this.logger = core.logger
+
+        this.submissionService = new SubmissionService(core)
+    }
+
+    /**
+     * Returns the papers.id of papers that are visible to `user`.
+     *
+     * Papers are visible if:
+     * - User is an author.
+     * - Papers have a preprint.
+     * - Papers have a submission visible to the user.
+     *
+     * TODO Do we want to show the paper when at least one event is visible to
+     * the user?  Or make events subservient to the paper's status?  Is making
+     * an event 'public' enough to make the paper public or does the paper have
+     * to be shared as a preprint / publication first and then the event is
+     * publicly visible?
+     *
+     * @param {User}    user    The user we want to get visible papers for.
+     *
+     * @return {int[]}  An array containing the ids of the visible papers.
+     */
+    async getVisiblePaperIds(user) {
+        const visibleSubmissionIds = await this.submissionService.getVisibleSubmissionIds(user)
+
+        const results = await this.database.query(`
+            SELECT papers.id FROM papers
+                LEFT OUTER JOIN journal_submissions ON papers.id = journal_submission.paper_id
+                LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
+            WHERE papers.show_preprint = true
+                OR journal_submissions.id = ANY($1::bigint[]) 
+                OR paper_authors.user_id = $2
+        `, [ visibleSubmissionIds, user.id ])
+
+        if ( results.rows.length <= 0 ) {
+            return []
+        }
+
+        return results.rows.map((r) => r.id)
+    }
+
+    /**
+     * Determine whether `user` can view `paperId`.
+     *
+     * @see this.getVisiblePaperIds() for visibility rules.
+     *
+     * @param   {User}  user    The user who's visibility we want to check.
+     * @param   {int}   paperId The id of the paper we want to check whether `user` can see.
+     *
+     * @return  {boolean}   True if `user` can see `paperId`, false otherwise.
+     */
+    async canViewPaper(user, paperId) {
+        const results = await this.database.query(`
+            SELECT papers.id FROM papers
+                LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
+            WHERE papers.id = $1 AND (papers.show_preprint = true OR paper_authors.user_id = $2)
+        `, [ user.id, paperId ])
+
+        if ( results.rows.length > 0 ) {
+            return true
+        }
+
+        return await this.submissionService.canViewSubmission(user, paperId)
     }
 
     async getPreprints() {

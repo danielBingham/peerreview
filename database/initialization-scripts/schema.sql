@@ -507,7 +507,7 @@ CREATE TYPE paper_event_types AS ENUM(
     'paper:new-version', 
     'paper:preprint-posted',
     'paper:new-review', 
-    'paper:comment-posted',
+    'paper:new-comment',
     'review:comment-reply-posted',
     'submission:new', 
     'submission:new-review',
@@ -515,7 +515,10 @@ CREATE TYPE paper_event_types AS ENUM(
     'submission:reviewer-assigned',
     'submission:reviewer-unassigned',
     'submission:editor-assigned',
-    'submission:editor-unassigned'
+    'submission:editor-unassigned',
+
+    /* Deprecated and unused values */
+    'paper:comment-posted'
 );
 
 CREATE TYPE paper_event_visibility AS ENUM(

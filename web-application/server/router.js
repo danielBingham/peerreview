@@ -481,6 +481,22 @@ module.exports = function(core) {
         })
     })
 
+    /******************************************************************************
+     *          Version REST Routes
+     ******************************************************************************/
+
+    router.post('/paper/:paper_id/versions', function(request, response, next) {
+        paperController.postPaperVersions(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/paper/:paper_id/version/:version', function(request, response, next) {
+        paperController.patchPaperVersion(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
     /**************************************************************************
      *          Paper Event Routes
      * ************************************************************************/
@@ -534,21 +550,6 @@ module.exports = function(core) {
         })
     })
 
-    /******************************************************************************
-     *          Version REST Routes
-     ******************************************************************************/
-
-    router.post('/paper/:paper_id/versions', function(request, response, next) {
-        paperController.postPaperVersions(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.patch('/paper/:paper_id/version/:version', function(request, response, next) {
-        paperController.patchPaperVersion(request, response).catch(function(error) {
-            next(error)
-        })
-    })
 
     /**************************************************************************
      * Paper Submission REST Routes

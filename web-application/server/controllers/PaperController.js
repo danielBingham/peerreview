@@ -25,7 +25,7 @@ module.exports = class PaperController {
         this.journalSubmissionDAO = new backend.JournalSubmissionDAO(core)
 
         this.submissionPermissionService = new backend.SubmissionService(core)
-        this.paperPermissionsService = new backend.PaperPermissionsService(core)
+        this.PaperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
 
@@ -169,17 +169,17 @@ module.exports = class PaperController {
 
             // Preprints the session user can review.
             if ( query.type == 'preprint') {
-                visibleIds = await this.paperPermissionsService.getPreprints()
+                visibleIds = await this.PaperService.getPreprints()
 
             // Retrieves all of a  
             } else if (session.user && query.type == 'drafts' ) {
-                visibleIds = await this.paperPermissionsService.getDrafts(session.user.id)
+                visibleIds = await this.PaperService.getDrafts(session.user.id)
             } else if ( session.user && query.type == 'private-drafts' ) {
-                visibleIds = await this.paperPermissionsService.getPrivateDrafts(session.user.id)
+                visibleIds = await this.PaperService.getPrivateDrafts(session.user.id)
             } else if ( session.user && query.type == 'user-submissions' ) {
-                visibleIds = await this.paperPermissionsService.getUserSubmissions(session.user.id)
+                visibleIds = await this.PaperService.getUserSubmissions(session.user.id)
             } else if (session.user && query.type == 'review-submissions' ) {
-                visibleIds = await this.paperPermissionsService.getVisibleDraftSubmissions(session.user.id)
+                visibleIds = await this.PaperService.getVisibleDraftSubmissions(session.user.id)
             } else if ( session.user && query.type == 'assigned-review' ) {
                 const assignedResults = await this.database.query(`
                     SELECT journal_submissions.paper_id
