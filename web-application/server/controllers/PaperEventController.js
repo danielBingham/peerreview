@@ -1,6 +1,7 @@
 const { 
     PaperEventDAO, 
     PaperDAO, 
+    PaperCommentDAO,
     UserDAO, 
     ReviewDAO, 
     JournalSubmissionDAO,
@@ -17,6 +18,7 @@ module.exports = class PaperEventController {
 
         this.paperEventDAO = new PaperEventDAO(core)
         this.paperDAO = new PaperDAO(core)
+        this.paperCommentDAO = new PaperCommentDAO(core)
         this.userDAO = new UserDAO(core)
         this.reviewDAO = new ReviewDAO(core)
         this.submissionDAO = new JournalSubmissionDAO(core)
@@ -34,6 +36,7 @@ module.exports = class PaperEventController {
         const reviewIds = []
         const reviewCommentIds = []
         const submissionIds = []
+        const paperCommentIds = []
         for(const [id, event] of Object.entries(results.dictionary)) {
             if ( event.actorId ) {
                 userIds.push(event.actorId)
@@ -50,6 +53,8 @@ module.exports = class PaperEventController {
             if ( event.submissionId ) {
                 submissionIds.push(event.submissionId)
             }
+            if ( event.paperCommentId ) {
+                paperCommentIds.push(event.paperCommentId)
         }
 
         // ======== Users =====================================================
@@ -57,7 +62,6 @@ module.exports = class PaperEventController {
         relations.users = userResults.dictionary
 
         // ======== reviews ===================================================
-
         const reviewResults = await this.reviewDAO.selectReviews(
             `WHERE reviews.id = ANY($1::bigint[]) OR review_comments.id = ANY($2::bigint[])`, 
             [ reviewIds, reviewCommentIds ]
@@ -70,6 +74,13 @@ module.exports = class PaperEventController {
             [ submissionIds ]
         )
         relations.submissions = submissionResults.dictionary
+
+        // ======== Paper Comments ============================================
+        const paperCommentResults = await this.paperCommentDAO.selectPaperComments(
+            `WHERE paper_comments.id = ANY($1::bigint[])`,
+            [ paperCommentIds ]
+        )
+        relations.paperComments = paperCommentResults.dictionary
 
         if ( requestedRelations ) {
             for(const relation of requestedRelations ) {
