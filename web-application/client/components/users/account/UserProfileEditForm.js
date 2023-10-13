@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from 'react-redux'
 
 import { patchUser, cleanupRequest } from '/state/users'
 
-import UserProfileImage from '/components/users/UserProfileImage'
 import FileUploadInput from '/components/files/FileUploadInput'
 import Spinner from '/components/Spinner'
 
@@ -183,12 +182,22 @@ const UserProfileEditForm = function(props) {
         locationErrorView = ( <div className="error">Location is too long. Limit is 256 characters.</div> )
     }
 
+    const userProfileImage = ( <UserCicleIcon /> )
+    if ( file ) {
+        const url = new URL(file.filepath, file.location)
+        content = (
+            <img src={url.href} />
+        )
+    }
+
     return (
         <div className='user-profile-edit-form'>
             <form onSubmit={onSubmit}>
                 <div className="profile-picture">
                     <div className="profile-wrapper">
-                        <UserProfileImage file={file} />                
+                        <div className="profile-image">
+                            { userProfileImage }
+                        </div>
                     </div>
                     <div className="input-wrapper">
                         <FileUploadInput setFile={setFile} types={[ 'image/jpeg', 'image/png' ]} />

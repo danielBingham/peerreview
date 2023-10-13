@@ -105,26 +105,34 @@ module.exports = class SubmissionService {
      * @return  {int[]} An array of the visible submissionIds.
      */
     async getVisibleSubmissionIds(user) {
-        const results = await this.database.query(`
+        const sql = `
             SELECT DISTINCT journal_submissions.id
                 FROM journal_submissions
                     LEFT OUTER JOIN journals ON journal_submissions.journal_id = journals.id
                     LEFT OUTER JOIN journal_members ON journal_submissions.journal_id = journal_members.journal_id
-                    LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submissionId
-                    LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submissionId
+                    LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
+                    LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submission_id
             WHERE 
                 journals.model = 'public'
-                    OR (journals.model = 'open-public' AND (journal_submissions.status = 'published' OR journal_members.user_id = $1))
-                    OR (journals.model = 'open' AND (journal_submissions.status = 'published' OR journal_member.user_id = $1))
+                    OR (journals.model = 'open-public' AND (journal_submissions.status = 'published' 
+                        ${ user ? 'OR journal_members.user_id = $1' : ''}))
+                    OR (journals.model = 'open-closed' AND (journal_submissions.status = 'published' 
+                        ${ user ? 'OR journal_members.user_id = $1' : '' }))
                     OR (journals.model = 'closed' 
                         AND (journal_submissions.status = 'published' 
-                            OR ( journal_members.permissions = 'owner' 
+                            ${ user ? `OR ( journal_members.permissions = 'owner' 
                                 OR journal_submission_editors.user_id = $1 
                                 OR journal_submission_reviewers.user_id = $1
-                                )
+                                )` : '' }
                             )
                        )
-        `, [ user.id ])
+        `
+        const params = []
+        if ( user ) {
+            params.push(user.id)
+        }
+
+        const results = await this.database.query(sql, params)
 
         if ( results.rows.length <= 0 ) {
             return []
@@ -137,7 +145,7 @@ module.exports = class SubmissionService {
         const visibleSubmissionIds = await this.getVisibleSubmissionIds(user)
 
         const results = await this.database.query(`
-            SELECT paper_id FROM journal_submissions WHERE id = ANY($1::bigint[]) AND paper_id = $1
+            SELECT paper_id FROM journal_submissions WHERE id = ANY($1::bigint[]) AND paper_id = $2
         `, [ visibleSubmissionIds, paperId])
 
         if ( results.rows.length > 0 ) {

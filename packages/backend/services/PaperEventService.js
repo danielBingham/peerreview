@@ -75,7 +75,7 @@ module.exports = class PaperEventService {
                 'paper:new-version': [ 'public' ],
                 'paper:preprint-posted': [ 'public' ],
                 'paper:new-review': [ 'public' ], 
-                'paper:comment-posted': [ 'public' ],
+                'paper:new-comment': [ 'public' ],
                 'review:comment-reply-posted': [ 'public' ],
                 'submission:new': [ 'public' ], 
                 'submission:new-review': [ 'public' ],
@@ -89,7 +89,7 @@ module.exports = class PaperEventService {
                 'paper:new-version': [ 'editors', 'reviewers', 'authors' ],
                 'paper:preprint-posted': [ 'public' ],
                 'paper:new-review': [ 'editors', 'reviewers', 'authors' ], 
-                'paper:comment-posted': [ 'editors', 'reviewers', 'authors' ],
+                'paper:new-comment': [ 'editors', 'reviewers', 'authors' ],
                 'submission:new': [ 'editors', 'reviewers', 'authors' ], 
                 'submission:new-review': [ 'editors', 'reviewers', 'authors' ], 
                 'submission:status-changed': [ 'editors', 'reviewers', 'authors' ],
@@ -102,7 +102,7 @@ module.exports = class PaperEventService {
                 'paper:new-version': [ 'editors', 'reviewers', 'authors' ],
                 'paper:preprint-posted': [ 'public' ],
                 'paper:new-review': [ 'editors', 'reviewers', 'authors' ], 
-                'paper:comment-posted': [ 'editors', 'reviewers', 'authors' ],
+                'paper:new-comment': [ 'editors', 'reviewers', 'authors' ],
                 'submission:new': [ 'editors', 'reviewers', 'authors' ], 
                 'submission:new-review': [ 'editors', 'reviewers', 'authors' ], 
                 'submission:status-changed': [ 'editors', 'reviewers', 'authors' ],
@@ -115,7 +115,7 @@ module.exports = class PaperEventService {
                 'paper:new-version': [ 'managing-editors', 'assigned-editors', 'assigned-reviewers', 'authors' ],
                 'paper:preprint-posted': [ 'public' ],
                 'paper:new-review': [ 'managing-editors', 'assigned-editors' ], 
-                'paper:comment-posted': [ 'managing-editors', 'assigned-editors', 'assigned-reviewers', 'authors' ],
+                'paper:new-comment': [ 'managing-editors', 'assigned-editors', 'assigned-reviewers', 'authors' ],
                 'submission:new': [ 'managing-editors', 'assigned-editors', 'authors' ], 
                 'submission:new-review': [ 'managing-editors', 'assigned-editors', ], 
                 'submission:status-changed': [ 'managing-editors', 'assigned-editors' ],
@@ -263,11 +263,17 @@ module.exports = class PaperEventService {
             }
         }
             
-        // ======== start with public =========================================
+        // ======== start with public and committed =========================================
         
-        let eventConditions = 'paper_events.actor_id = $1 OR paper_events.visibility && $2'
-        const params = [ userId, userRoles ]
-        let count = 3
+        let eventConditions = `(paper_events.visibility && $2 AND paper_events.status = 'committed')`
+        const params = [ userRoles ]
+        let count = 2
+
+        if ( userId ) {
+            eventConditions += `OR (paper_events.actor_id = $${count})` 
+            count += 1
+            params.push(userId)
+        }
 
         // ======== Paper Roles ===============================================
         // ======== authors, corresponding-authors ============================
@@ -277,6 +283,7 @@ module.exports = class PaperEventService {
             eventConditions += ` OR (
                 paper_events.paper_id = $${count}
                     AND paper_events.visibility && $${count+1}
+                    AND paper_events.status = 'committed'
                 )
             `
             
@@ -308,6 +315,7 @@ module.exports = class PaperEventService {
             eventConditions += ` OR (
                 paper_events.visibility && $${count}::paper_event_visibility[] 
                     AND paper_events.submission_id = $${count+1}
+                    AND paper_events.status = 'committed'
             )`
 
             count += 2
@@ -319,6 +327,7 @@ module.exports = class PaperEventService {
 
                 eventConditions += `OR (
                     paper_events.visibility && $${count}::paper_event_visibility[]
+                        AND paper_events.status = 'committed'
                         AND paper_events.submission_id = $${count+1}
                         AND (
                             ( paper_events.actor_id = $${count+2} OR paper_events.assignee_id = $${count+2} )

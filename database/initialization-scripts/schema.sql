@@ -319,6 +319,7 @@ CREATE TYPE paper_comments_status AS ENUM('in-progress', 'committed', 'edit-in-p
 CREATE TABLE paper_comments (
     id          bigserial PRIMARY KEY,
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+    paper_version   bigint,
     user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
     status      paper_comments_status,
     content     text,
@@ -343,7 +344,7 @@ CREATE INDEX paper_comment_versions__version ON paper_comment_versions (version)
  * Journals
  ******************************************************************************/
 
-CREATE TYPE journal_model as ENUM('public', 'open-open', 'open-closed', 'closed');
+CREATE TYPE journal_model as ENUM('public', 'open-public', 'open-closed', 'closed');
 CREATE TABLE journals (
     id      bigserial PRIMARY KEY,
     name    varchar(1024) NOT NULL,

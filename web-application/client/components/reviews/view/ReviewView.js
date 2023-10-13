@@ -9,7 +9,6 @@ import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/gen
 import ReviewSummaryForm from '/components/reviews/widgets/ReviewSummaryForm'
 import ReviewSummaryView from '/components/reviews/widgets/ReviewSummaryView'
 import CommentThreadView from './CommentThreadView'
-import UserProfileImage from '/components/users/UserProfileImage'
 
 import Spinner from '/components/Spinner'
 

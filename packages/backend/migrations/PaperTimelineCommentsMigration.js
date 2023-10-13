@@ -42,6 +42,7 @@ module.exports = class PaperTimelineCommentsMigration {
                 CREATE TABLE paper_comments (
                     id          bigserial PRIMARY KEY,
                     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+                    paper_version     bigint,
                     user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
                     status      paper_comments_status,
                     content     text,
@@ -83,7 +84,7 @@ module.exports = class PaperTimelineCommentsMigration {
             `, [])
 
             await this.database.query(`
-                ALTER TABLE paper_events ADD FOREIGN KEY (paper_comment_id) REFERENCES paper_comments(id)
+                ALTER TABLE paper_events ADD FOREIGN KEY (paper_comment_id) REFERENCES paper_comments(id) ON DELETE CASCADE
             `, [])
 
             await this.database.query(`
@@ -105,7 +106,7 @@ module.exports = class PaperTimelineCommentsMigration {
                 await this.database.query(`DROP INDEX IF EXISTS paper_comments__paper_id`, [])
                 await this.database.query(`DROP INDEX IF EXISTS paper_comments__user_id`, [])
                 await this.database.query(`DROP TABLE IF EXISTS paper_comments`, [])
-                await this.database.query(`DROP TYPE IF EXISTS paper_comment_status `, [])
+                await this.database.query(`DROP TYPE IF EXISTS paper_comments_status `, [])
             } catch (rollbackError) {
                 console.error(error)
                 console.error(rollbackError)

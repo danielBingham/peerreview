@@ -24,7 +24,7 @@ module.exports = class PaperController {
         this.journalDAO = new backend.JournalDAO(core)
         this.journalSubmissionDAO = new backend.JournalSubmissionDAO(core)
 
-        this.submissionPermissionService = new backend.SubmissionService(core)
+        this.submissionService = new backend.SubmissionService(core)
         this.PaperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
@@ -61,18 +61,7 @@ module.exports = class PaperController {
         relations.users = userResults.dictionary
 
         // ======== submissions ===============================================
-        let visibleIds = []
-        if ( user ) {
-            visibleIds = await this.submissionPermissionService.getVisibleSubmissionIds(user.id)
-        } else {
-            const visibleSubmissionResults = await this.database.query(`
-                            SELECT paper_id FROM journal_submissions WHERE status='published'
-                        `, [])
-
-            for(const row of visibleSubmissionResults.rows) {
-                visibleIds.push(row.paper_id)
-            }
-        }
+        let visibleSubmissionIds = await this.submissionService.getVisibleSubmissionIds(user.id) 
 
         const paperIds = []
         for(const paper of results.list) {
@@ -80,8 +69,8 @@ module.exports = class PaperController {
         }
 
         const submissionResults = await this.journalSubmissionDAO.selectJournalSubmissions(
-            'WHERE journal_submissions.paper_id = ANY($1::bigint[]) AND journal_submissions.paper_id = ANY($2::bigint[])', 
-            [ paperIds, visibleIds ]
+            'WHERE journal_submissions.paper_id = ANY($1::bigint[]) AND journal_submissions.id = ANY($2::bigint[])', 
+            [ paperIds, visibleSubmissionIds]
         )
         relations.submissions = submissionResults.dictionary
 

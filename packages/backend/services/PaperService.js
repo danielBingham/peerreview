@@ -76,7 +76,7 @@ module.exports = class PaperService {
             SELECT papers.id FROM papers
                 LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
             WHERE papers.id = $1 AND (papers.show_preprint = true OR paper_authors.user_id = $2)
-        `, [ user.id, paperId ])
+        `, [ paperId, user.id ])
 
         if ( results.rows.length > 0 ) {
             return true

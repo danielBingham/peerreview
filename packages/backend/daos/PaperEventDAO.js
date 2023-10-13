@@ -116,7 +116,7 @@ module.exports = class PaperEventsDAO {
             } else if ( key == 'newStatus' ) {
                 columns += `new_status, `
             } else if ( key == 'paperCommentId' ) {
-                columns += `paperCommentId, `
+                columns += `paper_comment_id, `
             } else {
                 columns += `${key}, `
             }

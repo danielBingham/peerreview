@@ -17,7 +17,6 @@ import JournalTag from '/components/journals/JournalTag'
 import ReviewSummaryForm from '/components/reviews/widgets/ReviewSummaryForm'
 import ReviewSummaryView from '/components/reviews/widgets/ReviewSummaryView'
 import CommentThreadView from '/components/reviews/view/CommentThreadView'
-import UserProfileImage from '/components/users/UserProfileImage'
 
 import FeedEventPaperComponent from './components/FeedEventPaperComponent'
 

@@ -9,6 +9,7 @@ import Error404 from '/components/Error404'
 import PaperVersionTimeline from './PaperVersionTimeline'
 
 import PaperCreationEvent from '/components/papers/view/timeline/events/PaperCreationEvent'
+import PaperTimelineCommentForm from '/components/papers/view/timeline/comment-form/PaperTimelineCommentForm'
 
 import './PaperTimeline.css'
 
@@ -64,6 +65,7 @@ const PaperTimeline = function({ paperId }) {
             <Timeline>
                 <PaperCreationEvent paperId={paper.id} /> 
                 { versionViews }
+                <PaperTimelineCommentForm paperId={paper.id} />
             </Timeline>
         </div>
     )

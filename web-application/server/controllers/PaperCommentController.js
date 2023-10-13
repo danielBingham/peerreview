@@ -59,6 +59,20 @@ module.exports = class PaperCommentsController {
          * Checks complete
          *  POST the comment
          **********************************************************************/
+        
+        if ( ! paperComment.status ) {
+            paperComment.status = 'in-progress'
+        } else if ( paperComment.status == 'reverted' || paperComment.status == 'edit-in-progress' ) {
+            paperComment.status = 'in-progress'
+        }
+       
+        // We're only ever allowed to comment on the current version.
+        const paperVersionResults = await this.core.database.query(`
+            SELECT version FROM paper_versions WHERE paper_versions.paper_id = $1 ORDER BY version DESC
+        `, [ paperComment.paperId ])
+
+        paperComment.paperVersion = paperVersionResults.rows[0].version
+
 
         const id = await this.paperCommentDAO.insertPaperComment(paperComment)
 
@@ -77,7 +91,7 @@ module.exports = class PaperCommentsController {
         const event = {
             paperId: paperId,
             actorId: currentUser.id,
-            status: 'in-progress',
+            status: entity.status == 'in-progress' ? 'in-progress' : 'committed',
             type: 'paper:new-comment',
             paperCommentId: entity.id
         }
@@ -128,7 +142,7 @@ module.exports = class PaperCommentsController {
         }
 
         const existingResults = await this.paperCommentDAO.selectPaperComments('WHERE paper_comments.id = $1', [ paperCommentId ])
-        existing = existingResults.dictionary[paperCommentId]
+        const existing = existingResults.dictionary[paperCommentId]
 
         // 4. PaperComment(:paperCommentId) must exist
         if ( ! existing ) {
@@ -181,7 +195,7 @@ module.exports = class PaperCommentsController {
 
         // Update the event
         if ( paperComment.status == 'committed' && existing.status == 'in-progress' ) {
-            await this.database.query(`
+            await this.core.database.query(`
                 UPDATE paper_events SET status = 'committed' WHERE type = 'paper:new-comment' AND paper_comment_id = $1
             `, [ paperComment.id ])
         }
@@ -229,7 +243,7 @@ module.exports = class PaperCommentsController {
         }
 
         const existingResults = await this.paperCommentDAO.selectPaperComments('WHERE paper_comments.id = $1', [ paperCommentId ])
-        existing = existingResults.dictionary[paperCommentId]
+        const existing = existingResults.dictionary[paperCommentId]
 
         // 4. PaperComment(:paperCommentId) must exist
         if ( ! existing ) {
@@ -248,7 +262,7 @@ module.exports = class PaperCommentsController {
          *  DELETE the comment
          **********************************************************************/
 
-        await this.paperCommentDAO.deleteComment(paperCommentId)
+        await this.paperCommentDAO.deletePaperComment(paperCommentId)
 
         return response.status(200).json({ id: paperCommentId })
     }

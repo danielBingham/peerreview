@@ -85,7 +85,7 @@ const UserView = function(props) {
 
     return (
         <article id={ user.id } className='user-view'>
-            <UserProfileImage file={user.file} /> 
+            <UserProfileImage userId={user.id} /> 
             <div className="details">
                 <div className="name"> { user.name }</div>
                 { user.orcidId && <div className="orcid"> <ORCIDTag id={ user.orcidId} /></div> }

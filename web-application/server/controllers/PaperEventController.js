@@ -55,6 +55,7 @@ module.exports = class PaperEventController {
             }
             if ( event.paperCommentId ) {
                 paperCommentIds.push(event.paperCommentId)
+            }
         }
 
         // ======== Users =====================================================
@@ -151,9 +152,9 @@ module.exports = class PaperEventController {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
-         * 1. User logged in => May get published papers and drafts user has
-         * `review` permissions for.
-         * 2. User not logged in => May only get published papers.
+         * 1. Non-logged in users may only view visible, committed events.
+         * 2. Logged in users may view visible committed events and events in
+         * progress.
          *
          * These constraints are enforced in `PaperController::buildQuery()`.
          * 
@@ -164,7 +165,7 @@ module.exports = class PaperEventController {
         const { where, params, order, emptyResult, requestedRelations } = await this.parseQuery(
             request.session, 
             request.query,
-            `paper_events.paper_id = $1 AND paper_events.status = 'committed'`,
+            `paper_events.paper_id = $1 AND (paper_events.status = 'committed' ${ currentUser ? 'OR paper_events.actor_id = $2' : ''}) `,
             [ paperId ]
         )
 
