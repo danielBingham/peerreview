@@ -161,11 +161,12 @@ module.exports = class PaperEventController {
          * ********************************************************************/
         
         const paperId = request.params.paperId
+        const currentUser = request.session.user
 
         const { where, params, order, emptyResult, requestedRelations } = await this.parseQuery(
             request.session, 
             request.query,
-            `paper_events.paper_id = $1 AND (paper_events.status = 'committed' ${ currentUser ? 'OR paper_events.actor_id = $2' : ''}) `,
+            `paper_events.paper_id = $1`,
             [ paperId ]
         )
 

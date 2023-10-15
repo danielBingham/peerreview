@@ -5,6 +5,8 @@ import { newPaperComment, updatePaperComment, deletePaperComment, cleanupRequest
 
 import Button from '/components/generic/button/Button'
 
+import './PaperCommentForm.css'
+
 const PaperCommentForm = function({ paperId }) {
 
     console.log(`\n\n ## PaperCommentForm(${paperId}) ##`)
@@ -166,7 +168,7 @@ const PaperCommentForm = function({ paperId }) {
     // ======= Render ==============================================
 
     return (
-        <div className="comment-form" >
+        <div className="paper-comment-form" >
             <div className="content">
                 <textarea 
                     name="content" 
@@ -174,6 +176,7 @@ const PaperCommentForm = function({ paperId }) {
                     onBlur={commit}
                     onChange={(e) => setContent(e.target.value)} 
                     value={content}
+                    placeholder="Write a comment..."
                 >
                 </textarea>
             </div>

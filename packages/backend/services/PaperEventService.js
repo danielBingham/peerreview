@@ -265,7 +265,7 @@ module.exports = class PaperEventService {
             
         // ======== start with public and committed =========================================
         
-        let eventConditions = `(paper_events.visibility && $2 AND paper_events.status = 'committed')`
+        let eventConditions = `(paper_events.visibility && $1 AND paper_events.status = 'committed')`
         const params = [ userRoles ]
         let count = 2
 
