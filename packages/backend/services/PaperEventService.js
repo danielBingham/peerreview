@@ -348,8 +348,6 @@ module.exports = class PaperEventService {
             WHERE ${eventConditions}
         `
 
-        console.log(sql)
-        console.log(params)
         const results = await this.core.database.query(sql, params)
 
         const visibleEventIds = results.rows.map((r) => r.id)

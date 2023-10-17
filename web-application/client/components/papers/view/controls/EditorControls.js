@@ -63,7 +63,6 @@ const EditorControls = function({ paperId }) {
                 <ButtonModal className="editor-controls-modal"> 
                     <div className="header">Editing for { journalDictionary[submission.journalId].name }</div>
                     <SubmissionControls submissionId={submission.id} />
-                    { showDecisionControls && <ReviewDecisionControls submission={submission} /> }
                 </ButtonModal>
             </ButtonWithModal> }
         </>

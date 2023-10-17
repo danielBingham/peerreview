@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useLayoutEffect }  from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { UserCircleIcon } from '@heroicons/react/24/outline'
+
 import { patchUser, cleanupRequest } from '/state/users'
 
 import FileUploadInput from '/components/files/FileUploadInput'
@@ -182,10 +184,10 @@ const UserProfileEditForm = function(props) {
         locationErrorView = ( <div className="error">Location is too long. Limit is 256 characters.</div> )
     }
 
-    const userProfileImage = ( <UserCicleIcon /> )
+    let userProfileImage = ( <UserCircleIcon /> )
     if ( file ) {
         const url = new URL(file.filepath, file.location)
-        content = (
+        userProfileImage = (
             <img src={url.href} />
         )
     }

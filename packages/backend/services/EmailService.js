@@ -33,7 +33,7 @@ module.exports = class EmailService {
         const confirmationLink = this.config.host + `email-confirmation?token=${token.token}`
 
 
-        const emailTextBody = `Welcome to Peer Review, ${user.name}!
+        const emailTextBody = `Welcome to JournalHub, ${user.name}!
 
 Please confirm your email address by following the link below:
 ${confirmationLink}`
@@ -42,7 +42,7 @@ ${confirmationLink}`
         await this.sendEmail({
             "From": "no-reply@peer-review.io",
             "To": user.email,
-            "Subject": "Peer Review(io) - Email Confirmation",
+            "Subject": "[JournalHub] Welcome to JournalHub, ${user.name}!",
             "TextBody": emailTextBody,
             "MessageStream": "email-confirmation"
         })
@@ -60,7 +60,7 @@ ${resetLink}`
         await this.sendEmail({
             "From": "no-reply@peer-review.io",
             "To": user.email,
-            "Subject": "Peer Review(io) - Password Reset",
+            "Subject": "[JournalHub] Please reset your password",
             "TextBody": emailTextBody,
             "MessageStream": "password-reset"
         })

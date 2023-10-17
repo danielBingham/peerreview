@@ -1,8 +1,16 @@
-import React, { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
+import React from 'react'
+import { useSelector } from 'react-redux'
+import ReactMarkdown from 'react-markdown'
 
+import DateTag from '/components/DateTag'
 
-const PaperCommentView = function({ paperCommentId }) {
+import UserTag from '/components/users/UserTag'
+
+import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
+
+import './PaperCommentView.css'
+
+const PaperCommentView = function({ paperCommentId, eventId }) {
     
     // ======= Render State =========================================
 
@@ -16,16 +24,14 @@ const PaperCommentView = function({ paperCommentId }) {
     })
 
     const paperComment = useSelector(function(state) {
-        if ( commentId ) {
-            return state.paperComments.dictionary[commentId]
+        if ( paperCommentId ) {
+            return state.paperComments.dictionary[paperCommentId]
         } else {
             return null
         }
     })
 
     // ======= Actions and Event Handling ===========================
-
-    const dispatch = useDispatch()
     
 
     // ======= Effect Handling ======================================
@@ -36,10 +42,11 @@ const PaperCommentView = function({ paperCommentId }) {
     return (
         <div className="paper-comment-view" >
             <div className="header">
-                <UserTag userId={paperComment.userId} /> commented <DateTag timestamp={paperComment.committedDate} />
+                <div><UserTag id={paperComment.userId} /> commented <a href={`/paper/${paperComment.paperId}/timeline#comment-${paperComment.id}`}><DateTag timestamp={paperComment.committedDate} /></a></div>
+                <VisibilityControl eventId={eventId} /> 
             </div>
             <div className="content">
-                { paperComment.content }
+                <ReactMarkdown>{ paperComment.content }</ReactMarkdown>
             </div>
         </div>
     )

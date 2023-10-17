@@ -1,0 +1,5 @@
+.paper-comment-event {}
+.paper-comment-event .comment-wrapper {
+    padding: 10px;
+    border: thin solid var(--main-border-color);
+}

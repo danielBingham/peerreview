@@ -38,6 +38,7 @@ const PaperTimeline = function({ paperId }) {
         return state.papers.dictionary[paperId]
     })
 
+
     // ================= User Action Handling  ================================
     
 

@@ -94,10 +94,9 @@ module.exports = class PaperCommentDAO {
                 sql += `committed_date = now(), `
             } else {
                 sql += `${key} = $${count}, `
+                params.push(value)
+                count = count + 1
             }
-
-            params.push(value)
-            count = count + 1
         }
         sql += `updated_date = now() WHERE id = $${count}`
         params.push(paperComment.id)

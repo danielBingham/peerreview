@@ -2,3 +2,8 @@
     border: thin solid var(--main-border-color);
     padding: 20px 50px;
 }
+.paper-timeline-editor-controls-wrapper {
+    border: thin solid var(--main-border-color);
+    padding: 20px;
+    margin: 20px auto;
+}

@@ -101,7 +101,7 @@ const ReviewCommentView = function(props) {
                 execute={deleteComment} 
                 cancel={() => setAreYouSure(false)} 
             /> 
-            <div key={props.comment.id} id={`comment-${props.comment.id}`} className="comment-outer">
+            <div key={props.comment.id} id={`review-comment-${props.comment.id}`} className="comment-outer">
                 { props.review.status == 'in-progress' && (
                     <span className="controls">
                         <a href={`?thread=${props.thread.id}`} onClick={edit} className="edit">edit</a> 
@@ -109,7 +109,7 @@ const ReviewCommentView = function(props) {
                     </span>
                 ) }
                 <UserTag id={props.comment.userId} />
-                <div className="datetime"> { props.comment.version > 1 ? 'editted' : 'posted' } <a href={`#comment-${props.comment.id}`}><DateTag timestamp={props.comment.updatedDate} type="full"/></a> in <a  href={`#review-${props.review.id}`}>review #{props.review.id}</a></div>
+                <div className="datetime"> { props.comment.version > 1 ? 'editted' : 'posted' } <a href={`#review-comment-${props.comment.id}`}><DateTag timestamp={props.comment.updatedDate} type="full"/></a> in <a  href={`#review-${props.review.id}`}>review #{props.review.id}</a></div>
                 <div className="comment-inner" style={{ padding: '5px' }} >
                     <ReactMarkdown>
                         {props.comment.content}

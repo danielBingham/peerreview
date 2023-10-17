@@ -61,7 +61,7 @@ module.exports = class PaperController {
         relations.users = userResults.dictionary
 
         // ======== submissions ===============================================
-        let visibleSubmissionIds = await this.submissionService.getVisibleSubmissionIds(user.id) 
+        let visibleSubmissionIds = await this.submissionService.getVisibleSubmissionIds(user) 
 
         const paperIds = []
         for(const paper of results.list) {

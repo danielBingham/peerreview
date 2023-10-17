@@ -5,21 +5,17 @@ import { newPaperComment, updatePaperComment, deletePaperComment, cleanupRequest
 
 import Button from '/components/generic/button/Button'
 
+import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
+
 import './PaperCommentForm.css'
 
 const PaperCommentForm = function({ paperId }) {
-
-    console.log(`\n\n ## PaperCommentForm(${paperId}) ##`)
     
     // ======= Render State =========================================
    
-    const [ commentId, setCommentId ] = useState(null)
+    const [commentId, setCommentId] = useState(null)
     const [content, setContent] = useState('')
-    const [ needCommit, setNeedCommit ] = useState(false)
-
-    console.log(`CommentId: ${commentId}`)
-    console.log(`Content: ${content}`)
-    console.log(`NeedCommit: ${needCommit}`)
+    const [needCommit, setNeedCommit] = useState(false)
 
     // ======= Request Tracking =====================================
   
@@ -61,11 +57,27 @@ const PaperCommentForm = function({ paperId }) {
         if ( commentId ) {
             return state.paperComments.dictionary[commentId]
         } else {
+            // Otherwise, look for a comment in progress and use that.
+            for( const [ id, comment] of Object.entries(state.paperComments.dictionary)) {
+                if ( comment.userId == currentUser?.id && comment.paperId == paperId && comment.status == 'in-progress' ) {
+                    return comment
+                }
+            }
             return null
         }
     })
-    console.log(`PaperComment: `)
-    console.log(paperComment)
+
+    const event = useSelector(function(state) {
+        if ( ! paperComment ) {
+            return null
+        }
+        for(const [id, event] of Object.entries(state.paperEvents.dictionary)) {
+            if ( event.paperCommentId == paperComment.id ) {
+                return event
+            }
+        }
+        return null
+    })
 
     // ======= Actions and Event Handling ===========================
 
@@ -74,28 +86,23 @@ const PaperCommentForm = function({ paperId }) {
     const commitComment = function() {
         const comment = {
             id: commentId,
-            status: status,
             content: content
         }
         setPatchCommentRequestId(dispatch(updatePaperComment(comment)))
     }
 
     const create = function(event) {
-        setPostCommentRequestId(dispatch(newPaperComment(paperId, currentUser.id)))
+        if ( ! commentId && ! paperComment ) {
+            setPostCommentRequestId(dispatch(newPaperComment(paperId, currentUser.id)))
+        }
     }
 
     const commit = function(event) {
         // Nothing to commit.
-        if ( content.trim().length <= 0 ) {
-            setDeleteCommentRequestId(dispatch(deletePaperComment(commentId)))
-            setCommentId(null)
+        if ( ! commentId ) {
+            setNeedCommit(true)
         } else {
-
-            if ( ! commentId ) {
-                setNeedCommit(true)
-            } else {
-                commitComment()
-            }
+            commitComment()
         }
     }
 
@@ -108,31 +115,39 @@ const PaperCommentForm = function({ paperId }) {
             content: content
         }
         setPatchCommentRequestId(dispatch(updatePaperComment(comment)))
+
+        setCommentId(null)
+        setContent('')
         return false
     }
 
     const cancelComment = function(event) {
         event.preventDefault()
-        
-        if ( status == 'in-progress') {
-            setDeleteCommentRequestId(dispatch(deleteReviewComment(props.paper.id, props.review.id, props.comment.threadId, props.comment)))
-        } else if ( status == 'edit-in-progress' ) {
+       
+        if ( paperComment.status == 'in-progress') {
+            setDeleteCommentRequestId(dispatch(deletePaperComment(commentId)))
+        } else if ( paperComment.status == 'edit-in-progress' ) {
             const comment = {
                 id: commentId,
                 status: 'reverted'
             }
-            setPatchCommentRequestId(dispatch(patchReviewComment(props.paper.id, props.review.id, props.comment.threadId, comment)))
+            setPatchCommentRequestId(dispatch(updatePaperComment(comment)))
         }
-
+        setCommentId(null)
+        setContent('')
     }
 
     // ======= Effect Handling ======================================
 
+    useEffect(function() {
+        if ( paperComment && ! commentId ) {
+            setCommentId(paperComment.id)
+            setContent(paperComment.content)
+        }
+    }, [ paperComment ])
 
     useEffect(function() {
         if ( postCommentRequest && postCommentRequest.state == 'fulfilled' && ! postCommentRequest.cacheBusted) {
-            console.log(`Setting comment id: `)
-            console.log(postCommentRequest)
             setCommentId(postCommentRequest.result.entity.id)
             if ( needCommit ) {
                 commitComment()
@@ -179,6 +194,9 @@ const PaperCommentForm = function({ paperId }) {
                     placeholder="Write a comment..."
                 >
                 </textarea>
+            </div>
+            <div className="visibility-controls">
+                <VisibilityControl eventId={event?.id} /> 
             </div>
             <div className="controls">
                 <Button onClick={cancelComment}>Cancel</Button>

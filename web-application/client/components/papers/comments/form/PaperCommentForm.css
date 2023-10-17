@@ -11,6 +11,10 @@
     background-color: var(--input-background-color);
     padding: 10px;
 }
+.paper-comment-form .visibility-controls {
+    padding: 10px;
+    text-align: right;
+}
 .paper-comment-form .content textarea:focus {
     background-color: var(--input-focus-background-color);
 }

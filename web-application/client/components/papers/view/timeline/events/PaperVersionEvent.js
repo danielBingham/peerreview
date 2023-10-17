@@ -30,13 +30,12 @@ const PaperVersionEvent = function({ eventId }) {
     // ================= Render ===============================================
     
     return (
-        <TimelineItem>
+        <TimelineItem className="paper-version-event">
             <TimelineIcon>
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <div><UserTag id={event.actorId} /> uploaded <strong><Link to={`/paper/${event.paperId}/file?version=${version.version}`}>version { version.version}</Link></strong> <DateTag timestamp={event.eventDate} type="full" />.</div> 
-                <VisibilityControl eventId={eventId} />
+                <UserTag id={event.actorId} /> uploaded <strong><Link to={`/paper/${event.paperId}/file?version=${version.version}`}>version { version.version}</Link></strong> <DateTag timestamp={event.eventDate} type="full" />. <VisibilityControl eventId={eventId} compact={true}/>
             </TimelineItemWrapper>
         </TimelineItem> 
     )

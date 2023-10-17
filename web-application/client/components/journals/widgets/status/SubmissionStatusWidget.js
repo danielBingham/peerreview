@@ -90,7 +90,7 @@ const SubmissionStatusWidget = function(props) {
     }
     
     const statusMenuItemViews = []
-    const statuses = [ 'submitted', 'review', 'proofing' ]
+    const statuses = [ 'rejected', 'submitted', 'review', 'proofing', 'published',  'retracted']
     for(const status of statuses ) {
         statusMenuItemViews.push(
             <FloatingMenuItem

@@ -1,5 +1,5 @@
 
-const { PaperCommentDAO, PaperDAO, PaperService, PaperEventService } = require('@danielbingham/peerreview-backend')
+const { PaperCommentDAO, PaperDAO, PaperEventDAO, PaperService, PaperEventService, NotificationService } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -10,13 +10,23 @@ module.exports = class PaperCommentsController {
 
         this.paperDAO = new PaperDAO(core)
         this.paperCommentDAO = new PaperCommentDAO(core)
+        this.paperEventDAO = new PaperEventDAO(core)
        
         this.paperService = new PaperService(core)
         this.paperEventService = new PaperEventService(core)
+        this.notificationService = new NotificationService(core)
     }
 
     async getRelations(currentUser, results) {
-        
+        const relations = {} 
+
+        const eventResults = await this.paperEventDAO.selectEvents(
+            'WHERE paper_events.paper_comment_id = ANY($1::bigint[])', 
+            [ results.list ]
+        )
+        relations.events = eventResults.dictionary
+
+        return relations
     }
 
 
@@ -86,7 +96,6 @@ module.exports = class PaperCommentsController {
                 `PaperComment(${id}) not found after insert.`)
         }
 
-        const relations = await this.getRelations(currentUser, results)
 
         const event = {
             paperId: paperId,
@@ -96,6 +105,22 @@ module.exports = class PaperCommentsController {
             paperCommentId: entity.id
         }
         await this.paperEventService.createEvent(currentUser, event)
+
+        if ( entity.status == 'committed' ) {
+            // ==== Notifications =============================================
+           
+            this.notificationService.sendNotifications(
+                request.session.user,
+                'new-comment',
+                {
+                    comment: entity
+                }
+            )
+
+            // ==== END Notifications =========================================
+        }
+
+        const relations = await this.getRelations(currentUser, results)
 
         return response.status(201).json({
             entity: entity,
@@ -175,32 +200,46 @@ module.exports = class PaperCommentsController {
             }
 
             await this.paperCommentDAO.updatePaperComment(paperComment)
-        }
-
-        if ( paperComment.status == 'reverted' ) {
+        } else if ( paperComment.status == 'reverted' ) {
             await this.paperCommentDAO.revertVersion(paperComment.id)
+        } else {
+            await this.paperCommentDAO.updatePaperComment(paperComment)
         }
 
         // ======== Collect return data and handle events and notifications ===
 
-        const results = await this.paperCommentDAO.selectPaperComments('WHERE paper_comments.id = $1', [ id ])
-        const entity = results.dictionary[id]
+        const results = await this.paperCommentDAO.selectPaperComments('WHERE paper_comments.id = $1', [ paperCommentId ])
+        const entity = results.dictionary[paperCommentId]
 
         if ( ! entity ) {
             throw new ControllerError(500, 'server-error',
-                `PaperComment(${id}) not found after update.`)
+                `PaperComment(${paperCommentId}) not found after update.`)
         }
 
-        const relations = await this.getRelations(currentUser, results)
 
         // Update the event
         if ( paperComment.status == 'committed' && existing.status == 'in-progress' ) {
             await this.core.database.query(`
                 UPDATE paper_events SET status = 'committed' WHERE type = 'paper:new-comment' AND paper_comment_id = $1
             `, [ paperComment.id ])
+
+            // ==== Notifications =============================================
+           
+            this.notificationService.sendNotifications(
+                request.session.user,
+                'new-comment',
+                {
+                    comment: entity
+                }
+            )
+
+            // ==== END Notifications =========================================
         }
 
-        // TODO Notifications
+
+        // We need to get the relations after we update the event - because the
+        // event is one of the relations.
+        const relations = await this.getRelations(currentUser, results)
 
         return response.status(201).json({
             entity: entity,

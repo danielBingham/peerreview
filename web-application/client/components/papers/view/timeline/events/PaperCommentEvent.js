@@ -1,17 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { useDispatch } from 'react-redux'
+import { useSelector } from 'react-redux'
 
 import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/generic/timeline/Timeline'
 
 import UserProfileImage from '/components/users/UserProfileImage'
+import PaperCommentView from '/components/papers/comments/view/PaperCommentView'
 
 import './PaperCommentEvent.css'
 
-const PaperCommentEvent = function({ id, eventId }) {
-    
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[paperId]
-    })
+const PaperCommentEvent = function({ eventId }) {
 
     const event = useSelector(function(state) {
         return state.paperEvents.dictionary[eventId]
@@ -36,7 +33,9 @@ const PaperCommentEvent = function({ id, eventId }) {
                     <UserProfileImage userId={paperComment.userId} /> 
                 </TimelineIcon>
                 <TimelineItemWrapper>
-                    <PaperCommentView paperCommentId={paperComment.id} /> 
+                    <div className="comment-wrapper">
+                        <PaperCommentView eventId={eventId}  paperCommentId={paperComment.id} /> 
+                    </div>
                 </TimelineItemWrapper>
             </TimelineItem>
         </div>
