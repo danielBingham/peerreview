@@ -6,6 +6,7 @@ import { TimelineItem, TimelineIcon, TimelineItemWrapper } from '/components/gen
 import PaperCommentForm from '/components/papers/comments/form/PaperCommentForm'
 import UserProfileImage from '/components/users/UserProfileImage'
 import SubmissionControls from '/components/journals/widgets/SubmissionControls'
+import JournalTag from '/components/journals/JournalTag'
 
 import './PaperTimelineCommentForm.css'
 
@@ -73,7 +74,12 @@ const PaperTimelineCommentForm = function({ paperId }) {
                         <PaperCommentForm paperId={paperId} />
                     </div>
                     { submission && <div className="paper-timeline-editor-controls-wrapper">
-                         <SubmissionControls submissionId={submission.id} /> 
+                        <div className="paper-timeline-editor-controls-header">
+                            <div>Edit Submission for <JournalTag id={submission.journalId} /></div>
+                        </div>
+                        <div className="paper-timeline-editor-controls">
+                             <SubmissionControls submissionId={submission.id} /> 
+                        </div>
                     </div>}
                 </TimelineItemWrapper>
             </TimelineItem>
