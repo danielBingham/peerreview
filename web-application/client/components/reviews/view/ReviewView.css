@@ -12,9 +12,7 @@
 .review-view-summary-wrapper {
     border: thin solid var(--main-border-color);
 }
-.review-view .review-summary, .review-view .review-summary-form {
-    padding: 20px 50px;
-}
+.review-view .review-summary, .review-view .review-summary-form { }
 
 .review-view .approved svg {
     color: green !important;

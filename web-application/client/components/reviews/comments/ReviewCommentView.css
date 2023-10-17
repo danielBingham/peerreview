@@ -1,5 +1,5 @@
 .comment-outer {
-    padding: 20px 5px 0 5px;
+    padding: 10px 5px 0 5px;
     border-bottom: thin solid var(--main-border-color);
 }
 .comment-outer .profile-picture {
@@ -11,12 +11,14 @@
     border: thin solid var(--main-border-color);
     background-color: var(--main-border-color);
 }
+.comment-outer .header {
+    padding: 0 5px;
+}
 .comment-outer .comment-inner {
     clear: both;
 }
 .comment-outer .controls {
     float: right;
-    margin-top: -15px;
 }
 .comment-outer .controls svg {
     width: 24px;

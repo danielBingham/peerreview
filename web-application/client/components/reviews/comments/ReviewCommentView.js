@@ -108,8 +108,10 @@ const ReviewCommentView = function(props) {
                         <span onClick={(e) => setAreYouSure(true)} className="delete"><XCircleIcon /></span>
                     </span>
                 ) }
-                <UserTag id={props.comment.userId} />
-                <div className="datetime"> { props.comment.version > 1 ? 'editted' : 'posted' } <a href={`#review-comment-${props.comment.id}`}><DateTag timestamp={props.comment.updatedDate} type="full"/></a> in <a  href={`#review-${props.review.id}`}>review #{props.review.id}</a></div>
+                <div className="header">
+                    <UserTag id={props.comment.userId} />
+                    <span className="datetime"> { props.comment.version > 1 ? 'editted' : 'posted' } <a href={`#review-comment-${props.comment.id}`}><DateTag timestamp={props.comment.updatedDate} type="full"/></a> in <a  href={`#review-${props.review.id}`}>review #{props.review.id}</a></span>
+                </div>
                 <div className="comment-inner" style={{ padding: '5px' }} >
                     <ReactMarkdown>
                         {props.comment.content}

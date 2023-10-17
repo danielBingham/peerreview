@@ -1,7 +1,5 @@
 .paper-comment-form {}
-.paper-comment-form .content {
-    padding: 4px;
-} 
+.paper-comment-form .content { } 
 .paper-comment-form .content textarea {
     display: inline-block;
     box-sizing: border-box;
@@ -13,12 +11,12 @@
 }
 .paper-comment-form .visibility-controls {
     padding: 10px;
-    text-align: right;
+    text-align: center;
 }
 .paper-comment-form .content textarea:focus {
     background-color: var(--input-focus-background-color);
 }
 .paper-comment-form .controls {
     padding: 0 5px 10px 5px;
-    text-align: right;
+    text-align: center;
 }

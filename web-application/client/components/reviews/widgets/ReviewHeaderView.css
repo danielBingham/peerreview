@@ -3,9 +3,7 @@
     background-color: white;
 }
 
-.review-header .inner {
-    padding: 10px;
-}
+.review-header .inner { }
 .review-header .inner .instructions {
     padding: 20px;
 }
@@ -19,12 +17,10 @@
 .review-header .selected-review {
     border: thin solid var(--main-border-color);
     margin: 10px auto;
-    padding: 10px;
 }
 .review-header .review-in-progress {
     border: thin solid var(--main-border-color);
     margin: 10px auto;
-    padding: 10px;
 }
 
 .review-selector {

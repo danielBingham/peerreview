@@ -1,14 +1,18 @@
-.review-summary {
+.review-summary { }
+.review-summary .header {
+    border-bottom: thin solid var(--card-border-color);
+    background-color: var(--card-header-background-color);
     padding: 10px;
+    display: grid;
+    grid-template-columns: 3fr 2fr;
 }
-.review-summary .reviewer {
+.review-summary .header .left { text-align: left; }
+.review-summary .header .right { text-align: right; }
+.review-summary .recommendation {
     display: inline-block;
 }
-.review-summary .recommendation {
-    padding: 5px 10px;
-}
 .review-summary .summary-text {
-    padding: 10px;
+    padding: 0 20px;
 }
 .review-summary .author-controls {
     text-align: right;
@@ -22,7 +26,7 @@
     margin-bottom: -7px;
 }
 .review-summary .request-changes svg {
-    color: #666;
+    color: #c7a124;
 }
 .review-summary .rejected svg  {
     color: red;

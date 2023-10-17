@@ -42,8 +42,8 @@ const PaperCommentView = function({ paperCommentId, eventId }) {
     return (
         <div className="paper-comment-view" >
             <div className="header">
-                <div><UserTag id={paperComment.userId} /> commented <a href={`/paper/${paperComment.paperId}/timeline#comment-${paperComment.id}`}><DateTag timestamp={paperComment.committedDate} /></a></div>
-                <VisibilityControl eventId={eventId} /> 
+                <div className="left"><UserTag id={paperComment.userId} /> commented <a href={`/paper/${paperComment.paperId}/timeline#comment-${paperComment.id}`}><DateTag timestamp={paperComment.committedDate} /></a></div>
+                <div className="right"><VisibilityControl eventId={eventId} /></div>
             </div>
             <div className="content">
                 <ReactMarkdown>{ paperComment.content }</ReactMarkdown>

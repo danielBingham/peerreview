@@ -1,7 +1,18 @@
 .paper-comment-view {
-    padding: 10px;
+    border: thin solid var(--card-border-color);
 }
-.paper-comment-view .content {
+.paper-comment-view .header {
     padding: 10px;
+    border-bottom: thin solid var(--card-border-color);
+    background-color: var(--card-header-background-color);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.paper-comment-view .header .right {
+    text-align: right;
+}
+
+.paper-comment-view .content {
+    padding: 0 20px;
 }
 
