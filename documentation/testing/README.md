@@ -10,12 +10,8 @@ checklist for that PR.
 - [ ] ORCID iD Authentication
 - [ ] User Profile Edit
 - [ ] Journal Creation
-- [ ] Journal Types
 - [ ] Draft Submission 
-- [ ] Draft Paper List and View
-- [ ] Draft Review
-- [ ] Draft Version Upload
-- [ ] Draft Version Review
+- [ ] Journal Workflow and Review
 - [ ] Draft Publish
 - [ ] Paper Response
 - [ ] Field List
@@ -62,10 +58,6 @@ checklist for that PR.
 ## Draft Submission
 
 - [ ] Run through [Draft Submission](./draft-submission.md)
-- Navigate to the timeline of the draft with neither preprint nor journal submission
-    - [ ] Leave a comment and confirm comment visibility is `authors`
-    - [ ] Leave a review and confirm the review visibility is `authors`
-    - [ ] Upload a version and confirm the version visibility is `authors`
 - Login to a user with out permissions on `Test Closed`.
     - [ ] Submit a draft to `Test Closed`.
 - Login to a user with out permissions on `Test Open`.

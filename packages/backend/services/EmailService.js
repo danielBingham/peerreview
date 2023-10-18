@@ -42,7 +42,7 @@ ${confirmationLink}`
         await this.sendEmail({
             "From": "no-reply@peer-review.io",
             "To": user.email,
-            "Subject": "[JournalHub] Welcome to JournalHub, ${user.name}!",
+            "Subject": `[JournalHub] Welcome to JournalHub, ${user.name}!`,
             "TextBody": emailTextBody,
             "MessageStream": "email-confirmation"
         })
