@@ -186,15 +186,15 @@ const ReviewHeaderView = function(props) {
         <>
             <div className="controls">
                 <PaperVersionSelector paperId={props.paperId} />  
-                <FloatingMenu className="review-selector" closeOnClick={true}>
-                    <FloatingMenuTrigger>Viewing: { trigger }</FloatingMenuTrigger>
-                    <FloatingMenuBody className="review-menu-body">
-                        <FloatingMenuHeader>
-                            Select a review to view
-                        </FloatingMenuHeader>
-                        { reviewViews }
-                    </FloatingMenuBody>
-                </FloatingMenu>
+                <div className="review-selector-menu-wrapper">
+                    <FloatingMenu className="review-selector" closeOnClick={true}>
+                        <FloatingMenuTrigger>Viewing: { trigger }</FloatingMenuTrigger>
+                        <FloatingMenuBody className="review-menu-body">
+                            <FloatingMenuHeader title="Select a review to view" />
+                            { reviewViews }
+                        </FloatingMenuBody>
+                    </FloatingMenu>
+                </div>
                 <div className="start-review">
                     <StartReviewButton id={paper.id} />
                 </div>

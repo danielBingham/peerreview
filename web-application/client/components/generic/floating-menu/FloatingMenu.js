@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useRef, useContext, createContext } from 'react'
+import React, { useState, useEffect, useRef, useContext, createContext, Children } from 'react'
 
-import { ChevronDownIcon, ChevronUpIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline'
+import { XCircleIcon } from '@heroicons/react/24/solid'
 
 export const VisibleContext = createContext(false)
 export const ToggleMenuContext = createContext(null)
@@ -135,7 +136,7 @@ export const FloatingMenuBody = function(props) {
  *
  * @param {object} props    The standard React props object - empty.
  */
-export const FloatingMenuHeader = function(props) {
+export const FloatingMenuHeader = function({ title, children }) {
 
     // ======= Render State =========================================
 
@@ -152,11 +153,16 @@ export const FloatingMenuHeader = function(props) {
     // ======= Effect Handling ======================================
 
     // ======= Render ===============================================
-   
+
     return (
         <div className="menu-header">
-            <div className="menu-title">{ props.children }</div>
-            <div className="menu-escape" ><a href="" onClick={(e) => { e.preventDefault(); toggleMenu(); }}><XMarkIcon /></a></div>
+            <div className="menu-header-top">
+                <div className="menu-title">{ title }</div>
+                <div className="menu-escape" ><a href="" onClick={(e) => { e.preventDefault(); toggleMenu(); }}><XCircleIcon/></a></div>
+            </div>
+            {  Children.count(children) > 0 && <div className="menu-header-bottom">
+                { children }
+            </div> }
         </div>
     )
 

@@ -1,0 +1,17 @@
+.paper-journal-submission-event { font-size: 12px; }
+.paper-journal-submission-event.timeline-item .timeline-icon {
+    width: 20px;
+    height: 20px;
+    margin-left: -45px;
+}
+.paper-journal-submission-event.timeline-item .timeline-icon svg,
+.paper-journal-submission-event.timeline-item .timeline-icon img {
+    width: 20px;
+    height: 20px;
+}
+.paper-journal-submission-event.timeline-item .timeline-item-wrapper {
+    padding: 0px 20px 20px 20px;
+}
+.paper-journal-submission-event .event-visibility-control .menu-trigger {
+    font-size: 12px;
+}

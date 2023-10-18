@@ -70,12 +70,12 @@ const PaperPDFPageView = function(props) {
     })
 
     const reviewInProgress = useSelector(function(state) {
-        if ( ! state.reviews.inProgress[props.paperId] ) {
-            return null
-        } else if ( ! state.reviews.inProgress[props.paperId][props.versionNumber] ) {
-            return null
+        for(const [id, review] of Object.entries(state.reviews.dictionary)) {
+            if ( review.paperId == props.paperId && review.version == props.versionNumber  && review.status == 'in-progress') {
+                return review
+            }
         }
-        return state.reviews.inProgress[props.paperId][props.versionNumber]
+        return null
     })
 
     const threads = useSelector(function(state) {

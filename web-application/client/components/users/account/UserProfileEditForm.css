@@ -11,6 +11,10 @@
     grid-column: 2 / 3;
     align-self: center;
 }
+.user-profile-edit-form .profile-picture .profile-wrapper .profile-image svg {
+    width: 150px;
+    color: var(--input-border-color);
+}
 .user-profile-edit-form .profile-picture .file-upload label {
     display: block;
     font-weight: bold;

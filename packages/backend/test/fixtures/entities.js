@@ -253,6 +253,44 @@ const papers = {
 }
 
 /**
+ * Paper Comment Entities
+ *
+ * @see packages/backend/daos/PaperCommentDAO.js -> hydratePaperComment()
+ */
+const paperComments = {
+    1: {
+        id: 1,
+        paperId: 1,
+        userId: 1,
+        status: 'committed',
+        content: 'This is comment text.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        committedDate: 'TIMESTAMP'
+    },
+    2: {
+        id: 2,
+        paperId: 1,
+        userId: 2,
+        status: 'committed',
+        content: 'This is more comment text.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        committedDate: 'TIMESTAMP'
+    },
+    3: {
+        id: 3, 
+        paperId: 1,
+        userId: 1,
+        status: 'in-progress',
+        content: 'This is further comment text.',
+        createdDate: 'TIMESTAMP',
+        updatedDate: 'TIMESTAMP',
+        committedDate: 'TIMESTAMP'
+    }
+}
+
+/**
  * Review Entities
  *
  * @see packages/backend/daos/ReviewDAO.js -> hydrateReviews()
@@ -561,6 +599,17 @@ module.exports = {
         list: Object.values(papers),
         meta: {
             count: Object.keys(papers).length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: 1
+        },
+        relations: {}
+    },
+    paperComments: {
+        dictionary: paperComments,
+        list: Object.keys(paperComments).map((key) => parseInt(key)),
+        meta: {
+            count: Object.keys(paperComments).length,
             page: 1,
             pageSize: 20,
             numberOfPages: 1

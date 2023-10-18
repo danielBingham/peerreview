@@ -57,7 +57,7 @@ const UserTag = function(props) {
             name = ( <Link to={ `/user/${user.id}` }>{user.name}</Link> )
         }
 
-        content = ( <> <UserProfileImage file={user.file} /> { name } </> ) 
+        content = ( <> <UserProfileImage userId={user.id} /> { name } </> ) 
     }
                     
 

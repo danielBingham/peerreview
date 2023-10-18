@@ -2,6 +2,13 @@
     padding-left: 30px;
     font-size: 12px;
 }
+.event-visibility-control.compact {
+    padding-left: 10px;
+    display: inline-block;
+}
+.event-visibility-control.floating-menu .menu-trigger {
+    font-size: 12px;
+}
 .event-visibility-control svg {
     display: inline-block;
     width: 18px;

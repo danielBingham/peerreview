@@ -1,0 +1,31 @@
+.paper-comment-view {
+    border: thin solid var(--card-border-color);
+}
+.paper-comment-view .header {
+    padding: 10px;
+    border-bottom: thin solid var(--card-border-color);
+    background-color: var(--card-header-background-color);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+}
+.paper-comment-view .header .right {
+    text-align: right;
+}
+.paper-comment-view .header .right .dots-menu {}
+.paper-comment-view .header .right .dots-menu .dots {
+    padding: 0 10px;
+}
+.paper-comment-view .header .right .dots-menu svg {
+    width: 1.2em;
+    height: 1.2em;
+}
+.paper-comment-view .header .right .dots-menu .menu-item {
+    padding: 10px 20px;
+}
+
+
+
+.paper-comment-view .content {
+    padding: 0 20px;
+}
+

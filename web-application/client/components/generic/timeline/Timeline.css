@@ -4,7 +4,7 @@
 
 .timeline .timeline-item {
     padding-left: 30px;
-    margin: 10px -5px 10px 0;
+    margin: 5px -5px 5px 0;
 }
 
 .timeline .timeline-item .timeline-icon {
@@ -29,7 +29,7 @@
 }
 
 .timeline .timeline-item .timeline-item-wrapper {
-    padding: 8px 20px 20px;
+    padding: 8px 20px 24px 20px;
 }
 .timeline .timeline-item .timeline-item-wrapper::before {
     display: inline-block;

@@ -9,6 +9,7 @@ import PaperPreprintSubmissionEvent from './events/PaperPreprintSubmissionEvent'
 import PaperJournalSubmissionEvent from './events/PaperJournalSubmissionEvent'
 import PaperSubmissionAssignmentEvent from './events/PaperSubmissionAssignmentEvent'
 import PaperSubmissionStatusChange from './events/PaperSubmissionStatusChange'
+import PaperCommentEvent from './events/PaperCommentEvent'
 
 const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
     
@@ -46,14 +47,6 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
             }
         }
         return results
-    })
-
-    const reviewInProgress = useSelector(function(state) {
-        if ( state.reviews.inProgress[paperId] ) {
-            return state.reviews.inProgress[paperId][versionNumber]
-        } else {
-            return null
-        }
     })
 
     // ====== User Action Handling  ================================
@@ -184,19 +177,17 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
                 <PaperSubmissionAssignmentEvent key={event.id} eventId={event.id} />
             )
         }
-    }
 
-    let reviewInProgressView = null
-    if ( reviewInProgress ) {
-        reviewInProgressView = (
-            <ReviewView id={reviewInProgress.id} paperId={paperId} versionNumber={versionNumber} />
-        )
+        else if ( event.type == 'paper:new-comment' && event.status == 'committed') {
+            eventViews.push(
+                <PaperCommentEvent key={event.id} eventId={event.id} />
+            )
+        }
     }
 
     return (
         <>
             { eventViews }
-            { reviewInProgressView }
         </>
     )
 

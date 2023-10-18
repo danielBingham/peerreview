@@ -90,7 +90,7 @@ const SubmissionStatusWidget = function(props) {
     }
     
     const statusMenuItemViews = []
-    const statuses = [ 'submitted', 'review', 'proofing' ]
+    const statuses = [ 'rejected', 'submitted', 'review', 'proofing', 'published',  'retracted']
     for(const status of statuses ) {
         statusMenuItemViews.push(
             <FloatingMenuItem
@@ -109,9 +109,7 @@ const SubmissionStatusWidget = function(props) {
                 <strong>Status</strong>: { submission.status } 
             </FloatingMenuTrigger>
             <FloatingMenuBody>
-                <FloatingMenuHeader>
-                    <strong>Select&nbsp;a&nbsp;new&nbsp;Status</strong>
-                </FloatingMenuHeader>
+                <FloatingMenuHeader title="Select new Status" />
                 { statusMenuItemViews }
             </FloatingMenuBody>
         </FloatingMenu>

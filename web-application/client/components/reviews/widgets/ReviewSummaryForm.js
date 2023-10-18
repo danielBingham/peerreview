@@ -58,12 +58,12 @@ const ReviewSummaryForm = function(props) {
     })
 
     const reviewInProgress = useSelector(function(state) {
-        if ( ! state.reviews.inProgress[props.paper.id] ) {
-            return null
-        } else if ( ! state.reviews.inProgress[props.paper.id][props.versionNumber] ) {
-            return null
+        for(const [id, review] of Object.entries(state.reviews.dictionary)) {
+            if ( review.paperId == props.paper.id && review.version == props.versionNumber && review.status == 'in-progress' ) {
+                return review
+            }
         }
-        return state.reviews.inProgress[props.paper.id][props.versionNumber]
+        return null
     })
 
     const event = useSelector(function(state) {

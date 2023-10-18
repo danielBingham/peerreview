@@ -128,7 +128,7 @@ const AssignmentFilterMenu = function(props) {
                 Assigned { props.type == 'editors' ? 'Editors' : 'Reviewers' } 
             </FloatingMenuTrigger>
             <FloatingMenuBody>
-                <FloatingMenuHeader>
+                <FloatingMenuHeader title={`Filter by assigned ${props.type}`}>
                     <div>
                         <input 
                             type="text" 

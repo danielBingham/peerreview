@@ -30,7 +30,8 @@ module.exports = class PaperEventsDAO {
                 reviewId: row.event_reviewId,
                 reviewCommentId: row.event_reviewCommentId,
                 submissionId: row.event_submissionId,
-                newStatus: row.event_newStatus
+                newStatus: row.event_newStatus,
+                paperCommentId: row.event_paperCommentId
             }
 
             if( ! dictionary[event.id] ) {
@@ -67,7 +68,8 @@ module.exports = class PaperEventsDAO {
                 paper_events.review_id as "event_reviewId",
                 paper_events.review_comment_id as "event_reviewCommentId",
                 paper_events.submission_id as "event_submissionId", 
-                paper_events.new_status as "event_newStatus"
+                paper_events.new_status as "event_newStatus",
+                paper_events.paper_comment_id as "event_paperCommentId"
 
             FROM paper_events
             ${where}
@@ -90,7 +92,7 @@ module.exports = class PaperEventsDAO {
         const validFields = [ 
             'paperId', 'actorId', 'version', 'status', 'type', 
             'visibility', 'eventDate', 'assigneeId', 'reviewId', 
-            'reviewCommentId', 'submissionId', 'newStatus' 
+            'reviewCommentId', 'submissionId', 'newStatus', 'paperCommentId'
         ]
 
         let count = 1
@@ -113,6 +115,8 @@ module.exports = class PaperEventsDAO {
                 columns += `submission_id, `
             } else if ( key == 'newStatus' ) {
                 columns += `new_status, `
+            } else if ( key == 'paperCommentId' ) {
+                columns += `paper_comment_id, `
             } else {
                 columns += `${key}, `
             }

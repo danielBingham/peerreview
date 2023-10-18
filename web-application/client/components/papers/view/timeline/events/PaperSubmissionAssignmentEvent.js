@@ -36,13 +36,12 @@ const PaperSubmissionAssignmentEvent = function({ eventId }) {
 
 
     return (
-        <TimelineItem>
+        <TimelineItem className="paper-submission-assignment-event">
             <TimelineIcon>
                 { eventTypeMap[event.type].icon } 
             </TimelineIcon>
             <TimelineItemWrapper>
-                <div><UserTag id={event.actorId} /> { eventTypeMap[event.type].name } <UserTag id={event.assigneeId}/> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />.</div>
-                <VisibilityControl eventId={eventId} />
+                <UserTag id={event.actorId} /> { eventTypeMap[event.type].name } <UserTag id={event.assigneeId}/> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />. <VisibilityControl eventId={eventId} compact={true} />
             </TimelineItemWrapper>
         </TimelineItem> 
     )
