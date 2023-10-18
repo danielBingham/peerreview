@@ -11,8 +11,11 @@
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
 }
+.review-header .controls  .review-selector-menu-wrapper {
+    text-align: center;
+}
 .review-header .review-selector .review-option {
-    padding: 20px 10px;
+    padding: 10px 10px;
 }
 .review-header .selected-review {
     border: thin solid var(--main-border-color);

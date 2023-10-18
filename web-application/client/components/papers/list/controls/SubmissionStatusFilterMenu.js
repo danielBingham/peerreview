@@ -71,9 +71,7 @@ const SubmissionStatusFilterMenu = function({}) {
         <FloatingMenu className="submission-status-filter-menu" >
             <FloatingMenuTrigger>Status{selectedView}</FloatingMenuTrigger>
             <FloatingMenuBody>
-                <FloatingMenuHeader>
-                    Status
-                </FloatingMenuHeader>
+                <FloatingMenuHeader title="Filter by status" />
                 { menuItemViews }
             </FloatingMenuBody>
         </FloatingMenu> 

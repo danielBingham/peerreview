@@ -162,7 +162,7 @@ const JournalFilterMenu = function({}) {
         <FloatingMenu className="journals-filter-menu">
             <FloatingMenuTrigger>Journals{selectedView}</FloatingMenuTrigger>
             <FloatingMenuBody>
-                <FloatingMenuHeader>
+                <FloatingMenuHeader title="Filter by journal">
                     <JournalSuggestions />
                 </FloatingMenuHeader>
                 { selectedContent }

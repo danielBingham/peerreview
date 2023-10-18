@@ -13,6 +13,9 @@
     padding: 10px;
     text-align: center;
 }
+.paper-comment-form .content textarea {
+    resize: vertical;
+}
 .paper-comment-form .content textarea:focus {
     background-color: var(--input-focus-background-color);
 }

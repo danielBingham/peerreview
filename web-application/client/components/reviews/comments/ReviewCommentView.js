@@ -3,14 +3,16 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams } from 'react-router-dom'
 import ReactMarkdown from 'react-markdown'
 
+import { EllipsisHorizontalIcon } from '@heroicons/react/24/outline'
+
 import { deleteReviewComment, patchReviewComment, cleanupRequest } from '/state/reviews'
+
+import { FloatingMenu, FloatingMenuBody, FloatingMenuTrigger, FloatingMenuItem } from '/components/generic/floating-menu/FloatingMenu'
 
 import UserTag from '/components/users/UserTag'
 import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 import AreYouSure from '/components/AreYouSure'
-
-import { XCircleIcon } from '@heroicons/react/24/outline'
 
 import './ReviewCommentView.css'
 
@@ -103,10 +105,13 @@ const ReviewCommentView = function(props) {
             /> 
             <div key={props.comment.id} id={`review-comment-${props.comment.id}`} className="comment-outer">
                 { props.review.status == 'in-progress' && (
-                    <span className="controls">
-                        <a href={`?thread=${props.thread.id}`} onClick={edit} className="edit">edit</a> 
-                        <span onClick={(e) => setAreYouSure(true)} className="delete"><XCircleIcon /></span>
-                    </span>
+                    <FloatingMenu className="controls">
+                        <FloatingMenuTrigger showArrow={false}><EllipsisHorizontalIcon /></FloatingMenuTrigger>
+                        <FloatingMenuBody>
+                            <FloatingMenuItem onClick={edit} className="edit">edit</FloatingMenuItem> 
+                            <FloatingMenuItem onClick={(e) => setAreYouSure(true)} className="delete">delete</FloatingMenuItem>
+                        </FloatingMenuBody>
+                    </FloatingMenu>
                 ) }
                 <div className="header">
                     <UserTag id={props.comment.userId} />

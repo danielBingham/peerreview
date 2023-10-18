@@ -1,6 +1,6 @@
 .comment-outer {
     padding: 10px 5px 0 5px;
-    border-bottom: thin solid var(--main-border-color);
+    border-bottom: thin solid var(--card-border-color);
 }
 .comment-outer .profile-picture {
     float: left;
@@ -8,8 +8,8 @@
     width: 30px;
     margin-right: 10px;
     margin-bottom: 5px;
-    border: thin solid var(--main-border-color);
-    background-color: var(--main-border-color);
+    border: thin solid var(--card-border-color);
+    background-color: var(--card-border-color);
 }
 .comment-outer .header {
     padding: 0 5px;
@@ -23,10 +23,9 @@
 .comment-outer .controls svg {
     width: 24px;
     height: 24px;
-    margin-bottom: -6px;
-    padding-left: 5px;
-    color: #666;
+    margin: 0px 10px;
+    color: var(--dots-menu-color);
 }
-.comment-outer .controls svg:hover {
-    color: red;
+.comment-outer .controls .menu-item {
+    padding: 10px 20px;
 }

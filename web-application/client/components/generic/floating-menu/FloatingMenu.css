@@ -27,8 +27,8 @@
 .floating-menu .menu-body {
     position: absolute;
     top: 2em;
-    right: 0;
-    text-align: center;
+    left: 0;
+    text-align: left;
     background-color: white; 
     border: thin solid var(--floating-menu-border-color);
     box-shadow: 0 0 3px 1px rgba(100,100,100,0.2);
@@ -39,28 +39,36 @@
 
 
 .floating-menu .menu-body .menu-header {
-    position: relative;
-    padding: 20px 20px 10px 20px;
     border-bottom: thin solid var(--floating-menu-border-color);
 }
-.floating-menu .menu-body .menu-header .menu-title {
+.floating-menu .menu-body .menu-header .menu-header-top {
+    display: grid;
+    grid-template-columns: 6fr 1fr;
+    border-bottom: thin solid var(--floating-menu-border-color);
+}
+.floating-menu .menu-body .menu-header .menu-title { 
+    padding: 10px;
+    font-weight: bold;
+    white-space: nowrap;
 }
 .floating-menu .menu-body .menu-header .menu-escape {
-    position: absolute;
-    top: 5px;
-    right: 5px;
-    width: 12px;
-    height: 12px;
-    cursor: pointer;
+    padding: 10px;
 }
 .floating-menu .menu-body .menu-header .menu-escape a:link {
-    color: var(--main-text-color);
+    color: var(--floating-menu-icon-color);
 }
 .floating-menu .menu-body .menu-header .menu-escape a:active,
 .floating-menu .menu-body .menu-header .menu-escape a:hover,
 .floating-menu .menu-body .menu-header .menu-escape a:visited {
-    color: var(--main-text-color);
+    color: var(--floating-menu-icon-color);
     filter: brightness(90%);
+}
+.floating-menu .menu-body .menu-header .menu-escape svg {
+    width: 1.2em;
+    height: 1.2em;
+}
+.floating-menu .menu-body .menu-header .menu-header-bottom {
+    padding: 5px;
 }
 
 
@@ -68,6 +76,7 @@
     display: block;
     text-transform:capitalize;
     white-space: nowrap;
+    padding-left: 20px;
 }
 .floating-menu .menu-body a.menu-item:link {
     color: var(--main-text-color);

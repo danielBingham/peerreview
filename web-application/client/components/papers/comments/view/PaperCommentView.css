@@ -11,6 +11,19 @@
 .paper-comment-view .header .right {
     text-align: right;
 }
+.paper-comment-view .header .right .dots-menu {}
+.paper-comment-view .header .right .dots-menu .dots {
+    padding: 0 10px;
+}
+.paper-comment-view .header .right .dots-menu svg {
+    width: 1.2em;
+    height: 1.2em;
+}
+.paper-comment-view .header .right .dots-menu .menu-item {
+    padding: 10px 20px;
+}
+
+
 
 .paper-comment-view .content {
     padding: 0 20px;

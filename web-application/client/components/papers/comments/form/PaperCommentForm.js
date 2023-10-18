@@ -9,7 +9,7 @@ import VisibilityControl from '/components/papers/view/timeline/events/controls/
 
 import './PaperCommentForm.css'
 
-const PaperCommentForm = function({ paperId }) {
+const PaperCommentForm = function({ paperId, paperCommentId }) {
     
     // ======= Render State =========================================
    
@@ -54,7 +54,13 @@ const PaperCommentForm = function({ paperId }) {
     })
 
     const paperComment = useSelector(function(state) {
-        if ( commentId ) {
+        if ( paperCommentId && ! commentId ) {
+            const comment = state.paperComments.dictionary[paperCommentId]
+            if ( comment.status !== 'edit-in-progress' ) {
+                throw new Error(`PaperCommentForm() called with comment not in 'edit-in-progress'.`)
+            }
+            return comment
+        } else if ( commentId ) {
             return state.paperComments.dictionary[commentId]
         } else {
             // Otherwise, look for a comment in progress and use that.

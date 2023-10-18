@@ -272,7 +272,7 @@ const VisibilityControl = function({ eventId, eventType, compact }) {
 
         return (
             <FloatingMenu className={`event-visibility-control ${ compact ? 'compact' : ''}`}>
-                <FloatingMenuTrigger><EyeIcon/> { compact ? '' : event.visibility.join(', ') }</FloatingMenuTrigger>
+                <FloatingMenuTrigger showArrow={ ! compact}><EyeIcon/> { compact ? '' : event.visibility.join(', ') }</FloatingMenuTrigger>
                 <FloatingMenuBody>
                     { menuItemViews }
                 </FloatingMenuBody>
