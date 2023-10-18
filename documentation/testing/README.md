@@ -40,11 +40,6 @@ checklist for that PR.
 - [ ] Login to a user with email and password
     - [ ] Connect ORCID iD to the account 
 
-## Reputation Generation
-
-- [ ] Register a new user with email and password
-    - [ ] Test reputation generation with an ORCID iD
-
 ## User Profile Edit
 
 - Login to a User
@@ -56,73 +51,49 @@ checklist for that PR.
     - [ ] Change user's email
     - [ ] Change user's password 
 
+## Journal Creation
+
+- [ ] Run [Journal Creation](./journal-creation.md) with title `Test Closed` and `closed` model.
+- [ ] Run [Journal Creation](./journal-creation.md) with title `Test Open` and `open` model.
+- [ ] Run [Journal Creation](./journal-creation.md) with title `Test Open-Public` and `open-public` model.
+- [ ] Run [Journal Creation](./journal-creation.md) with title `Test Public` and `public` model.
+
 ## Draft Submission
 
-- [ ] Submit a Draft Paper
-    - [ ] With one author
-    - [ ] With multiple authors
-        - [ ] author suggestion is working correctly
-    - [ ] With an author with commenter privileges
-    - [ ] With one field
-        - [ ] Field suggestion is working correctly
-    - [ ] With multiple fields
-    - [ ] Upload a file
-        - [ ] Delete the uploaded file and upload a new one
-    - [ ] with a very large file
-    - [ ] With a file with lots of graphics
+- [ ] Run through [Draft Submission](./draft-submission.md)
+- Navigate to the timeline of the draft with neither preprint nor journal submission
+    - [ ] Leave a comment and confirm comment visibility is `authors`
+    - [ ] Leave a review and confirm the review visibility is `authors`
+    - [ ] Upload a version and confirm the version visibility is `authors`
+- Login to a user with out permissions on `Test Closed`.
+    - [ ] Submit a draft to `Test Closed`.
+- Login to a user with out permissions on `Test Open`.
+    - [ ] Submit a draft to `Test Open`.
+- Login to a user with out permissions on `Test Open-Public`.
+    - [ ] Submit a draft to `Test Open-Public`.
+- Login to a user with out permissions on `Test Public`.
+    - [ ] Submit a draft to `Test Public`.
+
+## Journal Workflow and Review
+
+- Login to a user with `managing-editor` permissions on `Test Closed` journal.
+    - [ ] Assign an `editor` to a submission.
+    - [ ] Login as the assigned editor.
+        - [ ] Assign 3 reviewers to the submission, including the editor.
+        - [ ] Set submission status to `Review`
+        - [ ] Run through [Draft Review](./draft-review.md) on the submission.
+        - [ ] Change the visibility on a review to add `authors`.
+            - [ ] Login as an author and confirm review is visible.
+        - [ ] 
+
 
 ## Draft Review
 
-- Logout of any users
-    - [ ] Review list should require login
-- Login to user with no reputation
-    - [ ] Review list should be empty 
-- Login to user with enough reputation to view fields populated with papers to review
-    - [ ] Review list should display the papers user has Review reputation for
-- While logged into a user with review reputation, select a paper to review from the list.
-    - [ ] Confirm existing reviews show on the Review tab
-        - [ ] Add a comment to a thread on the Review tab
-    - [ ] Confirm comments match on the Drafts tab
-        - [ ] Click on a comment, confirm it is centered
-        - [ ] Click on a pin, confirm comment is highlighted, centered, and scrolled
-        - [ ] Click on a comment or pin that causes a comment to be hidden near the top
-        - [ ] Click on the "Click here to expand", confirm comments show again
-    - [ ] Start a new review
-        - [ ] Confirm review form shows on the Review tab
-        - On the Draft Tab
-            - [ ] Add a comment
-            - [ ] Add a comment reply
-            - [ ] Add another comment.
-            - [ ] Edit a comment and save the edit
-            - [ ] Edit a comment and cancel the edit
-            - [ ] Delete a comment.
-            - [ ] Begin a comment
-        - On the Review Tab
-            - [ ] Finish the started comment.
-            - [ ] Edit a comment and save the edit.
-            - [ ] Edit a comment and cancel the edit.
-        - [ ] Populate the review summary and submit the review
-- Login to a user who's an author on this draft with Owner permissions
-    - [ ] Accept a review and confirm reputation gain for reviewer
-    - [ ] Reject a review and confirm no reputation loss for reviewer
+- [ ] Run through [Draft Review](./draft-review.md) for a submission on the `closed` journal.
+- [ ] Run through [Draft Review](./draft-review.md) for a submission on the `open` journal.
+- [ ] Run through [Draft Review](./draft-review.md) for a submission on the `open-public` journal.
+- [ ] Run through [Draft Review](./draft-review.md) for a submission on the `public` journal.
 
-## Draft Version Upload
-
-- Login as a user with owner permissions on a draft under review and navigate to that draft
-    - [ ] Click "upload new version", select a file and upload it
-        - [ ] Complete [Draft Review](draft-review) of the newly uploaded version
-
-## Draft Publish
-
-- Login as a user with owner permissions on a draft under review and navigate to that draft
-    - [ ] Click "publish" and confirm draft shows up on the Papers List
-
-## Paper Response
-
-- Login as a user with Response permissions on a published paper
-    - [ ] Write a response with 125 words and a vote, confirm score and reputation change appropriately.
-        - [ ] Confirm each responder is only allowed one response.
-    - [ ] Write a response with less than 125 words, confirm vote is denied.
 
 ## Field List
 
