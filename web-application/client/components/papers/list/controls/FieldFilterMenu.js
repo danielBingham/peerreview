@@ -152,7 +152,7 @@ const FieldFilterMenu = function({}) {
         <FloatingMenu className="fields-filter-menu">
             <FloatingMenuTrigger>Taxonomy{triggerView}</FloatingMenuTrigger>
             <FloatingMenuBody>
-                <FloatingMenuHeader>
+                <FloatingMenuHeader title="Filter by taxonomy">
                     <FieldSuggestions />
                 </FloatingMenuHeader>
                 <div className="scroll-pane">

@@ -28,13 +28,12 @@ const PaperJournalSubmissionEvent = function({ eventId }) {
     // ================= Render ===============================================
     
     return (
-        <TimelineItem>
+        <TimelineItem className="paper-journal-submission-event">
             <TimelineIcon>
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <div><UserTag id={event.actorId} /> submitted draft to <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />. </div>
-                <div><VisibilityControl eventId={event.id} /></div>
+                <UserTag id={event.actorId} /> submitted draft to <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />.  <VisibilityControl eventId={event.id} compact={true}/>
             </TimelineItemWrapper>
         </TimelineItem> 
     )

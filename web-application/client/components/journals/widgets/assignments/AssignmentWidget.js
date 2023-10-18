@@ -218,7 +218,7 @@ const AssignmentWidget = function(props) {
                     Assign { props.type == 'editor' ? 'Editors' : 'Reviewers' } 
                 </FloatingMenuTrigger>
                 <FloatingMenuBody>
-                    <FloatingMenuHeader>
+                    <FloatingMenuHeader title={`Assign ${props.type == 'editors' ? 'Editors' : 'Reviewers'}`}>
                         <div>
                             <input 
                                 type="text" 

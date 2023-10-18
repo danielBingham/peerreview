@@ -13,7 +13,6 @@
     border: thin solid var(--main-border-color);
 }
 .feed-paper-review-view .review-summary, .feed-paper-review-view .review-summary-form {
-    padding: 20px 50px;
 }
 
 .feed-paper-review-view .approved svg {

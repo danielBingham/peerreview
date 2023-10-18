@@ -101,32 +101,34 @@ const ReviewSummaryView = function(props) {
         if ( props.selectedReview.status !== 'in-progress' ) {
             let message = null
             if ( props.selectedReview.recommendation == 'commentary' ) {
-                message = (<div className="commentary"><ChatBubbleLeftRightIcon /> Commentary</div>)
+                message = (<span className="commentary"><ChatBubbleLeftRightIcon /> left commentary</span>)
             } else if ( props.selectedReview.recommendation == 'approve' ) {
-                message = (<div className="approved"> <CheckCircleIcon /> Recommends Approval</div>)
+                message = (<span className="approved"> <CheckCircleIcon /> recommended approval</span>)
             } else if ( props.selectedReview.recommendation == 'request-changes' ) {
-                message = (<div className="request-changes"><ClipboardDocumentListIcon/> Recommends Changes</div>)
+                message = (<span className="request-changes"><ClipboardDocumentListIcon/> recommended changes</span>)
             } else if ( props.selectedReview.recommendation == 'reject' ) {
-                message = (<div className="rejected"><XCircleIcon /> Recommends Rejection</div>)
+                message = (<span className="rejected"><XCircleIcon /> recommended rejection</span>)
             }
 
             recommendation = (
-                <div className="recommendation">
+                <span className="recommendation">
                     {message}
-                </div>
+                </span>
             )
         } else {
-            recommendation = (<div className="recommendation">Unfinished</div>)
+            recommendation = (<span className="recommendation">is reviewing</span>)
         }
          
 
         return (
             <div className="review-summary">
                 <div className="summary">
-                    <div className="reviewer"><UserTag id={props.selectedReview.userId}/> submitted <a href={`/paper/${props.paper.id}/timeline#review-${props.selectedReview.id}`}>review #{props.selectedReview.id}</a> <DateTag timestamp={props.selectedReview.updatedDate} type="full" /></div>
-                    { recommendation }
-                    <VisibilityControl eventId={props.eventId} /> 
-                    <div className="summary-text"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div>
+                    <div className="header">
+                        <div className="left">
+                            <UserTag id={props.selectedReview.userId}/> { recommendation } <a href={`/paper/${props.paper.id}/timeline#review-${props.selectedReview.id}`}><DateTag timestamp={props.selectedReview.updatedDate} type="full" /></a></div>
+                        <div className="right"><VisibilityControl eventId={props.eventId} /> </div>
+                    </div>
+                    { props.selectedReview.summary && <div className="summary-text"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div> }
                 </div>
             </div>
         )

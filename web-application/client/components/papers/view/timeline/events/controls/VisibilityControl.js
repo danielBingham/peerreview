@@ -14,7 +14,7 @@ import './VisibilityControl.css'
  * @see PaperEventService::canEditEvent()
  */
 const canEditEvent = function(user, event, paper, submission) {
-    if ( ! user ) {
+    if ( ! user || ! event ) {
         return false
     }
 
@@ -65,6 +65,10 @@ const canEditEvent = function(user, event, paper, submission) {
 }
 
 const generateMinimalVisibility = function(user, event, paper, submission) {
+    if ( ! event ) {
+        return null
+    }
+
     // If they are a corresponding author for the paper.
     const paperEvents = [ 
         'paper:new-version', 
@@ -92,7 +96,7 @@ const generateMinimalVisibility = function(user, event, paper, submission) {
     return 'corresponding-authors'
 }
 
-const VisibilityControl = function({ eventId }) {
+const VisibilityControl = function({ eventId, eventType, compact }) {
 
     // ============ Request Tracking ==========================================
 
@@ -112,15 +116,24 @@ const VisibilityControl = function({ eventId }) {
     })
 
     const event = useSelector(function(state) {
-        return state.paperEvents.dictionary[eventId]
+        if ( eventId ) {
+            return state.paperEvents.dictionary[eventId]
+        }
+        return null
     })
 
     const paper = useSelector(function(state) {
-        return state.papers.dictionary[event.paperId]
+        if ( event ) {
+            return state.papers.dictionary[event.paperId]
+        }
+        return null
     })
 
     const submission = useSelector(function(state) {
-        return state.journalSubmissions.dictionary[event.submissionId]
+        if ( event ) {
+            return state.journalSubmissions.dictionary[event.submissionId]
+        }
+        return null
     })
 
     // ============ Generated State ===========================================
@@ -202,12 +215,22 @@ const VisibilityControl = function({ eventId }) {
 
     // ============ Render ====================================================
 
-    if ( ! canEdit ) {
+    if ( ! event ) {
         return (
             <div className="event-visibility-control">
-                <EyeIcon/> { event.visibility.join() }
+                <EyeIcon/> None
             </div>
         )
+    }
+
+    if ( ! canEdit && ! compact ) {
+        return (
+             <div className="event-visibility-control">
+                <EyeIcon/> { event.visibility.join(', ') }
+            </div> 
+        )
+    } else if ( ! canEdit && compact ) {
+        return null
     } else {
         const visibilities = {
             'public': false,
@@ -248,8 +271,8 @@ const VisibilityControl = function({ eventId }) {
         }
 
         return (
-            <FloatingMenu className="event-visibility-control">
-                <FloatingMenuTrigger><EyeIcon/> { event.visibility.join(', ') }</FloatingMenuTrigger>
+            <FloatingMenu className={`event-visibility-control ${ compact ? 'compact' : ''}`}>
+                <FloatingMenuTrigger showArrow={ ! compact}><EyeIcon/> { compact ? '' : event.visibility.join(', ') }</FloatingMenuTrigger>
                 <FloatingMenuBody>
                     { menuItemViews }
                 </FloatingMenuBody>

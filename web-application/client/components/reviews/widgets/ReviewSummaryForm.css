@@ -8,6 +8,7 @@
     height: 200px;
     width: 100%;
     padding: 10px;
+    resize: vertical;
 }
 .review-summary-form textarea:focus {
     background-color: white;

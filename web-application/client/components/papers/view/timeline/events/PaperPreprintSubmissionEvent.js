@@ -22,13 +22,13 @@ const PaperPreprintSubmissionEvent = function({ eventId }) {
     // ================= Render ===============================================
     
     return (
-        <TimelineItem>
+        <TimelineItem className="paper-preprint-submission-event">
             <TimelineIcon>
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <div><UserTag id={event.actorId} /> submitted preprint <DateTag timestamp={event.eventDate} type="full" />.</div>
-                <VisibilityControl eventId={eventId} />
+                <UserTag id={event.actorId} /> submitted preprint <DateTag timestamp={event.eventDate} type="full" />.
+                <VisibilityControl eventId={eventId} compact={true} />
             </TimelineItemWrapper>
         </TimelineItem> 
     )

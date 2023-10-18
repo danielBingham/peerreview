@@ -9,6 +9,7 @@ import usersReducer from './users'
 import notificationsReducer from './notifications'
 import papersReducer from './papers'
 import paperEventsReducer from './paperEvents'
+import paperCommentsReducer from './paperComments'
 import reviewsReducer from './reviews'
 import journalsReducer from './journals'
 import journalSubmissionsReducer from './journalSubmissions'
@@ -28,6 +29,7 @@ const reducers = combineReducers({
     notifications: notificationsReducer,
     papers: papersReducer,
     paperEvents: paperEventsReducer,
+    paperComments: paperCommentsReducer,
     reviews: reviewsReducer,
     journals: journalsReducer,
     journalSubmissions: journalSubmissionsReducer,

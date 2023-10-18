@@ -24,8 +24,8 @@ module.exports = class PaperController {
         this.journalDAO = new backend.JournalDAO(core)
         this.journalSubmissionDAO = new backend.JournalSubmissionDAO(core)
 
-        this.submissionPermissionService = new backend.SubmissionService(core)
-        this.paperPermissionsService = new backend.PaperPermissionsService(core)
+        this.submissionService = new backend.SubmissionService(core)
+        this.PaperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
 
@@ -61,18 +61,7 @@ module.exports = class PaperController {
         relations.users = userResults.dictionary
 
         // ======== submissions ===============================================
-        let visibleIds = []
-        if ( user ) {
-            visibleIds = await this.submissionPermissionService.getVisibleSubmissionIds(user.id)
-        } else {
-            const visibleSubmissionResults = await this.database.query(`
-                            SELECT paper_id FROM journal_submissions WHERE status='published'
-                        `, [])
-
-            for(const row of visibleSubmissionResults.rows) {
-                visibleIds.push(row.paper_id)
-            }
-        }
+        let visibleSubmissionIds = await this.submissionService.getVisibleSubmissionIds(user) 
 
         const paperIds = []
         for(const paper of results.list) {
@@ -80,8 +69,8 @@ module.exports = class PaperController {
         }
 
         const submissionResults = await this.journalSubmissionDAO.selectJournalSubmissions(
-            'WHERE journal_submissions.paper_id = ANY($1::bigint[]) AND journal_submissions.paper_id = ANY($2::bigint[])', 
-            [ paperIds, visibleIds ]
+            'WHERE journal_submissions.paper_id = ANY($1::bigint[]) AND journal_submissions.id = ANY($2::bigint[])', 
+            [ paperIds, visibleSubmissionIds]
         )
         relations.submissions = submissionResults.dictionary
 
@@ -169,17 +158,17 @@ module.exports = class PaperController {
 
             // Preprints the session user can review.
             if ( query.type == 'preprint') {
-                visibleIds = await this.paperPermissionsService.getPreprints()
+                visibleIds = await this.PaperService.getPreprints()
 
             // Retrieves all of a  
             } else if (session.user && query.type == 'drafts' ) {
-                visibleIds = await this.paperPermissionsService.getDrafts(session.user.id)
+                visibleIds = await this.PaperService.getDrafts(session.user.id)
             } else if ( session.user && query.type == 'private-drafts' ) {
-                visibleIds = await this.paperPermissionsService.getPrivateDrafts(session.user.id)
+                visibleIds = await this.PaperService.getPrivateDrafts(session.user.id)
             } else if ( session.user && query.type == 'user-submissions' ) {
-                visibleIds = await this.paperPermissionsService.getUserSubmissions(session.user.id)
+                visibleIds = await this.PaperService.getUserSubmissions(session.user.id)
             } else if (session.user && query.type == 'review-submissions' ) {
-                visibleIds = await this.paperPermissionsService.getVisibleDraftSubmissions(session.user.id)
+                visibleIds = await this.PaperService.getVisibleDraftSubmissions(session.user.id)
             } else if ( session.user && query.type == 'assigned-review' ) {
                 const assignedResults = await this.database.query(`
                     SELECT journal_submissions.paper_id

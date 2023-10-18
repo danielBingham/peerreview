@@ -55,7 +55,7 @@ const UserBadge = function(props) {
         return (
             <div className="user-badge">
                 <div className="badge-grid">
-                    <UserProfileImage file={user.file} />
+                    <UserProfileImage userId={user.id} />
                     <div className="info-wrapper">
                         <div className="user-tag" ><Link to={ `/user/${user.id}` }>{user.name}</Link></div> 
                         <div className="institution">{user.institution}</div>

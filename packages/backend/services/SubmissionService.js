@@ -83,18 +83,56 @@ module.exports = class SubmissionService {
         return results.rows[0]
     }
 
-    async getVisibleSubmissionIds(userId) {
-        const results = await this.database.query(`
-            SELECT DISTINCT papers.id 
-                FROM papers
-                    LEFT OUTER JOIN journal_submissions ON papers.id = journal_submissions.paper_id
+    /**
+     * Get the submissionIds that are visible to `user`.
+     *
+     * This just controls the submission visibility.  Event visibility is
+     * subservient to the visibility of the submission and paper themselves,
+     * which are controlled by the journal's models.  A paper is visible if its
+     * submission is visible.
+     *
+     * Submissions are visible if:
+     * - The model is 'public'
+     * - The model is 'open-public' and the submission is published, or the
+     *   user is a journal member.
+     * - The model is 'open' and the submission is published or the user is a
+     *   journal member.
+     * - The model is 'closed' and the submisison is published or the user is
+     *   either a managing editor or assigned to the submission.
+     *
+     * @param {User}    user    The user who's visibility we want to check.
+     *
+     * @return  {int[]} An array of the visible submissionIds.
+     */
+    async getVisibleSubmissionIds(user) {
+        const sql = `
+            SELECT DISTINCT journal_submissions.id
+                FROM journal_submissions
+                    LEFT OUTER JOIN journals ON journal_submissions.journal_id = journals.id
                     LEFT OUTER JOIN journal_members ON journal_submissions.journal_id = journal_members.journal_id
+                    LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
+                    LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submission_id
             WHERE 
-                (journal_members.user_id = $1 AND (journal_members.permissions = 'editor' OR journal_members.permissions = 'owner'))
-                OR (journal_members.user_id = $1 AND journal_submissions.status = 'review' AND journal_members.permissions = 'reviewer')
-                OR journal_submissions.status = 'published'
-                OR papers.id IN (SELECT paper_id FROM paper_authors WHERE user_id = $1)
-        `, [ userId ])
+                journals.model = 'public'
+                    OR (journals.model = 'open-public' AND (journal_submissions.status = 'published' 
+                        ${ user ? 'OR journal_members.user_id = $1' : ''}))
+                    OR (journals.model = 'open-closed' AND (journal_submissions.status = 'published' 
+                        ${ user ? 'OR journal_members.user_id = $1' : '' }))
+                    OR (journals.model = 'closed' 
+                        AND (journal_submissions.status = 'published' 
+                            ${ user ? `OR ( journal_members.permissions = 'owner' 
+                                OR journal_submission_editors.user_id = $1 
+                                OR journal_submission_reviewers.user_id = $1
+                                )` : '' }
+                            )
+                       )
+        `
+        const params = []
+        if ( user ) {
+            params.push(user.id)
+        }
+
+        const results = await this.database.query(sql, params)
 
         if ( results.rows.length <= 0 ) {
             return []
@@ -103,8 +141,18 @@ module.exports = class SubmissionService {
         return results.rows.map((r) => r.id)
     }
 
-    async filterVisibleSubmissions(submissionResults, user) {
+    async canViewSubmission(user, paperId) {
+        const visibleSubmissionIds = await this.getVisibleSubmissionIds(user)
 
+        const results = await this.database.query(`
+            SELECT paper_id FROM journal_submissions WHERE id = ANY($1::bigint[]) AND paper_id = $2
+        `, [ visibleSubmissionIds, paperId])
+
+        if ( results.rows.length > 0 ) {
+            return true
+        }
+
+        return false
     }
 
 }

@@ -41,12 +41,10 @@ const SubmissionStatusFilterMenu = function({}) {
     // ============ Render ====================================================
     
     const statuses = {
-        'private-draft': 'Private Draft',
-        preprint: 'Preprint',
+        rejected: 'Rejected',
         submitted: 'Submitted',
         review: 'In Review',
         proofing: 'In Proofing',
-        rejected: 'Rejected',
         published: 'Published',
         retracted: 'Retracted'
     }
@@ -73,9 +71,7 @@ const SubmissionStatusFilterMenu = function({}) {
         <FloatingMenu className="submission-status-filter-menu" >
             <FloatingMenuTrigger>Status{selectedView}</FloatingMenuTrigger>
             <FloatingMenuBody>
-                <FloatingMenuHeader>
-                    Status
-                </FloatingMenuHeader>
+                <FloatingMenuHeader title="Filter by status" />
                 { menuItemViews }
             </FloatingMenuBody>
         </FloatingMenu> 

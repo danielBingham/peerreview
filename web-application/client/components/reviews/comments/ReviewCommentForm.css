@@ -8,6 +8,7 @@
     height: 150px;
     border: thin solid var(--input-border-color);
     padding: 5px;
+    resize: vertical;
 }
 .comment-form .controls {
     padding: 0 5px 10px 5px;

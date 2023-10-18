@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useLayoutEffect } from 'react'
-
 import { useDispatch, useSelector } from 'react-redux'
 
 import { deleteReviewComment, patchReviewComment, cleanupRequest } from '/state/reviews'

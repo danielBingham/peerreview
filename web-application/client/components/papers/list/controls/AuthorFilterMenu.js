@@ -162,7 +162,7 @@ const AuthorFilterMenu = function({}) {
         <FloatingMenu className="authors-filter-menu">
             <FloatingMenuTrigger>Authors{selectedView}</FloatingMenuTrigger>
             <FloatingMenuBody>
-                <FloatingMenuHeader>
+                <FloatingMenuHeader title="Filter by authors">
                     <UserSuggestions />
                 </FloatingMenuHeader>
                 { selectedContent }

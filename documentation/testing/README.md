@@ -1,6 +1,6 @@
 # Testing Peer Review
 
-This document contains the step necessary to run a manual test of Peer Review.
+This document contains the steps necessary to run a manual test of Peer Review.
 You can copy and paste the relevant sections into a PR to create a testing
 checklist for that PR.
 
@@ -8,8 +8,9 @@ checklist for that PR.
 
 - [ ] Authentication
 - [ ] ORCID iD Authentication
-- [ ] Reputation Generation
 - [ ] User Profile Edit
+- [ ] Journal Creation
+- [ ] Journal Types
 - [ ] Draft Submission 
 - [ ] Draft Paper List and View
 - [ ] Draft Review

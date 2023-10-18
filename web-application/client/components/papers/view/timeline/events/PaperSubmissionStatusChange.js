@@ -38,13 +38,12 @@ const PaperSubmissionStatusChange = function({ eventId }) {
     }
 
     return (
-        <TimelineItem>
+        <TimelineItem className="paper-submission-status-change-event" >
             <TimelineIcon>
                 <ArrowPathRoundedSquareIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <div><UserTag id={event.actorId} /> changed status to <strong>{ statuses[event.newStatus] }</strong> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />.</div> 
-                <VisibilityControl eventId={eventId} />
+                <UserTag id={event.actorId} /> changed status to <strong>{ statuses[event.newStatus] }</strong> for  <JournalTag id={submission.journalId}/> <DateTag timestamp={event.eventDate} type="full" />. <VisibilityControl eventId={eventId} compact={true} />
             </TimelineItemWrapper>
         </TimelineItem> 
     )

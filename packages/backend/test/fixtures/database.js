@@ -120,6 +120,39 @@ const papers = [
     }
 ]
 
+const paper_comments = [
+    { 
+        comment_id: 1,
+        comment_paperId: 1,
+        comment_userId: 1,
+        comment_status: 'committed',
+        comment_content: 'This is comment text.',
+        comment_createdDate: 'TIMESTAMP',
+        comment_updatedDate: 'TIMESTAMP',
+        comment_committedDate: 'TIMESTAMP'
+    },
+    {
+        comment_id: 2,
+        comment_paperId: 1,
+        comment_userId: 2,
+        comment_status: 'committed',
+        comment_content: 'This is more comment text.',
+        comment_createdDate: 'TIMESTAMP',
+        comment_updatedDate: 'TIMESTAMP',
+        comment_committedDate: 'TIMESTAMP'
+    },
+    {
+        comment_id: 3,
+        comment_paperId: 1,
+        comment_userId: 1,
+        comment_status: 'in-progress',
+        comment_content: 'This is further comment text.',
+        comment_createdDate: 'TIMESTAMP',
+        comment_updatedDate: 'TIMESTAMP',
+        comment_committedDate: 'TIMESTAMP'
+    }
+]
+
 const users = [
     {
         user_id: 1,
@@ -373,7 +406,12 @@ const database = {
             { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[0]},
             { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[1]},
         ]
-    } ,
+    },
+    paperComments: {
+        1: [{ ...paper_comments[0] }],
+        2: [{ ...paper_comments[1] }],
+        3: [{ ...paper_comments[2] }]
+    },
     journals: {
         1: [
             { ...journals[0], ...journal_members[0] },

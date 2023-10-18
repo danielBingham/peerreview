@@ -1,0 +1,16 @@
+.paper-timeline-comment-form-wrapper {
+    border: thin solid var(--main-border-color);
+}
+.paper-timeline-editor-controls-wrapper {
+    border: thin solid var(--main-border-color);
+    margin: 20px auto;
+}
+.paper-timeline-editor-controls-header {
+    padding: 10px;
+    border-bottom: thin solid var(--card-border-color);
+    background-color: var(--card-header-background-color);
+}
+.paper-timeline-editor-controls {
+    padding: 20px;
+}
+

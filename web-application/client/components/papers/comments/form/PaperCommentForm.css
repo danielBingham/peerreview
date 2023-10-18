@@ -1,0 +1,25 @@
+.paper-comment-form {}
+.paper-comment-form .content { } 
+.paper-comment-form .content textarea {
+    display: inline-block;
+    box-sizing: border-box;
+    width: 100%;
+    height: 150px;
+    border: thin solid var(--input-border-color);
+    background-color: var(--input-background-color);
+    padding: 10px;
+}
+.paper-comment-form .visibility-controls {
+    padding: 10px;
+    text-align: center;
+}
+.paper-comment-form .content textarea {
+    resize: vertical;
+}
+.paper-comment-form .content textarea:focus {
+    background-color: var(--input-focus-background-color);
+}
+.paper-comment-form .controls {
+    padding: 0 5px 10px 5px;
+    text-align: center;
+}

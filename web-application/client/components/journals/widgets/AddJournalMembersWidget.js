@@ -31,6 +31,11 @@ const AddJournalMembersWidget = function(props) {
     }
 
     const selectMember = function(user) {
+        const existingMember = props.members.find((m) => m.userId == user.id)
+        if ( existingMember ) {
+            return
+        }
+
         const newMembers = [ ...props.members ]
 
         const member = {

@@ -130,19 +130,28 @@ module.exports = class NotificationService {
              */
             'author:paper:new-comment': {
                 email: {
-                    subject: Handlebars.compile(`TODO`),
-                    body: Handlebars.compile(`TODO`)
+                    subject: Handlebars.compile(`[JournalHub] {{user.name}} commented on your paper, "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                     {{user.name}} commented on your paper, "{{paper.title}}". 
+
+                    Read the comment: {{host}}paper/{{paper.id}}/timeline#comment-{{comment.id}}
+                    `)
                 },
-                text: Handlebars.compile(`TODO`),
-                path: Handlebars.compile(`TODO`)
+                text: Handlebars.compile(`{{user.name}} commented on your paper, "{{paper.title}}"`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#comment-{{comment.id}}`)
             },
             'reviewer:paper:new-comment': {
                 email: {
-                    subject: Handlebars.compile(`TODO`),
-                    body: Handlebars.compile(`TODO`)
+                    subject: Handlebars.compile(`[JournalHub] {{user.name}} commented on "{{paper.title}}", which you reviewed`),
+                    body: Handlebars.compile(`
+                    {{user.name}} commented on "{{paper.title}}", which you reviewed. 
+
+                    Read the comment: {{host}}paper/{{paper.id}}/timeline#comment-{{comment.id}}
+
+                        `)
                 },
-                text: Handlebars.compile(`TODO`),
-                path: Handlebars.compile(`TODO`)
+                text: Handlebars.compile(`{{user.name}} commented on "{{paper.title}}", which you reviewed`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#comment-{{comment.id}}`)
             },
 
             /* ============ Journal Notifications ===================================== */
@@ -325,27 +334,39 @@ module.exports = class NotificationService {
              */
             'author:submission:new-comment': {
                 email: {
-                    subject: Handlebars.compile(`TODO`),
-                    body: Handlebars.compile(`TODO`)
+                    subject: Handlebars.compile(`[JournalHub] {{user.name}} commented on your paper, "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                    {{user.name}} commented on your paper, "{{paper.title}}". 
+
+                    Read the comment: {{host}}paper/{{paper.id}}/timeline#comment-{{comment.id}}
+                    `)
                 },
-                text: Handlebars.compile(`TODO`),
-                path: Handlebars.compile(`TODO`)
+                text: Handlebars.compile(`{{user.name}} commented on your paper, "{{paper.title}}"`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#comment-{{comment.id}}`)
             },
             'reviewer:submission:new-comment': {
                 email: {
-                    subject: Handlebars.compile(`TODO`),
-                    body: Handlebars.compile(`TODO`)
+                    subject: Handlebars.compile(`[JournalHub] {{user.name}} commented on your review assignment, "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                    {{user.name}} commented on your review assignment, "{{paper.title}}". 
+
+                    Read the comment: {{host}}paper/{{paper.id}}/timeline#comment-{{comment.id}}
+                    `)
                 },
-                text: Handlebars.compile(`TODO`),
-                path: Handlebars.compile(`TODO`)
+                text: Handlebars.compile(`{{user.name}} commented on your review assignment, "{{paper.title}}"`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#comment-{{comment.id}}`)
             },
             'editor:submission:new-comment': {
                 email: {
-                    subject: Handlebars.compile(`TODO`),
-                    body: Handlebars.compile(`TODO`)
+                    subject: Handlebars.compile(`[JournalHub] {{user.name}} commented on "{{paper.title}}"`),
+                    body: Handlebars.compile(`
+                    {{user.name}} commented on "{{paper.title}}". 
+
+                    Read the comment: {{host}}paper/{{paper.id}}/timeline#comment-{{comment.id}}
+                    `)
                 },
-                text: Handlebars.compile(`TODO`),
-                path: Handlebars.compile(`TODO`)
+                text: Handlebars.compile(`{{user.name}} commented on "{{paper.title}}"`),
+                path: Handlebars.compile(`/paper/{{paper.id}}/timeline#comment-{{comment.id}}`)
             },
 
             /**
@@ -425,12 +446,12 @@ module.exports = class NotificationService {
             // Notifications that affect multiple objects.
             'new-review': this.sendNewReview.bind(this),
             'new-version': this.sendNewVersion.bind(this),
+            'new-comment': this.sendNewComment.bind(this),
 
             // Paper notifications.
             'paper:submitted': this.sendPaperSubmitted.bind(this),
             'paper:preprint-posted': this.sendPaperPreprintPosted.bind(this),
             'paper:review-comment-reply': this.sendPaperReviewCommentReply.bind(this),
-            'paper:new-comment': this.sendPaperNewComment.bind(this),
 
             // Journal notifications.
             'journal:invited': this.sendJournalInvited.bind(this),
@@ -440,7 +461,6 @@ module.exports = class NotificationService {
             // Submission notifications.
             'submission:new': this.sendSubmissionNew.bind(this),
             'submission:review-comment-reply': this.sendSubmissionReviewCommentReply.bind(this),
-            'submission:new-comment': this.sendSubmissionNewComment.bind(this),
             'submission:status-changed': this.sendSubmissionStatusChanged.bind(this),
             'submission:reviewer-assigned': this.sendSubmissionReviewerAssigned.bind(this),
             'submission:reviewer-unassigned': this.sendSubmissionReviewerUnassigned.bind(this),
@@ -538,6 +558,128 @@ module.exports = class NotificationService {
                 )
             }
         }
+    }
+
+    async sendNewComment(currentUser, context) {
+        let object = 'paper'
+        const notifiedUserIds = [ currentUser.id ]
+
+        const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ context.comment.paperId ])
+        const paper = paperResults.dictionary[context.comment.paperId]
+
+        const eventResults = await this.paperEventDAO.selectEvents(`WHERE paper_events.paper_comment_id = $1`, [ context.comment.id ])
+        if ( eventResults.list.length <= 0 ) {
+            throw new ServiceError('missing-event', 
+                `Event missing for Review(${context.comment.id}).`)
+        }
+        const event = eventResults.dictionary[eventResults.list[0]]
+
+        // There will only be activeSubmissionInfo if the currentUser (who is
+        // also the comment submitter) is associated with submission through its
+        // journal or is an author.  Otherwise, this will be `null` indicating
+        // that this is a preprint comment.
+        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(currentUser, paper.id)
+        if ( activeSubmissionInfo ) {
+            object = 'submission'
+
+            // ==== Assigned Reviewers ========================================
+
+            const isVisibleToAssignedReviewers = event.visibility.includes('assigned-reviewers') 
+                || event.visibility.includes('reviewers') || event.visibility.includes('public')
+
+            if ( isVisibleToAssignedReviewers ) {
+                const assignedReviewerResults = await this.core.database.query(`
+                    SELECT journal_submission_reviewers.user_id 
+                        FROM journal_submission_reviewers 
+                        WHERE journal_submission_reviewers.submission_id = $1
+                `, [ activeSubmissionInfo.id ])
+
+                const assignedReviewerIds = assignedReviewerResults.rows.length > 0 ? assignedReviewerResults.rows.map((r) => r.user_id) : []
+                for ( const id of assignedReviewerIds) {  
+                    if ( notifiedUserIds.includes(id)) {
+                        continue
+                    }
+
+                    notifiedUserIds.push(id)
+                    await this.createNotification(
+                        id,
+                        `reviewer:${object}:new-comment`,
+                        {
+                            paper: paper,
+                            comment: context.comment,
+                            user: currentUser
+                        }
+                    )
+                }
+            }
+            
+            // ==== Editors ===================================================
+            
+            if ( event.visibility.includes('editors') || event.visibility.includes('assigned-editors') ) {
+                const assignedEditorResults = await this.core.database.query(`
+                    SELECT user_id FROM journal_submission_editors WHERE submission_id = $1
+                `, [ activeSubmissionInfo.id ])
+
+                for(const row of assignedEditorResults.rows) {
+                    if ( notifiedUserIds.includes(row.user_id)) {
+                        continue
+                    }
+
+                    notifiedUserIds.push(row.user_id)
+                    await this.createNotification(
+                        row.user_id,
+                        `editor:${object}:new-comment`,
+                        {
+                            paper: paper,
+                            comment: context.comment,
+                            user: currentUser
+                        }
+                    )
+                }
+            }
+        }
+
+        // ======== Authors ===================================================
+
+        if ( event.visibility.includes('public') || event.visibility.includes('authors') ) {
+            for(const author of paper.authors) {
+                if ( notifiedUserIds.includes(author.userId)) {
+                    continue
+                }
+
+                notifiedUserIds.push(author.userId)
+                await this.createNotification(
+                    author.userId,
+                    `author:${object}:new-comment`,
+                    {
+                        paper: paper,
+                        comment: context.comment,
+                        user: currentUser
+                    }
+                )
+            }
+        } else if ( event.visibility.includes('corresponding-authors') ) {
+            for(const author of paper.authors) {
+                if ( notifiedUserIds.includes(author.userId)) {
+                    continue
+                }
+                if ( ! author.owner ) {
+                    continue
+                }
+
+                notifiedUserIds.push(author.userId)
+                await this.createNotification(
+                    author.userId,
+                    `author:${object}:new-comment`,
+                    {
+                        paper: paper,
+                        comment: context.comment,
+                        user: currentUser
+                    }
+                )
+            }
+        }
+        // TODO reviewers who have left a pre-print review
     }
 
     async sendNewVersion(currentUser, context) {
@@ -715,10 +857,6 @@ module.exports = class NotificationService {
         throw new ServiceError('not-implemented', `Not yet implemented.`)
     }
 
-    async sendPaperNewComment(currentUser, context) {
-        throw new ServiceError('not-implemented', 'Not yet implemented.')
-    }
-
     async sendJournalInvited(currentUser, context) {
         // Don't notify the user of their own actions.
         if ( currentUser.id == context.member.userId ) {
@@ -819,10 +957,6 @@ module.exports = class NotificationService {
     }
 
     async sendSubmissionReviewCommentReply(currentUser, context) {
-        throw new ServiceError('not-implemented', 'Not yet implemented.')
-    }
-
-    async sendSubmissionNewComment(currentUser, context) {
         throw new ServiceError('not-implemented', 'Not yet implemented.')
     }
 
