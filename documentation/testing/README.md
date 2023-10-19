@@ -50,10 +50,10 @@ checklist for that PR.
 
 ## Journal Creation
 
-- [ ] Run [Journal Creation](./journal-creation.md) with title `Test Closed` and `closed` model.
-- [ ] Run [Journal Creation](./journal-creation.md) with title `Test Open` and `open` model.
-- [ ] Run [Journal Creation](./journal-creation.md) with title `Test Open-Public` and `open-public` model.
-- [ ] Run [Journal Creation](./journal-creation.md) with title `Test Public` and `public` model.
+- [ ] Run [Journal Creation](./journal-creation.md) with params:`{ journal: { name:'Test Closed', model: 'closed'}}` 
+- [ ] Run [Journal Creation](./journal-creation.md) with params:`{ journal: { name:'Test Open', model: 'open'}}` 
+- [ ] Run [Journal Creation](./journal-creation.md) with params:`{ journal: { name:'Test Open Public', model: 'open-public'}}` 
+- [ ] Run [Journal Creation](./journal-creation.md) with params:`{ journal: { name:'Test Public', model: 'public'}}` 
 
 ## Draft Submission
 
