@@ -1,27 +1,27 @@
 :root {
-    --color-primary-0: #267257;	/* Main Primary color */
-    --color-primary-1: #EBFAF4;
-    --color-primary-2: #C0EADB;
-    --color-primary-3: #115B41;
-    --color-primary-4: #000604;
+--color-primary-0: #02B986;	/* Main Primary color */
+--color-primary-1: #F3F3F3;
+--color-primary-2: #CAD1CF;
+--color-primary-3: #10A179;
+--color-primary-4: #050D0B;
 
-    --color-secondary-1-0: #27556C;	/* Main Secondary color (1) */
-    --color-secondary-1-1: #EBF4F9;
-    --color-secondary-1-2: #C0DBE7;
-    --color-secondary-1-3: #134056;
-    --color-secondary-1-4: #000406;
+--color-secondary-1-0: #0E6DB6;	/* Main Secondary color (1) */
+--color-secondary-1-1: #F3F3F3;
+--color-secondary-1-2: #C9CDD0;
+--color-secondary-1-3: #19649E;
+--color-secondary-1-4: #050A0D;
 
-    --color-secondary-2-0: #408E2F;	/* Main Secondary color (2) */
-    --color-secondary-2-1: #F0FCEE;
-    --color-secondary-2-2: #D1F4C9;
-    --color-secondary-2-3: #257115;
-    --color-secondary-2-4: #010800;
+--color-secondary-2-0: #20DC03;	/* Main Secondary color (2) */
+--color-secondary-2-1: #F9F9F9;
+--color-secondary-2-2: #E1E8E0;
+--color-secondary-2-3: #2DCB14;
+--color-secondary-2-4: #081106;
 
-    --color-complement-0: #AA5D39;	/* Main Complement color */
-    --color-complement-1: #FFF5F0;
-    --color-complement-2: #FFE1D2;
-    --color-complement-3: #883D19;
-    --color-complement-4: #090300;
+--color-complement-0: #FF5E03;	/* Main Complement color */
+--color-complement-1: #FFFFFF;
+--color-complement-2: #FFF9F6;
+--color-complement-3: #F66818;
+--color-complement-4: #140C07;
 
     --primary-color-lightest: var(--color-primary-1);
     --primary-color-light: var(--color-primary-2);
@@ -47,66 +47,66 @@
     --danger-color-dark: var(--color-complement-3);
     --danger-color-darkest: var(--color-complement-4);
 
-    --primary-highlight-color: var(--primary-color-dark);
-    --secondary-highlight-color: var(--secondary-color-dark);
+    --primary-highlight-color: var(--secondary-color-dark);
+    --secondary-highlight-color: var(--primary-color-dark);
     --warn-highlight-color: var(--danger-color-dark);
 
-    --header-background-color: var(--secondary-color-darkest);
-    --header-border-color: var(--secondary-color-darkest);
-    --header-text-color: var(--secondary-color-lightest);
+    --header-background-color: var(--primary-color-darkest);
+    --header-border-color: var(--primary-color-darkest);
+    --header-text-color: var(--primary-color-lightest);
     --header-text-highlight-color: white;
-    --header-spacer-color: var(--secondary-color-lightest);
+    --header-spacer-color: var(--primary-color-lightest);
 
-    --footer-background-color: var(--secondary-color-darkest);
-    --footer-border-color: var(--secondary-color-darkest);
-    --footer-text-color: var(--secondary-color-lightest);
+    --footer-background-color: var(--primary-color-darkest);
+    --footer-border-color: var(--primary-color-darkest);
+    --footer-text-color: var(--primary-color-lightest);
 
-    --user-menu-background-color: var(--secondary-color-darkest);
-    --user-menu-border-color: var(--secondary-color-darkest);
-    --user-menu-spacer-color: var(--secondary-color-lightest);
-    --user-menu-text-color: var(--secondary-color-lightest);
+    --user-menu-background-color: var(--primary-color-darkest);
+    --user-menu-border-color: var(--primary-color-darkest);
+    --user-menu-spacer-color: var(--primary-color-lightest);
+    --user-menu-text-color: var(--primary-color-lightest);
     --user-menu-text-highlight-color: white;
 
-    --page-header-background-color: var(--secondary-color-lightest);
+    --page-header-background-color: var(--primary-color-lightest);
 
     --page-background-color: white;
-    --page-text-color: var(--secondary-color-darkest);
+    --page-text-color: var(--primary-color-darkest);
     --page-border-color: none;
 
-    --tab-bar-background-color: var(--secondary-color-lightest);
-    --tab-bar-border-color: var(--secondary-color-light);
-    --tab-bar-text-color: var(--secondary-color-darkest);
-    --tab-bar-icon-color: var(--secondary-color-darkest);
+    --tab-bar-background-color: var(--primary-color-lightest);
+    --tab-bar-border-color: var(--primary-color-light);
+    --tab-bar-text-color: var(--primary-color-darkest);
+    --tab-bar-icon-color: var(--primary-color-darkest);
 
     --main-background-color: white;
-    --main-border-color: var(--secondary-color-light);
-    --main-text-color: var(--secondary-color-darkest);
-    --main-icon-color: var(--secondary-color-light);
-    --main-icon-highlight-color: var(--secondary-color-mid);
+    --main-border-color: var(--primary-color-light);
+    --main-text-color: var(--primary-color-darkest);
+    --main-icon-color: var(--primary-color-light);
+    --main-icon-highlight-color: var(--primary-color-mid);
 
-    --floating-menu-border-color: var(--secondary-color-light);
-    --floating-menu-icon-color: var(--secondary-color-light);
+    --floating-menu-border-color: var(--primary-color-light);
+    --floating-menu-icon-color: var(--primary-color-light);
 
-    --icon-color: var(--secondary-color-darkest);
+    --icon-color: var(--primary-color-darkest);
 
-    --card-header-background-color: var(--secondary-color-lightest);
-    --card-border-color: var(--secondary-color-light);
-    --dots-menu-color: var(--secondary-color-mid);
+    --card-header-background-color: var(--primary-color-lightest);
+    --card-border-color: var(--primary-color-light);
+    --dots-menu-color: var(--primary-color-mid);
 
     --input-background-color: var(--secondary-color-lightest);
     --input-focus-background-color: white;
     --input-border-color: var(--secondary-color-light);
-    --input-highlight-color: var(--primary-color-mid);
+    --input-highlight-color: var(--secondary-color-mid);
 
-    --link-color: var(--primary-color-dark);
-    --link-highlight-color: var(--primary-color-mid);
+    --link-color: var(--secondary-color-dark);
+    --link-highlight-color: var(--secondary-color-mid);
 
     --button-color: var(--secondary-color-lightest);
     --button-border-color: var(--secondary-color-light);
 
-    --button-primary-color: var(--primary-color-mid);
-    --button-highlight-color: var(--primary-color-dark);
-    --button-warn-color: var(--danger-color-mid);
+    --button-primary-color: var(--secondary-color-mid);
+    --button-highlight-color: var(--secondary-color-dark);
+    --button-warn-color: var(--danger-color-dark);
 }
 
 html {

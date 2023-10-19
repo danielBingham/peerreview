@@ -1,63 +1,63 @@
 /* CSS - Cascading Style Sheet */
 /* Palette color codes */
-/* Palette URL: http://paletton.com/#uid=6360m0kllll1SYV5FSSq5h0YV19 */
+/* Palette URL: http://paletton.com/#uid=6390o0kv-Bu00WI16KpsPuSkn2y */
 
 /* Feel free to copy&paste color codes to your application */
 
 
 /* As hex codes */
 
---color-primary-0: #267257;	/* Main Primary color */
---color-primary-1: #EBFAF4;
---color-primary-2: #C0EADB;
---color-primary-3: #115B41;
---color-primary-4: #000604;
+--color-primary-0: #02B986;	/* Main Primary color */
+--color-primary-1: #F3F3F3;
+--color-primary-2: #CAD1CF;
+--color-primary-3: #10A179;
+--color-primary-4: #050D0B;
 
---color-secondary-1-0: #27556C;	/* Main Secondary color (1) */
---color-secondary-1-1: #EBF4F9;
---color-secondary-1-2: #C0DBE7;
---color-secondary-1-3: #134056;
---color-secondary-1-4: #000406;
+--color-secondary-1-0: #0E6DB6;	/* Main Secondary color (1) */
+--color-secondary-1-1: #F3F3F3;
+--color-secondary-1-2: #C9CDD0;
+--color-secondary-1-3: #19649E;
+--color-secondary-1-4: #050A0D;
 
---color-secondary-2-0: #408E2F;	/* Main Secondary color (2) */
---color-secondary-2-1: #F0FCEE;
---color-secondary-2-2: #D1F4C9;
---color-secondary-2-3: #257115;
---color-secondary-2-4: #010800;
+--color-secondary-2-0: #20DC03;	/* Main Secondary color (2) */
+--color-secondary-2-1: #F9F9F9;
+--color-secondary-2-2: #E1E8E0;
+--color-secondary-2-3: #2DCB14;
+--color-secondary-2-4: #081106;
 
---color-complement-0: #AA5D39;	/* Main Complement color */
---color-complement-1: #FFF5F0;
---color-complement-2: #FFE1D2;
---color-complement-3: #883D19;
---color-complement-4: #090300;
+--color-complement-0: #FF5E03;	/* Main Complement color */
+--color-complement-1: #FFFFFF;
+--color-complement-2: #FFF9F6;
+--color-complement-3: #F66818;
+--color-complement-4: #140C07;
 
 
 
 /* As RGBa codes */
 
-.rgba-primary-0 { color: rgba( 38,114, 87,1) }	/* Main Primary color */
-.rgba-primary-1 { color: rgba(235,250,244,1) }
-.rgba-primary-2 { color: rgba(192,234,219,1) }
-.rgba-primary-3 { color: rgba( 17, 91, 65,1) }
-.rgba-primary-4 { color: rgba(  0,  6,  4,1) }
+.rgba-primary-0 { color: rgba(  2,185,134,1) }	/* Main Primary color */
+.rgba-primary-1 { color: rgba(243,243,243,1) }
+.rgba-primary-2 { color: rgba(202,209,207,1) }
+.rgba-primary-3 { color: rgba( 16,161,121,1) }
+.rgba-primary-4 { color: rgba(  5, 13, 11,1) }
 
-.rgba-secondary-1-0 { color: rgba( 39, 85,108,1) }	/* Main Secondary color (1) */
-.rgba-secondary-1-1 { color: rgba(235,244,249,1) }
-.rgba-secondary-1-2 { color: rgba(192,219,231,1) }
-.rgba-secondary-1-3 { color: rgba( 19, 64, 86,1) }
-.rgba-secondary-1-4 { color: rgba(  0,  4,  6,1) }
+.rgba-secondary-1-0 { color: rgba( 14,109,182,1) }	/* Main Secondary color (1) */
+.rgba-secondary-1-1 { color: rgba(243,243,243,1) }
+.rgba-secondary-1-2 { color: rgba(201,205,208,1) }
+.rgba-secondary-1-3 { color: rgba( 25,100,158,1) }
+.rgba-secondary-1-4 { color: rgba(  5, 10, 13,1) }
 
-.rgba-secondary-2-0 { color: rgba( 64,142, 47,1) }	/* Main Secondary color (2) */
-.rgba-secondary-2-1 { color: rgba(240,252,238,1) }
-.rgba-secondary-2-2 { color: rgba(209,244,201,1) }
-.rgba-secondary-2-3 { color: rgba( 37,113, 21,1) }
-.rgba-secondary-2-4 { color: rgba(  1,  8,  0,1) }
+.rgba-secondary-2-0 { color: rgba( 32,220,  3,1) }	/* Main Secondary color (2) */
+.rgba-secondary-2-1 { color: rgba(249,249,249,1) }
+.rgba-secondary-2-2 { color: rgba(225,232,224,1) }
+.rgba-secondary-2-3 { color: rgba( 45,203, 20,1) }
+.rgba-secondary-2-4 { color: rgba(  8, 17,  6,1) }
 
-.rgba-complement-0 { color: rgba(170, 93, 57,1) }	/* Main Complement color */
-.rgba-complement-1 { color: rgba(255,245,240,1) }
-.rgba-complement-2 { color: rgba(255,225,210,1) }
-.rgba-complement-3 { color: rgba(136, 61, 25,1) }
-.rgba-complement-4 { color: rgba(  9,  3,  0,1) }
+.rgba-complement-0 { color: rgba(255, 94,  3,1) }	/* Main Complement color */
+.rgba-complement-1 { color: rgba(255,255,255,1) }
+.rgba-complement-2 { color: rgba(255,249,246,1) }
+.rgba-complement-3 { color: rgba(246,104, 24,1) }
+.rgba-complement-4 { color: rgba( 20, 12,  7,1) }
 
 
 
