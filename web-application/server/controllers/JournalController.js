@@ -144,10 +144,10 @@ module.exports = class JournalController {
         }
 
 
-        if ( query.page && ! options.ignorePage ) {
+        if ( query.page ) {
             result.page = query.page
         } else if ( ! options.ignorePage ) {
-            result.page = 1
+            result.page = null 
         }
 
         if ( query.sort == 'newest' ) {
