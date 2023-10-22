@@ -82,7 +82,7 @@ checklist for that PR.
 
 - [ ] Upload a new version of 'Test Preprint Paper'
 - [ ] Run [Paper Review](./paper-review) on 'Test Preprint Paper'
--
+
 ## Field List
 
 - Click into a field.

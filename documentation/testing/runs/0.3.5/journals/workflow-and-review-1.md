@@ -20,7 +20,7 @@ Confirm journal editorial and review workflows are working as expected.
     - Log in as an author 
         - [x] **Confirm** review is visible.
     - Log in as an `assigned-reviewer`
-        - [ ] Run [Paper Review](./paper-review.md)
+        - [x] Run [Paper Review](./paper-review.md)
     - Log in as `assigned-editor` 
         - [ ] **Confirm** both reviews are visible on the timeline.
         - [ ] **Confirm** both reviews are visible on the submission status page.
