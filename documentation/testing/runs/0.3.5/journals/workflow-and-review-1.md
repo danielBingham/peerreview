@@ -22,15 +22,15 @@ Confirm journal editorial and review workflows are working as expected.
     - Log in as an `assigned-reviewer`
         - [x] Run [Paper Review](./paper-review.md)
     - Log in as `assigned-editor` 
-        - [ ] **Confirm** both reviews are visible on the timeline.
-        - [ ] **Confirm** both reviews are visible on the submission status page.
-        - [ ] Change the status to `Proofing`
-        - [ ] Change the status to `Published`
+        - [x] **Confirm** both reviews are visible on the timeline.
+        - [x] **Confirm** both reviews are visible on the submission status page.
+        - [x] Change the status to `Proofing`
+        - [x] Change the status to `Published`
     - Log out
-        - [ ] **Confirm** the paper is visible in the published paper list of the journal
-        - [ ] **Confirm** the paper is visible in the published paper list of the home page
-        - [ ] **Confirm** the publish action shows on the timeline
-        - [ ] **Confirm** all events have visibility appropriate to the journal
+        - [x] **Confirm** the paper is visible in the published paper list of the journal
+        - [x] **Confirm** the paper is visible in the published paper list of the home page
+        - [x] **Confirm** the publish action shows on the timeline
+        - [x] **Confirm** all events have visibility appropriate to the journal
 ## Run
 
-Run for `0.3.5` with params 
+Run for `0.3.5` with params:`{ journal: { name:'Test Closed', model: 'closed'}}`

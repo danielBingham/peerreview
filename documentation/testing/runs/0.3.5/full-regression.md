@@ -73,10 +73,10 @@ checklist for that PR.
 
 ## Journal Workflow and Review
 
-- [ ] Run [Journal Workflow and Review](./journal-workflow-and-review.md) with params:`{ journal: { name:'Test Closed', model: 'closed'}}`
-- [ ] Run [Journal Workflow and Review](./journal-workflow-and-review.md) with params:`{ journal: { name:'Test Open', model: 'open'}}`
-- [ ] Run [Journal Workflow and Review](./journal-workflow-and-review.md) with params:`{ journal: { name:'Test Open-Public', model: 'open-public'}}`
-- [ ] Run [Journal Workflow and Review](./journal-workflow-and-review.md) with params:`{ journal: { name:'Test Public', model: 'public'}}`
+- [x] Run [Journal Workflow and Review](./journal-workflow-and-review-1.md) with params:`{ journal: { name:'Test Closed', model: 'closed'}}`
+- [ ] Run [Journal Workflow and Review](./journal-workflow-and-review-2.md) with params:`{ journal: { name:'Test Open', model: 'open'}}`
+- [ ] Run [Journal Workflow and Review](./journal-workflow-and-review-3.md) with params:`{ journal: { name:'Test Open-Public', model: 'open-public'}}`
+- [ ] Run [Journal Workflow and Review](./journal-workflow-and-review-4.md) with params:`{ journal: { name:'Test Public', model: 'public'}}`
 
 ## Paper Versioning
 

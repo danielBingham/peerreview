@@ -31,3 +31,7 @@ Confirm journal editorial and review workflows are working as expected.
         - [ ] **Confirm** the paper is visible in the published paper list of the home page
         - [ ] **Confirm** the publish action shows on the timeline
         - [ ] **Confirm** all events have visibility appropriate to the journal
+
+## Run
+
+Run for `0.3.5` with Params:`{ journal: { name:'Test Open', model: 'open' }}`
