@@ -244,6 +244,20 @@ module.exports = class JournalDAO {
     }
 
     async deleteJournalMember(journalId, userId) {
+
+        // Before we delete the member, we need to remove them from their assignements.
+       const editorResults = await this.database.query(`
+            DELETE FROM journal_submission_editors
+                WHERE user_id = $1
+                    AND submission_id IN (SELECT id FROM journal_submissions WHERE journal_id = $2)
+        `, [ userId, journalId ])
+
+        const reviewerResults = await this.database.query(`
+            DELETE FROM journal_submission_reviewers
+                WHERE user_id = $1
+                    AND submission_id IN (SELECT id FROM journal_submissions WHERE journal_id = $2)
+        `, [ userId, journalId ])
+
         const results = await this.database.query(`
             DELETE FROM journal_members WHERE journal_id = $1 AND user_id = $2
         `, [ journalId, userId ])
