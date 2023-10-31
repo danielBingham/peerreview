@@ -32,9 +32,7 @@ const AuthorDashboardPage = function(props) {
     let content = (<Spinner local={true} />)
     if ( currentUser ) {
         if ( selectedTab == 'drafts' ) { 
-            content = (<PaperList  type="private-drafts" />)
-        } else if ( selectedTab == 'submissions' ) {
-            content = (<PaperList type="user-submissions" />)
+            content = (<PaperList  type="drafts" />)
         } else if ( selectedTab == 'preprints' ) {
             content = (<PaperList type="preprint" authors={[ currentUser.id ]} /> )
         } else if ( selectedTab == 'papers' ) {
@@ -58,10 +56,7 @@ const AuthorDashboardPage = function(props) {
             </PageHeader>
             <PageTabBar>
                 <PageTab url="/author/drafts" tab="drafts" initial={true}>
-                    <DocumentIcon/>Private Drafts
-                </PageTab>
-                <PageTab url="/author/submissions" tab="submissions">
-                    <InboxArrowDownIcon/>Submissions 
+                    <DocumentIcon/>Drafts
                 </PageTab>
                 <PageTab url="/author/preprints" tab="preprints">
                     <DocumentIcon/>Preprints 
