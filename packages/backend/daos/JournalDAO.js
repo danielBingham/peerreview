@@ -101,6 +101,49 @@ module.exports = class JournalDAO {
         }
     }
 
+    async getPage(where, inputParams, order, page) {
+        where = where || ''
+        const params = [ ...inputParams ] || [] // Need to copy here because we're going
+        // to reuse it in count.
+        order = order ? order : 'journals.created_date desc'
+
+        if ( ! page ) {
+            return null 
+        }
+
+        let paging = ''
+        page = page ? page : 1
+
+        const offset = (page-1) * PAGE_SIZE
+        let count = params.length 
+
+        paging = `
+                LIMIT $${count+1}
+                OFFSET $${count+2}
+            `
+
+        params.push(PAGE_SIZE)
+        params.push(offset)
+
+        const sql = `
+            SELECT DISTINCT 
+                journals.id, journals.name, journals.created_date
+            FROM journals
+                LEFT OUTER JOIN journal_members ON journals.id = journal_members.journal_id
+            ${where}
+            GROUP BY journals.id
+            ORDER BY ${order}
+            ${paging}
+        `
+
+        const results = await this.database.query(sql, params)
+        if ( results.rows.length > 0 ) {
+            return results.rows.map((row) => row.id)
+        } else {
+            return []
+        }
+    }
+
     async selectJournals(where, inputParams, order, page) {
         where = where || ''
         const params = [ ...inputParams ] || [] // Need to copy here because we're going
@@ -110,20 +153,16 @@ module.exports = class JournalDAO {
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we
         // probably don't want to have to deal with pagination.
-        let paging = ''
         if ( page ) {
-            page = page ? page : 1
-            
-            const offset = (page-1) * PAGE_SIZE
-            let count = params.length 
+            const pageIds = await this.getPage(where, params, order, page)
 
-            paging = `
-                LIMIT $${count+1}
-                OFFSET $${count+2}
-            `
-
-            params.push(PAGE_SIZE)
-            params.push(offset)
+            if ( where.length > 0 ) {
+                where += ` AND journals.id = ANY($${params.length}::bigint[])`
+                params.push(pageIds)
+            } else {
+                where = `WHERE journals.id = ANY($1::bigint[])`
+                params.push(pageIds)
+            }
         }
 
         const sql = `
@@ -137,7 +176,6 @@ module.exports = class JournalDAO {
                 LEFT OUTER JOIN journal_members ON journals.id = journal_members.journal_id
             ${where}
             ORDER BY ${order}
-            ${paging}
         `
 
         const results = await this.database.query(sql, params)
