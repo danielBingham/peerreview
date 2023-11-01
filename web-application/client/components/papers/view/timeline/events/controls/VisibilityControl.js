@@ -72,7 +72,8 @@ const generateMinimalVisibility = function(user, event, paper, submission) {
     // If they are a corresponding author for the paper.
     const paperEvents = [ 
         'paper:new-version', 
-        'paper:preprint-posted'
+        'paper:preprint-posted',
+        'paper:new-comment'
     ]
     if ( paperEvents.includes(event.type) && paper ) {
         return 'corresponding-authors' 
@@ -83,6 +84,7 @@ const generateMinimalVisibility = function(user, event, paper, submission) {
     const submissionEvents = [
         'submission:new', 
         'submission:new-review',
+        'submission:new-comment',
         'submission:status-changed',
         'submission:reviewer-assigned',
         'submission:reviewer-unassigned',

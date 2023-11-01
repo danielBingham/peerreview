@@ -10,6 +10,7 @@ import Button from '/components/generic/button/Button'
 import Spinner from '/components/Spinner'
 
 import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
+import VisibilityBar from '/components/papers/view/timeline/events/controls/VisibilityBar'
 
 import './ReviewSummaryForm.css'
 
@@ -219,9 +220,11 @@ const ReviewSummaryForm = function(props) {
                             <label htmlFor="approve" onClick={(e) => setRecommendation('approve')}><CheckCircleIcon/>Approve</label>
                             <div className="explanation">Recommend that the draft be approved with out additional changes.</div>
                         </div>
+                    </div>
+                    <div>
                         { event &&
                             <div className="visibility-chooser"> 
-                                <VisibilityControl eventId={event.id} /> 
+                                <VisibilityBar eventId={event.id} /> 
                             </div>
                         }
                         <div className="submission-buttons">

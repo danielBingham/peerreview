@@ -101,7 +101,7 @@ module.exports = class PaperCommentsController {
             paperId: paperId,
             actorId: currentUser.id,
             status: entity.status == 'in-progress' ? 'in-progress' : 'committed',
-            type: 'paper:new-comment',
+            type: 'new-comment',
             paperCommentId: entity.id
         }
         await this.paperEventService.createEvent(currentUser, event)
@@ -220,7 +220,7 @@ module.exports = class PaperCommentsController {
         // Update the event
         if ( paperComment.status == 'committed' && existing.status == 'in-progress' ) {
             await this.core.database.query(`
-                UPDATE paper_events SET status = 'committed' WHERE type = 'paper:new-comment' AND paper_comment_id = $1
+                UPDATE paper_events SET status = 'committed' WHERE ( type = 'paper:new-comment' OR type= 'submission:new-comment' ) AND paper_comment_id = $1
             `, [ paperComment.id ])
 
             // ==== Notifications =============================================

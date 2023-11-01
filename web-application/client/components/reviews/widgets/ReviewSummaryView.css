@@ -26,15 +26,15 @@
     margin-bottom: -7px;
 }
 .review-summary .request-changes svg {
-    color: #c7a124;
+    color: var(--secondary-color-main);
 }
 .review-summary .rejected svg  {
-    color: red;
+    color: var(--danger-color-main);
 }
 .review-summary .approved svg {
-    color: green;
+    color: var(--success-color-main);
 }
 .review-summary .accepted svg {
-    color: green;
+    color: var(--success-color-main);
 }
 

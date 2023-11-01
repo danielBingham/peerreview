@@ -1,6 +1,7 @@
 .comment-thread-pin {
     position: absolute;
-    background: rgba(170, 103, 3, 0.75);
+    /* --secondary-color-main */
+    background: rgba(251, 153, 75, 0.75);
     border-radius: 18px;
     width: 16px;
     height: 16px;
@@ -17,7 +18,8 @@
     border-radius: 22px;
     margin-left: -11px;
     margin-top: -11px;
-    background-color: rgba(211, 178, 14, 0.75);
+    /** --secondary-color-main-highlight: #fab37d; */
+    background-color: rgba(250, 179, 125, 0.75);
 }
 
 .comment-thread-pin.selected {
@@ -26,5 +28,6 @@
     border-radius: 22px;
     margin-left: -11px;
     margin-top: -11px;
-    background-color: rgba(211, 178, 14, 0.75);
+    /** --secondary-color-main-highlight: #fab37d; */
+    background-color: rgba(250, 179, 125, 0.75);
 }

@@ -178,7 +178,7 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
             )
         }
 
-        else if ( event.type == 'paper:new-comment' && event.status == 'committed') {
+        else if ( ( event.type == 'paper:new-comment' || event.type == 'submission:new-comment' ) && event.status == 'committed') {
             eventViews.push(
                 <PaperCommentEvent key={event.id} eventId={event.id} />
             )

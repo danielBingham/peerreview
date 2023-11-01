@@ -1,0 +1,24 @@
+.visibility-bar {
+    padding: 5px;
+}
+
+.visibility-bar.base {
+    color: var(--secondary-color-dark);
+    background-color: var(--secondary-color-lightest);
+    border-top: thin solid var(--secondary-color-light);
+    border-bottom: thin solid var(--secondary-color-light);
+}
+
+.visibility-bar.danger {
+    color: var(--danger-color-dark);
+    background-color: var(--danger-color-lightest);
+    border-top: thin solid var(--danger-color-light);
+    border-bottom: thin solid var(--danger-color-light);
+}
+
+.visibility-bar.safe {
+    color: var(--success-color-dark);
+    background-color: var(--success-color-lightest);
+    border-top: thin solid var(--success-color-light);
+    border-bottom: thin solid var(--success-color-light);
+}

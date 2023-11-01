@@ -6,6 +6,7 @@ import { newPaperComment, updatePaperComment, deletePaperComment, cleanupRequest
 import Button from '/components/generic/button/Button'
 
 import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
+import VisibilityBar from '/components/papers/view/timeline/events/controls/VisibilityBar'
 
 import './PaperCommentForm.css'
 
@@ -201,9 +202,7 @@ const PaperCommentForm = function({ paperId, paperCommentId }) {
                 >
                 </textarea>
             </div>
-            <div className="visibility-controls">
-                <VisibilityControl eventId={event?.id} /> 
-            </div>
+            <VisibilityBar eventId={event?.id} />
             <div className="controls">
                 <Button onClick={cancelComment}>Cancel</Button>
                 <Button type="primary" onClick={submitComment}>{ paperComment && paperComment.status == 'edit-in-progress' ? 'Edit' : 'Add Comment'}</Button>
