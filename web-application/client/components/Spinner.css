@@ -13,8 +13,8 @@
   margin-top: -10px;
   margin-left: -10px;
   border-radius: 50%;
-  border: 2px solid #ccc;
-  border-top-color: #000;
+  border: 2px solid var(--primary-color-light);
+  border-top-color: var(--primary-color-darkest);
   animation: spinner .6s linear infinite;
 }
 
@@ -33,7 +33,7 @@
   width: 20px;
   height: 20px;
   border-radius: 50%;
-  border: 2px solid #ccc;
-  border-top-color: #000;
+  border: 2px solid var(--primary-color-light);
+  border-top-color: var(--primary-color-darkest);;
   animation: spinner .6s linear infinite;
 }
