@@ -316,10 +316,12 @@ module.exports = class PaperController {
                    id 
                 FROM papers
                     LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
-                WHERE is_published=true AND 
+                WHERE papers.is_draft=false AND 
                     ( paper_versions.searchable_content @@ websearch_to_tsquery('english', $1) OR
                         papers.searchable_title @@ websearch_to_tsquery('english', $1) )
             `, [ query.searchString ])
+
+            console.log(results.rows)
 
             if ( results.rows.length > 0 ) {
                 count += 1
