@@ -281,6 +281,16 @@ export const makeTrackedRequest = function(dispatch, getState, slice, method, en
         responseOk = response.ok
         return response.json()
     }).then(function(responseBody) {
+        // If the request doesn't exist, then bail out before completing
+        // `onSuccess`.  This means it has already been cleaned up, and its
+        // results are probably invalid.
+        //
+        // In any case, there's nothing to complete and nothing to fail.
+        const state = getState()
+        if( ! state[slice.name].requests[requestId] ) {
+            return
+        }
+
         if ( responseOk ) {
             if ( onSuccess ) {
                 try {

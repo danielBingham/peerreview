@@ -88,7 +88,27 @@ export const eventsSlice = createSlice({
             const name = action.payload.name
             const list = action.payload.list
 
-            state.queries[name].list = [ ...state.queries[name].list, ...list ]
+            // TECHDEBT - We need to filter the list for the ids being appended
+            // because when a PaperComment goes from 'in-progress' to
+            // 'committed', we update the `eventDate` of its attached event.
+            // This can result in duplicate events in the list. The solution is
+            // to filter the list for any of the ids we're about to append, to
+            // remove them from their previous locations in the list and ensure
+            // the appended instances of those ids are the only instances.
+            //
+            // There almost certainly is a better way to do this.
+            //
+            // O(n^2) -- We shouldn't often have lits of ids long enough for
+            // that to matter, since we're getting only the newest events, but
+            // this is still far from ideal.
+            //
+            //
+            let clearedList = [ ...state.queries[name].list ]
+            for(const id of list) {
+                clearedList = clearedList.filter((item) => item != id)
+            }
+
+            state.queries[name].list = [ ...clearedList, ...list ]
         },
 
         // ========== Request Tracking Methods =============

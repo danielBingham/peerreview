@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
+import { setPaperEventQueryResults } from '/state/paperEvents'
 import { newPaperComment, updatePaperComment, deletePaperComment, cleanupRequest } from '/state/paperComments'
 
 import Button from '/components/generic/button/Button'
@@ -11,13 +12,14 @@ import VisibilityBar from '/components/papers/view/timeline/events/controls/Visi
 import './PaperCommentForm.css'
 
 const PaperCommentForm = function({ paperId, paperCommentId }) {
-    
+   
     // ======= Render State =========================================
    
     const [commentId, setCommentId] = useState(null)
     const [content, setContent] = useState('')
     const [needCommit, setNeedCommit] = useState(false)
 
+    
     // ======= Request Tracking =====================================
   
     const [postCommentRequestId, setPostCommentRequestId] = useState(null)
@@ -86,6 +88,14 @@ const PaperCommentForm = function({ paperId, paperCommentId }) {
         return null
     })
 
+    const query = useSelector(function(state) {
+        if ( ! event ) {
+            return null
+        }
+
+        return state.paperEvents.queries[`${event.paperId}-${event.version}`]
+    })
+
     // ======= Actions and Event Handling ===========================
 
     const dispatch = useDispatch()
@@ -113,8 +123,14 @@ const PaperCommentForm = function({ paperId, paperCommentId }) {
         }
     }
 
-    const submitComment = function(event) {
-        event.preventDefault()
+    const submitComment = function(e) {
+        e.preventDefault()
+
+        if ( event ) {
+            const list = query.list.filter((id) => id != event.id)
+            list.push(event.id)
+            dispatch(setPaperEventQueryResults({ name: `${event.paperId}-${event.version}`, meta: query.meta, list: list }))
+        }
 
         const comment = {
             id: commentId,
@@ -148,8 +164,10 @@ const PaperCommentForm = function({ paperId, paperCommentId }) {
 
     useEffect(function() {
         if ( paperComment && ! commentId ) {
-            setCommentId(paperComment.id)
-            setContent(paperComment.content)
+            if ( paperComment.status != 'committed' ) {
+                setCommentId(paperComment.id)
+                setContent(paperComment.content)
+            } 
         }
     }, [ paperComment ])
 

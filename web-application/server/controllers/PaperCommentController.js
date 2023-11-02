@@ -220,7 +220,7 @@ module.exports = class PaperCommentsController {
         // Update the event
         if ( paperComment.status == 'committed' && existing.status == 'in-progress' ) {
             await this.core.database.query(`
-                UPDATE paper_events SET status = 'committed' WHERE ( type = 'paper:new-comment' OR type= 'submission:new-comment' ) AND paper_comment_id = $1
+                UPDATE paper_events SET status = 'committed', event_date=now() WHERE ( type = 'paper:new-comment' OR type= 'submission:new-comment' ) AND paper_comment_id = $1
             `, [ paperComment.id ])
 
             // ==== Notifications =============================================
