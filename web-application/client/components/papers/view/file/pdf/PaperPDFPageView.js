@@ -5,8 +5,10 @@ import { useSearchParams } from 'react-router-dom'
 
 import { postReviewThreads, newReview, cleanupRequest } from '/state/reviews'
 
-import { Page } from 'react-pdf/dist/esm/entry.webpack'
-import 'react-pdf/dist/esm/Page/AnnotationLayer.css'
+import { Page, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 import ReviewCommentThreadPinView from '/components/reviews/comments/ReviewCommentThreadPinView'
 

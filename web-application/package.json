@@ -57,7 +57,7 @@
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
     "react-markdown": "^8.0.3",
-    "react-pdf": "^5.7.2",
+    "react-pdf": "^7.5.1",
     "react-redux": "^8.0.1",
     "react-router-dom": "^6.3.0",
     "redux": "^4.2.0",

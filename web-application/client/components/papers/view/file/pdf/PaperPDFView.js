@@ -2,7 +2,10 @@ import React, { useState, useRef, useCallback, useLayoutEffect, useEffect } from
 import { useDispatch, useSelector } from 'react-redux'
 import { useSearchParams, useLocation } from 'react-router-dom'
 
-import { Document, Page } from 'react-pdf/dist/esm/entry.webpack'
+import { Document, Page, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 import PaperPDFPageView from './PaperPDFPageView'
 import ReviewCommentsWrapper from '/components/reviews/comments/ReviewCommentsWrapper'
@@ -44,6 +47,15 @@ const PaperPDFView = function(props) {
         return state.papers.dictionary[props.paperId]
     })
 
+
+    const file = useSelector(function(state) {
+        if ( ! state.papers.files[props.paperId] ) {
+            return null
+        }
+
+        return state.papers.files[props.paperId][props.versionNumber]
+    })
+
     // We need this to be a ref because the callback can be called mutliple
     // times in a single render loop.  When that happens, if we're using state,
     // it will only record a single page as rendered, even if dozens have
@@ -76,7 +88,7 @@ const PaperPDFView = function(props) {
     }, [ renderedPages, setRenderedPages ])    
 
     // ======= Effect Handling ======================================
-    
+
     useEffect(function() {
         if ( renderedPages !== 0 && loadedVersion != props.versionNumber ) {
             setRenderedPages(0)
@@ -91,7 +103,7 @@ const PaperPDFView = function(props) {
 
     // ================= Render ===============================================
 
-    if ( paper.versions.length > 0 ) {
+    if ( paper.versions.length > 0 && file) {
 
         let version = paper.versions.find((v) => v.version == props.versionNumber)
         if ( ! version ) {
@@ -111,9 +123,7 @@ const PaperPDFView = function(props) {
                 )
             }
         }
-
-        const url = new URL(version.file.filepath, version.file.location)
-        const urlString = url.toString()
+        
         return (
             <article id={`paper-${props.paperId}-content`} className="paper-pdf">
                 <ReviewCommentsWrapper 
@@ -125,7 +135,7 @@ const PaperPDFView = function(props) {
                 />
                 <Document 
                     className="paper-pdf-document" 
-                    file={urlString} 
+                    file={file} 
                     loading={<Spinner />} 
                     onLoadSuccess={onLoadSuccess}
                     onSourceError={(error) => console.log(error)}
@@ -136,7 +146,11 @@ const PaperPDFView = function(props) {
             </article>
         )
     } else {
-        return (<Spinner />)
+        return (
+            <article id={`paper-${props.paperId}-content`} className="paper-pdf">
+                <Spinner local={true} />
+            </article>
+        )
     }
 
 }
