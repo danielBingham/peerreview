@@ -1265,6 +1265,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
                 // getSession 
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
@@ -1295,6 +1297,8 @@ describe('JournalController', function() {
         it('should return 200 when the authenticated user is an Owner deleting a Reviewer', async function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
 
@@ -1328,6 +1332,8 @@ describe('JournalController', function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
                 // getSession 
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
@@ -1358,6 +1364,8 @@ describe('JournalController', function() {
         it('should return 200 when the authenticated user is an Owner deleting an Owner', async function() {
             core.database.query.mockReturnValue(undefined)
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1]  }) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [] })
                 .mockReturnValueOnce({ rowCount: 1, rows: database.journals[1] }) //journalDAO.selectJournals()
                 
