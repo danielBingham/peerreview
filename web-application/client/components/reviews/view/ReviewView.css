@@ -15,12 +15,12 @@
 .review-view .review-summary, .review-view .review-summary-form { }
 
 .review-view .approved svg {
-    color: green !important;
+    color: var(--success-color-main) !important;
 }
 .review-view .request-changes svg {
-    color: #c7a124 !important;
+    color: var(--secondary-color-main) !important;
 }
 .review-view .rejected svg {
-    color: red !important;
+    color: var(--danger-color-main) !important;
 }
 

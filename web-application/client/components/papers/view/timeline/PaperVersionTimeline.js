@@ -1,7 +1,10 @@
 import React, { useCallback } from 'react'
 import { useSelector } from 'react-redux'
 
-import { Document } from 'react-pdf/dist/esm/entry.webpack'
+import { Document, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 import Spinner from '/components/Spinner'
 
@@ -19,6 +22,14 @@ const PaperVersionTimeline = function({ paperId, versionNumber }) {
         return state.papers.dictionary[paperId]
     })
 
+    const file = useSelector(function(state) {
+        if ( ! state.papers.files[paperId] ) {
+            return null
+        }
+
+        return state.papers.files[paperId][versionNumber]
+    })
+
     // ====== User Action Handling  ================================
 
     const loading = useCallback(function() {
@@ -34,17 +45,16 @@ const PaperVersionTimeline = function({ paperId, versionNumber }) {
 
     // ====== Render ===============================================
 
-    // Generate the url for the file.
-    let version = paper.versions.find((v) => v.version == versionNumber)
-    if ( ! version ) {
-        version = paper.versions[0]
+    if ( ! file ) {
+        return (
+            <Spinner local={true} />
+        )
     }
-    const fileUrl = new URL(version.file.filepath, version.file.location)
 
     return (
         <>
             <Document 
-                file={fileUrl.toString()} 
+                file={file} 
                 loading={loading} 
                 onSourceError={onSourceError}
                 onLoadError={onLoadError}

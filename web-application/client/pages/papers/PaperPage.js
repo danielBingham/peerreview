@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom'
 
 import { DocumentCheckIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline'
 
-import { getPaper, cleanupRequest } from '/state/papers'
+import { getPaper, loadFiles, clearFiles, cleanupRequest } from '/state/papers'
 
 import Spinner from '/components/Spinner'
 import { Page, PageBody, PageHeader, PageHeaderGrid, PageTabBar, PageTab } from '/components/generic/Page'
@@ -60,6 +60,18 @@ const PaperPage = function({}) {
     useEffect(function() {
         setRequestId(dispatch(getPaper(id)))
     }, [ id ])
+
+    useEffect(function() {
+        if ( paper ) {
+            dispatch(loadFiles(paper))
+        }
+
+        return function cleanup() {
+            if ( paper ) {
+                dispatch(clearFiles(paper))
+            }
+        }
+    }, [ paper ])
 
     // Clean up our request.
     useEffect(function() {

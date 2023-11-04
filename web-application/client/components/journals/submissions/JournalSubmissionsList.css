@@ -1,5 +1,5 @@
 .journal-submission .submission-controls-wrapper {
-    background-color: #f0f3f5;
-    border-top: thin solid #D3D9DE;
-    border-bottom: thin solid #D3D9DE;
+    background-color: var(--primary-color-lightest);
+    border-top: thin solid var(--primary-color-light);
+    border-bottom: thin solid var(--primary-color-light);
 }

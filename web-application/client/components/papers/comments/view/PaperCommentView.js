@@ -12,6 +12,7 @@ import AreYouSure from '/components/AreYouSure'
 import { FloatingMenu, FloatingMenuBody, FloatingMenuTrigger, FloatingMenuItem } from '/components/generic/floating-menu/FloatingMenu'
 
 import UserTag from '/components/users/UserTag'
+import VisibilityBar from '/components/papers/view/timeline/events/controls/VisibilityBar'
 import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
 
 import './PaperCommentView.css'
@@ -115,7 +116,6 @@ const PaperCommentView = function({ paperCommentId, eventId }) {
                 <div className="header">
                     <div className="left"><UserTag id={paperComment.userId} /> commented <a href={`/paper/${paperComment.paperId}/timeline#comment-${paperComment.id}`}><DateTag timestamp={paperComment.committedDate} /></a></div>
                     <div className="right">
-                        <VisibilityControl eventId={eventId} />
                         { currentUser && currentUser.id == paperComment.userId && <FloatingMenu className="dots-menu">
                             <FloatingMenuTrigger className="dots" showArrow={false}><EllipsisHorizontalIcon /></FloatingMenuTrigger>
                             <FloatingMenuBody>
@@ -125,6 +125,7 @@ const PaperCommentView = function({ paperCommentId, eventId }) {
                         </FloatingMenu> }
                     </div>
                 </div>
+                <VisibilityBar eventId={eventId} />
                 <div className="content">
                     <ReactMarkdown>{ paperComment.content }</ReactMarkdown>
                 </div>

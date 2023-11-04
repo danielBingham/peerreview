@@ -19,7 +19,7 @@
     padding: 10px;
 }
 .authors-input .author-suggestions .author-suggestion:hover, .authors-input .author-suggestions .author-suggestion.highlighted {
-    background-color: #dfdfdf;
+    background-color: var(--primary-color-main);
 }
 .authors-input .error {
     padding: 10px;

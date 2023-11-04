@@ -95,6 +95,9 @@ module.exports = class PaperTimelineCommentsMigration {
                 ALTER TYPE paper_event_types ADD VALUE IF NOT EXISTS 'paper:new-comment'
             `, [])
 
+            await this.database.query(`
+                ALTER TYPE paper_event_types ADD VALUE IF NOT EXISTS 'submission:new-comment'
+            `, [])
         } catch (error) {
             try {
                 await this.database.query(`ALTER TABLE paper_events DROP COLUMN IF EXISTS paper_comment_id`, [])
@@ -133,7 +136,7 @@ module.exports = class PaperTimelineCommentsMigration {
             await this.database.query(`DROP INDEX IF EXISTS paper_comments__paper_id`, [])
             await this.database.query(`DROP INDEX IF EXISTS paper_comments__user_id`, [])
             await this.database.query(`DROP TABLE IF EXISTS paper_comments`, [])
-            await this.database.query(`DROP TYPE IF EXISTS paper_comment_status `, [])
+            await this.database.query(`DROP TYPE IF EXISTS paper_comments_status `, [])
         } catch (error) {
             throw new MigrationError('no-rollback', error.message)
         }
@@ -166,6 +169,9 @@ module.exports = class PaperTimelineCommentsMigration {
      */
     async down(targets) { 
         try {
+            await this.database.query(`
+                DELETE FROM paper_events WHERE type='paper:new-comment' OR type='submission:new-comment'
+            `, [])
 
         } catch(error) {
             throw MigrationError('no-rollback', error.message)

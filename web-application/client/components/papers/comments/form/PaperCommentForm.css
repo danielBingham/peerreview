@@ -8,10 +8,13 @@
     border: thin solid var(--input-border-color);
     background-color: var(--input-background-color);
     padding: 10px;
+    margin: 0;
 }
-.paper-comment-form .visibility-controls {
-    padding: 10px;
+.paper-comment-form .visibility-bar {
     text-align: center;
+}
+.paper-comment-form .visibility-bar .event-visibility-controls {
+    padding: 0;
 }
 .paper-comment-form .content textarea {
     resize: vertical;

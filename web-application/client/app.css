@@ -3,18 +3,33 @@
     /**************************************************************************
      * Color Palette
      *************************************************************************/
-    --primary-color-lightest: #f7fafc;
-    --primary-color-light: #dee1e3;
-    --primary-color-main: #0797FC;
-    --primary-color-main-highlight: #3faefd;
-    --primary-color-dark: #2e3438;
+    --primary-color-lightest: #fafcfc;
+    --primary-color-light: #dce6e6;
+    --primary-color-main: #2E9894;
+    --primary-color-main-highlight: #4d9996;
+    --primary-color-dark: #2e3333;
     --primary-color-darkest: #191a1a;
 
-    --success-color-main: #00FC8A;
-    --success-color-main-highlight: #70ffbe;
+    --secondary-color-lightest: #faece1;
+    --secondary-color-light: #facfaf;
+    --secondary-color-main: #FB994C;
+    --secondary-color-main-highlight: #fab37d;
+    --secondary-color-dark: #4d4845;
+    --secondary-color-darkest: #1a1919;
 
-    --danger-color-main: #FF9000;
-    --danger-color-main-highlight: #fcbe6d; 
+    --success-color-lightest: #e2fae1;
+    --success-color-light: #b3faaf;
+    --success-color-main: #45CB3E;
+    --success-color-main-highlight: #6dcc68;
+    --success-color-dark: #454d45;
+    --success-color-darkest: #191a19;
+
+    --danger-color-lightest: #f7dfdf;
+    --danger-color-light: #f7adb0;
+    --danger-color-main: #F84B50;
+    --danger-color-main-highlight: #f77c80; 
+    --danger-color-dark: #4d4545;
+    --danger-color-darkest: #1a1919;
 
     /**************************************************************************
      * End Color Palette

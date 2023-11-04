@@ -15,7 +15,7 @@ const PaperSearchPage = function(props) {
         <Page id="paper-search-page">
             <PageBody>
                 <PaperSearchView  />
-                <PaperList type="published" query={query} />
+                <PaperList type="published" />
             </PageBody>
         </Page>
     )

@@ -12,6 +12,7 @@ import UserTag from '/components/users/UserTag'
 import DateTag from '/components/DateTag'
 import Spinner from '/components/Spinner'
 import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
+import VisibilityBar from '/components/papers/view/timeline/events/controls/VisibilityBar'
 
 import './ReviewSummaryView.css'
 
@@ -126,8 +127,8 @@ const ReviewSummaryView = function(props) {
                     <div className="header">
                         <div className="left">
                             <UserTag id={props.selectedReview.userId}/> { recommendation } <a href={`/paper/${props.paper.id}/timeline#review-${props.selectedReview.id}`}><DateTag timestamp={props.selectedReview.updatedDate} type="full" /></a></div>
-                        <div className="right"><VisibilityControl eventId={props.eventId} /> </div>
                     </div>
+                    <VisibilityBar eventId={props.eventId} />
                     { props.selectedReview.summary && <div className="summary-text"><ReactMarkdown>{props.selectedReview.summary}</ReactMarkdown></div> }
                 </div>
             </div>

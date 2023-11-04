@@ -44,7 +44,7 @@
     color: black;
 }
 .draft-paper-list-item .title a:hover {
-    color: #888;
+    color: var(--link-highlight-color);
 }
 .draft-paper-list-item .title svg {
     width: 1em;

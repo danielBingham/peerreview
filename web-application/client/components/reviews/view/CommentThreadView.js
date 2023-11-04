@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
-import { Page } from 'react-pdf/dist/esm/entry.webpack'
+import { Page, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.js`;
 
 import ReviewSummaryView from '/components/reviews/widgets/ReviewSummaryView'
 import ReviewCommentThreadView from '/components/reviews/comments/ReviewCommentThreadView'

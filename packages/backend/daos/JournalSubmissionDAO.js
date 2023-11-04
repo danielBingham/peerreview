@@ -156,7 +156,7 @@ module.exports = class JournalSubmissionDAO {
 
             ${where}
 
-            ORDER BY journal_submissions.created_date desc
+            ORDER BY journal_submissions.created_date desc, reviews.created_date desc
         `
 
         const results = await this.database.query(sql, params)

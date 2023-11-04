@@ -18,12 +18,12 @@
     margin-left: 5px;
 }
 .assignment-widget .assignee .request-changes svg {
-    color: #c7a124;
+    color: var(--secondary-color-main);
 }
 .assignment-widget .assignee .rejected svg  {
-    color: red;
+    color: var(--danger-color-main);
 }
 .assignment-widget .assignee .approved svg {
-    color: green;
+    color: var(--success-color-main);
 }
 

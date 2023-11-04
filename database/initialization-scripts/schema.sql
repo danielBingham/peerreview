@@ -512,6 +512,7 @@ CREATE TYPE paper_event_types AS ENUM(
     'review:comment-reply-posted',
     'submission:new', 
     'submission:new-review',
+    'submission:new-comment',
     'submission:status-changed',
     'submission:reviewer-assigned',
     'submission:reviewer-unassigned',

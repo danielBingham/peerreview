@@ -79,6 +79,7 @@ module.exports = class PaperEventService {
                 'review:comment-reply-posted': [ 'public' ],
                 'submission:new': [ 'public' ], 
                 'submission:new-review': [ 'public' ],
+                'submission:new-comment': [ 'public' ],
                 'submission:status-changed': [ 'public' ],
                 'submission:reviewer-assigned': [ 'public' ],
                 'submission:reviewer-unassigned': [ 'public' ],
@@ -92,6 +93,7 @@ module.exports = class PaperEventService {
                 'paper:new-comment': [ 'editors', 'reviewers', 'authors' ],
                 'submission:new': [ 'editors', 'reviewers', 'authors' ], 
                 'submission:new-review': [ 'editors', 'reviewers', 'authors' ], 
+                'submission:new-comment': [ 'editors', 'reviewers', 'authors' ],
                 'submission:status-changed': [ 'editors', 'reviewers', 'authors' ],
                 'submission:reviewer-assigned': [ 'editors', 'reviewers', 'authors' ],
                 'submission:reviewer-unassigned': [ 'editors', 'reviewers', 'authors' ],
@@ -105,6 +107,7 @@ module.exports = class PaperEventService {
                 'paper:new-comment': [ 'editors', 'reviewers', 'authors' ],
                 'submission:new': [ 'editors', 'reviewers', 'authors' ], 
                 'submission:new-review': [ 'editors', 'reviewers', 'authors' ], 
+                'submission:new-comment': [ 'editors', 'reviewers', 'authors' ],
                 'submission:status-changed': [ 'editors', 'reviewers', 'authors' ],
                 'submission:reviewer-assigned': [ 'editors', 'reviewers', 'authors' ],
                 'submission:reviewer-unassigned': [ 'editors', 'reviewers', 'authors' ],
@@ -114,10 +117,11 @@ module.exports = class PaperEventService {
             'closed': {
                 'paper:new-version': [ 'managing-editors', 'assigned-editors', 'assigned-reviewers', 'authors' ],
                 'paper:preprint-posted': [ 'public' ],
-                'paper:new-review': [ 'managing-editors', 'assigned-editors' ], 
-                'paper:new-comment': [ 'managing-editors', 'assigned-editors', 'assigned-reviewers', 'authors' ],
+                'paper:new-review': [ 'authors' ], 
+                'paper:new-comment': [ 'authors' ],
                 'submission:new': [ 'managing-editors', 'assigned-editors', 'authors' ], 
-                'submission:new-review': [ 'managing-editors', 'assigned-editors', ], 
+                'submission:new-review': [ 'managing-editors', 'assigned-editors' ], 
+                'submission:new-comment': [ 'managing-editors', 'assigned-editors' ],
                 'submission:status-changed': [ 'managing-editors', 'assigned-editors' ],
                 'submission:reviewer-assigned': [ 'managing-editors', 'assigned-editors', 'assigned-reviewers' ],
                 'submission:reviewer-unassigned': [ 'managing-editors', 'assigned-editors', 'assigned-reviewers' ],
@@ -177,6 +181,14 @@ module.exports = class PaperEventService {
             event.type = 'submission:new-review'
         } else if ( event.type == 'new-review' && activeSubmissionInfo === null ) {
             event.type = 'paper:new-review'
+        }
+
+        if ( event.type == 'new-comment' && isAuthor ) {
+            event.type = 'paper:new-comment'
+        } else if ( event.type == 'new-comment' && activeSubmissionInfo !== null) {
+            event.type = 'submission:new-comment'
+        } else if ( event.type == 'new-comment' && activeSubmissionInfo === null ) {
+            event.type = 'paper:new-comment'
         }
 
         if ( ! event.visibility ) {

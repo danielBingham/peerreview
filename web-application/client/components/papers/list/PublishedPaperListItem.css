@@ -50,7 +50,7 @@
     color: black;
 }
 .published-paper-list-item .title a:hover {
-    color: #888;
+    color: var(--link-highlight-color);
 }
 .published-paper-list-item .title svg {
     width: 1em;
