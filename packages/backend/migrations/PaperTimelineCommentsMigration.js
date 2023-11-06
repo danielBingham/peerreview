@@ -174,7 +174,7 @@ module.exports = class PaperTimelineCommentsMigration {
             `, [])
 
         } catch(error) {
-            throw MigrationError('no-rollback', error.message)
+            throw new MigrationError('no-rollback', error.message)
         }
     }
 }
