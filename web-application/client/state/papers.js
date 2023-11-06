@@ -142,10 +142,12 @@ export const papersSlice = createSlice({
         },
 
         clearFiles: function(state, action) {
-            for(const [version, url] of Object.entries(state.files[action.payload.paperId])) {
-                URL.revokeObjectURL(url)
+            if ( state.files[action.payload.paperId] ) {
+                for(const [version, url] of Object.entries(state.files[action.payload.paperId])) {
+                    URL.revokeObjectURL(url)
+                }
+                delete state.files[action.payload.paperId]
             }
-            delete state.files[action.payload.paperId]
         },
 
 
