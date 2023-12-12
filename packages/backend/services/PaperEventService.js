@@ -448,4 +448,22 @@ module.exports = class PaperEventService {
 
         return false 
     }
+
+    async canViewAnonymous(user, eventIds) {
+        const results = await this.database.query(`
+            SELECT paper_events.id
+                FROM paper_events
+                    LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = paper_events.paper_id
+                    LEFT OUTER JOIN  
+
+        // If the user is the event actor, then they can see.
+        
+
+        // If the user is an Author and the actor is an Author, then they can see.
+
+
+        // If user is a Managing Editor or an Assigned Editor and actor is a journal member, they can see it.
+
+
+    }
 }

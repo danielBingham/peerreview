@@ -345,10 +345,12 @@ CREATE INDEX paper_comment_versions__version ON paper_comment_versions (version)
  ******************************************************************************/
 
 CREATE TYPE journal_model as ENUM('public', 'open-public', 'open-closed', 'closed');
+CREATE TYPE journal_anonymity as ENUM('forced-identified', 'default-identified', 'reviewers-anonymous', 'double-anonymous');
 CREATE TABLE journals (
     id      bigserial PRIMARY KEY,
     name    varchar(1024) NOT NULL,
     model journal_model NOT NULL DEFAULT 'closed', 
+    anonymity journal_anonymity NOT NULL DEFFAULT 'double-anonymous',
     description text,
     created_date    timestamptz,
     updated_date    timestamptz
@@ -551,6 +553,7 @@ CREATE TABLE paper_events (
     status paper_event_status DEFAULT 'committed',
     type paper_event_types NOT NULL,
     visibility paper_event_visibility[] NOT NULL DEFAULT '{"authors"}',
+    anonymous boolean DEFAULT false,
     event_date timestamptz,
 
     assignee_id bigint REFERENCES users(id) DEFAULT NULL,
@@ -560,6 +563,128 @@ CREATE TABLE paper_events (
     new_status journal_submission_status DEFAULT NULL,
     paper_comment_id bigint REFERENCES paper_comments(id) DEFAULT NULL ON DELETE CASCADE
 );
+
+/******************************************************************************
+ * Permissions 
+ *****************************************************************************/
+
+CREATE TYPE permission_type AS ENUM(
+    'Paper:entity:view', /* View a paper. */
+    'Paper:entity:identify', /* Identify the anonymous authors of a paper. */
+    'Paper:entity:edit', /* Edit a paper: changing title, fields, authors, metadata and uploading new versions. */
+    'Paper:entity:review', /* Review a paper. */
+    'Paper:entity:comment', /* Comment on a paper's timeline. */
+
+    'Paper:event:view', /* View a paper event. */
+    'Paper:event:edit', /* Edit a paper event: change its visibility. */
+    'Paper:event:identify', /* Identify the anonymous actor of a paper event. */
+
+    'Paper:version:view',
+    'Paper:version:edit',
+    'Paper:version:review',
+    'Paper:version:comment',
+
+    'Paper:review:view',
+    'Paper:review:identify',
+    'Paper:review:edit',
+    'Paper:review:comment',
+
+    'Paper:comment:view',
+    'Paper:comment:edit',
+
+    'Paper:submission:view',
+    'Paper:submission:edit',
+
+    'Journal:entity:view',
+    'Journal:entity:edit',
+
+    'Journal:membership:view',
+    'Journal:membership:edit',
+
+    'Journal:settings:view',
+    'Journal:settings:edit',
+
+    'Journal:submissions:view',
+    'Journal:submissions:edit',
+
+    'Journal:submissions:paper:identify',
+    'Journal:submissions:paper:review',
+    'Journal:submissions:paper:comment',
+
+    'Journal:submissions:reviews:view',
+    'Journal:submissions:reviews:edit',
+    'Journal:submissions:reviews:identify',
+
+    'Journal:assignedSubmissions:view',
+    'Journal:assignedSubmissions:edit',
+
+    'Journal:assignedSubmissions:paper:identify',
+    'Journal:assignedSubmissions:paper:review',
+    'Journal:assignedSubmissions:paper:comment'
+
+    'Journal:assignedSubmissions:reviews:view',
+    'Journal:assignedSubmissions:reviews:edit',
+    'Journal:assignedSubmissions:reviews:identify'
+);
+
+CREATE TABLE `user_permissions` (
+    user_id bigint  REFERENCES users(id),
+    permission permission_type,
+
+    paper_id bigint REFERENCES papers(id) DEFAULT null,
+    version int DEFAULT null,
+    event_id bigint REFERENCES paper_events(id) DEFAULT NULL,
+    review_id bigint REFERENCES reviews(id) DEFAULT null,
+    paper_comment_id    bigint REFERENCES paper_comments(id) DEFAULT NULL,
+    submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
+    journal_id  bigint REFERENCES journals(id) DEFAULT NULL
+);
+
+CREATE TYPE `role_type` AS ENUM('public', 'author', 'editor', 'reviewer');
+CREATE TABLE `roles` (
+    id  bigserial PRIMARY KEY,
+    name    varchar(1024),
+    type role_type,
+    is_owner boolean,
+
+    description text,
+    journal_id  bigint REFERENCES journals(id) DEFAULT NULL,
+    paper_id    bigint REFERENCES papers(id) DEFAULT NULL
+);
+INSERT INTO roles (name, type, description) VALUES ('public', 'public', 'The general public.');
+
+CREATE TABLE `role_permissions` (
+    role_id bigint REFERENCES roles(id) DEFAULT NULL,
+    permission permission_type,
+
+    paper_id bigint REFERENCES papers(id) DEFAULT null,
+    version int DEFAULT null,
+    review_id bigint REFERENCES reviews(id) DEFAULT null,
+    paper_comment_id    bigint REFERENCES paper_comments(id) DEFAULT NULL,
+    submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
+    journal_id  bigint REFERENCES journals(id) DEFAULT NULL
+);
+
+CREATE TABLE `user_roles` (
+    role_id bigint REFERENCS roles(id) DEFAULT NULL,
+    user_id bigint REFERENCES users(id) DEFAULT NULL
+);
+
+
+/* TODO How are we achiving this? */
+CREATE TABLE `default_role_permissions` (
+    id  bigserial PRIMARY KEY,
+    entity_name varchar(1024),
+    permission permission_type,
+
+    paper_id bigint REFERENCES papers(id) DEFAULT null,
+    version int DEFAULT null,
+    review_id bigint REFERENCES reviews(id) DEFAULT null,
+    paper_comment_id    bigint REFERENCES paper_comments(id) DEFAULT NULL,
+    submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
+    journal_id  bigint REFERENCES journals(id) DEFAULT NULL
+);
+
 
 /******************************************************************************
  * Responses 

@@ -69,6 +69,13 @@ module.exports = class PaperEventController {
         )
         relations.reviews = reviewResults.dictionary
 
+        for(const [id, event] of Object.entries(results.dictionary)) {
+            if ( event.anonymous && event.reviewId) {
+                delete relations.reviews[event.reviewId].userId
+                delete event.actorId
+            }
+        }
+
         // ======== Submissions ===============================================
         const submissionResults = await this.submissionDAO.selectJournalSubmissions(
             `WHERE journal_submissions.id = ANY($1::bigint[])`,
