@@ -688,6 +688,7 @@ CREATE TABLE `role_permissions` (
 
     paper_id bigint REFERENCES papers(id) DEFAULT null,
     version int DEFAULT null,
+    event_id bigint REFERENCES paper_events(id) DEFAULT NULL,
     review_id bigint REFERENCES reviews(id) DEFAULT null,
     paper_comment_id    bigint REFERENCES paper_comments(id) DEFAULT NULL,
     submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
