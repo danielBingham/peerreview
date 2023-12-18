@@ -579,24 +579,49 @@ CREATE TYPE permission_type AS ENUM(
     'Paper:event:edit', /* Edit a paper event: change its visibility. */
     'Paper:event:identify', /* Identify the anonymous actor of a paper event. */
 
+    'Paper:events:view',
+    'Paper:events:edit',
+    'Paper:events:identify',
+
     'Paper:version:view',
     'Paper:version:edit',
     'Paper:version:review',
     'Paper:version:comment',
+
+    'Paper:versions:view',
+    'Paper:versions:edit',
+    'Paper:versions:review',
+    'Paper:versions:comment',
 
     'Paper:review:view',
     'Paper:review:identify',
     'Paper:review:edit',
     'Paper:review:comment',
 
+    'Paper:reviews:view',
+    'Paper:reviews:identify',
+    'Paper:reviews:edit',
+    'Paper:reviews:comment',
+
     'Paper:comment:view',
     'Paper:comment:edit',
+    'Paper:comment:identify',
+
+    'Paper:comments:view',
+    'Paper:comments:edit',
+    'Paper:comments:identify',
 
     'Paper:submission:view',
     'Paper:submission:edit',
 
+    'Paper:submissions:view',
+    'Paper:submissions:edit',
+
     'Journal:entity:view',
     'Journal:entity:edit',
+
+    'Journal:member:view',
+    'Journal:member:edit',
 
     'Journal:membership:view',
     'Journal:membership:edit',
@@ -604,9 +629,13 @@ CREATE TYPE permission_type AS ENUM(
     'Journal:settings:view',
     'Journal:settings:edit',
 
+    'Journal:submission:view',
+    'Journal:submission:edit',
+
     'Journal:submissions:view',
     'Journal:submissions:edit',
 
+    'Journal:submissions:paper:view',
     'Journal:submissions:paper:identify',
     'Journal:submissions:paper:review',
     'Journal:submissions:paper:comment',
