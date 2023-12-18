@@ -52,13 +52,12 @@ The following table defines all available permissions:
 
 | Permission                        | Required Fields                   | Description                   |
 |-----------------------------------|-----------------------------------|-------------------------------|
-
 | `Paper:entity:view`               | `paper_id`                        | Grants `view` on `Paper`. Allows the user or role to see that the paper exists.  |
 | `Paper:entity:identify`           | `paper_id`                        | Grants the ability to `identify` the anonymous authors of `Paper`. |
 | `Paper:entity:edit`               | `paper_id`                        | Grants `edit` on `Paper`. Allows the user or role to edit the title, fields, or authors of the paper as well as upload new version and submit preprints or submissions.    |
 | `Paper:entity:review`             | `paper_id`                        | Grants `review` on `Paper`. Allows the user or role to review the paper. |
 | `Paper:entity:comment`            | `paper_id`                        | Grants `comment` on `Paper`. Allows the user or role to comment on the paper. |
-
+|-----------------------------------|-----------------------------------|------------------------------|
 | `Paper:event:view`                | `paper_id`, `event_id`            | Grants `view` on the `event` attached to `Paper`. Allows the user or role to view the event. |
 | `Paper:event:edit`                | `paper_id`, `event_id`            | Grants `edit` the `event` on `Paper` by changing its visibility. |
 | `Paper:event:identify`            | `paper_id`, `event_id`            | Allows identification (`identify`) of the anonymous actor of `event` on `Paper`. |
