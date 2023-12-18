@@ -74,5 +74,8 @@ The following table defines all available permissions:
 | `Paper:version:edit`              | `paper_id`, `version`             | Grants `edit` on `version` attached to `Paper`.  Lets the user or role edit the referenced version, changing its visibility. |
 | `Paper:version:review`            | `paper_id`, `version`             | Grants `review` on `version` attached to `Paper`.  Allows the user or role to review a single, referenced version of the referenced paper. |
 | `Paper:version:comment`           | `paper_id`, `version`             | Grants `comment` on `version` attached to `Paper`.  Allows the user or role to comment on a single, referenced version of the referenced paper. |
+|                                   |                                   |                               |
+| **Paper:versions**                |                                   | Permissions on all versions attached to a paper. |
+| `Paper:versions:view`             | `paper_id`                        | Grants `view` on all verisons attached to a `Paper`.  Allows the user or role to view all versions on a paper. |
 
 
