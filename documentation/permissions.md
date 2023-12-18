@@ -62,6 +62,11 @@ The following table defines all available permissions:
 | `Paper:event:edit`                | `paper_id`, `event_id`            | Grants `edit` the `event` on `Paper` by changing its visibility. |
 | `Paper:event:identify`            | `paper_id`, `event_id`            | Allows identification (`identify`) of the anonymous actor of `event` on `Paper`. |
 |                                   |                                   |                               |
-| `Paper:events:view`               | `paper_id`                        | Grants `view` on all events attached to `Paper`. |
+| `Paper:events:view`               | `paper_id`                        | Grants `view` on all events attached to `Paper`. Lets the user or role view all events on the paper. |
+| `Paper:events:edit`               | `paper_id`                        | Grants `edit` on all events attached to a `Paper`. Lets the user or role edit all events on the paper. |
+| `Paper:events:identify`           | `paper_id`                        | Grants `identify` on all events attached to a `Paper`.  Lets the user or role identify the actor for all events on the paper. |
+|                                   |                                   |                               |
+| `Paper:version:view`              | `paper_id`, `version`             | Grants `view` on `version` attached to `Paper`. Lets the user or role view the referenced version of the paper. |
+| `Paper:version:edit`              | `paper_id`, `version`             | Grants `edit` on `version` attached to `Paper`.  Lets the user or role edit the referenced version, changing its visibility. |
 
 
