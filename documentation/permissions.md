@@ -58,16 +58,21 @@ The following table defines all available permissions:
 | `Paper:entity:edit`               | `paper_id`                        | Grants `edit` on `Paper`. Allows the user or role to edit the title, fields, or authors of the paper as well as upload new version and submit preprints or submissions.    |
 | `Paper:entity:review`             | `paper_id`                        | Grants `review` on `Paper`. Allows the user or role to review the paper. |
 | `Paper:entity:comment`            | `paper_id`                        | Grants `comment` on `Paper`. Allows the user or role to comment on the paper. |
+|                                   |                                   |                               |
 | **Paper:event**                |                                   | Permissions on a single event on a paper. |
 | `Paper:event:view`                | `paper_id`, `event_id`            | Grants `view` on the `event` attached to `Paper`. Allows the user or role to view the event. |
 | `Paper:event:edit`                | `paper_id`, `event_id`            | Grants `edit` the `event` on `Paper` by changing its visibility. |
 | `Paper:event:identify`            | `paper_id`, `event_id`            | Allows identification (`identify`) of the anonymous actor of `event` on `Paper`. |
+|                                   |                                   |                               |
 | **Paper:events**                  |                                   | Permissions on all events attached to a paper.|
 | `Paper:events:view`               | `paper_id`                        | Grants `view` on all events attached to `Paper`. Lets the user or role view all events on the paper. |
 | `Paper:events:edit`               | `paper_id`                        | Grants `edit` on all events attached to a `Paper`. Lets the user or role edit all events on the paper. |
 | `Paper:events:identify`           | `paper_id`                        | Grants `identify` on all events attached to a `Paper`.  Lets the user or role identify the actor for all events on the paper. |
+|                                   |                                   |                               |
 | **Paper:version**                 |                                   | Permissions on a single version attached to a paper. |
 | `Paper:version:view`              | `paper_id`, `version`             | Grants `view` on `version` attached to `Paper`. Lets the user or role view the referenced version of the paper. |
 | `Paper:version:edit`              | `paper_id`, `version`             | Grants `edit` on `version` attached to `Paper`.  Lets the user or role edit the referenced version, changing its visibility. |
+| `Paper:version:review`            | `paper_id`, `version`             | Grants `review` on `version` attached to `Paper`.  Allows the user or role to review a single, referenced version of the referenced paper. |
+| `Paper:version:comment`           | `paper_id`, `version`             | Grants `comment` on `version` attached to `Paper`.  Allows the user or role to comment on a single, referenced version of the referenced paper. |
 
 
