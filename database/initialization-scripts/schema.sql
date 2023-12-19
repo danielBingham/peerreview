@@ -569,19 +569,11 @@ CREATE TABLE paper_events (
  *****************************************************************************/
 
 CREATE TYPE permission_type AS ENUM(
-    'Paper:entity:view', /* View a paper. */
-    'Paper:entity:identify', /* Identify the anonymous authors of a paper. */
-    'Paper:entity:edit', /* Edit a paper: changing title, fields, authors, metadata and uploading new versions. */
-    'Paper:entity:review', /* Review a paper. */
-    'Paper:entity:comment', /* Comment on a paper's timeline. */
-
-    'Paper:event:view', /* View a paper event. */
-    'Paper:event:edit', /* Edit a paper event: change its visibility. */
-    'Paper:event:identify', /* Identify the anonymous actor of a paper event. */
-
-    'Paper:events:view',
-    'Paper:events:edit',
-    'Paper:events:identify',
+    'Paper:entity:view', 
+    'Paper:entity:identify', 
+    'Paper:entity:edit', 
+    'Paper:entity:review', 
+    'Paper:entity:comment', 
 
     'Paper:version:view',
     'Paper:version:edit',
@@ -592,6 +584,18 @@ CREATE TYPE permission_type AS ENUM(
     'Paper:versions:edit',
     'Paper:versions:review',
     'Paper:versions:comment',
+
+    'Paper:version:events:view',
+    'Paper:version:events:edit',
+    'Paper:version:events:identify',
+
+    'Paper:event:view', 
+    'Paper:event:edit', 
+    'Paper:event:identify', 
+
+    'Paper:events:view',
+    'Paper:events:edit',
+    'Paper:events:identify',
 
     'Paper:review:view',
     'Paper:review:identify',
