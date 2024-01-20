@@ -47,5 +47,5 @@ header a:link, header a:active, header a:visited {
 }
 
 header a:hover {
-    color: white;
+    color: var(--header-text-highlight-color);
 }

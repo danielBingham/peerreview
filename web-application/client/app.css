@@ -3,12 +3,14 @@
     /**************************************************************************
      * Color Palette
      *************************************************************************/
-    --primary-color-lightest: #fafcfc;
-    --primary-color-light: #dce6e6;
-    --primary-color-main: #2E9894;
-    --primary-color-main-highlight: #4d9996;
-    --primary-color-dark: #2e3333;
-    --primary-color-darkest: #191a1a;
+
+
+    --primary-color-lightest: #f9fbfc;
+    --primary-color-light: #e6ecf2;
+    --primary-color-main: #398fe5;
+    --primary-color-main-highlight: #67a6e5;
+    --primary-color-dark: #44484c;
+    --primary-color-darkest: #161819; 
 
     --secondary-color-lightest: #faece1;
     --secondary-color-light: #facfaf;
@@ -62,6 +64,7 @@
     --header-menu-spacer-color: var(--primary-color-lightest);
     --header-menu-text-color: var(--primary-color-lightest);
     --header-menu-text-highlight-color: white;
+
 
     /** Page Header **/
     --page-header-background-color: var(--primary-color-lightest);
