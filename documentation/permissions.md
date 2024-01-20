@@ -87,5 +87,6 @@ The following table defines all available permissions:
 | `Paper:events:identify`           | `paper_id`                        | `Paper:entity:view`, `Paper:version:view` | Grants `identify` on all events attached to a `Paper`.  Lets the user or role identify the actor for all events on the paper. |
 |                                   |                                   |                               |                               |
 | **Paper:review**                  |                                   |                               | Grants permissions on a single review attached to a paper. |
-| `Paper:review:view`               | `paper_id`, `review_id`           | `Paper:entity:view`, `Paper:version:view` | Grants `view` on `Review(review_id)` attached to `Paper(paper_id)`.  Allows the user or role to view and read the identified review. |
-
+| `Paper:review:view`               | `paper_id`, `version`, `review_id` | `Paper:entity:view`, `Paper:version:view` | Grants `view` on `Review(review_id)` of `Version(version)` attached to `Paper(paper_id)`.  Allows the user or role to view and read the review. |
+| `Paper:review:identify`           | `paper_id`, `version`, `review_id` | `Paper:entity:view`, `Paper:version:view`, `Paper:review:view` | Grants `identify` on `Review(review_id)` of `Version(version)` attached to `Paper(paper_id)`. Allows the user or role to identify the anonymous reviewer of the review. |
+| `Paper:review:edit`               | `paper_id`, `version`, `review_id` | `Paper:entity:view`, `Paper:version:view`, `Paper:review:view` |
