@@ -161,10 +161,6 @@ const PaperPage = function({}) {
                     <DocumentCheckIcon /> Paper
                 </PageTab> }
 
-                { ! paper.isDraft && <PageTab url={`/paper/${id}/responses`} tab="responses">
-                    <ChatBubbleLeftEllipsisIcon /> Responses
-                </PageTab> }
-
                 <PageTab url={`/paper/${id}/file`} tab="file" initial={ paper.isDraft }>
                     <DocumentTextIcon /> File
                 </PageTab>
