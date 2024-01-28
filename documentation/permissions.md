@@ -119,6 +119,16 @@ The following table defines all available permissions:
 | **Journal**                       |                                   |                                           | Grants permissions on a single Journal. |
 | `Journal:entity:view`             | `journal_id`                      |                                           | Grants `view` on `Journal(journal_id)`. Allows the user to view the journal. |
 | `Journal:entity:edit`             | `journal_id`                      |                                           | Grants `edit` on `Journal(journal_id)`.  Allows the user to edit the journal's description, title, and about page. |
+|                                   |                                   |                                           |                   |
 | **Journal:member**                |                                   |                                           | Grants permissions to edit the membership of a single member of Journal. | 
 | `Journal:member:view`             | `journal_id`, `user_id`           | `Journal:entity:view`                     | Grants `view` on the membership of `User(user_id)` in `Journal(journal_id)`.  Allows the user to see that `User(user_id)` is a member of `Journal(journal_id)`. |
 | `Journal:member:edit`             | `journal_id`, `user_id`           | `Journal:entity:view`                     | Grants `edit` on the membership of `User(user_id)` in `Journal(journal_id)`. Allows the user to modify the membership of `User(user_id)` in `Journal(journal_id)`. |
+|                                   |                                   |                                           |                   |
+| **Journal:membership**            |                                   |                                           | Grants permissions on the memberships of all members of a Journal. |
+| `Journal:membership:view`         | `journal_id`                      | `Journal:entity:view`                     | Grants `view` permission on the membership of all members of `Journal(journal_id)`.  Allows the user to view the membership information of all members of the journal. |
+| `Journal:membership:edit`         | `journal_id`                      | `Journal:entity:view`                     | Grants `edit` permission on the membership of all members of `Journal(journal_id)`.  Allows the user to edit the membership information all members of the journal. |
+|                                   |                                   |                                           |                   |
+| **Journal:settings**              |                                   |                                           | Grants permissions on the journal's settings. |
+| `Journal:settings:view`           | `journal_id`                      | `Journal:entity:view`                     | Grants `view` on the journal's settings. Allows the user to see the journal's settings. |
+| `Journal:settings:edit`           | `journal_id`                      | `Journal:entity:view`                     | Grants `edit` on the journal's settings.  Allows the user to change the journal's settings. |
+
