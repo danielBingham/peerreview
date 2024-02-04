@@ -186,12 +186,14 @@ const papers = {
             {
                 userId: 1,
                 order: 1,
-                owner: true
+                owner: true,
+                submitter: true
             },
             {
                 userId: 2,
                 order: 2,
-                owner: false 
+                owner: false, 
+                submitter: false
             }
         ],
         fields: [

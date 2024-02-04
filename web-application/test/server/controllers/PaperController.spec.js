@@ -5,8 +5,6 @@ const PaperController = require('../../../server/controllers/PaperController')
 
 const ControllerError = require('../../../server/errors/ControllerError')
 
-const fs = require('fs')
-
 describe('PaperController', function() {
 
     // ====================== Fixture Data ====================================
@@ -102,79 +100,65 @@ describe('PaperController', function() {
 
     })
 
-    xdescribe('.postPapers()', function() {
-        // We'll come back to this test later.
-        describe('handles an uploaded paper', function() {
-
-            beforeEach(function() {
-                for ( const version of submittedPapers[0].versions) {
-                    const fromPath = process.cwd() + '/test/server/files/public/uploads' + version.file.filepath
-                    const toPath = process.cwd() + '/test/server/files/public/uploads/files' + version.file.filepath
-                    fs.copyFileSync(fromPath, toPath) 
+    describe('.postPapers()', function() {
+        const testSubmission = {
+            title: "A Test Paper",
+            isDraft: false,
+            showPreprint: false,
+            authors: [
+                {
+                    userId: 1,
+                    order: 1,
+                    submitter: true,
+                    role: 'corresponding-author'
                 }
-            })
-
-            afterEach(function() {
-                for ( const version of expectedPapers[0].versions) {
-                    const path = process.cwd() + '/test/server/files/public' + version.file.filepath
-                    fs.rmSync(path)
+            ],
+            fields: [{ id: 1 }],
+            versions: [
+                {
+                    file: { id: 1 }
                 }
-            })
+            ]
+        }
 
-            it('should return 201 with the submitted paper', async function() {
-
-                core.database.query.mockReturnValueOnce({rowCount: 1, rows: [ { id: 1 }]}) // insertPaper
-                    .mockReturnValueOnce({rowCount:2, rows: [ ]}) // insertAuthors
-                    .mockReturnValueOnce({rowCount:2, rows: [ ]}) // insertFields
-                // insertVersion (1)
-                    .mockReturnValueOnce({rowCount:1, rows: database.filesBefore[1]}) // selectFiles
-                    .mockReturnValueOnce({rowCount:0, rows: [ ] }) // select MAX(version)
-                    .mockReturnValueOnce({rowCount:1, rows: [ ]}) // insert version
-                    .mockReturnValueOnce({rowCount:1, rows: [ ]}) // updateFile
-
-                // insertVersion(2)
-                    .mockReturnValueOnce({rowCount:1, rows: database.filesBefore[2]}) // selectFiles
-                    .mockReturnValueOnce({rowCount:1, rows: [ { version: 2 } ] }) // select MAX(version)
-                    .mockReturnValueOnce({rowCount:1, rows: [ ]}) // insertVersion
-                    .mockReturnValueOnce({rowCount:1, rows: [ ]}) // updateFile
-
-                    .mockReturnValueOnce({rowCount:8, rows: database.papers[1] }) // selectPaper
-                    .mockReturnValueOnce({rowCount:2, rows: database.users[1] })
-                    .mockReturnValueOnce({rowCount:2, rows: database.users[2] })
-
-                const request = {
-                    body: submittedPapers[0],
-                    session: {
-                        user: {
-                            id: 1
-                        }
-                    }
-                }
-
-                const response = new Response()
-                const paperController = new PaperController(core)
-                paperController.paperDAO.fileService.base = '/test/server/files/' + paperController.paperDAO.fileService.base
-
-                // Silence logging to supress a bunch of PDF.js warnings.
-                const log = console.log  
-                console.log = jest.fn()
-
-                await paperController.postPapers(request, response)
-
-                console.log = log
-
-                expect(response.status.mock.calls[0][0]).toEqual(201)
-                expect(response.json.mock.calls[0][0]).toEqual(expectedPapers[0])
-            })
-        })
-
-        it('should throw a ControllerError with 403 if no user is authenticated', async function() {
+        it('should throw a ControllerError with 401 if no user is authenticated', async function() {
             const request = {
-                body: submittedPapers[0]
+                body: { ...testSubmission }
             }
 
             const response = new Response()
             const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(401)
+                expect(error.type).toEqual('not-authenticated')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it(`should throw 403:not-authorized if the submitting user doesn't have 'create' permissions`, async function() {
+            const request = {
+                body: { ...testSubmission },
+                session: {
+                    user: { id: 1 }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(false),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
             try {
                 await paperController.postPapers(request, response)
             } catch (error ) {
@@ -184,12 +168,40 @@ describe('PaperController', function() {
             }
 
             expect.hasAssertions()
-
         })
 
-        it('should throw a ControllerError with 403 if the submitting user is not an owner', async function() {
+        it('should throw 400:no-authors when a paper is submitted without authors', async function() {
             const request = {
-                body: submittedPapers[0],
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+            request.body.authors = []
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('no-authors')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw 403:not-author if the submitting user is not an author', async function() {
+            const request = {
+                body: { ...testSubmission },
                 session: {
                     user: {
                         id: 2
@@ -199,22 +211,56 @@ describe('PaperController', function() {
 
             const response = new Response()
             const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
             try {
                 await paperController.postPapers(request, response)
             } catch (error ) {
                 expect(error).toBeInstanceOf(ControllerError)
                 expect(error.status).toEqual(403)
-                expect(error.type).toEqual('not-owner')
+                expect(error.type).toEqual('not-author')
             }
 
             expect.hasAssertions()
         })
 
-        it('should throw a DAOError if database returns rowCount=0 on insert', async function() {
+        it('should throw 400:no-corresponding-author when a paper is submitted without a corresponding author', async function() {
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+            request.body.authors = [{ userId: 1, order: 1, role: 'author', submitter: true }]
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('no-corresponding-author')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw 400:invalid-author when a paper is submitted without authors', async function() {
             core.database.query.mockReturnValueOnce({rowCount: 0, rows: [] })
 
             const request = {
-                body: submittedPapers[0],
+                body: { ...testSubmission }, 
                 session: {
                     user: {
                         id: 1
@@ -224,6 +270,206 @@ describe('PaperController', function() {
 
             const response = new Response()
             const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('invalid-author:1')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw 400:no-fields when a paper is submitted without fields', async function() {
+            core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+            request.body.fields = []
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('no-fields')
+            }
+
+            expect.hasAssertions()
+        })
+        
+        it('should throw 400:invalid-field when a paper is submitted with an invalid field', async function() {
+            core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('invalid-field:1')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw 400:no-versions when a paper is submitted without versions', async function() {
+            core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+            request.body.versions = []
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('no-versions')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw 400:invalid-file error when the submitted file does not exist in the database', async function() {
+            core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('invalid-file:1')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw 400:file-in-use error when a file is used on another paper', async function() {
+            core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [ { paper_id: 1, file_id: 1 }] })
+
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('file-in-use')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw a DAOError if database returns rowCount=0 on insert', async function() {
+            core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
             try {
                 await paperController.postPapers(request, response)
             } catch (error ) {
@@ -234,13 +480,23 @@ describe('PaperController', function() {
 
         })
 
-        it('should pass thrown errors on to the error handler', async function() {
-            core.database.query.mockImplementation(function(sql, params) {
-                throw new Error('This is a test error!')
-            })
+        it('should succeed with 201 and respond with the entity and relations', async function() {
+            core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+                // InsertPaper
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                // insertAuthors
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                // insertFields
+                .mockReturnValueOnce({ rowCount: 1, rows: [] })
+                // We're mocking insertVersions at the DAO level since it has a
+                // significant amount of logic.
+                .mockReturnValueOnce({ rowCount: 1, rows: database.papers[1] }) 
 
             const request = {
-                body: submittedPapers[0],
+                body: { ...testSubmission }, 
                 session: {
                     user: {
                         id: 1
@@ -250,14 +506,29 @@ describe('PaperController', function() {
 
             const response = new Response()
             const paperController = new PaperController(core)
-            try {
-                await paperController.postPapers(request, response)
-            } catch (error) {
-                expect(error).toBeInstanceOf(Error)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false),
+                papers: {
+                    createRoles: jest.fn(),
+                    assignRoles: jest.fn()
+                }
             }
-            expect.hasAssertions()
+            paperController.paperDAO.insertVersions = jest.fn()
+            paperController.paperEventService.createEvent = jest.fn()
+            paperController.notificationService.sendNotifications = jest.fn()
+            paperController.getRelations = jest.fn().mockReturnValue({})
+
+            await paperController.postPapers(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(201)
+            expect(response.json.mock.calls[0][0]).toEqual({
+                entity: expectedPapers.dictionary[1],
+                relations: {}
+            })
 
         })
+
 
     })
 
