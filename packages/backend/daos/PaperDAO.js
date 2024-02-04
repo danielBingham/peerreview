@@ -36,8 +36,8 @@ module.exports = class PaperDAO {
         const list = []
 
         for(const row of rows) {
-            const paper = {
-                id: row.paper_id,
+            const paper = new Paper()
+            paper.id = row.paper_id,
                 title: row.paper_title,
                 isDraft: row.paper_isDraft,
                 showPreprint: row.paper_showPreprint,

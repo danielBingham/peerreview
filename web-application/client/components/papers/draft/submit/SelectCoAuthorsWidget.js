@@ -47,12 +47,9 @@ const SelectCoAuthorsWidget = function(props) {
         props.setAuthors([ ...props.authors,author])
     }
 
-    const assignPermissions = function(author, permissions) {
-        if ( permissions == 'owner' ) {
-            author.owner = true
-        } else {
-            author.owner = false
-        }
+    const assignRole = function(author, role) {
+        author.role = role
+
         const newAuthors = props.authors.filter((a) => a.userId != author.userId)
         newAuthors.push(author)
         newAuthors.sort((a,b) => a.order - b.order)
@@ -122,11 +119,11 @@ const SelectCoAuthorsWidget = function(props) {
                 <div className="right">
                     { userDictionary[author.userId].status == 'invited' ? <span className="status">Invited</span> : null }
                     <select 
-                        onChange={(e) => assignPermissions(author, e.target.value) } 
-                        value={ author.owner ? 'owner' : 'commenter' } name="permissions"
+                        onChange={(e) => assignRole(author, e.target.value) } 
+                        value={ author.role } name="role"
                     > 
-                        <option value="owner">Corresponding Author</option>
-                        <option value="commenter">Author</option>
+                        <option value="corresponding-author">Corresponding Author</option>
+                        <option value="author">Author</option>
                     </select>
                     { author.userId != currentUser.id && <a href="" onClick={(e) => { e.preventDefault(); removeAuthor(author) }} ><XMarkIcon  /></a> }
                 </div>

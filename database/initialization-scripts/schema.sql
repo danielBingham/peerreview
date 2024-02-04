@@ -569,19 +569,25 @@ CREATE TABLE paper_events (
  *****************************************************************************/
 
 CREATE TYPE permission_type AS ENUM(
-    'Paper:entity:view', 
-    'Paper:entity:identify', 
-    'Paper:entity:edit', 
-    'Paper:entity:review', 
-    'Paper:entity:comment', 
+    'Papers:create',
+
+    'Paper:view', 
+    'Paper:edit', 
+    'Paper:delete',
+    'Paper:identify', 
+    'Paper:review', 
+    'Paper::comment', 
 
     'Paper:version:view',
     'Paper:version:edit',
+    'Paper:version:delete',
     'Paper:version:review',
     'Paper:version:comment',
 
+    'Paper:versions:create',
     'Paper:versions:view',
     'Paper:versions:edit',
+    'Paper:versions:delete',
     'Paper:versions:review',
     'Paper:versions:comment',
 
@@ -660,7 +666,7 @@ CREATE TYPE permission_type AS ENUM(
     'Journal:assignedSubmissions:reviews:identify'
 );
 
-CREATE TABLE `user_permissions` (
+CREATE TABLE user_permissions (
     user_id bigint  REFERENCES users(id),
     permission permission_type,
 
@@ -673,10 +679,11 @@ CREATE TABLE `user_permissions` (
     journal_id  bigint REFERENCES journals(id) DEFAULT NULL
 );
 
-CREATE TYPE `role_type` AS ENUM('public', 'author', 'editor', 'reviewer');
-CREATE TABLE `roles` (
+CREATE TYPE role_type AS ENUM('public', 'author', 'editor', 'reviewer');
+CREATE TABLE roles (
     id  bigserial PRIMARY KEY,
     name    varchar(1024),
+    short_description varchar(1024),
     type role_type,
     is_owner boolean,
 
@@ -686,7 +693,7 @@ CREATE TABLE `roles` (
 );
 INSERT INTO roles (name, type, description) VALUES ('public', 'public', 'The general public.');
 
-CREATE TABLE `role_permissions` (
+CREATE TABLE role_permissions (
     role_id bigint REFERENCES roles(id) DEFAULT NULL,
     permission permission_type,
 
@@ -698,27 +705,13 @@ CREATE TABLE `role_permissions` (
     submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
     journal_id  bigint REFERENCES journals(id) DEFAULT NULL
 );
+INSERT INTO role_permissions (role_id, permission)
+    SELECT roles.id, 'Papers:create' FROM roles WHERE roles.name = 'public';
 
-CREATE TABLE `user_roles` (
+CREATE TABLE user_roles (
     role_id bigint REFERENCS roles(id) DEFAULT NULL,
     user_id bigint REFERENCES users(id) DEFAULT NULL
 );
-
-
-/* TODO How are we achiving this? */
-CREATE TABLE `default_role_permissions` (
-    id  bigserial PRIMARY KEY,
-    entity_name varchar(1024),
-    permission permission_type,
-
-    paper_id bigint REFERENCES papers(id) DEFAULT null,
-    version int DEFAULT null,
-    review_id bigint REFERENCES reviews(id) DEFAULT null,
-    paper_comment_id    bigint REFERENCES paper_comments(id) DEFAULT NULL,
-    submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
-    journal_id  bigint REFERENCES journals(id) DEFAULT NULL
-);
-
 
 /******************************************************************************
  * Responses 

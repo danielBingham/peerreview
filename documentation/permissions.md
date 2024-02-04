@@ -132,3 +132,4 @@ The following table defines all available permissions:
 | `Journal:settings:view`           | `journal_id`                      | `Journal:entity:view`                     | Grants `view` on the journal's settings. Allows the user to see the journal's settings. |
 | `Journal:settings:edit`           | `journal_id`                      | `Journal:entity:view`                     | Grants `edit` on the journal's settings.  Allows the user to change the journal's settings. |
 
+
