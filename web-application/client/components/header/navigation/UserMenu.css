@@ -7,6 +7,7 @@
     border-bottom: thin solid var(--header-menu-border-color);
     border-left: thin solid var(--header-menu-border-color);
     border-right: thin solid var(--header-menu-border-color);
+    box-shadow: 0 0 5px rgba(0,0,0,0.1);
     padding: 10px 0 10px 0;
     z-index: 1000;
     white-space: nowrap;

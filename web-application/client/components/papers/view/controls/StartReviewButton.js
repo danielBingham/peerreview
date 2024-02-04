@@ -79,10 +79,8 @@ const StartReviewButton = function({ id }) {
     }, [ postReviewsRequestId ])
 
     // ======= Render ===============================================
-
-    const viewOnly = ! paper.isDraft
     
-    if ( ! reviewInProgress && ! viewOnly && currentUser ) {
+    if ( ! reviewInProgress && currentUser ) {
         return (
             <Button type={ isAuthor ? "default" : "primary" } onClick={startReview}>Start Review</Button>  
         )

@@ -17,7 +17,7 @@ header #site-title {
 
     text-align: left;
 }
-header #site-title svg {
+header #site-title img {
     display: inline-block;
     width: 24px;
     height: 24px;
@@ -47,5 +47,5 @@ header a:link, header a:active, header a:visited {
 }
 
 header a:hover {
-    color: white;
+    color: var(--header-text-highlight-color);
 }

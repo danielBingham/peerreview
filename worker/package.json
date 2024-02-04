@@ -18,6 +18,7 @@
   "dependencies": {
     "@aws-sdk/client-s3": "^3.294.0",
     "@danielbingham/peerreview-backend": "^0.3.7",
+    "@danielbingham/peerreview-model": "^0.3.7",
     "bull": "^4.10.4",
     "pg": "^8.7.3"
   },

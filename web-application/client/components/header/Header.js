@@ -30,7 +30,7 @@ const Header = function(props) {
     
     return (
         <header>
-            <div id="site-title"><Link to="/"><BookOpenIcon />JournalHub</Link><sub className="wip">( alpha )</sub></div>
+            <div id="site-title"><Link to="/"><img src="/favicon.svg" /> JournalHub</Link><sub className="wip">( alpha )</sub></div>
             <div id="navigation">
                 <MainNavigation />
                 { currentUser && <CreationNavigation /> }
