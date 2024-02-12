@@ -666,19 +666,6 @@ CREATE TYPE permission_type AS ENUM(
     'Journal:assignedSubmissions:reviews:identify'
 );
 
-CREATE TABLE user_permissions (
-    user_id bigint  REFERENCES users(id),
-    permission permission_type,
-
-    paper_id bigint REFERENCES papers(id) DEFAULT null,
-    version int DEFAULT null,
-    event_id bigint REFERENCES paper_events(id) DEFAULT NULL,
-    review_id bigint REFERENCES reviews(id) DEFAULT null,
-    paper_comment_id    bigint REFERENCES paper_comments(id) DEFAULT NULL,
-    submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
-    journal_id  bigint REFERENCES journals(id) DEFAULT NULL
-);
-
 CREATE TYPE role_type AS ENUM('public', 'author', 'editor', 'reviewer');
 CREATE TABLE roles (
     id  bigserial PRIMARY KEY,
@@ -693,7 +680,14 @@ CREATE TABLE roles (
 );
 INSERT INTO roles (name, type, description) VALUES ('public', 'public', 'The general public.');
 
-CREATE TABLE role_permissions (
+CREATE TABLE user_roles (
+    role_id bigint REFERENCS roles(id) DEFAULT NULL,
+    user_id bigint REFERENCES users(id) DEFAULT NULL
+);
+
+CREATE TABLE permissions (
+    id bigserial PRIMARY KEY,
+    user_id bigint REFERENCES users(id) DEFAULT NULL,
     role_id bigint REFERENCES roles(id) DEFAULT NULL,
     permission permission_type,
 
@@ -705,13 +699,9 @@ CREATE TABLE role_permissions (
     submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
     journal_id  bigint REFERENCES journals(id) DEFAULT NULL
 );
-INSERT INTO role_permissions (role_id, permission)
+INSERT INTO permissions (role_id, permission)
     SELECT roles.id, 'Papers:create' FROM roles WHERE roles.name = 'public';
 
-CREATE TABLE user_roles (
-    role_id bigint REFERENCS roles(id) DEFAULT NULL,
-    user_id bigint REFERENCES users(id) DEFAULT NULL
-);
 
 /******************************************************************************
  * Responses 

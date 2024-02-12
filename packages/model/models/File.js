@@ -2,7 +2,6 @@
 class File {
 
     constructor(data) {
-
         /** The database id of this file in the `files` table. @type {number} */
         this.id = null
 

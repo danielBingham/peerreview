@@ -3,6 +3,8 @@ const sanitizeFilename = require('sanitize-filename')
 const fs = require('fs')
 const pdfjslib = require('pdfjs-dist/legacy/build/pdf.js')
 
+const { Paper, PaperAuthor, PaperVersion } = require('@danielbingham/peerreview-model')
+
 const DAOError = require('../errors/DAOError')
 
 const UserDAO = require('./UserDAO')
@@ -35,59 +37,56 @@ module.exports = class PaperDAO {
         const dictionary = {}
         const list = []
 
-        for(const row of rows) {
-            const paper = new Paper()
-            paper.id = row.paper_id,
-                title: row.paper_title,
-                isDraft: row.paper_isDraft,
-                showPreprint: row.paper_showPreprint,
-                score: row.paper_score,
-                createdDate: row.paper_createdDate,
-                updatedDate: row.paper_updatedDate,
-                authors: [],
-                fields: [],
-                versions: []
-            }
+        // These are just used to track the various child objects and ensure
+        // uniqueness.
+        const authorDictionary = {}
+        const versionDictionary = {}
+        const fieldDictionary = {}
 
-            if ( ! dictionary[paper.id] ) {
+        for(const row of rows) {
+            if ( ! (row.Paper_id in dictionary ) ){
+                const paper = new Paper()
+                paper.id = row.Paper_id
+                paper.title = row.Paper_title
+                paper.isDraft = row.Paper_isDraft
+                paper.showPreprint = row.Paper_showPreprint
+                paper.score = row.Paper_score
+                paper.createdDate = row.Paper_createdDate
+                paper.updatedDate = row.Paper_updatedDate
+
                 dictionary[paper.id] = paper
                 list.push(paper)
             }
 
-            const author = {
-                userId: row.author_userId,
-                order: row.author_order,
-                owner: row.author_owner,
-                submitter: row.author_submitter
+            if ( row.PaperAuthor_userId && ! (row.PaperAuthor_userId in authorDictionary)) {
+                const paperAuthor = new PaperAuthor()
+                paperAuthor.userId  = row.PaperAuthor_userId
+                paperAuthor.order = row.PaperAuthor_order
+                paperAuthor.owner = row.PaperAuthor_owner
+                paperAuthor.submitter = row.PaperAuthor_submitter
+
+                authorDictionary[paperAuthor.userId] = paperAuthor 
+                dictionary[row.Paper_id].authors.push(paperAuthor)
             }
 
-            if ( ! dictionary[paper.id].authors.find((a) => a.userId == author.userId)) {
-                dictionary[paper.id].authors.push(author)
+            if ( row.PaperVersion_version && ! (row.PaperVersion_version in versionDictionary)) {
+                const paperVersion = new PaperVersion()
+
+                paperVersion.version = row.PaperVersion_version
+                paperVersion.file = this.fileDAO.hydrateFile(row)
+                paperVersion.content = row.PaperVersion_content
+                paperVersion.reviewCount = row.PaperVersion_reviewCount
+                paperVersion.createdDate = row.PaperVersion_createdDate
+                paperVersion.updatedDate = row.PaperVersion_updatedDate
+
+                versionDictionary[paperVersion.version] = paperVersion
+                dictionary[row.Paper_id].versions.push(paperVersion)
             }
 
-            const paper_version = {
-                file: this.fileDAO.hydrateFile(row),
-                version: row.version_version,
-                content: row.version_content,
-                reviewCount: row.version_reviewCount,
-                createdDate: row.version_createdDate,
-                updatedDate: row.version_updatedDate
+            if ( row.PaperField_fieldId && ! (row.PaperField_fieldId in fieldDictionary)) {
+                fieldDictionary[row.PaperField_fieldId] = true
+                dictionary[row.Paper_id].fields.push(row.PaperField_fieldId)
             }
-            // Ignore versions that haven't finished uploading.
-            if (paper_version.version && ! dictionary[paper.id].versions.find((v) => v.version == paper_version.version)) {
-                dictionary[paper.id].versions.push(paper_version)
-            }
-
-            if ( row.paperField_fieldId) {
-                const paper_field = {
-                    id: row.paperField_fieldId
-                }
-
-                if ( ! dictionary[paper.id].fields.find((f) => f.id == paper_field.id)) {
-                    dictionary[paper.id].fields.push(paper_field)
-                }
-            }
-
         }
 
         return { dictionary: dictionary, list: list } 
@@ -127,23 +126,28 @@ module.exports = class PaperDAO {
         const sql = `
                SELECT 
 
-                    papers.id as paper_id, papers.title as paper_title, papers.is_draft as "paper_isDraft",
-                    papers.score as paper_score, papers.show_preprint as "paper_showPreprint",
-                    papers.created_date as "paper_createdDate", papers.updated_date as "paper_updatedDate",
+                    papers.id as "Paper_id", papers.title as "Paper_title", papers.is_draft as "Paper_isDraft",
+                    papers.score as "Paper_score", papers.show_preprint as "Paper_showPreprint",
+                    papers.created_date as "Paper_createdDate", papers.updated_date as "Paper_updatedDate",
 
-                    paper_authors.user_id as "author_userId", paper_authors.author_order as author_order,
-                    paper_authors.owner as author_owner, paper_authors.submitter as author_submitter,
+                    paper_authors.user_id as "PaperAuthor_userId", paper_authors.author_order as "PaperAuthor_order",
+                    paper_authors.owner as "PaperAuthor_owner", paper_authors.submitter as "PaperAuthor_submitter",
 
-                    paper_versions.version as version_version,
-                    paper_versions.content as version_content, paper_versions.review_count as "version_reviewCount",
-                    paper_versions.created_date as "version_createdDate", paper_versions.updated_date as "version_updatedDate",
+                    paper_versions.version as "PaperVersion_version",
+                    paper_versions.content as "PaperVersion_content", paper_versions.review_count as "PaperVersion_reviewCount",
+                    paper_versions.created_date as "PaperVersion_createdDate", paper_versions.updated_date as "PaperVersion_updatedDate",
 
                     ${ this.fileDAO.getFilesSelectionString() },
 
-                    paper_fields.field_id as "paperField_fieldId"
+                    paper_fields.field_id as "PaperField_fieldId",
+
+                    roles.id as "Role_id", roles.name as "Role_name", 
+                    roles.paper_id as "Role_paperId", roles.journal_id as "Roles_journalId"
 
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
+                    LEFT OUTER JOIN user_roles ON paper_authors.user_id = user_roles.user_id
+                    LEFT OUTER JOIN roles ON user_roles.role_id = roles.id
                     LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
                     LEFT OUTER JOIN files on paper_versions.file_id = files.id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
@@ -152,6 +156,7 @@ module.exports = class PaperDAO {
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
         `
         const results = await this.database.query(sql, params)
+        console.log(results)
 
         if ( results.rows.length == 0 ) {
             return { dictionary: {}, list: [] } 

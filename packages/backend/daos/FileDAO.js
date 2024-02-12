@@ -1,5 +1,7 @@
 const DAOError = require('../errors/DAOError')
 
+const { File } = require('@danielbingham/peerreview-model')
+
 
 module.exports = class FilesDAO {
 
@@ -9,15 +11,15 @@ module.exports = class FilesDAO {
     }
 
     hydrateFile(row) {
-        return {
-            id: row.file_id,
-            userId: row.file_userId,
-            location: row.file_location,
-            filepath: row.file_filepath,
-            type: row.file_type,
-            createdDate: row.file_createdDate,
-            updatedDate: row.file_updatedDate
-        }
+        return new File({
+            id: row.File_id,
+            userId: row.File_userId,
+            location: row.File_location,
+            filepath: row.File_filepath,
+            type: row.File_type,
+            createdDate: row.File_createdDate,
+            updatedDate: row.File_updatedDate
+        })
     }
 
     hydrateFiles(rows) {
@@ -26,8 +28,8 @@ module.exports = class FilesDAO {
 
         for(const row of rows) {
             const file = this.hydrateFile(row)
-            if ( ! files[row.id] ) {
-                files[row.id] = file
+            if ( ! files[row.File_id] ) {
+                files[row.File_id] = file
                 list.push(file)
             }
 
@@ -37,8 +39,8 @@ module.exports = class FilesDAO {
     }
 
     getFilesSelectionString() {
-        return `files.id as file_id, files.user_id as "file_userId", files.location as file_location, files.filepath as file_filepath, files.type as file_type,
-            files.created_date as "file_createdDate", files.updated_date as "file_updatedDate"` 
+        return `files.id as "File_id", files.user_id as "File_userId", files.location as "File_location", files.filepath as "File_filepath", files.type as "File_type",
+            files.created_date as "File_createdDate", files.updated_date as "File_updatedDate"` 
     }
 
     async selectFiles(where, params) {

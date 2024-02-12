@@ -76,6 +76,9 @@ class PaperAuthor {
 
         /** Is this author the one who submitted the paper? @type {boolean} */
         this.submitter = false
+
+        /** The role being assigned to this author.  Not stored in the database.  @type {string} */
+        this.role = 'author'
         
         if ( data ) {
             this.fromJSON(data)
@@ -87,7 +90,8 @@ class PaperAuthor {
             userId: this.userId,
             order: this.order,
             owner: this.owner,
-            submitter: this.submitter
+            submitter: this.submitter,
+            role: this.role 
         }
         return data
     }
@@ -97,6 +101,7 @@ class PaperAuthor {
         this.order = data.order
         this.owner = data.owner
         this.submitter = data.submitter
+        this.role = data.role
     }
 }
 

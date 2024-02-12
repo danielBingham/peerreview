@@ -8,74 +8,180 @@
  ******************************************************************************/
 
 const paper_authors = [
+    // 0
+    // @see packages/model/fixtures/Paper.js -> Fixture 1, author 1 
     {
-        author_userId: 1,
-        author_order: 1,
-        author_owner: true,
-        author_submitter: true
+        PaperAuthor_userId: 1,
+        PaperAuthor_order: 1,
+        PaperAuthor_owner: true,
+        PaperAuthor_submitter: true
     },
+    // 1
+    // @see packages/model/fixtures/Paper.js -> Fixture 2, author 1 
     {
-        author_userId: 2,
-        author_order: 2,
-        author_owner: false,
-        author_submitter: false 
+        PaperAuthor_userId: 2,
+        PaperAuthor_order: 1,
+        PaperAuthor_owner: true,
+        PaperAuthor_submitter: true
+    },
+    // 2
+    // @see packages/model/fixtures/Paper.js -> Fixture 2, author 2 
+    {
+        PaperAuthor_userId: 3,
+        PaperAuthor_order: 2,
+        PaperAuthor_owner: false,
+        PaperAuthor_submitter: false 
+    },
+    // 3
+    // @see packages/model/fixtures/Paper.js -> Fixture 3, author 1 
+    {
+        PaperAuthor_userId: 4,
+        PaperAuthor_order: 1,
+        PaperAuthor_owner: true,
+        PaperAuthor_submitter: true
+    },
+    // 4
+    // @see packages/model/fixtures/Paper.js -> Fixture 4, author 1 
+    {
+        PaperAuthor_userId: 5,
+        PaperAuthor_order: 1,
+        PaperAuthor_owner: true,
+        PaperAuthor_submitter: true
+    },
+    // 5
+    // @see packages/model/fixtures/Paper.js -> Fixture 4, author 2 
+    {
+        PaperAuthor_userId: 6,
+        PaperAuthor_order: 2,
+        PaperAuthor_owner: false,
+        PaperAuthor_submitter: false 
     }
 ]
 
 const paper_versions = [
+    // 0
+    // @see packges/model/fixtures/Paper.js -> Fixture 1, Version 1 
     {     
-        version_version: 1,
-        version_createdDate: 'TIMESTAMP',
-        version_updatedDate: 'TIMESTAMP'
+        PaperVersion_version: 1,
+        PaperVersion_content: 'This is the content of a single author, single version paper.',
+        PaperVersion_reviewCount: 0,
+        PaperVersion_createdDate: 'TIMESTAMP',
+        PaperVersion_updatedDate: 'TIMESTAMP'
     },
+    // 1
+    // @see packages/model/fixtures/Paper.js -> Fixture 2, Version 1 
     {
-        version_version: 2,
-        version_createdDate: 'TIMESTAMP',
-        version_updatedDate: 'TIMESTAMP',
-    }
-]
-
-const filesBefore = [
-    {
-        file_id: 1,
-        file_userId: 1,
-        file_filepath: '/uploads/files/WatsonCrick1953.pdf',
-        file_type: 'application/pdf',
-        file_location: 'https://spaces-bucket-url.digitalocean.com',
-        file_createdDate: 'TIMESTAMP',
-        file_updatedDate: 'TIMESTAMP'
+        PaperVersion_version: 1,
+        PaperVersion_content: 'This is the content of a multiple author, single version paper.',
+        PaperVersion_reviewCount: 0,
+        PaperVersion_createdDate: 'TIMESTAMP',
+        PaperVersion_updatedDate: 'TIMESTAMP',
     },
+    // 2
+    // @see packages/model/fixtures/Paper.js -> Fixture 3, Version 1 
     {
-        file_id: 2,
-        file_userId: 1,
-        file_filepath: '/uploads/files/WatsonCrick-Annotated.pdf',
-        file_type: 'application/pdf',
-        file_location: 'https://spaces-bucket-url.digitalocean.com',
-        file_createdDate: 'TIMESTAMP',
-        file_updatedDate: 'TIMESTAMP'
-
+        PaperVersion_version: 1,
+        PaperVersion_content: 'This is the content of a single author, multiple version paper.',
+        PaperVersion_reviewCount: 0,
+        PaperVersion_createdDate: 'TIMESTAMP',
+        PaperVersion_updatedDate: 'TIMESTAMP',
+    },
+    // 3
+    // @see packages/model/fixtures/Paper.js -> Fixture 3, Version 2 
+    {
+        PaperVersion_version: 2,
+        PaperVersion_content: 'This is the content of a second version of a single author, multiple version paper.',
+        PaperVersion_reviewCount: 0,
+        PaperVersion_createdDate: 'TIMESTAMP',
+        PaperVersion_updatedDate: 'TIMESTAMP',
+    },
+    // 4
+    // @see packages/model/fixtures/Paper.js -> Fixture 4, Version 1 
+    {
+        PaperVersion_version: 1,
+        PaperVersion_content: 'This is the content of a multiple author, multiple version paper.',
+        PaperVersion_reviewCount: 0,
+        PaperVersion_createdDate: 'TIMESTAMP',
+        PaperVersion_updatedDate: 'TIMESTAMP',
+    },
+    // 5
+    // @see packages/model/fixtures/Paper.js -> Fixture 4, Version 2 
+    {
+        PaperVersion_version: 2,
+        PaperVersion_content: 'This is the content of a second version of a multiple author, multiple version paper.',
+        PaperVersion_reviewCount: 0,
+        PaperVersion_createdDate: 'TIMESTAMP',
+        PaperVersion_updatedDate: 'TIMESTAMP',
     }
 ]
 
 const files = [
+    // 0
+    // @see packages/model/fixtures/File.js -> Fixture 1
     {
-        file_id: 1,
-        file_userId: 1,
-        file_filepath: '/uploads/papers/1-1-molecular-structure-of-nucleic-acids.pdf',
-        file_type: 'application/pdf',
-        file_location: 'https://spaces-bucket-url.digitalocean.com',
-        file_createdDate: 'TIMESTAMP',
-        file_updatedDate: 'TIMESTAMP'
+        File_id: 1,
+        File_userId: 1,
+        File_location: 'https://s3.amazonaws.com',
+        File_filepath: 'papers/1-1-single-author-single-version-paper.pdf',
+        File_type: 'application/pdf',
+        File_createdDate: 'TIMESTAMP',
+        File_updatedDate: 'TIMESTAMP'
     },
+    // 1
+    // @see packages/model/fixtures/File.js -> Fixture 2
     {
-        file_id: 2,
-        file_userId: 1,
-        file_filepath: '/uploads/papers/1-2-molecular-structure-of-nucleic-acids.pdf',
-        file_type: 'application/pdf',
-        file_location: 'https://spaces-bucket-url.digitalocean.com',
-        file_createdDate: 'TIMESTAMP',
-        file_updatedDate: 'TIMESTAMP'
+        File_id: 2,
+        File_userId: 2,
+        File_location: 'https://s3.amazonaws.com',
+        File_filepath: 'papers/2-1-multiple-author-single-version-paper.pdf',
+        File_type: 'application/pdf',
+        File_createdDate: 'TIMESTAMP',
+        File_updatedDate: 'TIMESTAMP'
 
+    },
+    // 2
+    // @see packages/model/fixtures/File.js -> Fixture 3
+    {
+        File_id: 3,
+        File_userId: 4,
+        File_location: 'https://s3.amazonaws.com',
+        File_filepath: 'papers/3-1-single-author-multiple-version-paper.pdf',
+        File_type: 'application/pdf',
+        File_createdDate: 'TIMESTAMP',
+        File_updatedDate: 'TIMESTAMP'
+    },
+    // 3
+    // @see packages/model/fixtures/File.js -> Fixture 4
+    {
+        File_id: 4,
+        File_userId: 4,
+        File_location: 'https://s3.amazonaws.com',
+        File_filepath: 'papers/3-2-single-author-multiple-version-paper.pdf',
+        File_type: 'application/pdf',
+        File_createdDate: 'TIMESTAMP',
+        File_updatedDate: 'TIMESTAMP'
+    },
+    // 4
+    // @see packages/model/fixtures/File.js -> Fixture 5
+    {
+        File_id: 5,
+        File_userId: 5,
+        File_location: 'https://s3.amazonaws.com',
+        File_filepath: 'papers/4-1-multiple-author-multiple-version-paper.pdf',
+        File_type: 'application/pdf',
+        File_createdDate: 'TIMESTAMP',
+        File_updatedDate: 'TIMESTAMP'
+    },
+    // 5
+    // @see packages/model/fixtures/File.js -> Fixture 6
+    {
+        File_id: 6,
+        File_userId: 5,
+        File_location: 'https://s3.amazonaws.com',
+        File_filepath: 'papers/4-2-multiple-author-multiple-version-paper.pdf',
+        File_type: 'application/pdf',
+        File_createdDate: 'TIMESTAMP',
+        File_updatedDate: 'TIMESTAMP'
     }
 ]
 
@@ -104,19 +210,49 @@ const fields = [
 ]
 
 const papers = [
+    // 0
+    // @see packages/model/fixtures/Paper.js -> Fixture 1
     { 
-        paper_id: 1,
-        paper_title: 'Molecular Structure of Nucleic Acids',
-        paper_isDraft: false,
-        paper_createdDate: 'TIMESTAMP',
-        paper_updatedDate: 'TIMESTAMP',
+        Paper_id: 1,
+        Paper_title: 'Single Author, Single Version Paper',
+        Paper_isDraft: true,
+        Paper_showPreprint: true,
+        Paper_score: 0,
+        Paper_createdDate: 'TIMESTAMP',
+        Paper_updatedDate: 'TIMESTAMP'
     },
+    // 1
+    // @see packages/model/fixtures/Paper.js -> Fixture 2
     { 
-        paper_id: 2,
-        paper_title: 'Molecular Structure of Nucleic Acids',
-        paper_isDraft: true,
-        paper_createdDate: 'TIMESTAMP',
-        paper_updatedDate: 'TIMESTAMP',
+        Paper_id: 2,
+        Paper_title: 'Multiple Author, Single Version Paper',
+        Paper_isDraft: true,
+        Paper_showPreprint: false,
+        Paper_score: 2,
+        Paper_createdDate: 'TIMESTAMP',
+        Paper_updatedDate: 'TIMESTAMP'
+    },
+    // 2
+    // @see packages/model/fixtures/Paper.js -> Fixture 3
+    { 
+        Paper_id: 3,
+        Paper_title: 'Single Author, Multiple Version Paper',
+        Paper_isDraft: false,
+        Paper_showPreprint: true,
+        Paper_score: 3,
+        Paper_createdDate: 'TIMESTAMP',
+        Paper_updatedDate: 'TIMESTAMP'
+    },
+    // 3
+    // @see packages/model/fixtures/Paper.js -> Fixture 4
+    { 
+        Paper_id: 4,
+        Paper_title: 'Mulitple Author, Multiple Version Paper',
+        Paper_isDraft: false,
+        Paper_showPreprint: false,
+        Paper_score: 4,
+        Paper_createdDate: 'TIMESTAMP',
+        Paper_updatedDate: 'TIMESTAMP'
     }
 ]
 
@@ -378,34 +514,32 @@ const journal_submission_editors = [
 
 const database = { 
     papers: {
+        // Fixture 1: Single Author, Single Version Paper
+        // @see packages/model/fixtures/Paper.js
         1: [
-            { ...papers[0], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[0]  },
-            { ...papers[0], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[1]  },
-
-            { ...papers[0], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[0]  },
-            { ...papers[0], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[1]  },
-
-             
-            { ...papers[0], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[0]  },
-            { ...papers[0], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[1]  },
-
-            { ...papers[0], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[0]  },
-            { ...papers[0], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[1]  },
+            { ...papers[0], ...paper_authors[0], ...paper_versions[0], ...files[0], PaperField_fieldId: 1  },
         ],
+        // Fixture 2: Multiple Author, Single Version Paper
+        // @see packages/model/fixtures/Paper.js
         2: [
-            { ...papers[1], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[0]},
-            { ...papers[1], ...paper_authors[0], ...paper_versions[0], ...files[0], ...fields[1]},
+            { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], PaperField_fieldId: 1 },
+            { ...papers[1], ...paper_authors[2], ...paper_versions[1], ...files[1], PaperField_fieldId: 1 },
+        ],
+        // Fixture 3: Single Author, Multiple Version Paper
+        // @see packages/model/fixtures/Paper.js
+        3: [ 
+            { ...papers[2], ...paper_authors[3], ...paper_versions[2], ...files[2], PaperField_fieldId: 1 },
+            { ...papers[2], ...paper_authors[3], ...paper_versions[3], ...files[3], PaperField_fieldId: 1 },
+        ],
+        // Fixture 4: Multiple Author, Multiple Version Paper
+        // @see packages/model/fixtures/Paper.js
+        4: [ 
+            { ...papers[3], ...paper_authors[4], ...paper_versions[4], ...files[4], PaperField_fieldId: 1 },
+            { ...papers[3], ...paper_authors[5], ...paper_versions[4], ...files[4], PaperField_fieldId: 1 },
 
-            { ...papers[1], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[0]},
-            { ...papers[1], ...paper_authors[0], ...paper_versions[1], ...files[1], ...fields[1]},
-
-             
-            { ...papers[1], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[0]},
-            { ...papers[1], ...paper_authors[1], ...paper_versions[0], ...files[0], ...fields[1]},
-
-            { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[0]},
-            { ...papers[1], ...paper_authors[1], ...paper_versions[1], ...files[1], ...fields[1]},
-        ]
+            { ...papers[3], ...paper_authors[4], ...paper_versions[5], ...files[5], PaperField_fieldId: 1 },
+            { ...papers[3], ...paper_authors[5], ...paper_versions[5], ...files[5], PaperField_fieldId: 1 },
+        ],
     },
     paperComments: {
         1: [{ ...paper_comments[0] }],
@@ -459,10 +593,6 @@ const database = {
     files: {
         1: [{ ...files[0] }],
         2: [{ ...files[1] }]
-    },
-    filesBefore: {
-        1: [{ ...filesBefore[0] }],
-        2: [{ ...filesBefore[1] }]
     }
 }
 

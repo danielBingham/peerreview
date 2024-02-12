@@ -1,5 +1,5 @@
-const backend = require('@danielbingham/peerreview-backend')
-const DAOError = backend.DAOError
+const { Logger, FeatureFlags, DatabaseFixtures, DAOError } = require('@danielbingham/peerreview-backend')
+const { Paper, PaperFixtures } = require('@danielbingham/peerreview-model')
 
 const PaperController = require('../../../server/controllers/PaperController')
 
@@ -9,8 +9,8 @@ describe('PaperController', function() {
 
     // ====================== Fixture Data ====================================
 
-    const database = backend.DatabaseFixtures.database
-    const expectedPapers = backend.EntityFixtures.papers
+    const database = DatabaseFixtures.database
+    const papers = PaperFixtures
 
     // ====================== Mocks ===========================================
 
@@ -21,7 +21,7 @@ describe('PaperController', function() {
     }
 
     const core = {
-        logger: new backend.Logger(),
+        logger: new Logger(),
         config: {
             s3: {
                 bucket_url: '',
@@ -37,7 +37,7 @@ describe('PaperController', function() {
         postmarkClient: {
             sendEmail: jest.fn()
         },
-        features: new backend.FeatureFlags() 
+        features: new FeatureFlags() 
     }
 
     // Disable logging.
@@ -66,7 +66,7 @@ describe('PaperController', function() {
             await paperController.getPapers(request, response)
 
             expect(response.status.mock.calls[0][0]).toEqual(200)
-            expect(response.json.mock.calls[0][0]).toEqual([ expectedPapers[0] ])
+            expect(response.json.mock.calls[0][0]).toEqual([ expectedPapers.database[1] ])
 
         })
 
@@ -101,27 +101,8 @@ describe('PaperController', function() {
     })
 
     describe('.postPapers()', function() {
-        const testSubmission = {
-            title: "A Test Paper",
-            isDraft: false,
-            showPreprint: false,
-            authors: [
-                {
-                    userId: 1,
-                    order: 1,
-                    submitter: true,
-                    role: 'corresponding-author'
-                }
-            ],
-            fields: [{ id: 1 }],
-            versions: [
-                {
-                    file: { id: 1 }
-                }
-            ]
-        }
-
         it('should throw a ControllerError with 401 if no user is authenticated', async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }
             }
@@ -145,6 +126,7 @@ describe('PaperController', function() {
         })
 
         it(`should throw 403:not-authorized if the submitting user doesn't have 'create' permissions`, async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission },
                 session: {
@@ -171,6 +153,7 @@ describe('PaperController', function() {
         })
 
         it('should throw 400:no-authors when a paper is submitted without authors', async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -200,6 +183,7 @@ describe('PaperController', function() {
         })
 
         it('should throw 403:not-author if the submitting user is not an author', async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission },
                 session: {
@@ -228,6 +212,7 @@ describe('PaperController', function() {
         })
 
         it('should throw 400:no-corresponding-author when a paper is submitted without a corresponding author', async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -256,9 +241,10 @@ describe('PaperController', function() {
             expect.hasAssertions()
         })
 
-        it('should throw 400:invalid-author when a paper is submitted without authors', async function() {
+        it('should throw 400:invalid-author when a paper is submitted without valid authors', async function() {
             core.database.query.mockReturnValueOnce({rowCount: 0, rows: [] })
 
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -290,6 +276,7 @@ describe('PaperController', function() {
             core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
 
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -322,6 +309,7 @@ describe('PaperController', function() {
             core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -354,6 +342,7 @@ describe('PaperController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -387,6 +376,7 @@ describe('PaperController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -420,6 +410,7 @@ describe('PaperController', function() {
                 .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
                 .mockReturnValueOnce({ rowCount: 1, rows: [ { paper_id: 1, file_id: 1 }] })
 
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -454,6 +445,7 @@ describe('PaperController', function() {
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
 
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -481,20 +473,22 @@ describe('PaperController', function() {
         })
 
         it('should succeed with 201 and respond with the entity and relations', async function() {
-            core.database.query.mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+            core.database.query
+                // SELECT DISTINCT users.id FROM users WHERE user.id = ANY($1::bigint[]) 
+                .mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                // SELECT DISTINCT fields.id from fields WHERE fields.id = ANY($1::bigint[]) 
                 .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                // SELECT DISTINCT files.id FROM files WHERE files.id = ANY($1::bigint[])
                 .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                // SELECT paper_versions.paper_id, paper_versions.file_id FROM paper_versions WHERE...
                 .mockReturnValueOnce({ rowCount: 0, rows: [] })
-                // InsertPaper
-                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
-                // insertAuthors
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // insertFields
-                .mockReturnValueOnce({ rowCount: 1, rows: [] })
-                // We're mocking insertVersions at the DAO level since it has a
-                // significant amount of logic.
+
+                // We're mocking the insertion methods at the DAO level since most of them don't return anything.
+            
+                // selectPapers()
                 .mockReturnValueOnce({ rowCount: 1, rows: database.papers[1] }) 
 
+            const testSubmission = papers.dictionary[1].toJSON()
             const request = {
                 body: { ...testSubmission }, 
                 session: {
@@ -514,7 +508,12 @@ describe('PaperController', function() {
                     assignRoles: jest.fn()
                 }
             }
+
+            paperController.paperDAO.insertPaper = jest.fn().mockReturnValueOnce(1)
+            paperController.paperDAO.insertAuthors = jest.fn()
+            paperController.paperDAO.insertFields = jest.fn()
             paperController.paperDAO.insertVersions = jest.fn()
+
             paperController.paperEventService.createEvent = jest.fn()
             paperController.notificationService.sendNotifications = jest.fn()
             paperController.getRelations = jest.fn().mockReturnValue({})
@@ -523,13 +522,11 @@ describe('PaperController', function() {
 
             expect(response.status.mock.calls[0][0]).toEqual(201)
             expect(response.json.mock.calls[0][0]).toEqual({
-                entity: expectedPapers.dictionary[1],
+                entity: papers.dictionary[1],
                 relations: {}
             })
 
         })
-
-
     })
 
     xdescribe('.getPaper()', function() {

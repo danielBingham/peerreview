@@ -7,6 +7,8 @@
  *
  ******************************************************************************/
 
+const { Paper, File } = require('@danielbingham/peerreview-model')
+
 /**
  * Field Entities
  *
@@ -149,7 +151,7 @@ const usersCleaned = {
  * @see packages/backend/daos/FileDAO.js -> hydrateFiles()
  */
 const files = {
-    1: { 
+    1: new File({ 
         id: 1,
         userId: 1,
         filepath: '/uploads/papers/1-1-molecular-structure-of-nucleic-acids.pdf',
@@ -157,8 +159,8 @@ const files = {
         location: 'https://spaces-bucket-url.digitalocean.com',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
-    },
-    2: { 
+    }),
+    2: new File({ 
         id: 2,
         userId: 1,
         filepath: '/uploads/papers/1-2-molecular-structure-of-nucleic-acids.pdf',
@@ -167,92 +169,9 @@ const files = {
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
 
-    }
+    })
 }
 
-/**
- * Paper Entities
- *
- * @see packages/backend/daos/PaperDAO.js -> hydratePapers()
- */
-const papers = {
-    1: {
-        id: 1,
-        title: 'Molecular Structure of Nucleic Acids',
-        isDraft: false,
-        createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP',
-        authors: [
-            {
-                userId: 1,
-                order: 1,
-                owner: true,
-                submitter: true
-            },
-            {
-                userId: 2,
-                order: 2,
-                owner: false, 
-                submitter: false
-            }
-        ],
-        fields: [
-            fields[0],
-            fields[1]
-        ],
-        versions: [
-            {
-                version: 1,
-                file: files[0],
-                createdDate: 'TIMESTAMP',
-                updatedDate: 'TIMESTAMP'
-            },
-            {
-                version: 2,
-                file: files[1],
-                createdDate: 'TIMESTAMP',
-                updatedDate: 'TIMESTAMP'
-            }
-        ]
-    },
-    2: {
-        id: 2,
-        title: 'Molecular Structure of Nucleic Acids',
-        isDraft: true,
-        createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP',
-        authors: [
-            {
-                userId: 1,
-                order: 1,
-                owner: true
-            },
-            {
-                userId: 2,
-                order: 2,
-                owner: false 
-            }
-        ],
-        fields: [
-            fields[0],
-            fields[1]
-        ],
-        versions: [
-            {
-                version: 1,
-                file: files[0],
-                createdDate: 'TIMESTAMP',
-                updatedDate: 'TIMESTAMP'
-            },
-            {
-                version: 2,
-                file: files[1],
-                createdDate: 'TIMESTAMP',
-                updatedDate: 'TIMESTAMP'
-            }
-        ]
-    }
-}
 
 /**
  * Paper Comment Entities
@@ -590,17 +509,6 @@ module.exports = {
         list: Object.values(usersUnclean),
         meta: {
             count: Object.keys(usersUnclean).length,
-            page: 1,
-            pageSize: 20,
-            numberOfPages: 1
-        },
-        relations: {}
-    },
-    papers: {
-        dictionary: papers,
-        list: Object.values(papers),
-        meta: {
-            count: Object.keys(papers).length,
             page: 1,
             pageSize: 20,
             numberOfPages: 1
