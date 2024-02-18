@@ -105,21 +105,21 @@ module.exports = class PaperController {
      * @param {Object}  query    The query object we get from the query string.
      * @param {boolean} query.isDraft   (Optional) A boolean indicating whether
      * we're selecting drafts or published papers.
-     * @param {integer} query.authorId  (Optional) The id of an author who's papers
+     * @param {number} query.authorId  (Optional) The id of an author who's papers
      * we wish to query for.
-     * @param {integer[]} query.fields  (Optional) An array of fields we want to
+     * @param {number[]} query.fields  (Optional) An array of fields we want to
      * restrict the paper query to.
-     * @param {integer[]} query.excludeFields   (Optional) An array of fields we
+     * @param {number[]} query.excludeFields   (Optional) An array of fields we
      * want to exclude from the query.
      * @param {string}  query.searchString  (Optional) A string of text we want to
      * search in paper bodies and titles for.
      * @param {string}  query.sort  (Optional) The sort we want to apply to our query.
-     * @param {integer} query.page  (Optional) The page we wish to return.
+     * @param {number} query.page  (Optional) The page we wish to return.
      * @param {Object} options  (Optional) An optional options object with
      * settings to tweak our parsing.
      * @param {boolean} options.ignoreOrder (Optional) Ignore the order clause.
      *
-     * @return {Object} Returns an object with the following structure:
+     * @return {Promise<Object>} Returns an object with the following structure:
      * ```
      * { 
      *  where: '', // The WHERE clause
