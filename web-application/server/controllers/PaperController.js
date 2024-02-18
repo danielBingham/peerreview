@@ -29,7 +29,6 @@ module.exports = class PaperController {
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
         this.permissionService = new backend.PermissionService(core)
-
     }
 
     async getRelations(user, results, requestedRelations) {
@@ -544,14 +543,13 @@ module.exports = class PaperController {
                 `User(${user.id}) submitted a paper with no fields.`)
         }
         
-        const fieldIds = paper.fields.map((f) => f.id)
         const fieldResults = await this.database.query(`
             SELECT DISTINCT fields.id FROM fields WHERE fields.id = ANY($1::bigint[])
-        `, [ fieldIds ])
+        `, [ paper.fields ])
 
             
-        if ( fieldResults.rows.length != fieldIds.length ) {
-            for ( const fieldId of fieldIds ) {
+        if ( fieldResults.rows.length != paper.fields.length ) {
+            for ( const fieldId of paper.fields ) {
                 if ( ! fieldResults.rows.find((f) => f.id == fieldId)) {
                     throw new ControllerError(400, `invalid-field:${fieldId}`,
                         `User(${user.id}) submitted a paper with invalid Field(${fieldId}).`)
@@ -607,7 +605,6 @@ module.exports = class PaperController {
         
         const results = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
         const entity = results.dictionary[paper.id]
-        console.log(entity)
         if ( ! entity ) {
             throw new ControllerError(500, `server-error`, `Paper ${paper.id} does not exist after insert!`)
         }

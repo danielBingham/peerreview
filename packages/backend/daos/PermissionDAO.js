@@ -67,8 +67,21 @@ module.exports = class PermissionDAO {
         return this.hydratePermissions(results.rows)
     }
 
-    insertPermission(permission) {
+    async insertPermission(permission) {
+        const sql = `
+            INSERT INTO permissions (user_id, role_id, permission, paper_id, version, event_id, review_id, paper_comment_id, submission_id, journal_id)
+                VALUES ($1, $2, $3, $5, $5, $6, $7, $8, $9, $10)
+                RETURNING id
+        `
+        const params = [ permission.userId, permission.roleId, permission.permission, permission.paperId, permission.version, permission.eventId, permission.reviewId, permission.paperCommentId, permission.submissionId, permission.journalId ]
+        
+        const results = await this.core.database.insert(sql, params)
 
+        if ( results.rowCount <= 0 || results.rows.length <= 0 ) {
+            throw new DAOError('Failed to insert permission.')
+        }
+
+        return results.rows[0].id
     }
 
     updatePermission(data) {

@@ -672,7 +672,6 @@ CREATE TABLE roles (
     name    varchar(1024),
     short_description varchar(1024),
     type role_type,
-    is_owner boolean,
 
     description text,
     journal_id  bigint REFERENCES journals(id) DEFAULT NULL,

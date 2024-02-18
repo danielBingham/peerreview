@@ -156,7 +156,6 @@ module.exports = class PaperDAO {
                 ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
         `
         const results = await this.database.query(sql, params)
-        console.log(results)
 
         if ( results.rows.length == 0 ) {
             return { dictionary: {}, list: [] } 

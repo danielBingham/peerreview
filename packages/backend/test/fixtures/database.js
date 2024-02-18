@@ -121,7 +121,7 @@ const files = [
     {
         File_id: 1,
         File_userId: 1,
-        File_location: 'https://s3.amazonaws.com',
+        File_location: 'https://s3.amazonaws.com/',
         File_filepath: 'papers/1-1-single-author-single-version-paper.pdf',
         File_type: 'application/pdf',
         File_createdDate: 'TIMESTAMP',
@@ -132,7 +132,7 @@ const files = [
     {
         File_id: 2,
         File_userId: 2,
-        File_location: 'https://s3.amazonaws.com',
+        File_location: 'https://s3.amazonaws.com/',
         File_filepath: 'papers/2-1-multiple-author-single-version-paper.pdf',
         File_type: 'application/pdf',
         File_createdDate: 'TIMESTAMP',
@@ -144,7 +144,7 @@ const files = [
     {
         File_id: 3,
         File_userId: 4,
-        File_location: 'https://s3.amazonaws.com',
+        File_location: 'https://s3.amazonaws.com/',
         File_filepath: 'papers/3-1-single-author-multiple-version-paper.pdf',
         File_type: 'application/pdf',
         File_createdDate: 'TIMESTAMP',
@@ -155,7 +155,7 @@ const files = [
     {
         File_id: 4,
         File_userId: 4,
-        File_location: 'https://s3.amazonaws.com',
+        File_location: 'https://s3.amazonaws.com/',
         File_filepath: 'papers/3-2-single-author-multiple-version-paper.pdf',
         File_type: 'application/pdf',
         File_createdDate: 'TIMESTAMP',
@@ -166,7 +166,7 @@ const files = [
     {
         File_id: 5,
         File_userId: 5,
-        File_location: 'https://s3.amazonaws.com',
+        File_location: 'https://s3.amazonaws.com/',
         File_filepath: 'papers/4-1-multiple-author-multiple-version-paper.pdf',
         File_type: 'application/pdf',
         File_createdDate: 'TIMESTAMP',
@@ -177,7 +177,7 @@ const files = [
     {
         File_id: 6,
         File_userId: 5,
-        File_location: 'https://s3.amazonaws.com',
+        File_location: 'https://s3.amazonaws.com/',
         File_filepath: 'papers/4-2-multiple-author-multiple-version-paper.pdf',
         File_type: 'application/pdf',
         File_createdDate: 'TIMESTAMP',
@@ -217,7 +217,7 @@ const papers = [
         Paper_title: 'Single Author, Single Version Paper',
         Paper_isDraft: true,
         Paper_showPreprint: true,
-        Paper_score: 0,
+        Paper_score: 1,
         Paper_createdDate: 'TIMESTAMP',
         Paper_updatedDate: 'TIMESTAMP'
     },

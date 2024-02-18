@@ -10,7 +10,6 @@
 module.exports = class Permission {
 
     constructor(data) {
-
         /** The database id of this permission grant. @type {number} */
         this.id = null
 
