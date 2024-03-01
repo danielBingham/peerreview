@@ -14,7 +14,9 @@ const paper_authors = [
         PaperAuthor_userId: 1,
         PaperAuthor_order: 1,
         PaperAuthor_owner: true,
-        PaperAuthor_submitter: true
+        PaperAuthor_submitter: true,
+        Role_id: 1,
+        Role_name: 'corresponding-author'
     },
     // 1
     // @see packages/model/fixtures/Paper.js -> Fixture 2, author 1 
@@ -22,7 +24,9 @@ const paper_authors = [
         PaperAuthor_userId: 2,
         PaperAuthor_order: 1,
         PaperAuthor_owner: true,
-        PaperAuthor_submitter: true
+        PaperAuthor_submitter: true,
+        Role_id: 1,
+        Role_name: 'corresponding-author'
     },
     // 2
     // @see packages/model/fixtures/Paper.js -> Fixture 2, author 2 
@@ -30,7 +34,10 @@ const paper_authors = [
         PaperAuthor_userId: 3,
         PaperAuthor_order: 2,
         PaperAuthor_owner: false,
-        PaperAuthor_submitter: false 
+        PaperAuthor_submitter: false,
+        Role_id: 2,
+        Role_name: 'author'
+ 
     },
     // 3
     // @see packages/model/fixtures/Paper.js -> Fixture 3, author 1 
@@ -38,7 +45,9 @@ const paper_authors = [
         PaperAuthor_userId: 4,
         PaperAuthor_order: 1,
         PaperAuthor_owner: true,
-        PaperAuthor_submitter: true
+        PaperAuthor_submitter: true,
+        Role_id: 1,
+        Role_name: 'corresponding-author'
     },
     // 4
     // @see packages/model/fixtures/Paper.js -> Fixture 4, author 1 
@@ -46,7 +55,9 @@ const paper_authors = [
         PaperAuthor_userId: 5,
         PaperAuthor_order: 1,
         PaperAuthor_owner: true,
-        PaperAuthor_submitter: true
+        PaperAuthor_submitter: true,
+        Role_id: 1,
+        Role_name: 'corresponding-author'
     },
     // 5
     // @see packages/model/fixtures/Paper.js -> Fixture 4, author 2 
@@ -54,7 +65,9 @@ const paper_authors = [
         PaperAuthor_userId: 6,
         PaperAuthor_order: 2,
         PaperAuthor_owner: false,
-        PaperAuthor_submitter: false 
+        PaperAuthor_submitter: false,
+        Role_id: 2,
+        Role_name: 'author'
     }
 ]
 

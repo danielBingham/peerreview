@@ -46,6 +46,7 @@ describe('PaperController.postPapers()', function() {
     beforeEach(function() {
         core.database.query.mockReset()
         core.logger.level = -1 
+        core.features = new FeatureFlags()
     })
 
 
@@ -55,6 +56,7 @@ describe('PaperController.postPapers()', function() {
             body: { ...testSubmission }
         }
 
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -73,64 +75,9 @@ describe('PaperController.postPapers()', function() {
         expect.hasAssertions()
     })
 
-    it(`should throw 403:not-authorized if the submitting user doesn't have 'create' permissions`, async function() {
-        const testSubmission = papers.dictionary[1].toJSON()
-        const request = {
-            body: { ...testSubmission },
-            session: {
-                user: { id: 1 }
-            }
-        }
 
-        const response = new Response()
-        const paperController = new PaperController(core)
-        paperController.permissionService = {
-            can: jest.fn().mockReturnValue(false),
-            canPublic: jest.fn().mockReturnValue(false)
-        }
 
-        try {
-            await paperController.postPapers(request, response)
-        } catch (error ) {
-            expect(error).toBeInstanceOf(ControllerError)
-            expect(error.status).toEqual(403)
-            expect(error.type).toEqual('not-authorized')
-        }
-
-        expect.hasAssertions()
-    })
-
-    it('should throw 400:no-authors when a paper is submitted without authors', async function() {
-        const testSubmission = papers.dictionary[1].toJSON()
-        const request = {
-            body: { ...testSubmission }, 
-            session: {
-                user: {
-                    id: 1
-                }
-            }
-        }
-        request.body.authors = []
-
-        const response = new Response()
-        const paperController = new PaperController(core)
-        paperController.permissionService = {
-            can: jest.fn().mockReturnValue(true),
-            canPublic: jest.fn().mockReturnValue(false)
-        }
-
-        try {
-            await paperController.postPapers(request, response)
-        } catch (error ) {
-            expect(error).toBeInstanceOf(ControllerError)
-            expect(error.status).toEqual(400)
-            expect(error.type).toEqual('no-authors')
-        }
-
-        expect.hasAssertions()
-    })
-
-    it('should throw 403:not-author if the submitting user is not an author', async function() {
+    it('should throw 403:not-owner if the submitting user is not an author', async function() {
         const testSubmission = papers.dictionary[1].toJSON()
         const request = {
             body: { ...testSubmission },
@@ -141,6 +88,7 @@ describe('PaperController.postPapers()', function() {
             }
         }
 
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -153,37 +101,7 @@ describe('PaperController.postPapers()', function() {
         } catch (error ) {
             expect(error).toBeInstanceOf(ControllerError)
             expect(error.status).toEqual(403)
-            expect(error.type).toEqual('not-author')
-        }
-
-        expect.hasAssertions()
-    })
-
-    it('should throw 400:no-corresponding-author when a paper is submitted without a corresponding author', async function() {
-        const testSubmission = papers.dictionary[1].toJSON()
-        const request = {
-            body: { ...testSubmission }, 
-            session: {
-                user: {
-                    id: 1
-                }
-            }
-        }
-        request.body.authors = [{ userId: 1, order: 1, role: 'author', submitter: true }]
-
-        const response = new Response()
-        const paperController = new PaperController(core)
-        paperController.permissionService = {
-            can: jest.fn().mockReturnValue(true),
-            canPublic: jest.fn().mockReturnValue(false)
-        }
-
-        try {
-            await paperController.postPapers(request, response)
-        } catch (error ) {
-            expect(error).toBeInstanceOf(ControllerError)
-            expect(error.status).toEqual(400)
-            expect(error.type).toEqual('no-corresponding-author')
+            expect(error.type).toEqual('not-authorized:not-owner')
         }
 
         expect.hasAssertions()
@@ -202,6 +120,7 @@ describe('PaperController.postPapers()', function() {
             }
         }
 
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -235,6 +154,7 @@ describe('PaperController.postPapers()', function() {
         }
         request.body.fields = []
 
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -267,6 +187,7 @@ describe('PaperController.postPapers()', function() {
             }
         }
 
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -301,6 +222,7 @@ describe('PaperController.postPapers()', function() {
         }
         request.body.versions = []
 
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -334,6 +256,7 @@ describe('PaperController.postPapers()', function() {
             }
         }
 
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -368,6 +291,7 @@ describe('PaperController.postPapers()', function() {
             }
         }
 
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -402,7 +326,7 @@ describe('PaperController.postPapers()', function() {
                 }
             }
         }
-
+        
         const response = new Response()
         const paperController = new PaperController(core)
         paperController.permissionService = {
@@ -473,6 +397,189 @@ describe('PaperController.postPapers()', function() {
             entity: papers.dictionary[1],
             relations: {}
         })
+    })
+
+
+    describe('with 49-anonymity-and-permissions', function() {
+
+        beforeEach(function() {
+            core.features = new FeatureFlags({ '49-anonymity-and-permissions': { status: 'enabled' } })
+        })
+
+        it('should throw 400:no-authors when a paper is submitted without authors', async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+            request.body.authors = []
+        
+            
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('no-authors')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw 403:not-author if the submitting user is not an author', async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
+            const request = {
+                body: { ...testSubmission },
+                session: {
+                    user: {
+                        id: 2
+                    }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(403)
+                expect(error.type).toEqual('not-author')
+            }
+
+            expect.hasAssertions()
+        })
+
+
+        it(`should throw 403:not-authorized if the submitting user doesn't have 'create' permissions`, async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
+            const request = {
+                body: { ...testSubmission },
+                session: {
+                    user: { id: 1 }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(false),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(403)
+                expect(error.type).toEqual('not-authorized')
+            }
+
+            expect.hasAssertions()
+        })
+
+        it('should throw 400:no-corresponding-author when a paper is submitted without a corresponding author', async function() {
+            const testSubmission = papers.dictionary[1].toJSON()
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+            request.body.authors = [{ userId: 1, order: 1, role: 'author', submitter: true }]
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false)
+            }
+
+            try {
+                await paperController.postPapers(request, response)
+            } catch (error ) {
+                expect(error).toBeInstanceOf(ControllerError)
+                expect(error.status).toEqual(400)
+                expect(error.type).toEqual('no-corresponding-author')
+            }
+
+            expect.hasAssertions()
+        })
+
+
+        it('should succeed with 201 and respond with the entity and relations', async function() {
+            core.database.query
+                // SELECT DISTINCT users.id FROM users WHERE user.id = ANY($1::bigint[]) 
+                .mockReturnValueOnce({rowCount: 1, rows: [{ id: 1 }] })
+                // SELECT DISTINCT fields.id from fields WHERE fields.id = ANY($1::bigint[]) 
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                // SELECT DISTINCT files.id FROM files WHERE files.id = ANY($1::bigint[])
+                .mockReturnValueOnce({ rowCount: 1, rows: [{ id: 1 }] })
+                // SELECT paper_versions.paper_id, paper_versions.file_id FROM paper_versions WHERE...
+                .mockReturnValueOnce({ rowCount: 0, rows: [] })
+
+                // We're mocking the insertion methods at the DAO level since most of them don't return anything.
+            
+                // selectPapers()
+                .mockReturnValueOnce({ rowCount: 1, rows: database.papers[1] }) 
+
+            const testSubmission = papers.dictionary[1].toJSON()
+            const request = {
+                body: { ...testSubmission }, 
+                session: {
+                    user: {
+                        id: 1
+                    }
+                }
+            }
+
+            const response = new Response()
+            const paperController = new PaperController(core)
+            paperController.permissionService = {
+                can: jest.fn().mockReturnValue(true),
+                canPublic: jest.fn().mockReturnValue(false),
+                papers: {
+                    createRoles: jest.fn(),
+                    assignRoles: jest.fn()
+                }
+            }
+
+            paperController.paperDAO.insertPaper = jest.fn().mockReturnValueOnce(1)
+            paperController.paperDAO.insertAuthors = jest.fn()
+            paperController.paperDAO.insertFields = jest.fn()
+            paperController.paperDAO.insertVersions = jest.fn()
+
+            paperController.paperEventService.createEvent = jest.fn()
+            paperController.notificationService.sendNotifications = jest.fn()
+            paperController.getRelations = jest.fn().mockReturnValue({})
+
+            await paperController.postPapers(request, response)
+
+            expect(response.status.mock.calls[0][0]).toEqual(201)
+            expect(response.json.mock.calls[0][0]).toEqual({
+                entity: papers.dictionary[1],
+                relations: {}
+            })
+        })
+
 
     })
 })

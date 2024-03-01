@@ -72,4 +72,37 @@ module.exports = class PaperPermissionService {
         await this.core.database.query(sql, params)
     }
 
+    /**
+     * Get an array with the ids of papers visible to the given user.
+     *
+     * @param {User} user   The user we want to get visible papers for.
+     */
+    async getVisiblePaperIds(user) {
+        let results = null
+        if ( user ) {
+            const sql = `
+                SELECT 
+                    paper_id
+                FROM permissions
+                    WHERE user_id = $1 AND permission = 'Paper:view'
+            `
+
+            results = this.core.database.query(sql, [ user.id ])
+        } else {
+            const sql = `
+                SELECT
+                    paper_id
+                FROM permissions
+                    LEFT OUTER JOIN roles ON permissions.role_id = roles.id
+                WHERE roles.name = 'public' AND permission = 'Paper:view'
+
+            `
+
+        }
+
+        if ( ! results || results.rows.length <= 0 ) {
+            return []
+        }
+        return results.rows.map((r) => r.paper_id)
+    }
 }

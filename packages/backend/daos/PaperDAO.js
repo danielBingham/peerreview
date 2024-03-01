@@ -64,6 +64,7 @@ module.exports = class PaperDAO {
                 paperAuthor.order = row.PaperAuthor_order
                 paperAuthor.owner = row.PaperAuthor_owner
                 paperAuthor.submitter = row.PaperAuthor_submitter
+                paperAuthor.role = row.Role_name
 
                 authorDictionary[paperAuthor.userId] = paperAuthor 
                 dictionary[row.Paper_id].authors.push(paperAuthor)
@@ -142,12 +143,11 @@ module.exports = class PaperDAO {
                     paper_fields.field_id as "PaperField_fieldId",
 
                     roles.id as "Role_id", roles.name as "Role_name", 
-                    roles.paper_id as "Role_paperId", roles.journal_id as "Roles_journalId"
 
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
                     LEFT OUTER JOIN user_roles ON paper_authors.user_id = user_roles.user_id
-                    LEFT OUTER JOIN roles ON user_roles.role_id = roles.id
+                    LEFT OUTER JOIN roles ON user_roles.role_id = roles.id AND papers.id = roles.paper_id
                     LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
                     LEFT OUTER JOIN files on paper_versions.file_id = files.id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id

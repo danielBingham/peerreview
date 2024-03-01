@@ -10,6 +10,7 @@ const NotificationsMigration = require('../migrations/NotificationsMigration')
 const JournalTransparencyModelsMigration = require('../migrations/JournalTransparencyModelsMigration')
 const PaperEventStatusMigration = require('../migrations/PaperEventStatusMigration')
 const PaperTimelineCommentsMigration = require('../migrations/PaperTimelineCommentsMigration')
+const RolesAndPermissionsMigration = require('../migrations/RolesAndPermissionsMigration')
 
 const ServiceError = require('../errors/ServiceError')
 const MigrationError = require('../errors/MigrationError')
@@ -99,6 +100,12 @@ module.exports = class FeatureService {
                 dependsOn: [ 'paper-events-189', 'paper-event-status-215', 'journal-permissions-models-194' ],
                 conflictsWith: [],
                 migration: new PaperTimelineCommentsMigration(core)
+            },
+
+            '49-anonymity-and-permissions': {
+                dependsOn: [ 'paper-events-189', 'journal-permissions-models-194', 'paper-timeline-comments-189' ],
+                conflictsWith: [],
+                migration: new RolesAndPermissionsMigration(core)
             }
         }
     }

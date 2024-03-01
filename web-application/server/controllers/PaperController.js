@@ -15,6 +15,7 @@ const ControllerError = require('../errors/ControllerError')
 module.exports = class PaperController {
 
     constructor(core) {
+        this.core = core
         this.database = core.database
         this.logger = core.logger
 
@@ -28,6 +29,7 @@ module.exports = class PaperController {
         this.PaperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
+
         this.permissionService = new backend.PermissionService(core)
     }
 
@@ -144,6 +146,15 @@ module.exports = class PaperController {
 
         let count = 0
         let and = ''
+
+        if ( this.core.features.hasFeature('49-anonymity-and-permissions') ) {
+            const visiblePaperIds = this.permissionService.papers.getVisiblePaperIds(session.user)
+            
+            count += 1
+            and = ( count > 1 ? ' AND ' : '')
+            result.where += `${and} papers.id = ANY($${count}::bigint[])`
+            result.params.push(visiblePaperIds)
+        }
 
         // If we're not intentionally retrieving drafts then we're getting
         // published papers.
@@ -494,10 +505,19 @@ module.exports = class PaperController {
 
         const user = request.session.user
 
-        // 2. User must have 'Papers:create'
-        if ( ! this.permissionService.can(user, 'create', 'Papers', {}) ) {
-            throw new ControllerError(403, 'not-authorized',
-                `User(${user.id}) is not authorized to create new papers.`)
+        if ( this.core.features.hasFeature('49-anonymity-and-permissions') ) {
+            // 2. User must have 'Papers:create'
+            if ( ! this.permissionService.can(user, 'create', 'Papers', {}) ) {
+                throw new ControllerError(403, 'not-authorized',
+                    `User(${user.id}) is not authorized to create new papers.`)
+            }
+        } else {
+            // 2. User is an author and owner of the paper being submitted.
+            if ( ! paper.authors.find((a) => a.userId == user.id && a.owner) ) {
+                throw new ControllerError(403, 'not-authorized:not-owner', 
+                    `User(${user.id}) submitted a paper with out being an owner of that paper!`)
+            }
+
         }
 
         // 5. Paper has at least 1 valid author.
@@ -512,10 +532,12 @@ module.exports = class PaperController {
                 `User(${user.id}) submitted a paper they weren't an author on.`)
         }
 
-        // 4. Paper must have at least one corresponding author. 
-        if ( ! paper.authors.find((a) => a.role == 'corresponding-author') ) {
-            throw new ControllerError(400, 'no-corresponding-author', 
-                `User(${user.id}) submitted a paper without a corresponding author.`)
+        if ( this.core.features.hasFeature('49-anonymity-and-permissions') ) {
+            // 4. Paper must have at least one corresponding author. 
+            if ( ! paper.authors.find((a) => a.role == 'corresponding-author') ) {
+                throw new ControllerError(400, 'no-corresponding-author', 
+                    `User(${user.id}) submitted a paper without a corresponding author.`)
+            }
         }
 
         const authorIds = paper.authors.map((a) => a.userId)
