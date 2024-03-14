@@ -1,107 +1,86 @@
-const { File } = require('../models/File')
-
-const files = {}
-
-// We'll use these later to initialize objects when constructing the fixtures.
-let file = null
-
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.results = void 0;
+const files = {};
 /******************************************************************************
  * Fixture 1:  File for Single Author, Single Version Paper
  ******************************************************************************/
-
 // @see packages/backend/test/fixtures/database.js -> files[0]
-file = new File()
-file.id = 1
-file.userId = 1
-file.location = 'https://s3.amazonaws.com/'
-file.filepath = 'papers/1-1-single-author-single-version-paper.pdf'
-file.type = 'application/pdf'
-file.createdDate = 'TIMESTAMP'
-file.updatedDate = 'TIMESTAMP'
-
-files[file.id] = file
-
+files[1] = {
+    id: 1,
+    userId: 1,
+    location: 'https://s3.amazonaws.com/',
+    filepath: 'papers/1-1-single-author-single-version-paper.pdf',
+    type: 'application/pdf',
+    createdDate: 'TIMESTAMP',
+    updatedDate: 'TIMESTAMP',
+};
 /******************************************************************************
  * Fixture 2:  File for Multiple Author, Single Version Paper
  ******************************************************************************/
-
 // @see packages/backend/test/fixtures/database.js -> files[1]
-file = new File()
-file.id = 2
-file.userId = 2
-file.location = 'https://s3.amazonaws.com/'
-file.filepath = 'papers/2-1-multiple-author-single-version-paper.pdf'
-file.type = 'application/pdf'
-file.createdDate = 'TIMESTAMP'
-file.updatedDate = 'TIMESTAMP'
-
-files[file.id] = file
-
+files[2] = {
+    id: 2,
+    userId: 2,
+    location: 'https://s3.amazonaws.com/',
+    filepath: 'papers/2-1-multiple-author-single-version-paper.pdf',
+    type: 'application/pdf',
+    createdDate: 'TIMESTAMP',
+    updatedDate: 'TIMESTAMP',
+};
 /******************************************************************************
  * Fixture 3:  File for Single Author, Multiple Version Paper
  ******************************************************************************/
-
 // @see packages/backend/test/fixtures/database.js -> files[2]
-file = new File()
-file.id = 3
-file.userId = 4
-file.location = 'https://s3.amazonaws.com/'
-file.filepath = 'papers/3-1-single-author-multiple-version-paper.pdf'
-file.type = 'application/pdf'
-file.createdDate = 'TIMESTAMP'
-file.updatedDate = 'TIMESTAMP'
-
-files[file.id] = file
-
+files[3] = {
+    id: 3,
+    userId: 4,
+    location: 'https://s3.amazonaws.com/',
+    filepath: 'papers/3-1-single-author-multiple-version-paper.pdf',
+    type: 'application/pdf',
+    createdDate: 'TIMESTAMP',
+    updatedDate: 'TIMESTAMP',
+};
 /******************************************************************************
  * Fixture 4:  File for Second Version of Single Author, Multiple Version Paper
  ******************************************************************************/
-
 // @see packages/backend/test/fixtures/database.js -> files[3]
-file = new File()
-file.id = 4
-file.userId = 4
-file.location = 'https://s3.amazonaws.com/'
-file.filepath = 'papers/3-2-single-author-multiple-version-paper.pdf'
-file.type = 'application/pdf'
-file.createdDate = 'TIMESTAMP'
-file.updatedDate = 'TIMESTAMP'
-
-files[file.id] = file
-
+files[4] = {
+    id: 4,
+    userId: 4,
+    location: 'https://s3.amazonaws.com/',
+    filepath: 'papers/3-2-single-author-multiple-version-paper.pdf',
+    type: 'application/pdf',
+    createdDate: 'TIMESTAMP',
+    updatedDate: 'TIMESTAMP',
+};
 /******************************************************************************
  * Fixture 5:  File for Multiple Author, Multiple Version Paper
  ******************************************************************************/
-
 // @see packages/backend/test/fixtures/database.js -> files[4]
-file = new File()
-file.id = 5
-file.userId = 5
-file.location = 'https://s3.amazonaws.com/'
-file.filepath = 'papers/4-1-multiple-author-multiple-version-paper.pdf'
-file.type = 'application/pdf'
-file.createdDate = 'TIMESTAMP'
-file.updatedDate = 'TIMESTAMP'
-
-files[file.id] = file
-
+files[5] = {
+    id: 5,
+    userId: 5,
+    location: 'https://s3.amazonaws.com/',
+    filepath: 'papers/4-1-multiple-author-multiple-version-paper.pdf',
+    type: 'application/pdf',
+    createdDate: 'TIMESTAMP',
+    updatedDate: 'TIMESTAMP',
+};
 /******************************************************************************
  * Fixture 6:  File for Second Version of Multiple Author, Multiple Version Paper
  ******************************************************************************/
-
 // @see packages/backend/test/fixtures/database.js -> files[5]
-file = new File()
-file.id = 6
-file.userId = 5
-file.location = 'https://s3.amazonaws.com/'
-file.filepath = 'papers/4-2-multiple-author-multiple-version-paper.pdf'
-file.type = 'application/pdf'
-file.createdDate = 'TIMESTAMP'
-file.updatedDate = 'TIMESTAMP'
-
-files[file.id] = file
-
-module.exports = {
+files[6] = {
+    id: 6,
+    userId: 5,
+    location: 'https://s3.amazonaws.com/',
+    filepath: 'papers/4-2-multiple-author-multiple-version-paper.pdf',
+    type: 'application/pdf',
+    createdDate: 'TIMESTAMP',
+    updatedDate: 'TIMESTAMP',
+};
+exports.results = {
     dictionary: files,
     list: Object.values(files),
     meta: {
@@ -111,4 +90,4 @@ module.exports = {
         numberOfPages: 1
     },
     relations: {}
-}
+};
