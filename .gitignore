@@ -11,4 +11,4 @@ web-application/security/*
 infrastructure/**/secrets/
 **/*.lock.hcl
 database/test-data/**
-
+packages/**/dist
