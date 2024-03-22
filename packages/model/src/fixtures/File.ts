@@ -1,6 +1,7 @@
-import { File } from '../types/File'
+import { QueryResult, ModelDictionary } from "../types/Results"
+import { File } from "../types/File"
 
-const files: { [id: number]: File } = {}
+const files: ModelDictionary<File> = {}
 
 /******************************************************************************
  * Fixture 1:  File for Single Author, Single Version Paper
@@ -92,7 +93,7 @@ files[6] = {
     updatedDate: 'TIMESTAMP',
 }
 
-export const results = {
+export const results: QueryResult<File> = {
     dictionary: files,
     list: Object.values(files),
     meta: {

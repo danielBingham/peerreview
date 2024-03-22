@@ -1,10 +1,7 @@
-import { Paper, PaperAuthor, PaperVersion } from './types/Paper'
-export { Paper, PaperAuthor, PaperVersion }  
+export { Model } from './types/Model'
+export { ModelDictionary, DatabaseResult, RestResult, PageMetadata, QueryResult} from './types/Results'
+export { Paper, PaperAuthor, PaperVersion } from './types/Paper'
+export { File } from './types/File'
 
-import { File } from './types/File'
-export { File }
-
-import { results as PaperFixtures } from './fixtures/Paper'
-export { PaperFixtures }
-import { results as FileFixtures } from './fixtures/File'
-export { FileFixtures }
+export { results as PaperFixtures } from './fixtures/Paper'
+export { results as FileFixtures } from './fixtures/File'

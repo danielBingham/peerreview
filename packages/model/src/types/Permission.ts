@@ -1,3 +1,4 @@
+import { Model } from "./Model"
 
 /**
  * Represents a permission that can be assigned to either a `User` or to a
@@ -7,10 +8,7 @@
  * one of a number of id values relating the permission to the entity in
  * question.
  */
-export interface Permission {
-        /** The database id of this permission grant.  */
-        id: number
-
+export interface Permission extends Model {
         /** The user this permission is granted to or NULL if this is a role permission.  */
         userId: number
 

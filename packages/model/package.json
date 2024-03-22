@@ -17,8 +17,10 @@
     "registry": "https://npm.pkg.github.com/"
   },
   "main": "dist/index.js",
+  "types": "src/index.ts",
   "scripts": {
-    "build": "tsc"
+    "build": "rm -rf dist && tsc --build ./tsconfig.json",
+    "watch": "tsc --watch"
   },
   "dependencies": { },
   "devDependencies": {

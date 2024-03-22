@@ -1,7 +1,6 @@
-export interface File {
-    /** The database id of this file in the `files` table. */
-    id: number
+import { Model } from './Model'
 
+export interface File extends Model {
     /** The User.id of the user who uploaded this file. */
     userId: number
 

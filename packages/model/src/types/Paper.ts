@@ -1,4 +1,5 @@
 import { File } from "./File"
+import { Model } from "./Model"
 
 /**
  * A version of a scholarly paper.
@@ -46,9 +47,7 @@ export interface PaperAuthor {
     role: string 
 }
 
-export interface Paper {
-    /**  The id of this paper in the `papers` table.  */
-    id: number
+export interface Paper extends Model {
 
     /** This paper's title. */
     title: string

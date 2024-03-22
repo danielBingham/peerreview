@@ -1,17 +1,28 @@
-const DAOError = require('../errors/DAOError')
+import { Pool, QueryResultRow } from 'pg'
 
-const { File } = require('@danielbingham/peerreview-model')
+import DAOError from '../errors/DAOError'
 
+import Core from '../core'
+import Logger from '../logger'
 
-module.exports = class FilesDAO {
+import { File, DatabaseResult, ModelDictionary } from '@danielbingham/peerreview-model'
 
-    constructor(core) {
+/**
+ * The data access object for the `files` table.
+ *
+ * Maps `File` objects to and from the database.
+ */
+export default class FilesDAO {
+    database: Pool
+    logger: Logger
+
+    constructor(core: Core) {
         this.database = core.database
         this.logger = core.logger
     }
 
-    hydrateFile(row) {
-        return new File({
+    hydrateFile(row: QueryResultRow): File {
+        return {
             id: row.File_id,
             userId: row.File_userId,
             location: row.File_location,
@@ -19,31 +30,41 @@ module.exports = class FilesDAO {
             type: row.File_type,
             createdDate: row.File_createdDate,
             updatedDate: row.File_updatedDate
-        })
+        }
     }
 
-    hydrateFiles(rows) {
-        const files = {}
-        const list = []
+    hydrateFiles(rows: QueryResultRow[]): DatabaseResult<File> {
+        const dictionary: ModelDictionary<File> = {}
+        const list: File[] = []
+
+        if ( rows.length <= 0 ) {
+            return {
+                dictionary: dictionary,
+                list: list
+            }
+        }
 
         for(const row of rows) {
             const file = this.hydrateFile(row)
-            if ( ! files[row.File_id] ) {
-                files[row.File_id] = file
+            if ( ! dictionary[row.File_id] ) {
+                dictionary[row.File_id] = file
                 list.push(file)
             }
 
         }
 
-        return list 
+        return {
+            dictionary: dictionary,
+            list: list
+        }
     }
 
-    getFilesSelectionString() {
+    getFilesSelectionString(): string {
         return `files.id as "File_id", files.user_id as "File_userId", files.location as "File_location", files.filepath as "File_filepath", files.type as "File_type",
             files.created_date as "File_createdDate", files.updated_date as "File_updatedDate"` 
     }
 
-    async selectFiles(where, params) {
+    async selectFiles(where: string, params: any[]): Promise<DatabaseResult<File>> {
         if ( ! where ) {
             where = ''
             params = []
@@ -57,14 +78,10 @@ module.exports = class FilesDAO {
         
         const results = await this.database.query(sql, params)
 
-        if ( results.rows.length <= 0 ) {
-            return []
-        }
-
         return this.hydrateFiles(results.rows)
     }
 
-    async insertFile(file) {
+    async insertFile(file: File): Promise<void> {
         const results = await this.database.query(`
             INSERT INTO files (id, user_id, location, filepath, type, created_date, updated_date)
                 VALUES ($1, $2, $3, $4, $5, now(), now())
@@ -75,7 +92,7 @@ module.exports = class FilesDAO {
         }
     }
 
-    async updateFile(file) {
+    async updateFile(file: File): Promise<void> {
         const results = await this.database.query(`
             UPDATE files SET user_id = $1, location=$2, filepath=$3, type=$4, updated_date=now()
                 WHERE id=$5
@@ -86,16 +103,16 @@ module.exports = class FilesDAO {
         }
     }
 
-    async updatePartialFile(file) {
+    async updatePartialFile(file: File): Promise<void>  {
         if ( ! file.id ) {
             throw new DAOError('missing-id', `Can't update a file with out an Id.`)
         }
 
         let sql = 'UPDATE files SET '
-        let params = []
+        let params: any = []
         let count = 1
         const ignored = [ 'id', 'createdDate', 'updatedDate' ] 
-        for(let key in file) {
+        for(let key of Object.keys(file)) {
             if (ignored.includes(key)) {
                 continue
             }
@@ -106,8 +123,7 @@ module.exports = class FilesDAO {
                 sql += `${key} = $${count}, `
             }
 
-
-            params.push(file[key])
+            params.push(file[key as keyof File])
             count = count + 1
         }
         sql += 'updated_date = now() WHERE id = $' + count
@@ -115,12 +131,12 @@ module.exports = class FilesDAO {
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rowCount <= 0) {
+        if ( results.rowCount && results.rowCount <= 0) {
             throw new DAOError('failed-update', `Failed to update files ${file.id}.`)
         }
     }
 
-    async deleteFile(fileId) {
+    async deleteFile(fileId: number): Promise<void> {
         const pathResults = await this.database.query(`
             SELECT filepath FROM files WHERE id = $1
         `, [ fileId ])
@@ -129,7 +145,7 @@ module.exports = class FilesDAO {
             throw new DAOError('not-found', `File ${fileId} doesn't seem to exist!`)
         }
 
-        const filepath = pathResults.rows[0].filepath
+        // TECHDEBT TODO We need to delete the file here.
 
         const results = await this.database.query(`
             DELETE FROM files WHERE id = $1
