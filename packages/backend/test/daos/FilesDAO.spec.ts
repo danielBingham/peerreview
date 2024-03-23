@@ -4,7 +4,7 @@ import { QueryResult } from 'pg'
 import FilesDAO from '../../src/daos/FileDAO'
 
 import { result } from '../fixtures/database/FilesTable'
-import { FileFixtures } from '@danielbingham/peerreview-model'
+import { File, getFileFixture, ResultType, DatabaseResult } from '@danielbingham/peerreview-model'
 
 import { mockCore } from '../mocks/MockCore'
 
@@ -20,7 +20,8 @@ describe('FilesDAO', function() {
             const fileDAO = new FilesDAO(mockCore)
             const hydratedResult = fileDAO.hydrateFile(result.rows[0])
 
-            expect(hydratedResult).toEqual(FileFixtures.database.dictionary[1])
+            const fixture = getFileFixture(ResultType.Database) as DatabaseResult<File>
+            expect(hydratedResult).toEqual(fixture.dictionary[1])
         })
     })
 
@@ -29,7 +30,8 @@ describe('FilesDAO', function() {
             const fileDAO = new FilesDAO(mockCore)
             const hydratedResults = fileDAO.hydrateFiles(result.rows)
 
-            expect(hydratedResults).toEqual(FileFixtures.database)
+            const fixture = getFileFixture(ResultType.Database) as DatabaseResult<File>
+            expect(hydratedResults).toEqual(fixture)
         })
     })
 
@@ -42,7 +44,8 @@ describe('FilesDAO', function() {
             const fileDAO = new FilesDAO(mockCore)
             const results = await fileDAO.selectFiles()
 
-            expect(results).toEqual(FileFixtures.database)
+            const fixture = getFileFixture(ResultType.Database) as DatabaseResult<File>
+            expect(results).toEqual(fixture)
         })
     })
 

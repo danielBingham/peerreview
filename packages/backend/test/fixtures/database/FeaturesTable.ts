@@ -8,7 +8,7 @@
  *
  ******************************************************************************/
 
-import { QueryResult } from 'pg'
+import { getTableFixture } from './getTableFixture'
 
 export const features = [
     // 0
@@ -102,10 +102,8 @@ export const features = [
 
 ]
 
-export const result: QueryResult = {
-    command: 'SELECT',
-    rowCount: features.length,
-    oid: 1,
-    fields: [],
-    rows: features 
+export function getFeaturesTableFixture(
+    filter?: (element: any, index:any, array: any[]) => boolean
+) {
+    return getTableFixture(features, filter)
 }

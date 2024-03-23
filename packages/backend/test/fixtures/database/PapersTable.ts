@@ -1,4 +1,14 @@
-import { QueryResult } from 'pg'
+/******************************************************************************
+ * Fixtures for the `papers` database table for use in tests.
+ *
+ * Represents the rows returned by the `SELECT` statement used in the
+ * `PaperDAO`.
+ *
+ * @see `papers`, `paper_authors`, and `paper_verisons` tables in
+ * `database/initialization-scripts/schema.sql`
+ *
+ ******************************************************************************/
+import { getTableFixture } from './getTableFixture'
 
 import { files } from './FilesTable'
 
@@ -170,12 +180,8 @@ export const papers = [
     }
 ]
 
-export const result: QueryResult = {
-    command: 'SELECT',
-    rowCount: papers.length,
-    oid: 1,
-    fields: [],
-    rows: [
+// Represents the rows returned by the `join` executed in PaperDAO.selectPapers().
+const paperRows = [
         // Fixture 1: Single Author, Single Version Paper
         // @see packages/model/fixtures/Paper.js
         { ...papers[0], ...paper_authors[0], ...paper_versions[0], ...files[0], PaperField_fieldId: 1  },
@@ -193,5 +199,10 @@ export const result: QueryResult = {
         { ...papers[3], ...paper_authors[5], ...paper_versions[4], ...files[4], PaperField_fieldId: 1 },
         { ...papers[3], ...paper_authors[4], ...paper_versions[5], ...files[5], PaperField_fieldId: 1 },
         { ...papers[3], ...paper_authors[5], ...paper_versions[5], ...files[5], PaperField_fieldId: 1 }
-    ]
+]
+
+export function getPapersTableJoinFixture(
+    filter?: (element: any, index:any, array: any[]) => boolean
+) {
+    return getTableFixture(paperRows, filter)
 }

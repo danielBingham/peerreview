@@ -8,7 +8,7 @@
  *
  ******************************************************************************/
 
-import { QueryResult } from 'pg'
+import { getTableFixture } from './getTableFixture'
 
 export const files = [
     // 0
@@ -80,10 +80,8 @@ export const files = [
     }
 ]
 
-export const result: QueryResult = {
-    command: 'SELECT',
-    rowCount: files.length,
-    oid: 1,
-    fields: [],
-    rows: files
+export function getFilesTableFixture(
+    filter?: (element: any, index:any, array: any[]) => boolean
+) {
+    return getTableFixture(files, filter)
 }
