@@ -1,4 +1,4 @@
-import { QueryResult, ModelDictionary } from "../types/Results"
+import { DatabaseResult, QueryResult, ModelDictionary } from "../types/Results"
 import { File } from "../types/File"
 
 const files: ModelDictionary<File> = {}
@@ -93,7 +93,12 @@ files[6] = {
     updatedDate: 'TIMESTAMP',
 }
 
-export const results: QueryResult<File> = {
+export const databaseResults: DatabaseResult<File> = {
+    dictionary: files,
+    list: Object.values(files)
+}
+
+export const queryResults: QueryResult<File> = {
     dictionary: files,
     list: Object.values(files),
     meta: {

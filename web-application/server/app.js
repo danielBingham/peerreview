@@ -104,7 +104,7 @@ app.use(function(request, response, next) {
 app.use(function(request, response, next) {
     const featureService = new FeatureService(core)
     featureService.getEnabledFeatures().then(function(features) {
-        core.features = new FeatureFlags(features)
+        core.features.setFeatures(features)
         next()
     }).catch(function(error) {
         next(error)

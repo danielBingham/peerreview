@@ -18,7 +18,7 @@ const PAGE_SIZE = 50
  * Data Access Object for mapping the `Paper` type (defined in
  * @danielbingham/peerreview-model) to and from the database.
  */
-module.exports = class PaperDAO {
+export default class PaperDAO {
     
     /** Number of results on each page. **/
     PAGE_SIZE: number
@@ -46,9 +46,9 @@ module.exports = class PaperDAO {
 
         // These are just used to track the various child objects and ensure
         // uniqueness.
-        const authorDictionary: { [id: number]: PaperAuthor } = {}
-        const versionDictionary: { [id: number]: PaperVersion } = {}
-        const fieldDictionary: { [id: number]: boolean } = {}
+        const authorDictionary: { [paperId: number]: { [ authorId: number]: PaperAuthor }} = {}
+        const versionDictionary: { [paperId: number]: { [versionId: number]:  PaperVersion }} = {}
+        const fieldDictionary: { [paperId: number]: { [fieldId: number]: boolean }} = {}
 
         for(const row of rows) {
             if ( ! (row.Paper_id in dictionary ) ){
@@ -69,36 +69,54 @@ module.exports = class PaperDAO {
                 list.push(paper)
             }
 
-            if ( row.PaperAuthor_userId && ! (row.PaperAuthor_userId in authorDictionary)) {
-                const paperAuthor: PaperAuthor = {
-                    userId : row.PaperAuthor_userId,
-                    order: row.PaperAuthor_order,
-                    owner: row.PaperAuthor_owner,
-                    submitter: row.PaperAuthor_submitter,
-                    role: row.Role_name
+            if ( row.PaperAuthor_userId ) {
+                if ( ! (row.Paper_id in authorDictionary) ) {
+                    authorDictionary[row.Paper_id] = {}
                 }
 
-                authorDictionary[paperAuthor.userId] = paperAuthor 
-                dictionary[row.Paper_id].authors.push(paperAuthor)
+                if ( ! (row.PaperAuthor_userId in authorDictionary[row.Paper_id])) {
+                    const paperAuthor: PaperAuthor = {
+                        userId : row.PaperAuthor_userId,
+                        order: row.PaperAuthor_order,
+                        owner: row.PaperAuthor_owner,
+                        submitter: row.PaperAuthor_submitter,
+                        role: row.Role_name
+                    }
+
+                    authorDictionary[row.Paper_id][paperAuthor.userId] = paperAuthor 
+                    dictionary[row.Paper_id].authors.push(paperAuthor)
+                }
             }
 
-            if ( row.PaperVersion_version && ! (row.PaperVersion_version in versionDictionary)) {
-                const paperVersion: PaperVersion = { 
-                    version: row.PaperVersion_version,
-                    file: this.fileDAO.hydrateFile(row),
-                    content: row.PaperVersion_content,
-                    reviewCount: row.PaperVersion_reviewCount,
-                    createdDate: row.PaperVersion_createdDate,
-                    updatedDate: row.PaperVersion_updatedDate
+            if ( row.PaperVersion_version ) {
+                if ( ! (row.Paper_id in versionDictionary)) {
+                    versionDictionary[row.Paper_id] = {}
                 }
 
-                versionDictionary[paperVersion.version] = paperVersion
-                dictionary[row.Paper_id].versions.push(paperVersion)
+                if ( ! (row.PaperVersion_version in versionDictionary[row.Paper_id])) {
+                    const paperVersion: PaperVersion = { 
+                        version: row.PaperVersion_version,
+                        file: this.fileDAO.hydrateFile(row),
+                        content: row.PaperVersion_content,
+                        reviewCount: row.PaperVersion_reviewCount,
+                        createdDate: row.PaperVersion_createdDate,
+                        updatedDate: row.PaperVersion_updatedDate
+                    }
+
+                    versionDictionary[row.Paper_id][paperVersion.version] = paperVersion
+                    dictionary[row.Paper_id].versions.push(paperVersion)
+                }
             }
 
-            if ( row.PaperField_fieldId && ! (row.PaperField_fieldId in fieldDictionary)) {
-                fieldDictionary[row.PaperField_fieldId] = true
-                dictionary[row.Paper_id].fields.push(row.PaperField_fieldId)
+            if ( row.PaperField_fieldId ) {
+                if ( ! (row.Paper_id in fieldDictionary)) {
+                    fieldDictionary[row.Paper_id] = {}
+                }
+
+                if ( ! (row.PaperField_fieldId in fieldDictionary[row.Paper_id])) {
+                    fieldDictionary[row.Paper_id][row.PaperField_fieldId] = true
+                    dictionary[row.Paper_id].fields.push(row.PaperField_fieldId)
+                }
             }
         }
 

@@ -1,6 +1,6 @@
-import { QueryResult, ModelDictionary } from "../types/Results"
+import { DatabaseResult, QueryResult, ModelDictionary } from "../types/Results"
 import { Paper } from "../types/Paper"
-import { results as files } from "./File"
+import { databaseResults as files } from "./File"
 
 const papers: ModelDictionary<Paper> = {}
 
@@ -196,7 +196,12 @@ papers[4] = {
     fields: [ 1 ]
 }
 
-export const results: QueryResult<Paper> = {
+export const databaseResults: DatabaseResult<Paper> = {
+    dictionary: papers,
+    list: Object.values(papers)
+}
+
+export const queryResults: QueryResult<Paper> = {
     dictionary: papers,
     list: Object.values(papers),
     meta: {

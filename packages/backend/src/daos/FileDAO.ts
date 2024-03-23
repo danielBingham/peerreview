@@ -64,11 +64,10 @@ export default class FilesDAO {
             files.created_date as "File_createdDate", files.updated_date as "File_updatedDate"` 
     }
 
-    async selectFiles(where: string, params: any[]): Promise<DatabaseResult<File>> {
-        if ( ! where ) {
-            where = ''
-            params = []
-        }
+    async selectFiles(where?: string, params?: any[]): Promise<DatabaseResult<File>> {
+        where = where ? where : ''
+        params = params ? params : []
+
         const sql = `
             SELECT 
                 ${ this.getFilesSelectionString() } 

@@ -16,6 +16,10 @@ module.exports = class FeatureFlags {
         }
     }
 
+    setFeatures(features) {
+        this.features = features
+    }
+
     hasFeature(name) {
         const feature = this.features[name]
 
