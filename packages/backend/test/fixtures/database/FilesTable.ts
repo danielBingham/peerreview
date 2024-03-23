@@ -1,3 +1,13 @@
+/******************************************************************************
+ * Fixtures for the `files` database table for use in tests.
+ *
+ * Represents the rows returned by the `SELECT` statement used in the
+ * `FileDAO`.
+ *
+ * @see `files` table in `database/initialization-scripts/schema.sql`
+ *
+ ******************************************************************************/
+
 import { QueryResult } from 'pg'
 
 export const files = [

@@ -1,5 +1,7 @@
 export { Model } from './types/Model'
 export { ModelDictionary, DatabaseResult, RestResult, PageMetadata, QueryResult} from './types/Results'
+
+export { Feature, FeatureStatus, PartialFeature } from './types/Feature'
 export { Paper, PaperAuthor, PaperVersion } from './types/Paper'
 export { File } from './types/File'
 
@@ -13,4 +15,10 @@ import { queryResults as fileQueryResults, databaseResults as fileDatabaseResult
 export const FileFixtures = {
     query: fileQueryResults,
     database: fileDatabaseResults
+}
+
+import { queryResults as featureQueryResults, databaseResults as featureDatabaseResults } from './fixtures/Feature'
+export const FeatureFixtures = {
+    query: featureQueryResults,
+    database: featureDatabaseResults
 }

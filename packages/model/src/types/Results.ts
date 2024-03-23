@@ -1,7 +1,7 @@
 import { Model } from "./Model"
 
 export interface ModelDictionary<T extends Model> {
-    [id: number]: T
+    [id: number|string]: T
 }
 
 export interface DatabaseResult<T extends Model> {
