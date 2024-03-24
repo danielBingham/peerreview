@@ -49,6 +49,9 @@ export interface PaperAuthor {
 
 export interface Paper extends Model {
 
+    /** The database id of this paper. **/
+    id: number
+
     /** This paper's title. */
     title: string
 
