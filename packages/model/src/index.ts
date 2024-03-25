@@ -4,6 +4,7 @@ export { ResultType, DatabaseResult, EntityResult, PageMetadata, QueryResult} fr
 export { Feature, FeatureStatus, PartialFeature } from './types/Feature'
 export { Paper, PaperAuthor, PaperVersion } from './types/Paper'
 export { File } from './types/File'
+export { Field } from './types/Field'
 
 export { getPaperFixture } from './fixtures/Paper'
 export { getFileFixture } from './fixtures/File'
