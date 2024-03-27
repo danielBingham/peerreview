@@ -10,7 +10,7 @@ export const fields: Field[] = [
         type: 'biology',
         depth: 1,
         averageReputation: 0,
-        description: "The study of life.",
+        description: 'Study of life.',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
     },
@@ -18,11 +18,11 @@ export const fields: Field[] = [
     // @see packages/backend/test/fixtures/database/FieldsTable.js -> fields[0]
     {
         id: 2,
-        name: 'physics',
-        type: 'physics',
-        depth: 1,
+        name: 'genetics',
+        type: 'biology',
+        depth: 2,
         averageReputation: 0,
-        description: "The study of forces.",
+        description: 'Study of genes and DNA.',
         createdDate: 'TIMESTAMP',
         updatedDate: 'TIMESTAMP'
     },

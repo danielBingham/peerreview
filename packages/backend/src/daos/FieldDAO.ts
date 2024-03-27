@@ -3,7 +3,6 @@ import { QueryResultRow } from 'pg'
 import { Field, DatabaseResult, ModelDictionary, PageMetadata } from '@danielbingham/peerreview-model'
 
 import Core from '../core'
-import DAOError from '../errors/DAOError'
 
 const PAGE_SIZE = 20 
 
@@ -32,9 +31,10 @@ export default class FieldDAO {
          * Especially in other DAOs.
          */
         this.selectionString = `
-            fields.id as field_id, fields.name as field_name, fields.type as field_type,
-            fields.depth as field_depth, fields.average_reputation as "field_averageReputation", fields.description as field_description, 
-            fields.created_date as "field_createdDate", fields.updated_date as "field_updatedDate"
+            fields.id as Field_id, fields.name as Field_name, fields.type as Field_type,
+            fields.depth as Field_depth, fields.average_reputation as "Field_averageReputation",
+            fields.description as Field_description, 
+            fields.created_date as "Field_createdDate", fields.updated_date as "Field_updatedDate"
         `
     }
 
@@ -49,14 +49,14 @@ export default class FieldDAO {
      */
     hydrateField(row: QueryResultRow ): Field {
         return  {
-            id: row.field_id,
-            name: row.field_name,
-            type: row.field_type,
-            depth: row.field_depth,
-            averageReputation: row.field_averageReputation,
-            description: row.field_description,
-            createdDate: row.field_createdDate,
-            updatedDate: row.field_updatedDate
+            id: row.Field_id,
+            name: row.Field_name,
+            type: row.Field_type,
+            depth: row.Field_depth,
+            averageReputation: row.Field_averageReputation,
+            description: row.Field_description,
+            createdDate: row.Field_createdDate,
+            updatedDate: row.Field_updatedDate
         }
     }
 
