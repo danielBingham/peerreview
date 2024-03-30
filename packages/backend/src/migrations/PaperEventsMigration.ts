@@ -1,22 +1,32 @@
-/********************************************************************
+/******************************************************************************
  *
- * PaperEvents Migration
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
  *
- * Add the tables to support journals.
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
  *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
  *
- ********************************************************************/
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import Core from '../core'
+import Migration from './Migration'
 
-const MigrationError = require('../errors/MigrationError')
-
-module.exports = class PaperEventsMigration {
-
-    constructor(core) {
-        this.database = core.database
-        this.logger = core.logger
-        this.config = core.config
+/**
+ * Add tables to support the Paper Event Timeline.
+ */
+export default class PaperEventsMigration extends Migration {
+    constructor(core: Core) {
+        super(core)
     }
-
 
     /**
      * Do any setup necessary to initialize this migration.
@@ -30,11 +40,10 @@ module.exports = class PaperEventsMigration {
      * So here we can create a new table, add a column with null values to a
      * table (to be populated later), create a new ENUM, etc.
      */
-    async initialize() {
-
+    async initialize(): Promise<void> {
         try {
 
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TYPE paper_event_types AS ENUM(
     'paper:new-version', 
     'paper:preprint-posted',
@@ -51,7 +60,7 @@ CREATE TYPE paper_event_types AS ENUM(
 )
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TYPE paper_event_visibility AS ENUM(
     'managing-editors',
     'editors',
@@ -64,7 +73,7 @@ CREATE TYPE paper_event_visibility AS ENUM(
 )
             `, [])            
 
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TABLE paper_events (
     id bigserial PRIMARY KEY,
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE NOT NULL,
@@ -82,74 +91,63 @@ CREATE TABLE paper_events (
 )
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 ALTER TABLE paper_versions ADD COLUMN IF NOT EXISTS review_count int 
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 ALTER TABLE paper_versions ALTER COLUMN review_count SET DEFAULT 0
             `, [])
 
         } catch (error) {
-            try {
+            await this.handleError(error, async () => {
+                await this.core.database.query(`DROP TABLE IF EXISTS paper_events`, [])
+                await this.core.database.query(`DROP TYPE IF EXISTS paper_event_types`, [])
+                await this.core.database.query(`DROP TYPE IF EXISTS paper_event_visibility`, [])
 
-                await this.database.query(`DROP TABLE IF EXISTS paper_events`, [])
-                await this.database.query(`DROP TYPE IF EXISTS paper_event_types`, [])
-                await this.database.query(`DROP TYPE IF EXISTS paper_event_visibility`, [])
-
-                await this.database.query(`ALTER TABLE paper_versions DROP COLUMN review_count`, [])
-
-            } catch (rollbackError) {
-                console.error(error)
-                console.error(rollbackError)
-                throw new MigrationError('no-rollback', rollbackError.message)
-            }
-            console.error(error)
-            throw new MigrationError('rolled-back', error.message)
+                await this.core.database.query(`ALTER TABLE paper_versions DROP COLUMN review_count`, [])
+            })
         }
-
     }
 
     /**
      * Rollback the setup phase.
      */
-    async uninitialize() {
-
+    async uninitialize(): Promise<void> {
         try {
-            await this.database.query(`DROP TABLE IF EXISTS paper_events`, [])
-            await this.database.query(`DROP TYPE IF EXISTS paper_event_types`, [])
-            await this.database.query(`DROP TYPE IF EXISTS paper_event_visibility`, [])
+            await this.core.database.query(`DROP TABLE IF EXISTS paper_events`, [])
+            await this.core.database.query(`DROP TYPE IF EXISTS paper_event_types`, [])
+            await this.core.database.query(`DROP TYPE IF EXISTS paper_event_visibility`, [])
 
-            await this.database.query(`ALTER TABLE paper_versions DROP COLUMN review_count`, [])
+            await this.core.database.query(`ALTER TABLE paper_versions DROP COLUMN review_count`, [])
         } catch (error) {
-            throw new MigrationError('no-rollback', error.message)
+            await this.handleError(error)
         }
     }
 
     /**
-     * Execute the migration for a set of targets.  Or for everyone if no
-     * targets are given.
+     * Execute the migration.
      *
      * Migrations always need to be non-destructive and rollbackable.  
      */
-    async up(targets) { 
+    async up(): Promise<void> { 
         try {
-            await this.database.query(`
+            await this.core.database.query(`
 UPDATE paper_versions SET review_count = ( 
     SELECT count(id) FROM reviews WHERE reviews.paper_id = paper_versions.paper_id AND reviews.version = paper_versions.version
 )
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 UPDATE paper_authors SET submitter = true WHERE author_order = 1
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO paper_events (paper_id, actor_id, version, type, event_date, review_id)
     SELECT paper_id, user_id as actor_id, version, 'paper:new-review' as type, updated_date as event_date, id as review_id FROM reviews
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO paper_events (paper_id, actor_id, version, type, event_date)
     SELECT 
         paper_versions.paper_id, paper_authors.user_id, paper_versions.version, 'paper:new-version', paper_versions.created_date
@@ -158,7 +156,7 @@ INSERT INTO paper_events (paper_id, actor_id, version, type, event_date)
     WHERE paper_authors.author_order = 1
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO paper_events (paper_id, actor_id, version, type, event_date)
     SELECT
         papers.id, paper_authors.user_id, 1, 'paper:preprint-posted', papers.created_date
@@ -168,13 +166,10 @@ INSERT INTO paper_events (paper_id, actor_id, version, type, event_date)
             `, [])
 
         } catch (error ) {
-            try {
-                await this.database.query(`UPDATE paper_versions SET review_count = 0`, [])
-                await this.database.query(`DROP FROM paper_events`, [])
-            } catch (rollbackError) {
-                throw new MigrationError('no-rollback', error.message)
-            }
-            throw new MigrationError('rolled-back', error.message)
+            await this.handleError(error, async () => {
+                await this.core.database.query(`UPDATE paper_versions SET review_count = 0`, [])
+                await this.core.database.query(`DROP FROM paper_events`, [])
+            })
         }
 
     }
@@ -182,13 +177,13 @@ INSERT INTO paper_events (paper_id, actor_id, version, type, event_date)
     /**
      * Rollback the migration.  Again, needs to be non-destructive.
      */
-    async down(targets) { 
+    async down(): Promise<void> { 
         try {
-            await this.database.query(`
+            await this.core.database.query(`
 UPDATE paper_versions SET review_count = 0
             `, [])
         } catch(error) {
-            throw MigrationError('no-rollback', error.message)
+            await this.handleError(error)
         }
     }
 }

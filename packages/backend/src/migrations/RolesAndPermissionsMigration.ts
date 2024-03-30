@@ -1,21 +1,32 @@
-/********************************************************************
+/******************************************************************************
  *
- * Roles And Permissions Migration 
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
  *
- * Add the tables to support roles and permissions.
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
  *
- ********************************************************************/
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import Core from '../core'
+import Migration from './Migration'
 
-const MigrationError = require('../errors/MigrationError')
-
-module.exports = class RolesAndPermissionsMigration {
-
-    constructor(core) {
-        this.database = core.database
-        this.logger = core.logger
-        this.config = core.config
+/**
+ * Add tables to support roles and permissions.
+ */
+export default class RolesAndPermissionsMigration extends Migration {
+    constructor(core: Core) {
+        super(core)
     }
-
 
     /**
      * Do any setup necessary to initialize this migration.
@@ -29,9 +40,9 @@ module.exports = class RolesAndPermissionsMigration {
      * So here we can create a new table, add a column with null values to a
      * table (to be populated later), create a new ENUM, etc.
      */
-    async initialize() {
+    async initialize(): Promise<void> {
         try {
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TYPE permission_type AS ENUM(
     'Papers:create',
 
@@ -131,7 +142,7 @@ CREATE TYPE permission_type AS ENUM(
 )
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TABLE user_permissions (
     user_id bigint  REFERENCES users(id),
     permission permission_type,
@@ -146,11 +157,11 @@ CREATE TABLE user_permissions (
 )
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TYPE role_type AS ENUM('public', 'author', 'editor', 'reviewer');
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TABLE roles (
     id  bigserial PRIMARY KEY,
     name    varchar(1024),
@@ -164,11 +175,11 @@ CREATE TABLE roles (
 )
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO roles (name, type, description) VALUES ('public', 'public', 'The general public.')
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TABLE role_permissions (
     role_id bigint REFERENCES roles(id) DEFAULT NULL,
     permission permission_type,
@@ -184,12 +195,12 @@ CREATE TABLE role_permissions (
             `, [])
 
 
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO role_permissions (role_id, permission)
     SELECT roles.id, 'Papers:create' FROM roles WHERE roles.name = 'public'
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 CREATE TABLE user_roles (
     role_id bigint REFERENCS roles(id) DEFAULT NULL,
     user_id bigint REFERENCES users(id) DEFAULT NULL
@@ -197,21 +208,15 @@ CREATE TABLE user_roles (
             `, [])
 
         } catch (error) {
-            try {
-                await this.database.query(`DROP TYPE IF EXISTS permission_type`, [])
-                await this.database.query(`DROP TABLE IF EXISTS user_permissions`, [])
+            await this.handleError(error, async () => {
+                await this.core.database.query(`DROP TYPE IF EXISTS permission_type`, [])
+                await this.core.database.query(`DROP TABLE IF EXISTS user_permissions`, [])
 
-                await this.database.query(`DROP TYPE IF EXISTS role_type`, [])
-                await this.database.query(`DROP TABLE IF EXISTS role`, [])
-                await this.database.query(`DROP TABLE IF EXISTS role_permissions`, [])
-                await this.database.query(`DROP TABLE IF EXISTS user_roles`, [])
-            } catch (rollbackError) {
-                console.error(error)
-                console.error(rollbackError)
-                throw new MigrationError('no-rollback', rollbackError.message)
-            }
-            console.error(error)
-            throw new MigrationError('rolled-back', error.message)
+                await this.core.database.query(`DROP TYPE IF EXISTS role_type`, [])
+                await this.core.database.query(`DROP TABLE IF EXISTS role`, [])
+                await this.core.database.query(`DROP TABLE IF EXISTS role_permissions`, [])
+                await this.core.database.query(`DROP TABLE IF EXISTS user_roles`, [])
+            })
         }
 
     }
@@ -219,46 +224,45 @@ CREATE TABLE user_roles (
     /**
      * Rollback the setup phase.
      */
-    async uninitialize() {
+    async uninitialize(): Promise<void> {
         try {
-            await this.database.query(`DROP TYPE IF EXISTS permission_type`, [])
-            await this.database.query(`DROP TABLE IF EXISTS user_permissions`, [])
+            await this.core.database.query(`DROP TYPE IF EXISTS permission_type`, [])
+            await this.core.database.query(`DROP TABLE IF EXISTS user_permissions`, [])
 
-            await this.database.query(`DROP TYPE IF EXISTS role_type`, [])
-            await this.database.query(`DROP TABLE IF EXISTS role`, [])
-            await this.database.query(`DROP TABLE IF EXISTS role_permissions`, [])
-            await this.database.query(`DROP TABLE IF EXISTS user_roles`, [])
+            await this.core.database.query(`DROP TYPE IF EXISTS role_type`, [])
+            await this.core.database.query(`DROP TABLE IF EXISTS role`, [])
+            await this.core.database.query(`DROP TABLE IF EXISTS role_permissions`, [])
+            await this.core.database.query(`DROP TABLE IF EXISTS user_roles`, [])
         } catch (error) {
-            throw new MigrationError('no-rollback', error.message)
+            await this.handleError(error)
         }
     }
 
     /**
-     * Execute the migration for a set of targets.  Or for everyone if no
-     * targets are given.
+     * Execute the migration.
      *
      * Migrations always need to be non-destructive and rollbackable.  
      */
-    async up(targets) { 
+    async up(): Promise<void> { 
         try {
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO roles (name, short_description, type, is_owner, description, paper_id)
     SELECT 'corresponding-author', 'Corresponding Author', 'author', true, 'One of this paper's corresponding authors.', papers.id FROM papers
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO roles (name, short_description, type, is_owner, description, paper_id)
     SELECT 'author', 'Author', 'author', false, 'One of this paper's authors.', papers.id FROM papers
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO user_roles (role_id, user_id)
     SELECT roles.id, paper_authors.user_id FROM roles 
         LEFT OUTER JOIN paper_authors ON roles.paper_id = paper_authors.paper_id
             WHERE roles.name = 'corresponding-author' AND paper_authors.owner = TRUE
             `, [])
 
-            await this.database.query(`
+            await this.core.database.query(`
 INSERT INTO user_roles (role_id, user_id)
     SELECT roles.id, paper_authors.user_id FROM roles 
         LEFT OUTER JOIN paper_authors ON roles.paper_id = paper_authors.paper_id
@@ -266,37 +270,33 @@ INSERT INTO user_roles (role_id, user_id)
             `, [])
 
         } catch (error ) {
-            try {
-                await this.database.query(`
+            await this.handleError(error, async () => {
+                await this.core.database.query(`
 DELETE FROM roles WHERE name = 'corresponding-author' or name = 'author'
                 `, [])
 
-                await this.database.query(`
+                await this.core.database.query(`
 DELETE FROM user_roles
                 `, [])
-            } catch (rollbackError) {
-                throw new MigrationError('no-rollback', error.message)
-            }
-            throw new MigrationError('rolled-back', error.message)
+            })
         }
-
     }
 
     /**
      * Rollback the migration.  Again, needs to be non-destructive.
      */
-    async down(targets) { 
+    async down(): Promise<void> { 
         try {
-                await this.database.query(`
-DELETE FROM roles WHERE name = 'corresponding-author' or name = 'author'
-                `, [])
+            await this.core.database.query(`
+                DELETE FROM roles WHERE name = 'corresponding-author' or name = 'author'
+            `, [])
 
-                await this.database.query(`
-DELETE FROM user_roles
-                `, [])
+            await this.core.database.query(`
+                DELETE FROM user_roles
+            `, [])
 
         } catch(error) {
-            throw new MigrationError('no-rollback', error.message)
+            await this.handleError(error)
         }
     }
 }

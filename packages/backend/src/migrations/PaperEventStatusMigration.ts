@@ -10,7 +10,7 @@ import Core from '../core'
 import Migration from './Migration'
 
 export default  class PaperEventStatusMigration extends Migration {
-    constructor(core) {
+    constructor(core: Core) {
         super(core)
     }
 
@@ -29,7 +29,6 @@ export default  class PaperEventStatusMigration extends Migration {
      */
     async initialize(): Promise<void> {
         try {
-
             await this.core.database.query(`
                 CREATE TYPE paper_event_status AS ENUM(
                     'in-progress',
@@ -55,7 +54,7 @@ export default  class PaperEventStatusMigration extends Migration {
             `, [])
 
         } catch (error) {
-            try {
+            await this.handleError(error, async () => {
                 await this.core.database.query(`ALTER TABLE paper_events DROP COLUMN IF EXISTS status`, [])
                 await this.core.database.query(`DROP TYPE IF EXISTS paper_event_status`, [])
                 await this.core.database.query(`
@@ -64,13 +63,7 @@ export default  class PaperEventStatusMigration extends Migration {
                         ADD FOREIGN KEY (review_id)
                             REFERENCES reviews(id)
                 `, [])
-            } catch (rollbackError) {
-                console.error(error)
-                console.error(rollbackError)
-                throw new MigrationError('no-rollback', rollbackError.message)
-            }
-            console.error(error)
-            throw new MigrationError('rolled-back', error.message)
+            })
         }
 
     }
@@ -78,8 +71,7 @@ export default  class PaperEventStatusMigration extends Migration {
     /**
      * Rollback the setup phase.
      */
-    async uninitialize() {
-
+    async uninitialize(): Promise<void> {
         try {
             await this.core.database.query(`ALTER TABLE paper_events DROP COLUMN IF EXISTS status`, [])
             await this.core.database.query(`DROP TYPE IF EXISTS paper_event_status`, [])
@@ -90,29 +82,25 @@ export default  class PaperEventStatusMigration extends Migration {
                             REFERENCES reviews(id)
             `, [])
         } catch (error) {
-            throw new MigrationError('no-rollback', error.message)
+            await this.handleError(error)
         }
     }
 
     /**
-     * Execute the migration for a set of targets.  Or for everyone if no
-     * targets are given.
+     * Execute the migration.
      *
      * Migrations always need to be non-destructive and rollbackable.  
      */
-    async up(targets) { 
+    async up(): Promise<void> { 
         try {
             await this.core.database.query(`
                 UPDATE paper_events SET status = 'committed'
             `, [])
 
         } catch (error ) {
-            try {
+            await this.handleError(error, async () => {
                 await this.core.database.query(`UPDATE paper_events SET status = NULL`, [])
-            } catch (rollbackError) {
-                throw new MigrationError('no-rollback', error.message)
-            }
-            throw new MigrationError('rolled-back', error.message)
+            })
         }
 
     }
@@ -120,11 +108,5 @@ export default  class PaperEventStatusMigration extends Migration {
     /**
      * Rollback the migration.  Again, needs to be non-destructive.
      */
-    async down(targets) { 
-        try {
-
-        } catch(error) {
-            throw MigrationError('no-rollback', error.message)
-        }
-    }
+    async down(): Promise<void> { }
 }

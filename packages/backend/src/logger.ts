@@ -1,5 +1,12 @@
 
-module.exports = class Logger  {
+/**
+ * A wrapper around `console.log` and `console.error` that respects our
+ * configuration values allowing us to control our logging output.
+ */
+export default class Logger  {
+    level: number
+    id: string
+
     /**
      * Use NPM's logging levels.
      */
@@ -23,9 +30,21 @@ module.exports = class Logger  {
         'silly'
     ]
 
-    constructor(level) {
-        if (Number.isInteger(level)) {
+    /**
+     * Build the logger with a target log level set.  Any message "more
+     * important", with a lower number, than the target log level will be
+     * logged.  Any message that's "less important", higher number, will be
+     * ignored.
+     *
+     * @param {number|string} level     The target log level.
+     */
+    constructor(level: number|string) {
+        this.level = Logger.levels.error
+
+        if (typeof level == 'number') {
             this.level = level
+        } else if ( Number.isInteger(level) ) {
+            this.level = parseInt(level)
         } else {
             if (level == 'error') {
                 this.level = Logger.levels.error
@@ -46,11 +65,25 @@ module.exports = class Logger  {
         this.id = 'unknown' 
     }
 
-    setId(id) {
+    /**
+     * Set a unique id that identifies the session for the logger.  This allows
+     * us to potentially connect log output and errors to individual users. Can
+     * be very helpful for working with users to reproduce and debug their
+     * issues.
+     *
+     * @param {string} id    The string id we want to use to identify this
+     * session in logs.
+     *
+     * @return {void}
+     */
+    setId(id: string): void {
         this.id = id
     }
 
-    log(level, message) {
+    /**
+     *
+     */
+    log(level: number, message: any): void {
         // We don't need to log anything. 
         if ( level > this.level ) {
             return
@@ -76,11 +109,17 @@ module.exports = class Logger  {
         }
     }
 
-    error(message) {
+    /**
+     * Log an error.
+     */
+    error(message: any): void {
         this.log(Logger.levels.error, message)    
     }
 
-    warn(message) {
+    /**
+     * Log a warning.
+     */
+    warn(message: any): void {
         if ( message instanceof Error ) {
             const content = `Warning: ${message.message}`
             this.log(Logger.levels.warn, content)
@@ -89,23 +128,38 @@ module.exports = class Logger  {
         }
     }
 
-    info(message) {
+    /**
+     * Log some info.
+     */
+    info(message: any): void {
         this.log(Logger.levels.info, message)
     }
 
-    http(message) {
+    /**
+     * Log http query info.
+     */
+    http(message: any): void {
         this.log(Logger.levels.http, message)
     }
 
-    verbose(message) {
+    /**
+     * Log a verbose message.
+     */
+    verbose(message: any): void {
         this.log(Logger.levels.verbose, message)
     }
 
-    debug(message) {
+    /**
+     * Log a debug message.
+     */
+    debug(message: any): void {
         this.log(Logger.levels.debug, message)
     }
 
-    silly(message) {
+    /**
+     * Log a silly message.
+     */
+    silly(message: any): void {
         this.log(Logger.levels.silly, message)
     }
 
