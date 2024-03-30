@@ -1,10 +1,9 @@
-import { Model } from './Model'
-
 /** 
  * Valid values for `Feature.status`. Represents where the Feature is in the
  * migration and activation process.
  */
 export enum FeatureStatus {
+    uncreated = 'uncreated',
     created = 'created', /* the feature's row has been inserted into the databse table */
     initializing = 'initializing',
     initialized = 'initialized', /* the feature has been initialized */
@@ -25,7 +24,7 @@ export enum FeatureStatus {
  *
  * @see `packages/backend/src/services/FeatureService.js`
  */
-export interface Feature extends Model {
+export interface Feature {
 
     /**
      * The name of the feature.  Should be named for a branch in Git. Also
@@ -68,4 +67,12 @@ export interface Feature extends Model {
 export interface PartialFeature {
     name: string
     status: string
+}
+
+/**
+ * A feature specific dictionary because features are referenced by names
+ * rather than integer id numbers like the rest of the Models.
+ */
+export interface FeatureDictionary {
+    [name: string]: Feature
 }

@@ -4,12 +4,12 @@
  */
 export interface Model {
     /** The database id of this Model in its associated database table. */
-    id: number|string
+    id: number
 }
 
 /**
  * A dictionary we can use with our model types.
  */
 export interface ModelDictionary<T extends Model> {
-    [id: number|string]: T
+    [id: number]: T
 }

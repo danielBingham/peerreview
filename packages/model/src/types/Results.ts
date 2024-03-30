@@ -31,7 +31,7 @@ export interface DatabaseResult<Type extends Model> {
     dictionary: ModelDictionary<Type>,
 
     /** A list of `Type` containing the same objects as `dictionary`, preserving query order. **/
-    list: Type[],
+    list: number[],
 }
 
 /**
@@ -76,8 +76,11 @@ export interface QueryResult<Type extends Model> {
     /** A dictionary of the wrapped result models, keyed by `Type.id`. **/
     dictionary: ModelDictionary<Type>,
 
-    /** An ordered list of the same models stored in `Dictionary`.  Preserves query order. **/
-    list: Type[],
+    /** 
+     * An ordered list of the ids of the models stored in `Dictionary`.
+     * Preserves query order. 
+    * **/
+    list: number[],
 
     /** Paging meta data for the query. **/
     meta: PageMetadata,

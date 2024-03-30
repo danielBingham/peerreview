@@ -1,7 +1,27 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+
 import { QueryResultRow } from 'pg'
 
 import Core from '../core'
-import { Feature, FeatureStatus, PartialFeature, DatabaseResult, ModelDictionary } from '@danielbingham/peerreview-model'
+import { Feature, FeatureStatus, PartialFeature, FeatureDictionary } from '@danielbingham/peerreview-model'
 
 import DAOError from '../errors/DAOError'
 
@@ -43,7 +63,6 @@ export default class FeatureDAO {
      */
     hydrateFeature(row: QueryResultRow): Feature {
         return {
-            id: row.Feature_name,
             name: row.Feature_name,
             status: row.Feature_status as FeatureStatus,
             createdDate: row.Feature_createdDate,
@@ -61,12 +80,11 @@ export default class FeatureDAO {
      *
      * @return {DatabaseResult<Feature>}    A populated DatabaseResult<Feature> object.
      */
-    hydrateFeatures(rows: QueryResultRow[]): DatabaseResult<Feature> {
-        const dictionary: ModelDictionary<Feature> = {}
-        const list: Feature[] = []
+    hydrateFeatures(rows: QueryResultRow[]): FeatureDictionary {
+        const dictionary: FeatureDictionary = {}
 
         if ( rows.length <= 0 ) {
-            return { list: list, dictionary: dictionary }
+            return dictionary 
         }
 
         for(const row of rows) {
@@ -74,10 +92,9 @@ export default class FeatureDAO {
 
             if ( ! dictionary[feature.name] ) {
                 dictionary[feature.name] = feature
-                list.push(feature)
             }
         }
-        return { list: list, dictionary: dictionary }
+        return dictionary 
     }
 
     /**
@@ -89,7 +106,7 @@ export default class FeatureDAO {
      * @return {Promise<DatabaseResult<Feature>>}   A Promise that resolves
      * with a DatabaseResult<Feature> with the results of the query.
      */
-    async selectFeatures(where?: string, params?: any[]): Promise<DatabaseResult<Feature>> {
+    async selectFeatures(where?: string, params?: any[]): Promise<FeatureDictionary> {
         where = where ? where : ''
         params = params ? params : []
 
@@ -116,11 +133,11 @@ export default class FeatureDAO {
      */
     async insertFeature(feature: Feature): Promise<void> {
         const sql = `
-            INSERT INTO features (name, created_date, updated_date)
-                VALUES ($1, now(), now())
+            INSERT INTO features (name, status, created_date, updated_date)
+                VALUES ($1, $2, now(), now())
         `
 
-        const result = await this.core.database.query(sql, [ feature.name ])
+        const result = await this.core.database.query(sql, [ feature.name, feature.status ])
         
         if ( ! result.rowCount || result.rowCount <= 0 ) {
             throw new DAOError('insert-failed', `Failed to insert Feature(${feature.name}).`)
