@@ -76,7 +76,7 @@ export default class Core {
      *
      * This is initialized separately from the other core dependencies.
      */
-    features: FeatureFlags | null
+    features: FeatureFlags 
 
     /**
      * Are we in the process of shutting down the server?

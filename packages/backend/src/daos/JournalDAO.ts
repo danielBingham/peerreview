@@ -1,10 +1,25 @@
-const DAOError = require('../errors/DAOError')
+import { Pool, Client, QueryResultRow } from 'pg'
+
+import Core from '../core'
+import DAOError from '../errors/DAOError'
+
+import { Journal, JournalMember, DatabaseResult, ModelDictionary} from '@danielbingham/peerreview-model'
 
 const PAGE_SIZE = 20
 
 module.exports = class JournalDAO {
+    core: Core
+    database: Pool|Client
 
-    constructor(core, database) {
+    /**
+     * Construct the Data Access Object with the core and an optional database
+     * client.
+     *
+     * @param {Core} core   The core object with dependencies.
+     * @param {Client} database     (Optional) A Client object from pg for use
+     * with the DAO in a transaction context.
+     */
+    constructor(core: Core, database?: Client) {
         this.core = core
 
         // If a database override is provided, use that.  Otherwise, use the
@@ -18,20 +33,27 @@ module.exports = class JournalDAO {
         this.database = ( database ? database : this.core.database )
     }
 
-    getSelectionString() {
+    /**
+     * Get the selection string for the `journals` table.  For use with
+     * `hydrateJournal` to select and populate Journal model objects.
+     */
+    getJournalSelectionString(): string {
         return `
-            journals.id as journal_id, journals.name as journal_name, journals.description as journal_description,
-            ${ this.core.features.hasFeature('journal-permission-models-194') ? 'journals.model as journal_model, ' : '' }
-            journals.created_date as "journal_createdDate", journals.updated_date as "journal_updatedDate",
+            journals.id as "Journal_id", 
+            journals.name as "Journal_name", 
+            journals.description as "Journal_description",
+            ${ this.core.features.hasFeature('journal-permission-models-194') ? 'journals.model as "Journal_model", ' : '' }
+            journals.created_date as "Journal_createdDate", 
+            journals.updated_date as "Journal_updatedDate"
         `
     }
 
-    hydrateJournal(row) {
-        const journal = {
-            id: row.journal_id,
-            name: row.journal_name,
-            description: row.journal_description,
-            createdDate: row.journal_createdDate,
+    hydrateJournal(row: QueryResultRow): Journal {
+        const journal: Journal = {
+            id: row.Journal_id,
+            name: row.Journal_name,
+            description: row.Journal_description,
+            createdDate: row.Journal_createdDate,
             updatedDate: row.journal_updatedDate,
             members: []
         }
@@ -41,9 +63,37 @@ module.exports = class JournalDAO {
         return journal
     }
 
-    hydrateJournals(rows) {
-        const dictionary = {}
-        const list = []
+    /**
+     * Get the selection string for the `journal_members` table, mapped to the
+     * `JournalMember` type.
+     */
+    getJournalMemberSelectionString(): string {
+        return `
+            journal_members.journal_id as "Member_journalId",
+            journal_members.user_id as "Member_userId", 
+            journal_members.member_order as "Member_order",
+            journal_members.permissions as "Member_permissions",
+            journal_members.created_date as "Member_createdDate",
+            journal_members.updated_date as "Member_updatedDate"
+        `
+    }
+
+    hydrateJournalMember(row: QueryResultRow): JournalMember {
+        const member: JournalMember = {
+            journalId: row.Member_journalId,
+            userId: row.Member_userId,
+            order: row.Member_order,
+            permissions: row.Member_permissions,
+            createdDate: row.Member_createdDate,
+            updatedDate: row.Member_updatedDate
+        }
+
+        return member
+    }
+
+    hydrateJournals(rows: QueryResultRow[]): DatabaseResult<Journal> {
+        const dictionary: ModelDictionary<Journal> = {}
+        const list: number[] = []
 
         for(const row of rows) {
             const journal = this.hydrateJournal(row) 
@@ -54,14 +104,9 @@ module.exports = class JournalDAO {
             }
 
             if ( row.member_userId ) {
-                const member = {
-                    journalId: row.member_journalId,
-                    userId: row.member_userId,
-                    order: row.member_order,
-                    permissions: row.member_permissions
-                }
 
                 if ( ! dictionary[journal.id].members.find((member) => member.userId == row.user_id) ) {
+                    const member = this.hydrateJournalMember(row)
                     dictionary[journal.id].members.push(member)
                 }
             }
@@ -167,10 +212,8 @@ module.exports = class JournalDAO {
 
         const sql = `
             SELECT 
-                ${ this.getSelectionString() }
+                ${ this.getJournalSelectionString() }
 
-                journal_members.journal_id as "member_journalId", journal_members.user_id as "member_userId", 
-                journal_members.member_order as member_order, journal_members.permissions as member_permissions
 
             FROM journals
                 LEFT OUTER JOIN journal_members ON journals.id = journal_members.journal_id
@@ -305,5 +348,6 @@ module.exports = class JournalDAO {
                 `Failed to delete Member(${member.userId}) from Journal(${journalId}).`)
         }
     }
+
 
 }

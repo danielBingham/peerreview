@@ -363,7 +363,7 @@ CREATE TABLE journal_members (
     journal_id  bigint REFERENCES journals(id) ON DELETE CASCADE,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
     member_order int,
-    permissions journal_user_permissions DEFAULT 'reviewer',
+    permissions journal_member_permissions DEFAULT 'reviewer',
     created_date    timestamptz,
     updated_date    timestamptz,
     PRIMARY KEY (journal_id, user_id)

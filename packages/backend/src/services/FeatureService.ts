@@ -1,35 +1,83 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 
-const FeatureDAO = require('../daos/FeatureDAO')
+import { Feature, FeatureStatus, FeatureDictionary } from '@danielbingham/peerreview-model'
+import FeatureDAO from '../daos/FeatureDAO'
 
-const ExampleMigration = require('../migrations/ExampleMigration')
-const WIPNoticeMigration = require('../migrations/WIPNoticeMigration')
-const CommentVersionsMigration = require('../migrations/CommentVersionsMigration')
-const JournalsMigration = require('../migrations/JournalsMigration')
-const PaperEventsMigration = require('../migrations/PaperEventsMigration')
-const NotificationsMigration = require('../migrations/NotificationsMigration')
-const JournalTransparencyModelsMigration = require('../migrations/JournalTransparencyModelsMigration')
-const PaperEventStatusMigration = require('../migrations/PaperEventStatusMigration')
-const PaperTimelineCommentsMigration = require('../migrations/PaperTimelineCommentsMigration')
-const RolesAndPermissionsMigration = require('../migrations/RolesAndPermissionsMigration')
+import Migration from '../migrations/Migration'
+import WIPNoticeMigration from '../migrations/WIPNoticeMigration'
+import CommentVersionsMigration from '../migrations/CommentVersionsMigration'
+import JournalsMigration from '../migrations/JournalsMigration'
+import PaperEventsMigration from '../migrations/PaperEventsMigration'
+import NotificationsMigration from '../migrations/NotificationsMigration'
+import JournalTransparencyModelsMigration from '../migrations/JournalTransparencyModelsMigration'
+import PaperEventStatusMigration from '../migrations/PaperEventStatusMigration'
+import PaperTimelineCommentsMigration from '../migrations/PaperTimelineCommentsMigration'
+import RolesAndPermissionsMigration from '../migrations/RolesAndPermissionsMigration'
 
-const ServiceError = require('../errors/ServiceError')
-const MigrationError = require('../errors/MigrationError')
+import ServiceError from '../errors/ServiceError'
+import MigrationError from '../errors/MigrationError'
+
+import Core from '../core'
 
 
 /**
- *  A Service for managing feature flags and migrations.  By necessity feature
- *  flags break the fourth wall, as it were, because they need to be referenced
- *  directly in code forks anyway, and they'll be changed directly in code and
- *  commits.  So we store them both in the database (to make it easy to link
+ *  A Service for managing feature flags and migrations. 
+ *
+ *  By necessity feature flags break the fourth wall, because they need to be
+ *  referenced directly in code forks, and they'll be changed directly in code
+ *  and commits. So we store them both in the database (to make it easy to link
  *  them to other entities) and in the code itself (so that they can be defined
- *  when they are created and needed and added to the database later).
+ *  when they are created and added to the database later).
  */
-module.exports = class FeatureService {
+export class FeatureService {
 
-    constructor(core) {
-        this.database = core.database
-        this.logger = core.logger
-        this.config = core.config 
+    /**  A reference to the Core giving us access to core dependencies. **/
+    core: Core
+
+    /** A reference to an instance of the Feature Data Access Object, allowing
+    * us to interact with the `features` table and retrieve Feature models. **/
+    featureDAO: FeatureDAO
+
+    /** 
+     * A dictionary of features with their code dependencies defined: 
+     * - dependencies on other features, an array of feature names 
+     * - conflicts with other features, an array of feature names
+     * - migration that they depend on, a Migration instance
+     ***/
+    features: {
+        [name: string]: {
+            dependsOn: string[]
+            conflictsWith: string[]
+            migration: Migration
+        }
+    }
+
+    /**
+     * Initialize the FeatureService.
+     *
+     * NOTE: This is where we define available feature flags, with their
+     * dependencies and conflicts, as well as their migrations in code.
+     */
+    constructor(core: Core) {
+        this.core = core
 
         this.featureDAO = new FeatureDAO(core)
 
@@ -42,11 +90,6 @@ module.exports = class FeatureService {
          * dashboard.
          */
         this.features = {
-            'example':  {
-                dependsOn: [],
-                conflictsWith: [],
-                migration: new ExampleMigration(core)
-            },
             'wip-notice': {
                 dependsOn: [],
                 conflictsWith: [],
@@ -96,12 +139,14 @@ module.exports = class FeatureService {
                 migration: new PaperEventStatusMigration(core)
             },
 
+            // Issue #190 - Paper timeline comments
             'paper-timeline-comments-190': {
                 dependsOn: [ 'paper-events-189', 'paper-event-status-215', 'journal-permissions-models-194' ],
                 conflictsWith: [],
                 migration: new PaperTimelineCommentsMigration(core)
             },
 
+            // #Issue #49 - Anonymity and Permissions
             '49-anonymity-and-permissions': {
                 dependsOn: [ 'paper-events-189', 'journal-permissions-models-194', 'paper-timeline-comments-189' ],
                 conflictsWith: [],
@@ -118,15 +163,13 @@ module.exports = class FeatureService {
      * status and none of the rest of the metadata.  We want to keep this
      * pretty efficient, since it's called on every request, so we're going
      * straight to the database and just getting exactly what we need.
-     *
-     * @param {User}    user    An instance of a populated `User` object.
      */
-    async getEnabledFeatures() {
-        const results = await this.database.query(`
+    async getEnabledFeatures(): Promise<FeatureDictionary> {
+        const results = await this.core.database.query(`
             SELECT name, status FROM features WHERE status = $1
         `, [ 'enabled' ])
 
-        const features = {}
+        const features: FeatureDictionary = {}
         for (const row of results.rows) {
             features[row.name] = {
                 name: row.name,
@@ -142,16 +185,19 @@ module.exports = class FeatureService {
      * need the feature's full metadata.
      *
      * @param {string} name The name of the feature we want to get.
+     *
+     * @return {Promise<Feature>} A Promise that resolves to the requested
+     * Feature.
      */
-    async getFeature(name) {
-        const { dictionary } = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
+    async getFeature(name: string): Promise<Feature> {
+        const dictionary = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
 
         let feature = dictionary[name]
 
         if ( ! feature && this.features[name] ) {
             feature = {
                 name: name,
-                status: 'uncreated'
+                status: FeatureStatus.uncreated
             }
         } 
 
@@ -161,26 +207,26 @@ module.exports = class FeatureService {
         return feature 
     }
 
-    async updateFeatureStatus(name, status) {
+    async updateFeatureStatus(name: string, status: FeatureStatus): Promise<void> {
         await this.featureDAO.updatePartialFeature({ name: name, status: status })
     }
 
-    async insert(name) {
+    async insert(name: string): Promise<void> {
         if ( ! this.features[name] ) {
-            return new ServiceError('missing-feature',
+            throw new ServiceError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
-        await this.featureDAO.insertFeature({ name: name })
+        await this.featureDAO.insertFeature({ name: name, status: FeatureStatus.created })
     }
 
-    async initialize(name) {
+    async initialize(name: string): Promise<void> {
         if ( ! this.features[name] ) {
-            return new ServiceError('missing-feature',
+            throw new ServiceError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
-        await this.updateFeatureStatus(name, 'initializing')
+        await this.updateFeatureStatus(name, FeatureStatus.initializing)
 
         try {
             await this.features[name].migration.initialize()
@@ -200,17 +246,17 @@ module.exports = class FeatureService {
             //
             // Hopefully the latter never happens.
             if ( error instanceof MigrationError && error.status == 'rolled-back' ) {
-                await this.updateFeatureStatus(name, 'created')
+                await this.updateFeatureStatus(name, FeatureStatus.created)
             }
             throw error
         }
 
-        await this.updateFeatureStatus(name, 'initialized')
+        await this.updateFeatureStatus(name, FeatureStatus.initialized)
     }
 
-    async migrate(name) {
+    async migrate(name:string ): Promise<void> {
         if ( ! this.features[name] ) {
-            return new ServiceError('missing-feature',
+            throw new ServiceError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 

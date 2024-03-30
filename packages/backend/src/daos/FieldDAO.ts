@@ -69,14 +69,14 @@ export default class FieldDAO {
      */
     hydrateFields(rows: QueryResultRow[]): DatabaseResult<Field> {
         const dictionary: ModelDictionary<Field> = {}
-        const list: Field[] = []
+        const list: number[] = []
 
         for(const row of rows) {
             const field = this.hydrateField(row)
 
             if ( ! dictionary[field.id] ) {
                 dictionary[field.id] = field
-                list.push(field)
+                list.push(field.id)
             }
         }
 
