@@ -129,6 +129,8 @@ export default class FeatureDAO {
      * @param {Feature} feature     The feature to translate to the database
      * and insert.
      *
+     * @throws {DAOError}   If something goes awry when inserting.
+     *
      * @return {Promise<void>}
      */
     async insertFeature(feature: Feature): Promise<void> {
