@@ -5,7 +5,7 @@ export { Feature, FeatureStatus, PartialFeature, FeatureDictionary } from './typ
 export { Field } from './types/Field'
 export { File, PartialFile } from './types/File'
 export { Paper, PaperAuthor, PaperVersion } from './types/Paper'
-export { Journal, JournalMember, JournalMemberPermissions } from './types/Journal'
+export { Journal, JournalModel, JournalAnonymity, PartialJournal, JournalMember, JournalMemberPermissions } from './types/Journal'
 
 export { getFeatureFixture } from './fixtures/Feature'
 export { getFieldFixture } from './fixtures/Field'

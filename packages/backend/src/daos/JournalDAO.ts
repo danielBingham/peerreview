@@ -1,13 +1,36 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 import { Pool, Client, QueryResultRow } from 'pg'
 
 import Core from '../core'
 import DAOError from '../errors/DAOError'
 
-import { Journal, JournalMember, DatabaseResult, ModelDictionary} from '@danielbingham/peerreview-model'
+import { Journal, JournalMember, DatabaseResult, PageMetadata, ModelDictionary} from '@danielbingham/peerreview-model'
 
 const PAGE_SIZE = 20
 
-module.exports = class JournalDAO {
+/**
+ * Data Access Object for mapping the `journals` and `journal_members` tables
+ * to the `Journal` model.
+ */
+export default class JournalDAO {
     core: Core
     database: Pool|Client
 
@@ -36,6 +59,10 @@ module.exports = class JournalDAO {
     /**
      * Get the selection string for the `journals` table.  For use with
      * `hydrateJournal` to select and populate Journal model objects.
+     *
+     * @return {string}     The portion of an SQL `SELECT` statement selecting
+     * fields from the `journals` table and mapping them to the `Journal`
+     * model.
      */
     getJournalSelectionString(): string {
         return `
@@ -48,6 +75,18 @@ module.exports = class JournalDAO {
         `
     }
 
+    /**
+     * Hydrate a single Journal model from a QueryResultRow. The query result
+     * row must contain the results of the selection string returned by
+     * `getJournalSelectionString()`, but can contain other data (which will be
+     * ignored).
+     *
+     * @param {QueryResultRow} row  The row resulting from a call to a `SELECT`
+     * query executed by `Pool.query()` containing the select string returned
+     * by `getJournalSelectionString()`.
+     *
+     * @return {Journal} The populated Journal model.
+     */
     hydrateJournal(row: QueryResultRow): Journal {
         const journal: Journal = {
             id: row.Journal_id,
@@ -66,6 +105,10 @@ module.exports = class JournalDAO {
     /**
      * Get the selection string for the `journal_members` table, mapped to the
      * `JournalMember` type.
+     *
+     * @return {string}     The portion of an SQL `SELECT` statement selecting
+     * fields from the `journal_members` table and mapping them to the
+     * JournalMember type.
      */
     getJournalMemberSelectionString(): string {
         return `
@@ -78,6 +121,18 @@ module.exports = class JournalDAO {
         `
     }
 
+    /**
+     * Populate a JournalMember object from an instance of pg's QueryResultRow.
+     * The result row must contain the results of a `SELECT` statement that
+     * included the selection string returned by
+     * `getJournalMemberSelectionString()`.  It may include other results,
+     * which will be ignored.
+     *
+     * @param {QueryResultRow}  row     A QueryResultRow containing results
+     * selected using `getJournalMemberSelectionString()`.
+     *
+     * @return {JournalMember}  A populated JournalMember object.
+     */
     hydrateJournalMember(row: QueryResultRow): JournalMember {
         const member: JournalMember = {
             journalId: row.Member_journalId,
@@ -91,6 +146,17 @@ module.exports = class JournalDAO {
         return member
     }
 
+    /**
+     * Hydrate multiple Journal models from an array of `QueryResultRow`
+     * returned by pg's Pool.
+     *
+     * @param {QueryResultRow[]} rows    The array of QueryResultRow containing
+     * the results of `getJournalSelectionString()` and
+     * `getJournalMemberSelectionString()`.
+     *
+     * @return {DatabaseResult<Journal>} A DatabaseResult populated with
+     * hydrated Journal models.
+     */
     hydrateJournals(rows: QueryResultRow[]): DatabaseResult<Journal> {
         const dictionary: ModelDictionary<Journal> = {}
         const list: number[] = []
@@ -115,49 +181,98 @@ module.exports = class JournalDAO {
         return { dictionary: dictionary, list: list }
     }
 
-    async countJournals(where, params, page) {
-        params = params ? params : []
-        where = where ? where : ''
+    /**
+     * Select Journal models from the database `journals` and `journal_members`
+     * tables.
+     *
+     * @param {string}  whereStatement   (Optional) The `WHERE` portion of an
+     * SQL `SELECT` statement against the `journals` and `journal_members`
+     * tables parameterized for use with pg's `Pool.query()`.
+     * @param {any[]}   whereParameters  (Optional) An array of parameters for
+     * use with `whereStatement`.
+     * @param {string}  orderStatement  (Optional) The `ORDER` portion of an
+     * SQL `SELECT` statement.
+     * @param {number}  pageNumber  (Optional) The page number of the page we
+     * want to retrieve.
+     *
+     * @return {Promise<DatabaseResult<Journal>>}   A Promise that results to a
+     * DatabaseResult populated with the hydrated Journal models that result
+     * from the query.
+     */
+    async selectJournals(
+        whereStatement?: string, 
+        whereParameters?: any[], 
+        orderStatement?: string, 
+        pageNumber?: number
+    ): Promise<DatabaseResult<Journal>> {
+        let where = whereStatement ? whereStatement : ''
+        const params = whereParameters ? [ ...whereParameters ] : [] // Need to copy here because we're going to reuse it in count.
+        let order = orderStatement ? orderStatement : 'journals.created_date desc'
+
+        // We only want to include the paging terms if we actually want paging.
+        // If we're making an internal call for another object, then we
+        // probably don't want to have to deal with pagination.
+        if ( pageNumber ) {
+            const pageIds = await this.getJournalIdsForPage(where, params, order, pageNumber)
+
+            if ( where.length > 0 ) {
+                where += ` AND journals.id = ANY($${params.length}::bigint[])`
+                params.push(pageIds)
+            } else {
+                where = `WHERE journals.id = ANY($1::bigint[])`
+                params.push(pageIds)
+            }
+        }
 
         const sql = `
-               SELECT 
-                 COUNT(journals.id) as count
-                FROM journals 
-                ${where} 
+            SELECT 
+                ${ this.getJournalSelectionString() },
+                ${ this.getJournalMemberSelectionString() }
+            FROM journals
+                LEFT OUTER JOIN journal_members ON journals.id = journal_members.journal_id
+            ${where}
+            ORDER BY ${order}
         `
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rows.length <= 0) {
-            return {
-                count: 0,
-                page: page ? page : 1,
-                pageSize: PAGE_SIZE,
-                numberOfPages: 1
-            }
-        }
-
-        const count = results.rows[0].count
-        return {
-            count: count,
-            page: page ? page : 1,
-            pageSize: PAGE_SIZE,
-            numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
+        if ( results.rows.length <= 0 ) {
+            return { dictionary: {}, list: [] } 
+        } else {
+            return this.hydrateJournals(results.rows)
         }
     }
 
-    async getPage(where, inputParams, order, page) {
-        where = where || ''
-        const params = [ ...inputParams ] || [] // Need to copy here because we're going
-        // to reuse it in count.
-        order = order ? order : 'journals.created_date desc'
-
-        if ( ! page ) {
-            return null 
-        }
+    /**
+     * Get an array of `Journal.id` that correspond the page of a query
+     * identified by `pageNumber`.
+     *
+     * @param {string}  whereStatement   (Optional) The `WHERE` portion of an
+     * SQL `SELECT` statement against the `journals` and `journal_members`
+     * tables parameterized for use with pg's `Pool.query()`.
+     * @param {any[]}   whereParameters  (Optional) An array of parameters for
+     * use with `whereStatement`.
+     * @param {string}  orderStatement  (Optional) The `ORDER` portion of an
+     * SQL `SELECT` statement.
+     * @param {number}  pageNumber  (Optional) The page number of the page we
+     * want to retrieve.
+     *
+     * @return {Promise<number[]>}  A Promise that results to an array
+     * containing the id numbers of the Journals on page `pageNumber` of the
+     * query.
+     */
+    async getJournalIdsForPage(
+        whereStatement?: string, 
+        whereParameters?: any[], 
+        orderStatement?: string, 
+        pageNumber?: number
+    ): Promise<number[]> {
+        let where = whereStatement ? whereStatement : ''
+        const params = whereParameters? [ ...whereParameters] : [] // Need to copy here because we're going to reuse it in count.
+        let order = orderStatement ? orderStatement : 'journals.created_date desc'
 
         let paging = ''
-        page = page ? page : 1
+        const page = pageNumber ? pageNumber : 1
 
         const offset = (page-1) * PAGE_SIZE
         let count = params.length 
@@ -189,74 +304,104 @@ module.exports = class JournalDAO {
         }
     }
 
-    async selectJournals(where, inputParams, order, page) {
-        where = where || ''
-        const params = [ ...inputParams ] || [] // Need to copy here because we're going
-        // to reuse it in count.
-        order = order ? order : 'journals.created_date desc'
-
-        // We only want to include the paging terms if we actually want paging.
-        // If we're making an internal call for another object, then we
-        // probably don't want to have to deal with pagination.
-        if ( page ) {
-            const pageIds = await this.getPage(where, params, order, page)
-
-            if ( where.length > 0 ) {
-                where += ` AND journals.id = ANY($${params.length}::bigint[])`
-                params.push(pageIds)
-            } else {
-                where = `WHERE journals.id = ANY($1::bigint[])`
-                params.push(pageIds)
-            }
-        }
+    /**
+     * Get the paging metadata for the query defined by the given
+     * `whereStatement` and `whereParams`.  
+     *
+     * @param {string}  whereStatement  The `WHERE` portion of an SQL `SELECT`
+     * query parameterized for use with pg's `Pool.query()`.
+     * @param {any[]}   whereParameters The parameters for `whereStatement`.
+     * @param {number}  pageNumber  The page number of the page we queried for,
+     * pass through to the metadata.
+     *
+     * @return {Promise<PageMetadata>}  The populated PageMetadata.
+     */
+    async getJournalPageMetadata(
+        whereStatement: string, 
+        whereParameters: any[], 
+        pageNumber: number
+    ): Promise<PageMetadata> {
+        let where = whereStatement ? whereStatement : ''
+        let params = whereParameters ? [ ...whereParameters ] : []
+        let page = pageNumber ? pageNumber : 1
 
         const sql = `
-            SELECT 
-                ${ this.getJournalSelectionString() }
-
-
-            FROM journals
-                LEFT OUTER JOIN journal_members ON journals.id = journal_members.journal_id
-            ${where}
-            ORDER BY ${order}
+               SELECT 
+                 COUNT(journals.id) as count
+                FROM journals 
+                ${where} 
         `
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rows.length <= 0 ) {
-            return { dictionary: {}, list: [] } 
-        } else {
-            return this.hydrateJournals(results.rows)
+        if ( results.rows.length <= 0) {
+            return {
+                count: 0,
+                page: page,
+                pageSize: PAGE_SIZE,
+                numberOfPages: 1
+            }
+        }
+
+        const count = results.rows[0].count
+        return {
+            count: count,
+            page: page,
+            pageSize: PAGE_SIZE,
+            numberOfPages: Math.floor(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
         }
     }
 
-    async insertJournal(journal) {
+    /**
+     * Insert a journal defined by a Journal model into the `journals` table.
+     *
+     * @param {Journal}     journal     The journal to insert into the `journals` table.
+     *
+     * @throws {DAOError}   When something goes awry with the `INSERT` query.
+     *
+     * @return {Promise<void>}
+     */
+    async insertJournal(journal: Journal): Promise<number> {
         const sql = `
-            INSERT INTO journals (name, description, ${ this.core.features.hasFeature('journal-permission-models-194') ? 'model, ' : ''} created_date, updated_date)
-                VALUES ($1, $2, ${ this.core.features.hasFeature('journal-permission-models-194') ? '$3, ' : ''} now(), now())
-                RETURNING id
+        INSERT INTO journals (
+            name, 
+            description, 
+            ${ this.core.features.hasFeature('journal-permission-models-194') ? 'model, ' : ''} 
+            created_date, 
+            updated_date
+        )
+        VALUES (
+            $1, 
+            $2, 
+            ${ this.core.features.hasFeature('journal-permission-models-194') ? '$3, ' : ''}
+            now(), 
+            now()
+        )
+        RETURNING id
         `
 
         const params = [ journal.name, journal.description ]
 
-        if ( this.core.features.hasFeature('journal-permission-models-194') ) {
-            params.push(journal.model)
+        if ( this.core.features.hasFeature('journal-permission-models-194')) {
+            if ( journal.model ) {
+                params.push(journal.model)
+            }
         }
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rowCount <= 0 || results.rows.length <= 0 ) {
-            throw new DAOError('failed-insertion', `Attempt to insert journal "${journal.name}" failed.`)
+        if ( ! results.rowCount || results.rowCount <= 0 || results.rows.length <= 0 ) {
+            throw new DAOError('failed-insertion', 
+                `Attempt to insert journal "${journal.name}" failed.`)
         }
 
         return results.rows[0].id
     }
 
-    async updateJournal(journal) {
-        throw new DAOError('not-implemented', `Attempt to call updateJournal, which hasn't been implemented.`)
-    }
-
-    async updatePartialJournal(journal) {
+    /**
+     *
+     */
+    async updatePartialJournal(journal: Journal): Promise<void> {
         const ignoredFields = [ 'id', 'createdDate', 'updatedDate' ]
 
         let sql = 'UPDATE journals SET '

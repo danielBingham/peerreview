@@ -206,7 +206,7 @@ module.exports = class JournalController {
         }
 
         const results = await this.journalDAO.selectJournals(where, params, order, page)
-        results.meta = await this.journalDAO.countJournals(where, params, page)
+        results.meta = await this.journalDAO.getJournalPageMetdata(where, params, page)
 
         results.relations = await this.getRelations(results, requestedRelations) 
 
