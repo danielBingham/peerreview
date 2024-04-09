@@ -56,7 +56,8 @@ export interface Journal extends Model {
     members: JournalMember[]
 }
 
-export interface PartialJournal {
+export interface PartialJournal extends Model {
+    name?: string
     description?: string
     model?: JournalModel
     anonymity?: JournalAnonymity

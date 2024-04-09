@@ -22,7 +22,7 @@ import { Pool, Client, QueryResultRow } from 'pg'
 import Core from '../core'
 import DAOError from '../errors/DAOError'
 
-import { Journal, JournalMember, DatabaseResult, PageMetadata, ModelDictionary} from '@danielbingham/peerreview-model'
+import { Journal, PartialJournal, JournalMember, DatabaseResult, PageMetadata, ModelDictionary} from '@danielbingham/peerreview-model'
 
 const PAGE_SIZE = 20
 
@@ -399,22 +399,25 @@ export default class JournalDAO {
     }
 
     /**
+     * Update a row in the `journals` table based on a PartialJournal model.
      *
+     * @param {PartialJournal} journal  The PartialJournal with the data we
+     * want to update in the `journals` table.
+     *
+     * @return {Promise<void>}
      */
-    async updatePartialJournal(journal: Journal): Promise<void> {
-        const ignoredFields = [ 'id', 'createdDate', 'updatedDate' ]
-
+    async updatePartialJournal(journal: PartialJournal): Promise<void> {
         let sql = 'UPDATE journals SET '
         let params = []
         let count = 1
-        for(let key in journal) {
-            if (ignoredFields.includes(key) ) {
+        for(let key of Object.keys(journal)) {
+            if ( key == 'id' || key == 'name') {
                 continue
             }
 
             sql += `${key} = $${count}, `
             
-            params.push(journal[key])
+            params.push(journal[key as keyof PartialJournal])
             count = count + 1
         }
         sql += `updated_date = now() WHERE id = $${count}`
@@ -423,25 +426,44 @@ export default class JournalDAO {
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rowCount <= 0 ) {
+        if ( ! results.rowCount || results.rowCount <= 0 ) {
             throw new DAOError('update-failure', `Failed to update Journal(${journal.id}).`)
         }
     }
 
-    async deleteJournal(journal) {
+    /**
+     * Delete a row from the `journals` table using it's `id`.
+     *
+     * @param {number} id   The id of a `Journal` model, matching the primary
+     * key of the `journals` table.
+     *
+     * @return {Promise<void>}
+     */
+    async deleteJournal(id: number): Promise<void> {
         const results = await this.database.query(
             'DELETE FROM journals WHERE id = $1',
-            [ journal.id ]
+            [ id ]
         )
 
-        if ( results.rowCount <= 0 ) {
-            throw new DAOError('failed-deletion', `Failed to delete Journal(${journal.id}).`)
+        if ( ! results.rowCount || results.rowCount <= 0 ) {
+            throw new DAOError('failed-deletion', `Failed to delete Journal(${id}).`)
         }
     }
 
     // ======= Journal Members ================================================
 
-    async insertJournalMember(journalId, member) {
+    /**
+     * Insert a row into the `journal_members` table from a `JournalMember`
+     * model.
+     *
+     * @param {number} journalId    The `Journal.id` of the journal the
+     * `JournalMember` belongs to.
+     * @param {JournalMember} member    The `JournalMember` we want to insert
+     * into the `journal_members` table.
+     *
+     * @return {Promise<void>}
+     */
+    async insertJournalMember(journalId: number, member: JournalMember): Promise<void> {
         const results = await this.database.query(`
             INSERT INTO journal_members (journal_id, user_id, member_order, permissions, created_date, updated_date)
                 VALUES ($1, $2, $3, $4, now(), now())
@@ -449,19 +471,22 @@ export default class JournalDAO {
             [ journalId, member.userId, member.order, member.permissions ]
         )
 
-        if ( results.rowCount <= 0 ) {
-            throw new DAOError('failed-insertion', `Failed to insert JournalUser(${journalUser.userId}).`)
+        if ( ! results.rowCount || results.rowCount <= 0 ) {
+            throw new DAOError('failed-insertion', `Failed to insert JournalUser(${member.userId}).`)
         }
     }
 
-    async updateJournalMember(journalId, member) {
+    /**
+     * Update a journal
+     */
+    async updateJournalMember(journalId: number, member: JournalMember): Promise<void> {
         const results = await this.database.query(`
             UPDATE journal_members SET permissions = $1, member_order = $2, updated_date = now()
                 WHERE journal_id = $3 AND user_id = $4
         `, [ member.permissions, member.order, journalId, member.userId ])
 
-        if ( results.rowCount <= 0 ) {
-            throw new DAOError('failed-update', `Failed to update Member(${member.userId}) of Journal(${journal.id}).`)
+        if ( ! results.rowCount || results.rowCount <= 0 ) {
+            throw new DAOError('failed-update', `Failed to update Member(${member.userId}) of Journal(${journalId}).`)
         }
     }
 
