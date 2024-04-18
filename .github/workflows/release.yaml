@@ -25,9 +25,9 @@ jobs:
 
       # Build and publish @danielbingham/peerreview-model
       - name: Install Model Dependencies 
+        working-directory: ./packages/model
         env:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        working-directory: ./packages/model
         run: |
           npm ci
 
@@ -51,6 +51,8 @@ jobs:
       # Build and publish @danielbingham/peerreview-backend
       - name: Install Backend NPM Modules
         working-directory: ./packages/backend
+        env:
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
 
