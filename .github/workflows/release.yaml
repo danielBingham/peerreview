@@ -54,6 +54,13 @@ jobs:
         run: |
           npm ci
 
+      - name: Install updated model version
+        working-directory: ./worker
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install @danielbingham/peerreview-model@${{ github.event.inputs.version }}
+
       - name: Run Backend Unit Tests
         working-directory: ./packages/backend
         run: |
@@ -79,23 +86,35 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
+
       - name: Install updated backend version
         working-directory: ./worker
         env: 
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install @danielbingham/peerreview-backend@${{ github.event.inputs.version }}
+
+      - name: Install updated model version
+        working-directory: ./worker
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install @danielbingham/peerreview-model@${{ github.event.inputs.version }}
+
       - name: Version the worker package
         working-directory: ./worker
         run: |
           npm version ${{ github.event.inputs.version }}
+
       - name: Build the Worker Docker Container
         working-directory: ./worker
         run: |
            docker build --build-arg TOKEN=${{ secrets.GITHUB_TOKEN }} -t ghcr.io/danielbingham/peerreview-worker:${{ github.event.inputs.version }} .
+
       - name: Login to Github Container Repository
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
+
       - name: Push the newly built container to the Repostory under the ${{ github.event.inputs.version }} tag
         run: |
           docker push ghcr.io/danielbingham/peerreview-worker:${{ github.event.inputs.version }}
@@ -108,27 +127,40 @@ jobs:
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm ci
+
       - name: Install updated backend version
         working-directory: ./web-application
         env: 
           TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           npm install @danielbingham/peerreview-backend@${{ github.event.inputs.version }}
+
+      - name: Install updated model version
+        working-directory: ./worker
+        env: 
+          TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          npm install @danielbingham/peerreview-model@${{ github.event.inputs.version }}
+
       - name: Run Web Application Unit Tests
         working-directory: ./web-application
         run: | 
           npm run test
+
       - name: Version the web application
         working-directory: ./web-application
         run: |
           npm version ${{ github.event.inputs.version }}
+
       - name: Build the  Web Application Docker Container
         working-directory: ./web-application
         run: |
            docker build --build-arg TOKEN=${{ secrets.GITHUB_TOKEN }} -t ghcr.io/danielbingham/peerreview:${{ github.event.inputs.version }} .
+
       - name: Login to Github Container Repository
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $GITHUB_REPOSITORY_OWNER --password-stdin
+
       - name: Push the newly built container to the Repostory under the ${{ github.event.inputs.version }} tag
         run: |
           docker push ghcr.io/danielbingham/peerreview:${{ github.event.inputs.version }}
