@@ -770,7 +770,7 @@ module.exports = class NotificationService {
             if ( isVisibleToAssignedEditors ) {
                 const assignedEditorResults = await this.core.database.query(`
                     SELECT user_id FROM journal_submission_editors
-                        LEFT OUTER JOIN journal_submissions ON journal_submission_editors.submission_id = journal_submisisons.id
+                        LEFT OUTER JOIN journal_submissions ON journal_submission_editors.submission_id = journal_submissions.id
                     WHERE journal_submissions.paper_id = $1
                 `, [ context.paper.id ])
 

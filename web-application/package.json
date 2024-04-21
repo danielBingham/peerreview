@@ -1,6 +1,6 @@
 {
   "name": "@danielbingham/peerreview-web-application",
-  "version": "0.3.7",
+  "version": "0.3.10",
   "description": "The web application of Peer Review.",
   "author": "Daniel Bingham",
   "license": "GPL-3.0",
@@ -33,7 +33,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.141.0",
-    "@danielbingham/peerreview-backend": "^0.3.7",
+    "@danielbingham/peerreview-backend": "^0.3.10",
     "@danielbingham/peerreview-model": "^0.3.7",
     "@heroicons/react": "^2.0.11",
     "@reduxjs/toolkit": "^1.8.1",
