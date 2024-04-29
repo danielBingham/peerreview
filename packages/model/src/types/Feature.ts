@@ -1,3 +1,5 @@
+import { Model } from './Model'
+
 /** 
  * Valid values for `Feature.status`. Represents where the Feature is in the
  * migration and activation process.
@@ -24,7 +26,7 @@ export enum FeatureStatus {
  *
  * @see `packages/backend/src/services/FeatureService.js`
  */
-export interface Feature {
+export interface Feature extends Model {
 
     /**
      * The name of the feature.  Should be named for a branch in Git. Also

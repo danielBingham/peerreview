@@ -57,7 +57,7 @@ const dummyConfig = {
 }
 
 const overrides: CoreOverrides = {
-    logger: jest.mocked(new Logger()),
+    logger: jest.mocked(new Logger(dummyConfig.log_level)),
     database: jest.mocked(new Pool()),
     postmarkClient: jest.mocked(new ServerClient('test-token')),
     queue: jest.mocked(new Queue('MockQueue'))

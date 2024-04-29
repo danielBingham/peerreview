@@ -9,7 +9,7 @@ export { ResultType } from '../types/Results'
  * against the fixture array.
  *
  * @param {Type[]} fixtures     An array of fixtures that extend `Model`.
- * @param {ResultType} resultType   The type of result set we want returned. 
+ * @param {ResultType} resultType   The type of result set we want returned (DatabaseResult, EntityResult, or QueryResult). 
  * @param {Function} filter     (Optional) An optional filter function passed to `fixtures.filter()`.
  *
  * @return {DatabaseResult<type> | EntityResult<Type> | QueryResult<Type>}  The
@@ -35,7 +35,7 @@ export function generateFixture<Type extends Model>(
     if ( resultType == ResultType.Database) {
         return {
             dictionary: fixtureDictionary,
-            list: fixtureList 
+            list: fixtureList.map((f) => f.id)
         }
     } else if ( resultType == ResultType.Entity) {
         return {
@@ -45,7 +45,7 @@ export function generateFixture<Type extends Model>(
     } else if ( resultType == ResultType.Query) {
         return {
             dictionary: fixtureDictionary,
-            list: fixtureList,
+            list: fixtureList.map((f) => f.id),
             meta: {
                 count: fixtureList.length,
                 page: 1,

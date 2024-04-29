@@ -93,11 +93,11 @@ export default class JournalDAO {
             name: row.Journal_name,
             description: row.Journal_description,
             createdDate: row.Journal_createdDate,
-            updatedDate: row.journal_updatedDate,
+            updatedDate: row.Journal_updatedDate,
             members: []
         }
         if ( this.core.features.hasFeature('journal-permission-models-194') ) {
-            journal.model = row.journal_model
+            journal.model = row.Journal_model
         }
         return journal
     }
@@ -161,19 +161,22 @@ export default class JournalDAO {
         const dictionary: ModelDictionary<Journal> = {}
         const list: number[] = []
 
-        for(const row of rows) {
-            const journal = this.hydrateJournal(row) 
+        const memberDictionary: { [journalId: number]: { [userId: number]: JournalMember }} = {}
 
-            if ( ! dictionary[journal.id] ) {
-                dictionary[journal.id] = journal
-                list.push(journal.id)
+        for(const row of rows) {
+            if ( ! ( row.Journal_id in dictionary) ) {
+                dictionary[row.Journal_id] = this.hydrateJournal(row) 
+                list.push(row.Journal_id)
             }
 
-            if ( row.member_userId ) {
+            if ( row.Member_userId ) {
+                if ( ! ( row.Journal_id in memberDictionary) ) {
+                    memberDictionary[row.Journal_id] = {}
+                }
 
-                if ( ! dictionary[journal.id].members.find((member) => member.userId == row.user_id) ) {
+                if ( ! ( row.Member_userId in memberDictionary[row.Journal_id])) {
                     const member = this.hydrateJournalMember(row)
-                    dictionary[journal.id].members.push(member)
+                    dictionary[row.Journal_id].members.push(member)
                 }
             }
         }
@@ -477,7 +480,15 @@ export default class JournalDAO {
     }
 
     /**
-     * Update a journal
+     * Update the row in the `journal_members` table associated with a
+     * particular JournalMember. 
+     *
+     * @param {number} journalId    The id of the journal the member belongs
+     * to.
+     * @param {JournalMember} member    The JournalMember we'd like to use to
+     * update the row in the database.
+     *
+     * @returns {Promise<void>}
      */
     async updateJournalMember(journalId: number, member: JournalMember): Promise<void> {
         const results = await this.database.query(`
@@ -490,11 +501,24 @@ export default class JournalDAO {
         }
     }
 
-    async updatePartialJournalMember(journal, member) {
+    /**
+     * Unimplemented.
+     */
+    async updatePartialJournalMember(journalId: number, member: JournalMember): Promise<void> {
         throw new DAOError('not-implemented', `Attempt to call updatePartialJournalMember() which isn't implemented.`)
     }
 
-    async deleteJournalMember(journalId, userId) {
+    /**
+     * Delete a JournalMember from a Journal by deleting the row from the
+     * `journal_members` table beloning to User(userId).
+     *
+     * @param {number} journalId   The id of the Journal the member belongs to. 
+     * @param {number} userId       The id of the User to remove from the
+     * Journal's membership.
+     *
+     * @returns {Promise<void>}
+     */
+    async deleteJournalMember(journalId: number, userId: number): Promise<void> {
 
         // Before we delete the member, we need to remove them from their assignements.
        const editorResults = await this.database.query(`
@@ -509,15 +533,14 @@ export default class JournalDAO {
                     AND submission_id IN (SELECT id FROM journal_submissions WHERE journal_id = $2)
         `, [ userId, journalId ])
 
+        // No we can delete the member.
         const results = await this.database.query(`
             DELETE FROM journal_members WHERE journal_id = $1 AND user_id = $2
         `, [ journalId, userId ])
 
-        if ( results.rowCount <= 0 ) {
+        if ( ! results.rowCount || results.rowCount <= 0 ) {
             throw new DAOError('failed-deletion', 
-                `Failed to delete Member(${member.userId}) from Journal(${journalId}).`)
+                `Failed to delete Member(${userId}) from Journal(${journalId}).`)
         }
     }
-
-
 }

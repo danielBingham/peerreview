@@ -5,7 +5,7 @@ export const features: Feature[] = [
     // Fixture 1 - Just created feature
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[0]
     {
-        id: 'test-feature-created',
+        id: 1,
         name: 'test-feature-created',
         status: FeatureStatus.created,
         createdDate: 'TIMESTAMP',
@@ -14,7 +14,7 @@ export const features: Feature[] = [
     // Fixture 2 - feature currently being initialized
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[1]
     {
-        id: 'test-feature-initializing',
+        id: 2,
         name: 'test-feature-initializing',
         status: FeatureStatus.initializing,
         createdDate: 'TIMESTAMP',
@@ -23,7 +23,7 @@ export const features: Feature[] = [
     // Fixture 3 - initialized feature 
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[2]
     {
-        id: 'test-feature-initialized',
+        id: 3,
         name: 'test-feature-initialized',
         status: FeatureStatus.initialized,
         createdDate: 'TIMESTAMP',
@@ -32,7 +32,7 @@ export const features: Feature[] = [
     // Fixture 4 - feature currently in process of migration
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[3]
     {
-        id: 'test-feature-migrating',
+        id: 4,
         name: 'test-feature-migrating',
         status: FeatureStatus.migrating,
         createdDate: 'TIMESTAMP',
@@ -41,7 +41,7 @@ export const features: Feature[] = [
     // Fixture 5 - feature that finished migrating 
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[4]
     {
-        id: 'test-feature-migrated',
+        id: 5,
         name: 'test-feature-migrated',
         status: FeatureStatus.migrated,
         createdDate: 'TIMESTAMP',
@@ -50,7 +50,7 @@ export const features: Feature[] = [
     // Fixture 6 - enabled feature 
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[5]
     {
-        id: 'test-feature-enabled',
+        id: 6,
         name: 'test-feature-enabled',
         status: FeatureStatus.enabled,
         createdDate: 'TIMESTAMP',
@@ -59,7 +59,7 @@ export const features: Feature[] = [
     // Fixture 7 - disabled feature 
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[6]
     {
-        id: 'test-feature-disabled',
+        id: 7,
         name: 'test-feature-disabled',
         status: FeatureStatus.disabled,
         createdDate: 'TIMESTAMP',
@@ -68,7 +68,7 @@ export const features: Feature[] = [
     // Fixture 8 - feature in process of rolling back 
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[7]
     {
-        id: 'test-feature-rolling-back',
+        id: 8,
         name: 'test-feature-rolling-back',
         status: FeatureStatus.rollingBack,
         createdDate: 'TIMESTAMP',
@@ -77,7 +77,7 @@ export const features: Feature[] = [
     // Fixture 9 - rolled back feature 
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[8]
     {
-        id: 'test-feature-rolled-back',
+        id: 9,
         name: 'test-feature-rolled-back',
         status: FeatureStatus.rolledBack,
         createdDate: 'TIMESTAMP',
@@ -86,7 +86,7 @@ export const features: Feature[] = [
     // Fixture 10 - feature in process of uninitializing 
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[9]
     {
-        id: 'test-feature-uninitializing',
+        id: 10,
         name: 'test-feature-uninitializing',
         status: FeatureStatus.uninitializing,
         createdDate: 'TIMESTAMP',
@@ -95,7 +95,7 @@ export const features: Feature[] = [
     // Fixture 11 - uninitialized feature (fully rolled back) 
     // @see packages/backend/test/fixtures/database/FeaturesTable.js -> features[10]
     {
-        id: 'test-feature-uninitialized',
+        id: 11,
         name: 'test-feature-uninitialized',
         status: FeatureStatus.uninitialized,
         createdDate: 'TIMESTAMP',
