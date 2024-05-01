@@ -19,8 +19,7 @@
  ******************************************************************************/
 import { Pool, Client, QueryResultRow } from 'pg'
 
-import Core from '../core'
-import DAOError from '../errors/DAOError'
+import { Core, DAOError } from '@danielbingham/peerreview-core'
 
 import { Journal, PartialJournal, JournalMember, DatabaseResult, PageMetadata, ModelDictionary} from '@danielbingham/peerreview-model'
 

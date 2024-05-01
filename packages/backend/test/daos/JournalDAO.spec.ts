@@ -23,19 +23,17 @@ import { QueryResult } from 'pg'
 
 import JournalsDAO from '../../src/daos/JournalDAO'
 
-import { getJournalsTableJoinFixture } from '../fixtures/database/JournalsTable'
+import { getJournalsTableJoinFixture } from '../../src/fixtures/database/JournalsTable'
 import { Journal, getJournalFixture, ResultType, DatabaseResult } from '@danielbingham/peerreview-model'
 
-import { mockCore } from '../mocks/MockCore'
+import { mockCore } from '@danielbingham/peerreview-core'
 
 
 describe('JournalsDAO', function() {
 
     beforeEach(function() {
         mockCore.database.query.mockReset()
-        mockCore.features.features['journal-permission-models-194'] = {
-            status: 'enabled'
-        }
+        mockCore.features.features['journal-permission-models-194'] = true 
     })
 
     describe('hydrateJournal()', function() {

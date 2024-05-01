@@ -3,10 +3,10 @@ import { QueryResult } from 'pg'
 
 import FilesDAO from '../../src/daos/FileDAO'
 
-import { getFilesTableFixture } from '../fixtures/database/FilesTable'
+import { getFilesTableFixture } from '../../src/fixtures/database/FilesTable'
 import { File, getFileFixture, ResultType, DatabaseResult } from '@danielbingham/peerreview-model'
 
-import { mockCore } from '../mocks/MockCore'
+import { mockCore } from '@danielbingham/peerreview-core'
 
 
 describe('FilesDAO', function() {

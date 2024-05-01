@@ -3,10 +3,10 @@ import { QueryResult } from 'pg'
 
 import PaperDAO from '../../src/daos/PaperDAO'
 
-import { getPapersTableJoinFixture } from '../fixtures/database/PapersTable'
+import { getPapersTableJoinFixture } from '../../src/fixtures/database/PapersTable'
 import { Paper, getPaperFixture, ResultType, DatabaseResult } from '@danielbingham/peerreview-model'
 
-import { mockCore } from '../mocks/MockCore'
+import { mockCore } from '@danielbingham/peerreview-core'
 
 describe('PaperDAO', function() {
 

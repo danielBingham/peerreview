@@ -1,7 +1,7 @@
 {
-  "name": "@danielbingham/peerreview-model",
+  "name": "@danielbingham/peerreview-features",
   "version": "0.3.10",
-  "description": "The model of Peer Review.",
+  "description": "Feature flagging and migrations for JournalHub.",
   "author": "Daniel Bingham",
   "license": "AGPL-3.0",
   "homepage": "https://github.com/danielbingham/peerreview#README",
@@ -20,10 +20,20 @@
   "types": "src/index.ts",
   "scripts": {
     "build": "rm -rf dist && tsc --build ./tsconfig.json",
-    "watch": "tsc --watch"
+    "watch": "tsc --watch",
+    "jest": "jest",
+    "test": "jest test"
   },
-  "dependencies": { },
+  "dependencies": {
+    "@danielbingham/peerreview-backend": "^0.3.10",
+    "@danielbingham/peerreview-core": "^0.3.10",
+    "@danielbingham/peerreview-model": "^0.3.10",
+    "@types/pg": "^8.11.5",
+    "pg": "^8.11.5"
+  },
   "devDependencies": {
+    "jest": "^29.4.3",
+    "ts-jest": "^29.1.2",
     "typescript": "^5.4.2"
   }
 }

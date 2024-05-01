@@ -1,3 +1,22 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 import { Pool, QueryResultRow } from 'pg'
 import mime from 'mime'
 import sanitizeFilename from 'sanitize-filename'
@@ -5,9 +24,7 @@ import pdfjslib from 'pdfjs-dist/legacy/build/pdf.js'
 
 import { Paper, PaperAuthor, PaperVersion, DatabaseResult, ModelDictionary, PageMetadata } from '@danielbingham/peerreview-model'
 
-import DAOError from '../errors/DAOError'
-
-import Core from '../core'
+import { Core, DAOError } from '@danielbingham/peerreview-core'
 
 import FileDAO from './FileDAO'
 import S3FileService from '../services/S3FileService'
@@ -42,7 +59,7 @@ export default class PaperDAO {
      */
     hydratePapers(rows: QueryResultRow[]): DatabaseResult<Paper>  {
         const dictionary: ModelDictionary<Paper> = {}
-        const list: Paper[] = []
+        const list: number[] = []
 
         // These are just used to track the various child objects and ensure
         // uniqueness.
@@ -66,7 +83,7 @@ export default class PaperDAO {
                 }
 
                 dictionary[paper.id] = paper
-                list.push(paper)
+                list.push(paper.id)
             }
 
             if ( row.PaperAuthor_userId ) {
@@ -381,7 +398,7 @@ export default class PaperDAO {
         if ( files.list.length <= 0) {
             throw new DAOError('invalid-file', `Invalid file_id posted with paper ${paper.id}.`)
         }
-        const file = files.list[0]
+        const file = files.dictionary[version.file.id]
 
         const maxVersionResults = await this.database.query(
             'SELECT MAX(version)+1 as version FROM paper_versions WHERE paper_id=$1', 

@@ -3,10 +3,10 @@ import { QueryResult } from 'pg'
 
 import FieldsDAO from '../../src/daos/FieldDAO'
 
-import { getFieldsTableFixture } from '../fixtures/database/FieldsTable'
+import { getFieldsTableFixture } from '../../src/fixtures/database/FieldsTable'
 import { Field, getFieldFixture, ResultType, DatabaseResult } from '@danielbingham/peerreview-model'
 
-import { mockCore } from '../mocks/MockCore'
+import { mockCore } from '@danielbingham/peerreview-core'
 
 
 describe('FieldsDAO', function() {
