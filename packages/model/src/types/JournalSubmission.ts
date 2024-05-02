@@ -19,36 +19,35 @@
  ******************************************************************************/
 import { Model } from './Model'
 
-export interface File extends Model {
-    /** The User.id of the user who uploaded this file. */
+export interface JournalSubmissionReview {
+    id: number
+    version: number
+    recommendation: string
     userId: number
-
-    /** The location where this file is stored.  Probably an S3 bucket url. */
-    location: string
-
-    /** The file path to the file with in the location. */
-    filepath: string
-
-    /** The mimetype of this file.  */
-    type: string
-
-    /** Time/Date when the file was created. */
-    createdDate: string
-
-    /** Time/Date when the file was last updated. */
-    updatedDate: string
 }
 
-export interface PartialFile extends Model {
-    /** The User.id of the user who uploaded this file. */
-    userId?: number
+export interface JournalSubmissionReviewer {
+    userId: number
+    assignedDate: string
+    reviews: JournalSubmissionReview[]
+}
 
-    /** The location where this file is stored.  Probably an S3 bucket url. */
-    location?: string
+export interface JournalSubmissionEditor {
+    userId: number
+    assignedDate: string
+}
 
-    /** The file path to the file with in the location. */
-    filepath?: string
-
-    /** The mimetype of this file.  */
-    type?: string
+export interface JournalSubmission extends Model {
+    journalId: number
+    paperId: number
+    submitterId?: number
+    submitterComment?: string
+    status: string
+    deciderId?: number
+    decisionComment?: string
+    decisionDate?: string
+    createdDate: string
+    updatedDate: string
+    reviewers: JournalSubmissionReviewer[]
+    editors: JournalSubmissionEditor[]
 }

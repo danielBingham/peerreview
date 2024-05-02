@@ -1,11 +1,16 @@
 
-const DAOError = require('../errors/DAOError')
+import { Pool, QueryResultRow } from 'pg'
+
+import { Core, DAOError } from '@danielbingham/peerreview-core'
+import { JournalSubmission, JournalSubmissionReviewer, ModelDictionary, DatabaseResult } from '@danielbingham/peerreview-model'
 
 const PAGE_SIZE = 20
 
-module.exports = class JournalSubmissionDAO {
+export class JournalSubmissionDAO {
+    core: Core
+    database: Pool
 
-    constructor(core, database) {
+    constructor(core: Core, database?: Pool) {
         this.core = core
 
         // If a database override is provided, use that.  Otherwise, use the
@@ -19,35 +24,103 @@ module.exports = class JournalSubmissionDAO {
         this.database = ( database ? database : this.core.database )
     }
 
-    hydrateJournalSubmissions(rows) {
-        const dictionary = {}
-        const list = []
+    /**
+     * Return the selection string for the `journal_submissions` table
+     * returning values for use with `hydrateJournalSubmission()`.  May be
+     * mixed with other selection strings and hydrate functions to generate
+     * additional objects.
+     *
+     * @return {string} The SELECT portion of an SQL query statement for the
+     * `journal_submissions` table.
+     */
+    getJournalSubmissionSelectionString(): string {
+        return `
+            journal_submissions.id as "JournalSubmission_id",
+            journal_submissions.journal_id as "JournalSubmission_journalId",
+            journal_submissions.paper_id as "JournalSubmission_paperId",
+            journal_submissions.submitter_id as "JournalSubmission_submitterId",
+            journal_submissions.submission_comment as "JournalSubmission_submitterComment",
+            journal_submissions.status as "JournalSubmission_status",
+            journal_submissions.decider_id as "JournalSubmission_deciderId",
+            journal_submissions.decision_comment as "JournalSubmission_decisionComment",
+            journal_submissions.decision_date as "JournalSubmission_decisionDate",
+            journal_submissions.created_date as "JournalSubmission_createdDate",
+            journal_submissions.updated_date as "JournalSubmission_updatedDate"
+        `
+
+    }
+
+    /** 
+     * Hydrate a single JournalSubmission from a single QueryResultRow
+     * generated using `getJournalSubmissionSelectionString()`. Any additional
+     * fields will be ignored.
+     */
+    hydrateJournalSubmission(row: QueryResultRow): JournalSubmission {
+        return {
+            id: row.JournalSubmission_id,
+            journalId: row.JournalSubmission_journalId,
+            paperId: row.JournalSubmission_paperId,
+            submitterId: row.JournalSubmission_submitterId,
+            submitterComment: row.JournalSubmission_submitterComment,
+            status: row.JournalSubmission_status,
+            deciderId: row.JournalSubmission_deciderId,
+            decisionComment: row.JournalSubmission_decisionComment,
+            decisionDate: row.JournalSubmission_decisionDate,
+            createdDate: row.JournalSubmission_createdDate,
+            updatedDate: row.JournalSubmission_updatedDate,
+            reviewers: [],
+            editors: []
+        }
+    }
+
+    /**
+     * Field component of an SQL SELECT statement for selecting the fields
+     * matching the JournalSubmissionReviewer type.
+     *
+     * @return {string} The SQL SELECT statement's field component.
+     */
+    getJournalSubmissionReviewerSelectionString(): string {
+        return `
+        journal_submission_reviewers.submission_id as "JournalSubmissionReviewer_submissionId",
+        journal_submission_reviewers.user_id as "JournalSubmissionReviewer_userId",
+        journal_submission_reviewers.created_date as "JournalSubmissionReviewer_assignedDate",
+        `
+    }
+
+    hydrateJournalSubmissionReviewer(row: QueryResultRow): JournalSubmissionReviewer {
+        return {
+            userId: row.JournalSubmissionReviewer_userId,
+            assignedDate: row.JournalSubmissionReviewer_assignedDate,
+            reviews: []
+        }
+
+    }
+
+    /**
+     * Hydrate a one or more JournalSubmission models from an array of
+     * QueryResultRow returned by pg's `Pool` or `Client`.  Return a populated
+     * `DatabaseResult<JournalSubmission>`.
+     *
+     * @param {QueryResultRow[]} rows   The rows containing the results of a
+     * database query made with the contents of
+     * `getJournalSubmissionSelectionString()`.  May include additional fields,
+     * which will be ignored.
+     *
+     * @return {DatabaseResult<JournalSubmission>} The populated DatabaseResult.
+     */
+    hydrateJournalSubmissions(rows: QueryResultRow[]): DatabaseResult<JournalSubmission> {
+        const dictionary: ModelDictionary<JournalSubmission> = {}
+        const list: number[] = []
 
         for(const row of rows) {
-            const submission = {
-                id: row.submission_id,
-                journalId: row.submission_journalId,
-                paperId: row.submission_paperId,
-                submitterId: row.submission_submitterId,
-                submitterComment: row.submission_submitterComment,
-                status: row.submission_status,
-                deciderId: row.submission_deciderId,
-                decisionComment: row.submission_decisionComment,
-                decisionDate: row.submission_decisionDate,
-                createdDate: row.submission_createdDate,
-                updatedDate: row.submission_updatedDate,
-                reviewers: [],
-                editors: []
-            }
-
-            if ( ! dictionary[submission.id] ) {
-                dictionary[submission.id] = submission
-                list.push(submission)
+            if ( ! (row.JournalSubmission_id in dictionary)) {
+                dictionary[row.JournalSubmission_id] = this.hydrateJournalSubmission(row)
+                list.push(row.JournalSubmission_id)
             }
 
             let reviewer = {
-                userId: row.reviewer_userId,
-                assignedDate: row.reviewer_assignedDate,
+                userId: row.JournalSubmissionReviewer_userId,
+                assignedDate: row.JournalSubmissionReviewer_assignedDate,
                 reviews: []
             }
 
@@ -126,21 +199,8 @@ module.exports = class JournalSubmissionDAO {
 
         const sql = `
             SELECT
-                journal_submissions.id as submission_id, 
-                journal_submissions.journal_id as "submission_journalId",
-                journal_submissions.paper_id as "submission_paperId",
-                journal_submissions.submitter_id as "submission_submitterId",
-                journal_submissions.submission_comment as "submission_submitterComment",
-                journal_submissions.status as submission_status,
-                journal_submissions.decider_id as "submission_deciderId",
-                journal_submissions.decision_comment as "submission_decisionComment",
-                journal_submissions.decision_date as "submission_decisionDate",
-                journal_submissions.created_date as "submission_createdDate",
-                journal_submissions.updated_date as "submission_updatedDate",
+                ${this.getJournalSubmissionSelectionString()},
 
-                journal_submission_reviewers.submission_id as "reviewer_submissionId",
-                journal_submission_reviewers.user_id as "reviewer_userId",
-                journal_submission_reviewers.created_date as "reviewer_assignedDate",
 
                 reviews.id as review_id, reviews.version as review_version,
                 reviews.recommendation as review_recommendation, reviews.user_id as "review_userId",
