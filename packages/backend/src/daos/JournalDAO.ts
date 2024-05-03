@@ -21,7 +21,7 @@ import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-import { Journal, PartialJournal, JournalMember, DatabaseResult, PageMetadata, ModelDictionary} from '@danielbingham/peerreview-model'
+import { Journal, PartialJournal, JournalMember, DatabaseResult, QueryMeta, ModelDictionary} from '@danielbingham/peerreview-model'
 
 const PAGE_SIZE = 20
 
@@ -316,13 +316,13 @@ export default class JournalDAO {
      * @param {number}  pageNumber  The page number of the page we queried for,
      * pass through to the metadata.
      *
-     * @return {Promise<PageMetadata>}  The populated PageMetadata.
+     * @return {Promise<QueryMeta>}  The populated QueryMeta.
      */
-    async getJournalPageMetadata(
+    async getJournalQueryMeta(
         whereStatement: string, 
         whereParameters: any[], 
         pageNumber: number
-    ): Promise<PageMetadata> {
+    ): Promise<QueryMeta> {
         let where = whereStatement ? whereStatement : ''
         let params = whereParameters ? [ ...whereParameters ] : []
         let page = pageNumber ? pageNumber : 1

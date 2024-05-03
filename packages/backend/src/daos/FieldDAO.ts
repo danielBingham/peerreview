@@ -20,7 +20,7 @@
 
 import { QueryResultRow } from 'pg'
 
-import { Field, DatabaseResult, ModelDictionary, PageMetadata } from '@danielbingham/peerreview-model'
+import { Field, DatabaseResult, ModelDictionary, QueryMeta } from '@danielbingham/peerreview-model'
 
 import { Core } from '@danielbingham/peerreview-core'
 
@@ -157,7 +157,7 @@ export default class FieldDAO {
 
     /**
      * Gets the total number of fields included in a query and returns them in
-     * the form of an initial PageMetadata.
+     * the form of an initial QueryMeta.
      *
      * @param {string} where    (Optional) The SQL `WHERE` statement to be used
      * with the query, parameterized for use with `pg:Pool.query`.
@@ -166,9 +166,9 @@ export default class FieldDAO {
      * used for the query but is passed through to the returned metadata.
      * Defaults to `1` if not provided.
      *
-     * @return {Promise<PageMetadata>}  The resulting PageMetdata.
+     * @return {Promise<QueryMeta>}  The resulting PageMetdata.
      */
-    async countFields(where?: string, params?: any[], page?: number): Promise<PageMetadata> {
+    async getFieldQueryMeta(where?: string, params?: any[], page?: number): Promise<QueryMeta> {
         params = params ? params : []
         where = where ? where : ''
         page = page ? page : 1

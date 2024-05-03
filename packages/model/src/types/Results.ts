@@ -51,9 +51,10 @@ export interface EntityResult<Type extends Model> {
 }
 
 /**
- * Page Metadata is used to page lists of results.
+ * Metadata describing the results of a query, primarily used for paging but
+ * could be extended with other kinds of metadata in the future.
  */
-export interface PageMetadata { 
+export interface QueryMeta { 
     /**  The total number of results. **/
     count: number,
 
@@ -83,7 +84,7 @@ export interface QueryResult<Type extends Model> {
     list: number[],
 
     /** Paging meta data for the query. **/
-    meta: PageMetadata,
+    meta: QueryMeta,
 
     /** 
      * A dictionary of `ModelDictionary` storing related objects that were

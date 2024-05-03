@@ -40,14 +40,18 @@ export interface JournalSubmissionEditor {
 export interface JournalSubmission extends Model {
     journalId: number
     paperId: number
-    submitterId?: number
-    submitterComment?: string
+    submitterId: number
     status: string
-    deciderId?: number
-    decisionComment?: string
-    decisionDate?: string
     createdDate: string
     updatedDate: string
     reviewers: JournalSubmissionReviewer[]
     editors: JournalSubmissionEditor[]
+}
+
+export interface PartialJournalSubmission {
+    id?: number
+    journalId?: number
+    submitterId?: number
+    paperId?: number
+    status?: string
 }
