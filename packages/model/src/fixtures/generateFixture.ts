@@ -1,6 +1,6 @@
 import { Model, ModelDictionary } from '../types/Model'
-import { ResultType, DatabaseResult, EntityResult, QueryResult, } from "../types/Results"
-export { ResultType } from '../types/Results'
+import { ResultType, DatabaseResult, EntityResult, QueryResult, } from "../types/Query"
+export { ResultType } from '../types/Query'
 
 /**
  * A helper function used to generate fixtures for tests.  Constructs the

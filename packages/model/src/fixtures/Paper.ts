@@ -1,4 +1,4 @@
-import { ResultType, DatabaseResult } from "../types/Results"
+import { ResultType, DatabaseResult } from "../types/Query"
 import { Paper } from "../types/Paper"
 import { File } from '../types/File'
 import { getFileFixture } from "./File"

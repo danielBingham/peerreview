@@ -22,7 +22,7 @@ import mime from 'mime'
 import sanitizeFilename from 'sanitize-filename'
 import pdfjslib from 'pdfjs-dist/legacy/build/pdf.js'
 
-import { Paper, PaperAuthor, PaperVersion, DatabaseResult, ModelDictionary, PageMetadata } from '@danielbingham/peerreview-model'
+import { Paper, PaperAuthor, PaperVersion, DatabaseResult, ModelDictionary, QueryMeta } from '@danielbingham/peerreview-model'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
@@ -280,7 +280,7 @@ export default class PaperDAO {
     /**
      *
      */
-    async countPapers(where: string, params: any[], page: number): Promise<PageMetadata> {
+    async countPapers(where: string, params: any[], page: number): Promise<QueryMeta> {
         where = (where ? where : '')
         params = (params ? params : [])
 

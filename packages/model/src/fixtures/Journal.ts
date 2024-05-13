@@ -18,7 +18,7 @@
  *
  ******************************************************************************/
 
-import { ResultType } from "../types/Results"
+import { ResultType } from "../types/Query"
 import { Journal, JournalModel, JournalMemberPermissions } from "../types/Journal"
 
 import { generateFixture } from './generateFixture'

@@ -19,24 +19,10 @@
  ******************************************************************************/
 import { Model } from './Model'
 
-export interface JournalSubmissionReview {
-    id: number
-    version: number
-    recommendation: string
-    userId: number
-}
-
-export interface JournalSubmissionReviewer {
-    userId: number
-    assignedDate: string
-    reviews: JournalSubmissionReview[]
-}
-
-export interface JournalSubmissionEditor {
-    userId: number
-    assignedDate: string
-}
-
+/** 
+ * Represents a submission to a journal, linking a paper to the journal it has
+ * been submitted to and storing any information about the submission itself.
+ */
 export interface JournalSubmission extends Model {
     journalId: number
     paperId: number
@@ -48,10 +34,46 @@ export interface JournalSubmission extends Model {
     editors: JournalSubmissionEditor[]
 }
 
+
+/**
+ * Represents a reviewer assignment to a submission to a journal.
+ */
+export interface JournalSubmissionReviewer {
+    submissionId: number
+    userId: number
+    assignedDate: string
+    reviews: JournalSubmissionReview[]
+}
+
+/**
+ * Review information needed when displaying reviewer assignments.
+ */
+export interface JournalSubmissionReview {
+    id: number
+    version: number
+    recommendation: string
+    userId: number
+}
+
+/**
+ * Represents an editor assignment to a submission to a journal.
+ */
+export interface JournalSubmissionEditor {
+    submissionId: number
+    userId: number
+    assignedDate: string
+}
+
+
+/**
+ * 
+ */
 export interface PartialJournalSubmission {
     id?: number
     journalId?: number
-    submitterId?: number
     paperId?: number
+    submitterId?: number
     status?: string
+    reviewers?: JournalSubmissionReviewer[]
+    editors?: JournalSubmissionEditor[]
 }

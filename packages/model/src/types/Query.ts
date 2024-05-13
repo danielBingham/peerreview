@@ -23,6 +23,32 @@ export enum ResultType {
 }
 
 /**
+ * Defines a Database Query made to a DAO's `selectEntity` method.
+ */
+export interface DatabaseQuery {
+    /** 
+     * The WHERE portion of an SQL SELECT statement, parameterized for use
+     * with pg's `Pool.query`. 
+     **/
+    where?: string
+
+    /** An array of values matching the parameters of `where`. **/
+    params?: any[]
+
+    /** 
+     * The ORDER portion of an SQL SELECT statement, parameterized for user
+     * with pg's `Pool.query`. 
+     **/
+    order?: string
+
+    /** The number of the page of the query we're requesting. **/
+    page?: number
+
+    /** The number of items we want to retrieve in each page. **/
+    itemsPerPage?: number
+}
+
+/**
  * Database results, returned by DAOs.
  */
 export interface DatabaseResult<Type extends Model> {

@@ -124,6 +124,7 @@ export class JournalSubmissionDAO {
      */
     hydrateJournalSubmissionReviewer(row: QueryResultRow): JournalSubmissionReviewer {
         return {
+            submissionId: row.JournalSubmissionReviewer_submissionId,
             userId: row.JournalSubmissionReviewer_userId,
             assignedDate: row.JournalSubmissionReviewer_assignedDate,
             reviews: []
@@ -193,6 +194,7 @@ export class JournalSubmissionDAO {
      */
     hydrateJournalSubmissionEditor(row: QueryResultRow): JournalSubmissionEditor {
         return {
+            submissionId: row.JournalSubmissionEditor_submissionId,
             userId: row.JournalSubmissionEditor_userId,
             assignedDate: row.JournalSubmissionEditor_assignedDate
         }
@@ -214,31 +216,35 @@ export class JournalSubmissionDAO {
         const dictionary: ModelDictionary<JournalSubmission> = {}
         const list: number[] = []
 
-        const reviewerDictionary: { [userId: number]: JournalSubmissionReviewer } = {}
-        const reviewDictionary: { [id: number]: JournalSubmissionReview } = {}
-        const editorDictionary: { [userId: number]: JournalSubmissionEditor } = {}
+        const reviewerDictionary: { [submissionId: number]: { [userId: number]: JournalSubmissionReviewer }} = {}
+        const reviewDictionary: { [submissionId: number]: { [id: number]: JournalSubmissionReview }} = {}
+        const editorDictionary: { [submissionId: number]: { [userId: number]: JournalSubmissionEditor }} = {}
 
         for(const row of rows) {
             if ( ! (row.JournalSubmission_id in dictionary)) {
                 dictionary[row.JournalSubmission_id] = this.hydrateJournalSubmission(row)
                 list.push(row.JournalSubmission_id)
+
+                reviewerDictionary[row.JournalSubmission_id] = {}
+                reviewDictionary[row.JournalSubmission_id] = {}
+                editorDictionary[row.JournalSubmission_id] = {}
             }
 
-            if ( ! ( row.JournalSubmissionReviewer_userId in reviewerDictionary)) {
+            if ( row.JournalSubmissionReviewer_userId && ! ( row.JournalSubmissionReviewer_userId in reviewerDictionary[row.JournalSubmission_id])) {
                 const reviewer = this.hydrateJournalSubmissionReviewer(row) 
-                reviewerDictionary[row.JournalSubmissionReviewer_userId] = reviewer 
+                reviewerDictionary[row.JournalSubmission_id][row.JournalSubmissionReviewer_userId] = reviewer 
                 dictionary[row.JournalSubmission_id].reviewers.push(reviewer)
             }
             
-            if ( ! ( row.JournalSubmissionReview_id in reviewDictionary)) {
+            if ( row.JournalSubmissionReview_id && ! ( row.JournalSubmissionReview_id in reviewDictionary[row.JournalSubmission_id])) {
                 const review = this.hydrateJournalSubmissionReview(row)
-                reviewDictionary[row.JournalSubmissionReview_id] = review
-                reviewerDictionary[row.JournalSubmissionReviewer_userId].reviews.push(review)
+                reviewDictionary[row.JournalSubmission_id][row.JournalSubmissionReview_id] = review
+                reviewerDictionary[row.JournalSubmission_id][row.JournalSubmissionReviewer_userId].reviews.push(review)
             }
 
-            if ( ! ( row.JournalSubmissionEditor_userId in editorDictionary)) {
+            if ( row.JournalSubmissionEditor_userId && ! ( row.JournalSubmissionEditor_userId in editorDictionary[row.JournalSubmission_id])) {
                 const editor = this.hydrateJournalSubmissionEditor(row)
-                editorDictionary[row.JournalSubmissionEditor_userId] = editor
+                editorDictionary[row.JournalSubmission_id][row.JournalSubmissionEditor_userId] = editor
                 dictionary[row.JournalSubmission_id].editors.push(editor)
             }
         }
@@ -382,12 +388,8 @@ export class JournalSubmissionDAO {
 
     /**
      * Translate a single JournalSubmission into a row in the
-     * `journal_submissions` table an insert it as a new row.
-     *
-     * @param {JournalSubmission} submission    A populated JournalSubmission.
-     *
-     * @return {Promise<number>} A promise that resolves to the id of the newly
-     * inserted JournalSubmission.
+     * `journal_submissions` table and insert it as a new row. Return the
+     * generated `id`.
      */
     async insertJournalSubmission(submission: PartialJournalSubmission): Promise<number> {
         if (  ! ('journalId' in submission) 
@@ -412,6 +414,10 @@ export class JournalSubmissionDAO {
         return results.rows[0].id
     }
 
+    /**
+     * Update the row in the `journal_submissions` table from a
+     * PartialJournalSubmission.
+     */
     async updatePartialSubmission(submission: PartialJournalSubmission): Promise<void> {
         const ignoredFields = [ 'id', 'journal_id', 'paper_id', 'created_date', 'updated_date' ]
 
@@ -425,67 +431,72 @@ export class JournalSubmissionDAO {
 
             if ( key == 'submitterId' ) {
                 sql += `submitter_id = $${count}, `
-            } else if ( key == 'submissionComment' ) {
-                sql += `submission_comment = $${count}, `
-            } else if ( key == 'deciderId' ) {
-                sql += `decider_id = $${count}, `
-            } else if ( key == `decisionComment` ) {
-                sql += `decision_comment = $${count}, `
             } else {
                 sql += `${key} = $${count}, `
             }
             
-            params.push(submission[key])
+            params.push(submission[key as keyof PartialJournalSubmission])
             count = count + 1
         }
 
-        if ( (submission.status == 'published' || submission.status == 'rejected') && submission.decider_id ) {
-            sql += `decision_date = now(), `
-        }
         sql += `updated_date = now() WHERE id = $${count}`
 
         params.push(submission.id)
 
         const results = await this.database.query(sql, params)
 
-        if ( results.rowCount <= 0 ) {
+        if ( results.rowCount && results.rowCount <= 0 ) {
             throw new DAOError('update-failure', 
                 `Failed to update Submission(${submission.id}) to Journal(${submission.journalId}).`)
         }
     }
 
-    async deleteSubmission(id) {
+    /**
+     * Delete the JournalSubmission identified by `id` from the `journal_submissions`
+     * table and all foriegn keyed tables.
+     */
+    async deleteSubmission(id: number): Promise<void> {
         const results = await this.database.query(`
             DELETE FROM journal_submissions WHERE id = $1
         `, [ id ])
 
-        if ( results.rowCount <= 0 ) {
+        if ( results.rowCount && results.rowCount <= 0 ) {
             throw new DAOError('failed-deletion',
-                `Attempt to delete Submission(${submission.id}) failed.`)
+                `Attempt to delete Submission(${id}) failed.`)
         }
     }
 
     // ======= Submission Reviewer ============================================
 
-    async insertJournalSubmissionReviewer(reviewer) {
+    /**
+     * Insert a JournalSubmissionReviewer into the
+     * `journal_submission_reviewers` table.
+     */
+    async insertJournalSubmissionReviewer(reviewer: JournalSubmissionReviewer): Promise<void> {
         const results = await this.database.query(`
             INSERT INTO journal_submission_reviewers (submission_id, user_id, created_date, updated_date)
                 VALUES ($1, $2, now(), now())
         `, [ reviewer.submissionId, reviewer.userId ])
 
-        if ( results.rowCount <= 0 ) {
+        if ( results.rowCount &&  results.rowCount <= 0 ) {
             throw new DAOError('failed-insertion', 
                 `Attempt to insert Reviewer(${reviewer.userId}) for Submission(${reviewer.submissionId}).`)
         }
     }
 
-    async deleteJournalSubmissionReviewer(submissionId, userId) {
+    /**
+     * Delete a JournalSubmissionReviewer identified by its `submissionId` and
+     * `userId`.
+     *
+     * This has the effect of unassigning the user from the submission.
+     */
+    async deleteJournalSubmissionReviewer(submissionId: number, userId: number): Promise<void> {
         const results = await this.database.query(`
             DELETE FROM journal_submission_reviewers
                 WHERE submission_id = $1 AND user_id = $2
         `, [ submissionId, userId ])
 
-        if ( results.rowCount <= 0 ) {
+        if ( results.rowCount && results.rowCount <= 0 ) {
             throw new DAOError('failed-deletion', 
                 `Failed to delete Reviewer(${userId}) for Submission(${submissionId}).`)
         }
@@ -493,25 +504,39 @@ export class JournalSubmissionDAO {
 
     // ======= Submission Editor ============================================
 
-    async insertJournalSubmissionEditor(editor) {
+    /**
+     * Insert a JournalSubmissionEditor into the `journal_submission_editors`
+     * table.
+     *
+     * This has the effect of assigning User(editor.userId) as an editor on 
+     * JournalSubmission(editor.submissionId).
+     */
+    async insertJournalSubmissionEditor(editor: JournalSubmissionEditor): Promise<void> {
         const results = await this.database.query(`
             INSERT INTO journal_submission_editors (submission_id, user_id, created_date, updated_date)
                 VALUES ($1, $2, now(), now())
         `, [ editor.submissionId, editor.userId ])
 
-        if ( results.rowCount <= 0 ) {
+        if ( results.rowCount && results.rowCount <= 0 ) {
             throw new DAOError('failed-insertion', 
-                `Attempt to insert Editor(${reviewer.userId}) for Submission(${reviewer.submissionId}).`)
+                `Attempt to insert Editor(${editor.userId}) for Submission(${editor.submissionId}).`)
         }
     }
 
-    async deleteJournalSubmissionEditor(submissionId, userId) {
+    /**
+     * Delete the JournalSubmissionEditor identified by `submissionId` and
+     * `userId` from the `journal_submission_editors` table.
+     *
+     * This has the effect of unassigning User(userId) as an editor on
+     * JournalSubmission(submissionId).
+     */
+    async deleteJournalSubmissionEditor(submissionId: number, userId: number): Promise<void> {
         const results = await this.database.query(`
             DELETE FROM journal_submission_editors
                 WHERE submission_id = $1 AND user_id = $2
         `, [ submissionId, userId ])
 
-        if ( results.rowCount <= 0 ) {
+        if ( results.rowCount && results.rowCount <= 0 ) {
             throw new DAOError('failed-deletion', 
                 `Failed to delete Editor(${userId}) for Submission(${submissionId}).`)
         }
