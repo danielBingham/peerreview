@@ -1,3 +1,22 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 import { Model } from "./Model"
 
 /**
@@ -24,24 +43,23 @@ export interface Permission extends Model {
         permission: string
 
         /** The id of the Paper this permission grants rights on, if any.  */
-        paperId: number
-
-        /** The version of the Paper this permission grants rights on, if any.  */
-        version: number
-
-        /** The id of the PaperEvent this permission grants rights on, if any.  */
-        eventId: number
-
-        /** The id of the Review this permission grants rights on, if any.  */
-        reviewId: number
-
-        /** The id of the PaperComment this permission grants rights on, if any.  */
-        paperCommentId: number
-
-        /** The id of the JournalSubmission this permission grants rights on, if any.  */
-        submissionId: number
+        paperId?: number
 
         /** The id of the Journal this permission grants rights on, if any.  */
-        journalId: number
+        journalId?: number
 
+        /** The version of the Paper this permission grants rights on, if any.  */
+        version?: number
+
+        /** The id of the PaperEvent this permission grants rights on, if any.  */
+        eventId?: number
+
+        /** The id of the Review this permission grants rights on, if any.  */
+        reviewId?: number
+
+        /** The id of the PaperComment this permission grants rights on, if any.  */
+        paperCommentId?: number
+
+        /** The id of the JournalSubmission this permission grants rights on, if any.  */
+        journalSubmissionId?: number
 }
