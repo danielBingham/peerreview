@@ -1,6 +1,36 @@
-const crypto = require('node:crypto')
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import crypto from 'node:crypto'
 
-const DAOError = require('../errors/DAOError')
+import { Pool, Client, QueryResultRow } from 'pg'
+
+import { Core, DAOError } from '@danielbingham/peerreview-core'
+
+import { 
+    Token, 
+    PartialToken, 
+    TokenType, 
+    DatabaseQuery, 
+    DatabaseResult, 
+    ModelDictionary 
+} from '@danielbingham/peerreview-model'
 
 const TOKEN_TTL = {
     'email-confirmation': 1000*60*60*24, // 1 day
@@ -8,23 +38,30 @@ const TOKEN_TTL = {
     'invitation': 1000*60*60*24*30 // 1 month
 }
 
-module.exports = class TokenDAO {
+export class TokenDAO {
+    core: Core
+    database: Pool | Client
 
-    constructor(core) {
+    constructor(core: Core, database?: Client | Pool) {
+        this.core = core
         this.database = core.database
-        this.logger = core.logger
+
+        if ( database ) {
+            this.database = database
+        }
     }
 
-    createToken(type) {
+    createToken(userId: number, type: TokenType): PartialToken  {
         const buffer = crypto.randomBytes(32)
         const token = {
             token: buffer.toString('hex'),
-            type: type
+            type: type,
+            userId: userId
         }
         return token
     }
 
-    async validateToken(tokenString, validTypes) {
+    async validateToken(tokenString: string, validTypes: TokenType[]) {
         const tokens = await this.selectTokens('WHERE tokens.token = $1', [ tokenString ])
 
         if ( tokens.length <= 0 ) {
