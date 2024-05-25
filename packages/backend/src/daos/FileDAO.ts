@@ -28,7 +28,7 @@ import { File, PartialFile, DatabaseResult, ModelDictionary } from '@danielbingh
  *
  * Maps `File` objects to and from the database.
  */
-export default class FilesDAO {
+export class FileDAO {
     core: Core
 
     /**

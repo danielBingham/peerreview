@@ -1,35 +1,86 @@
-const DAOError = require('../errors/DAOError')
-const FileDAO = require('./FileDAO')
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Pool, Client, QueryResultRow } from 'pg'
 
-const PAGE_SIZE = 20
+import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-module.exports = class UserDAO {
+import { 
+    User, 
+    UserJournalMembership,
+    DatabaseQuery, 
+    DatabaseResult, 
+    ModelDictionary 
+} from '@danielbingham/peerreview-model'
 
+import { FileDAO } from './FileDAO'
 
-    constructor(core) {
+export class UserDAO {
+    core: Core
+    database: Client | Pool
+
+    fileDAO: FileDAO
+
+    constructor(core: Core, database?: Client | Pool) {
         this.core = core
-
         this.database = core.database
-        this.logger = core.logger
+
+        if ( database ) {
+            this.database = database
+        }
 
         this.fileDAO = new FileDAO(core)
+    }
 
-        this.selectionString = `
-            users.id as user_id, users.orcid_id as "user_orcidId", users.file_id as "user_fileId",
-            users.status as user_status, users.permissions as user_permissions,
-            users.name as user_name, users.email as user_email, 
-            users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
-            users.reputation as user_reputation, 
-            users.created_date as "user_createdDate", users.updated_date as "user_updatedDate"
+    getUserSelectionString(clean?: boolean): string {
+        return `
+        users.id as "User_id", 
+        users.orcid_id as "User_orcidId", 
+        users.file_id as "User_fileId",
+        ${ ! clean ? 'users.status as "User_status"' : ''}, 
+        ${ ! clean ? 'users.permissions as "User_permissions"' : ''},
+        users.name as "User_name", 
+        ${ ! clean ? 'users.email as "User_email"' : ''}, 
+        users.bio as "User_bio", 
+        users.location as "User_location", 
+        users.institution as "User_institution", 
+        users.created_date as "User_createdDate", 
+        users.updated_date as "User_updatedDate"
         `
+    }
 
-        this.cleanSelectionString = `
-            users.id as user_id, users.orcid_id as "user_orcidId", users.file_id as "user_fileId",
-            users.name as user_name,
-            users.bio as user_bio, users.location as user_location, users.institution as user_institution, 
-            users.reputation as user_reputation, 
-            users.created_date as "user_createdDate", users.updated_date as "user_updatedDate"
-        `
+    hydrateUser(row: QueryResultRow): User {
+        return {
+            id: ( row.user_id !== undefined ? row.user_id : null),
+            orcidId: ( row.user_orcidId !== undefined ? row.user_orcidId : null),
+            name: ( row.user_name !== undefined ? row.user_name : null),
+            bio: ( row.user_bio !== undefined ? row.user_bio : null),
+            location: ( row.user_location !== undefined ? row.user_location : null), 
+            institution: ( row.user_institution !== undefined ? row.user_institution : null), 
+            createdDate: ( row.user_createdDate !== undefined ? row.user_createdDate : null),
+            updatedDate: ( row.user_updatedDate !== undefined ? row.user_updatedDate : null),
+            file: null,
+            memberships: [],
+            email: ( row.user_email !== undefined ? row.user_email : null),
+            status: ( row.user_status !== undefined ? row.user_status : null),
+            permissions: ( row.user_permissions !== undefined ? row.user_permissions : null)
+        }
     }
 
     /**
@@ -39,35 +90,15 @@ module.exports = class UserDAO {
      *
      * @return {Object}     The users parsed into a dictionary keyed using user.id. 
      */
-    hydrateUsers(rows, clean) {
-        // Users
-        const dictionary = {}
-        const list = []
+    hydrateUsers(rows: QueryResultRow[]): DatabaseResult<User> {
+        const dictionary: ModelDictionary<User> = {}
+        const list: number[] = []
 
         // Relationships
-        const memberships = {}
+        const memberships: { [userId: number]: { [journalId: number]: UserJournalMembership }} = {}
 
         for( const row of rows ) {
-            const user = {
-                id: ( row.user_id !== undefined ? row.user_id : null),
-                orcidId: ( row.user_orcidId !== undefined ? row.user_orcidId : null),
-                name: ( row.user_name !== undefined ? row.user_name : null),
-                bio: ( row.user_bio !== undefined ? row.user_bio : null),
-                location: ( row.user_location !== undefined ? row.user_location : null), 
-                institution: ( row.user_institution !== undefined ? row.user_institution : null), 
-                reputation: ( row.user_reputation !== undefined ? row.user_reputation : null),
-                createdDate: ( row.user_createdDate !== undefined ? row.user_createdDate : null),
-                updatedDate: ( row.user_updatedDate !== undefined ? row.user_updatedDate : null),
-                memberships: []
-            }
-
-            if ( ! clean ) {
-                // Issue #132 - We don't want to expose the user's email.
-                user.email = ( row.user_email !== undefined ? row.user_email : null)
-                user.status = ( row.user_status !== undefined ? row.user_status : null)
-                user.permissions = ( row.user_permissions !== undefined ? row.user_permissions : null)
-            }
-
+            const user = this.hydrateUser(row) 
             if ( row.file_id ) {
                 user.file = this.fileDAO.hydrateFile(row)
             } else {

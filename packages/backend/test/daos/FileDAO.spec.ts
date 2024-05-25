@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from '@jest/globals'
 import { QueryResult } from 'pg'
 
-import FilesDAO from '../../src/daos/FileDAO'
+import { FileDAO } from '../../src/daos/FileDAO'
 
 import { getFilesTableFixture } from '../../src/fixtures/database/FilesTable'
 import { File, getFileFixture, ResultType, DatabaseResult } from '@danielbingham/peerreview-model'
@@ -17,7 +17,7 @@ describe('FilesDAO', function() {
 
     describe('hydrateFile()', function() {
         it('should properly hydrate a single File based on a single QueryResultRow', async function() {
-            const fileDAO = new FilesDAO(mockCore)
+            const fileDAO = new FileDAO(mockCore)
 
 
             const tableFixture = getFilesTableFixture()
@@ -30,7 +30,7 @@ describe('FilesDAO', function() {
 
     describe('hydrateFiles()', function() {
         it('should properly interpret a QueryResultRow[] and return DatabaseResult<File>', async function() {
-            const fileDAO = new FilesDAO(mockCore)
+            const fileDAO = new FileDAO(mockCore)
 
             const tableFixture = getFilesTableFixture()
             const hydratedResults = fileDAO.hydrateFiles(tableFixture.rows)
@@ -47,7 +47,7 @@ describe('FilesDAO', function() {
                 return new Promise<QueryResult>(resolve => resolve(tableFixture))
             })
 
-            const fileDAO = new FilesDAO(mockCore)
+            const fileDAO = new FileDAO(mockCore)
 
             const results = await fileDAO.selectFiles()
 
