@@ -55,3 +55,19 @@ export interface User extends Model {
     updatedDate: string
     memberships: UserJournalMembership[]
 }
+
+export interface PartialUser {
+    id?: number
+    orcidId?: string
+    name?: string
+    email?: string
+    status?: UserStatus
+    password?: string | null
+    permissions?: UserPermissions
+    bio?: string
+    location?: string
+    institution?: string
+}
+
+
+}

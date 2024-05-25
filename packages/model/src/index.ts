@@ -31,7 +31,7 @@ export { PaperEvent, PartialPaperEvent } from './types/PaperEvent'
 export { Permission } from './types/Permission'
 export { Review, ReviewThread, ReviewComment, ReviewStatus, ReviewRecommendation } from './types/Review'
 export { Token, PartialToken, TokenType } from './types/Token'
-export { User, UserJournalMembership, UserStatus, UserPermissions } from './types/User'
+export { User, PartialUser, UserJournalMembership, UserStatus, UserPermissions } from './types/User'
 
 export { getFieldFixture } from './fixtures/Field'
 export { getFileFixture } from './fixtures/File'

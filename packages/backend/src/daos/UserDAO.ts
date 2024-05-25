@@ -23,13 +23,19 @@ import { Core, DAOError } from '@danielbingham/peerreview-core'
 
 import { 
     User, 
+    PartialUser,
     UserJournalMembership,
+    UserStatus,
+    UserPermissions,
     DatabaseQuery, 
     DatabaseResult, 
+    QueryMeta,
     ModelDictionary 
 } from '@danielbingham/peerreview-model'
 
 import { FileDAO } from './FileDAO'
+
+const PAGE_SIZE = 20
 
 export class UserDAO {
     core: Core
@@ -70,17 +76,36 @@ export class UserDAO {
             id: ( row.user_id !== undefined ? row.user_id : null),
             orcidId: ( row.user_orcidId !== undefined ? row.user_orcidId : null),
             name: ( row.user_name !== undefined ? row.user_name : null),
+            email: ( row.user_email !== undefined ? row.user_email : null),
+            status: ( row.user_status !== undefined ? row.user_status : null),
             bio: ( row.user_bio !== undefined ? row.user_bio : null),
             location: ( row.user_location !== undefined ? row.user_location : null), 
             institution: ( row.user_institution !== undefined ? row.user_institution : null), 
+            permissions: ( row.user_permissions !== undefined ? row.user_permissions : null),
             createdDate: ( row.user_createdDate !== undefined ? row.user_createdDate : null),
             updatedDate: ( row.user_updatedDate !== undefined ? row.user_updatedDate : null),
             file: null,
-            memberships: [],
-            email: ( row.user_email !== undefined ? row.user_email : null),
-            status: ( row.user_status !== undefined ? row.user_status : null),
-            permissions: ( row.user_permissions !== undefined ? row.user_permissions : null)
+            memberships: []
         }
+    }
+
+    getUserJournalMembershipSelectionString(): string {
+        return `
+        journal_members.journal_id as "UserJournalMembership_journalId",
+        journal_members.permissions as "UserJournalMembership_permissions",
+        journal_members.created_date as "UserJournalMembership_createdDate",
+        journal_members.updated_date as "UserJournalMembership_updatedDate"
+        `
+    }
+
+    hydrateUserJournalMembership(row: QueryResultRow): UserJournalMembership {
+        const membership = {
+            journalId: (row.UserJournalMembership_journalId !== undefined ? row.UserJournalMembership_journalId : null),
+            permissions: (row.UserJournalMembership_permissions !== undefined ? row.UserJournalMembership_permissions: null),
+            createdDate: (row.UserJournalMembership_createdDate !== undefined ? row.UserJournalMembership_createdDate : null),
+            updatedDate: (row.UserJournalMembership_updatedDate !== undefined ? row.UserJournalMembership_updatedDate : null)
+        }
+        return membership
     }
 
     /**
@@ -98,38 +123,24 @@ export class UserDAO {
         const memberships: { [userId: number]: { [journalId: number]: UserJournalMembership }} = {}
 
         for( const row of rows ) {
-            const user = this.hydrateUser(row) 
-            if ( row.file_id ) {
-                user.file = this.fileDAO.hydrateFile(row)
-            } else {
-                user.file = null
-            }
 
-            if ( row.membership_journalId ) {
-                if (! memberships[user.id] ) {
-                    memberships[user.id] = {}
-                } 
-                if ( ! memberships[user.id][row.membership_journalId] ){
-                    const membership = {
-                        journalId: (row.membership_journalId !== undefined ? row.membership_journalId : null),
-                        permissions: (row.membership_permissions !== undefined ? row.membership_permissions: null),
-                        createdDate: (row.membership_createdDate !== undefined ? row.membership_createdDate : null),
-                        updatedDate: (row.membership_updatedDate !== undefined ? row.membership_updatedDate : null)
-                    }
-
-                    memberships[user.id][membership.journalId] = membership
+            if ( ! ( row.User_id in dictionary)) {
+                const user = this.hydrateUser(row) 
+                if ( row.User_fileId ) {
+                    user.file = this.fileDAO.hydrateFile(row)
+                } else {
+                    user.file = null
                 }
-            }
 
-            if ( ! dictionary[row.user_id] ) {
                 dictionary[user.id] = user
                 list.push(user.id)
+                memberships[user.id] = {}
             }
-        }
 
-        for(const id of list ) {
-            if ( memberships[id] ) {
-                dictionary[id].memberships = Object.values(memberships[id])
+            if ( row.UserJournalMembership_journalId && ! ( row.UserJournalMembership_journalId in memberships[row.User_id])) {
+                const membership = this.hydrateUserJournalMembership(row)
+                memberships[row.User_id][row.UserJournalMembership_journalId] = membership
+                dictionary[row.User_id].memberships.push(membership)
             }
         }
 
@@ -143,27 +154,29 @@ export class UserDAO {
      *
      * @see this.selectUsers()
      */
-    async selectCleanUsers(where, params, order, page) {
-        return await this.selectUsers(where, params, order, page, true)
+    async selectCleanUsers(query: DatabaseQuery) {
+        return await this.selectUsers(query, true)
     }
 
     /**
      * Retrieve user records from the database.
      *
+     * TODO Fix paging.
      */
-    async selectUsers(where, params, order, page, clean) {
-        params = params ? params : []
-        where = where ? where : ''
-        order = order ? order : 'users.created_date desc'
+    async selectUsers(query: DatabaseQuery, clean?: boolean) {
+        const where = query.where ? `WHERE ${query.where}` : ''
+        const params = query.params ? query.params : []
+        const order = query.order ? query.order : 'users.created_date desc'
+
+        const page = query.page || 0
+        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
 
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we
         // probably don't want to have to deal with pagination.
         let paging = ''
-        if ( page ) {
-            page = page ? page : 1
-            
-            const offset = (page-1) * PAGE_SIZE
+        if ( page > 0) {
+            const offset = (page-1) * itemsPerPage 
             let count = params.length 
 
             paging = `
@@ -171,18 +184,17 @@ export class UserDAO {
                 OFFSET $${count+2}
             `
 
-            params.push(PAGE_SIZE)
+            params.push(itemsPerPage)
             params.push(offset)
         }
 
         const sql = `
                 SELECT 
-                    ${ clean === true ? this.cleanSelectionString : this.selectionString},
+                    ${this.getUserSelectionString(clean)},
 
-                    ${this.fileDAO.getFilesSelectionString()}${ this.core.features.hasFeature('journals-79') ? `, journal_members.journal_id as "membership_journalId",
-                    journal_members.permissions as "membership_permissions",
-                    journal_members.created_date as "membership_createdDate",
-                    journal_members.updated_date as "membership_updatedDate"` : '' }
+                    ${this.fileDAO.getFilesSelectionString()},
+
+                    ${ this.core.features.hasFeature('journals-79') ? this.getUserJournalMembershipSelectionString() : '' }
 
                 FROM users
                     LEFT OUTER JOIN files ON files.id = users.file_id
@@ -193,17 +205,23 @@ export class UserDAO {
         `
 
         const results = await this.database.query(sql, params)
-        return this.hydrateUsers(results.rows, (clean === true))
+        return this.hydrateUsers(results.rows)
     }
 
-    async countUsers(where, params, page) {
-        params = params ? params : []
-        where = where ? where : ''
+    async countUsers(query: DatabaseQuery): Promise<QueryMeta> {
+        const where = query.where ? `WHERE ${query.where}` : ''
+        const params = query.params ? query.params : []
+        const order = query.order ? query.order : 'users.created_date desc'
+
+        const page = query.page || 0
+        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
 
         const sql = `
-               SELECT 
+               SELECT DISTINCT ON (users.id)
                  COUNT(users.id) as count
                 FROM users 
+                    LEFT OUTER JOIN files ON files.id = users.file_id
+                    ${ this.core.features.hasFeature('journals-79') ? `LEFT OUTER JOIN journal_members on journal_members.user_id = users.id` : '' }
                 ${where} 
         `
 
@@ -223,39 +241,40 @@ export class UserDAO {
             count: count,
             page: page ? page : 1,
             pageSize: PAGE_SIZE,
-            numberOfPages: parseInt(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
+            numberOfPages: Math.floor(count / itemsPerPage) + ( count % itemsPerPage> 0 ? 1 : 0) 
         }
     }
 
-    async insertUser(user) {
-        if ( ! user.name ) {
+    async insertUser(user: PartialUser): Promise<number> {
+        if ( ! ( 'name' in user) || ! user.name) {
             throw new DAOError('name-missing', `Attempt to create a user with out a name.`)
         }
 
-        if ( ! user.email ) {
+        if ( ! ( 'email' in user) || ! user.email ) {
             throw new DAOError('email-missing', `Attempt to create a user without an email.`)
         }
 
-        user.status = user.status ? user.status : 'unconfirmed'
+        user.status = user.status ? user.status : UserStatus.Unconfirmed 
         user.password = user.password ? user.password : null
-        user.institution = user.institution ? user.institution : null
 
         const results = await this.database.query(`
-                    INSERT INTO users (name, email, status, institution, password, created_date, updated_date) 
-                        VALUES ($1, $2, $3, $4, $5, now(), now()) 
-                        RETURNING id
+            INSERT INTO users 
+                (name, email, status, institution, password, created_date, updated_date) 
+                VALUES 
+                    ($1, $2, $3, $4, $5, now(), now()) 
+                RETURNING id
 
                 `, 
             [ user.name, user.email, user.status, user.institution, user.password ]
         )
 
-        if ( results.rowCount == 0 ) {
-            throw new DAOError('insertion-failure', `Attempt to insert new user(${user.name}) failed.`)
+        if ( ! results.rowCount || results.rowCount == 0 ) {
+            throw new DAOError('insert-failed', `Attempt to insert new user(${user.name}) failed.`)
         }
         return results.rows[0].id
     }
 
-    async updatePartialUser(user) {
+    async updatePartialUser(user: PartialUser): Promise<void> {
         let sql = 'UPDATE users SET '
         let params = []
         let count = 1
@@ -273,7 +292,7 @@ export class UserDAO {
                 sql += `${key} = $${count}, `
             }
 
-            params.push(user[key])
+            params.push(user[key as keyof PartialUser])
             count = count + 1
         }
         sql += 'updated_date = now() WHERE id = $' + count
