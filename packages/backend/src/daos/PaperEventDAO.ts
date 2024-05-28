@@ -23,11 +23,11 @@ import { Core, DAOError } from '@danielbingham/peerreview-core'
 
 import { PaperEvent, PartialPaperEvent, DatabaseQuery, ModelDictionary, DatabaseResult } from '@danielbingham/peerreview-model'
 
-export class PaperEventsDAO {
+export class PaperEventDAO {
     core: Core
     database: Client | Pool
 
-    constructor(core: Core, database: Client | Pool) {
+    constructor(core: Core, database?: Client | Pool) {
         this.core = core
 
         this.database = core.database

@@ -18,9 +18,9 @@
  *
  ******************************************************************************/
 
-import { QueryResultRow } from 'pg'
+import { QueryResultRow, Pool, Client } from 'pg'
 
-import { Field, DatabaseResult, ModelDictionary, QueryMeta } from '@danielbingham/peerreview-model'
+import { Field, DatabaseQuery, DatabaseResult, ModelDictionary, QueryMeta } from '@danielbingham/peerreview-model'
 
 import { Core } from '@danielbingham/peerreview-core'
 
@@ -35,27 +35,36 @@ const PAGE_SIZE = 20
  */
 export default class FieldDAO {
     core: Core
-    selectionString: string
+    database: Pool | Client
 
     /**
      * Construct the DAO from a `Core` object.
      */
-    constructor(core: Core) {
+    constructor(core: Core, database?: Pool | Client) {
         this.core = core
+        this.database = this.core.database
 
-        /**
-         * SQL used to select a full field object.  Stored as a variable
-         * because function calls can be expensive.
-         *
-         * Useful for when we want to select field objects into joins.
-         * Especially in other DAOs.
-         */
-        this.selectionString = `
-            fields.id as Field_id, fields.name as Field_name, fields.type as Field_type,
-            fields.depth as Field_depth, fields.average_reputation as "Field_averageReputation",
-            fields.description as Field_description, 
-            fields.created_date as "Field_createdDate", fields.updated_date as "Field_updatedDate"
+        if ( database ) {
+            this.database = database
+        }
+    }
+
+    /**
+     * Get the field portion of an SQL SELECT statement that will select fields
+     * from the `fields` table and map them to the Field model.
+     */
+    getFieldSelectionString(): string {
+        return `
+            fields.id as "Field_id", 
+            fields.name as "Field_name", 
+            fields.type as "Field_type",
+            fields.depth as "Field_depth", 
+            fields.average_reputation as "Field_averageReputation",
+            fields.description as "Field_description", 
+            fields.created_date as "Field_createdDate",
+            fields.updated_date as "Field_updatedDate"
         `
+
     }
 
     /**
@@ -106,31 +115,21 @@ export default class FieldDAO {
     /**
      * Select fields using an optional parameterized SQL `WHERE` statement. May
      * also include an order statement and paging.
-     *
-     * @param {string} whereStatement   (Optional) SQL `WHERE` statement,
-     * parameterized for use with `pg:Pool.query`. If left out, all fields will
-     * be returned.
-     * @param {any[]} parameters    (Optional) An array of parameters matching the parameterization of whereStatement.
-     * @param {string} orderStatement   (Optional) An SQL `ORDER` statement.
-     * @param {number} page     (Optional) The page of results to load.
-     *
-     * @return {Promise<DatabaseResult<Field>>}     A promise that resolves to
-     * a DatabaseResult<Field> with the requested fields in hydrated Field
-     * objects.
      */
-    async selectFields(whereStatement?: string, parameters?: any[], orderStatement?: string, page?: number): Promise<DatabaseResult<Field>> {
-        const params = parameters ? [ ...parameters ] : []
-        let where = whereStatement ? whereStatement : ''
-        let order = orderStatement ? orderStatement : 'fields.depth asc, fields.name asc'
+    async selectFields(query: DatabaseQuery): Promise<DatabaseResult<Field>> {
+        const params = query.params ? [ ...query.params ] : []
+        let where = `WHERE ${query.where}` || ''
+        let order = query.order || 'fields.depth asc, fields.name asc'
+
+        let page = query.page || 0
+        let itemsPerPage = query.itemsPerPage || PAGE_SIZE
 
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we
         // probably don't want to have to deal with pagination.
         let paging = ''
-        if ( page ) {
-            page = page ? page : 1
-            
-            const offset = (page-1) * PAGE_SIZE
+        if ( page > 0 ) {
+            const offset = (page-1) * itemsPerPage 
             let count = params.length 
 
             paging = `
@@ -138,40 +137,33 @@ export default class FieldDAO {
                 OFFSET $${count+2}
             `
 
-            params.push(PAGE_SIZE)
+            params.push(itemsPerPage)
             params.push(offset)
         }
 
         const sql = `
                SELECT 
-                   ${this.selectionString}
+                   ${this.getFieldSelectionString()}
                 FROM fields
                 ${where} 
                 ORDER BY ${order} 
                 ${paging}
         `
 
-        const results = await this.core.database.query(sql, params)
+        const results = await this.database.query(sql, params)
         return this.hydrateFields(results.rows)
     }
 
     /**
      * Gets the total number of fields included in a query and returns them in
      * the form of an initial QueryMeta.
-     *
-     * @param {string} where    (Optional) The SQL `WHERE` statement to be used
-     * with the query, parameterized for use with `pg:Pool.query`.
-     * @param {any[]} params    (Optional) The parameters for use with `where`.
-     * @param {number} page     (Optional) The page being requested.  Isn't
-     * used for the query but is passed through to the returned metadata.
-     * Defaults to `1` if not provided.
-     *
-     * @return {Promise<QueryMeta>}  The resulting PageMetdata.
      */
-    async getFieldQueryMeta(where?: string, params?: any[], page?: number): Promise<QueryMeta> {
-        params = params ? params : []
-        where = where ? where : ''
-        page = page ? page : 1
+    async getFieldQueryMeta(query: DatabaseQuery): Promise<QueryMeta> {
+        const params = query.params ? [ ...query.params ] : []
+        const where = query.where || ''
+        
+        const page = query.page || 0
+        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
 
         const sql = `
                SELECT 
@@ -180,13 +172,13 @@ export default class FieldDAO {
                 ${where} 
         `
 
-        const results = await this.core.database.query(sql, params)
+        const results = await this.database.query(sql, params)
 
         if ( results.rows.length <= 0) {
             return {
                 count: 0,
                 page: page,
-                pageSize: PAGE_SIZE,
+                pageSize: itemsPerPage,
                 numberOfPages: 1
             }
         }
@@ -195,115 +187,9 @@ export default class FieldDAO {
         return {
             count: count,
             page: page ? page : 1,
-            pageSize: PAGE_SIZE,
-            numberOfPages: Math.floor(parseInt(count) / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
+            pageSize: itemsPerPage,
+            numberOfPages: Math.floor(parseInt(count) / itemsPerPage) + ( count % itemsPerPage > 0 ? 1 : 0) 
         }
-    }
-
-    /**
-     * Select the immediate children of parent field identified by `parentId`
-     *
-     * @param {number} parentId    The id of the field who's children we want to
-     * select.
-     *
-     * @return {Promise<number[]>}  An array of `Field.id` numbers
-     * corresponding to the immediate children of the field identified by
-    * `parentId`.
-     */
-    async selectFieldChildren(parentId: number): Promise<number[]> {
-        const results = await this.core.database.query(`
-            SELECT child_id FROM field_relationships WHERE parent_id = $1
-         `, [ parentId ])
-
-        if ( results.rows.length <= 0) {
-            return []
-        }
-
-        return results.rows.map((r) => r.child_id)
-    }
-
-    /**
-     * Select the immediate parents of the field identified by `childId`
-     *
-     * @param {number} childId The id of the field who's parents we want to
-     * select.
-     *
-     * @return {Promise<number[]>}  A promise which resolves to an array of
-     * `Field.id` numbers that represent the immediate parents of `childId`.
-     */
-    async selectFieldParents(childId: number): Promise<number[]> {
-        const results = await this.core.database.query(`
-            SELECT parent_id FROM field_relationships WHERE child_id = $1
-        `, [ childId ])
-
-        if ( results.rows.length <= 0) {
-            return []
-        }
-
-        return results.rows.map((r) => r.parent_id)
-    }
-
-
-    /**
-     * Select the entire tree under a single field.
-     *
-     * @param {number[]} rootIds An array of field ids who's descendents we want
-     * to select. 
-     *
-     * @return {Promise<number[]>}  A promise which resolves to an array of
-     * `Field.id` containing the ids of all of the decendends of the given
-     * fields.
-     **/
-    async selectFieldDescendents(rootIds: number[]): Promise<number[]> {
-        const fieldIds = [ ...rootIds]
-        let previous = [ ...rootIds]
-        do {
-            const results = await this.core.database.query(`SELECT child_id as id FROM field_relationships WHERE field_relationships.parent_id = ANY ($1::int[])`, [ previous ])
-
-            // We've reached the bottom of the tree.
-            if ( results.rows.length == 0) {
-               return fieldIds 
-            }
-
-            previous = []
-            for ( const row of results.rows ) {
-                fieldIds.push(row.id)
-                previous.push(row.id)
-            }
-        } while(previous.length > 0)
-
-        return fieldIds
-    }
-
-    /**
-     * Select the entire tree above an array of fields.  Results include the
-     * root fields.
-     *
-     * @param {number[]} rootIds An array of field ids the children of which we
-     * want to select.
-     *
-     * @return {Promise<number[]>}  A promise that resolves with an array of
-     * field ids representing all of the ancestors of these fields.
-     */
-    async selectFieldAncestors(rootIds: number[]): Promise<number[]> {
-        const fieldIds = [ ...rootIds]
-        let previous = [ ...rootIds]
-        do {
-            const results = await this.core.database.query(`SELECT parent_id as id FROM field_relationships WHERE field_relationships.child_id = ANY ($1::int[])`, [ previous ])
-
-            // We've reached the top of the tree.
-            if ( results.rows.length == 0) {
-               return fieldIds 
-            }
-
-            previous = []
-            for ( const row of results.rows ) {
-                fieldIds.push(row.id)
-                previous.push(row.id)
-            }
-        } while(previous.length > 0)
-
-        return fieldIds
     }
 
 }

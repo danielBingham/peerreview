@@ -26,7 +26,7 @@ import { Paper, PaperAuthor, PaperVersion, DatabaseResult, ModelDictionary, Quer
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-import FileDAO from './FileDAO'
+import { FileDAO } from './FileDAO'
 import S3FileService from '../services/S3FileService'
 
 const PAGE_SIZE = 50 
@@ -35,7 +35,7 @@ const PAGE_SIZE = 50
  * Data Access Object for mapping the `Paper` type (defined in
  * @danielbingham/peerreview-model) to and from the database.
  */
-export default class PaperDAO {
+export class PaperDAO {
     
     /** Number of results on each page. **/
     PAGE_SIZE: number

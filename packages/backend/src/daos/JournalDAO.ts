@@ -21,7 +21,7 @@ import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-import { Journal, PartialJournal, JournalMember, DatabaseResult, QueryMeta, ModelDictionary} from '@danielbingham/peerreview-model'
+import { Journal, PartialJournal, JournalMember, DatabaseQuery, DatabaseResult, QueryMeta, ModelDictionary} from '@danielbingham/peerreview-model'
 
 const PAGE_SIZE = 20
 
@@ -186,36 +186,18 @@ export default class JournalDAO {
     /**
      * Select Journal models from the database `journals` and `journal_members`
      * tables.
-     *
-     * @param {string}  whereStatement   (Optional) The `WHERE` portion of an
-     * SQL `SELECT` statement against the `journals` and `journal_members`
-     * tables parameterized for use with pg's `Pool.query()`.
-     * @param {any[]}   whereParameters  (Optional) An array of parameters for
-     * use with `whereStatement`.
-     * @param {string}  orderStatement  (Optional) The `ORDER` portion of an
-     * SQL `SELECT` statement.
-     * @param {number}  pageNumber  (Optional) The page number of the page we
-     * want to retrieve.
-     *
-     * @return {Promise<DatabaseResult<Journal>>}   A Promise that results to a
-     * DatabaseResult populated with the hydrated Journal models that result
-     * from the query.
      */
-    async selectJournals(
-        whereStatement?: string, 
-        whereParameters?: any[], 
-        orderStatement?: string, 
-        pageNumber?: number
-    ): Promise<DatabaseResult<Journal>> {
-        let where = whereStatement ? whereStatement : ''
-        const params = whereParameters ? [ ...whereParameters ] : [] // Need to copy here because we're going to reuse it in count.
-        let order = orderStatement ? orderStatement : 'journals.created_date desc'
+    async selectJournals(query: DatabaseQuery): Promise<DatabaseResult<Journal>> {
+        let where = `WHERE ${query.where}` || ''
+        const params = query.params ? [ ...query.params ] : [] // Need to copy here because we're going to reuse it in count.
+        let order = query.order || 'journals.created_date desc'
 
+        const page = query.page || 0
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we
         // probably don't want to have to deal with pagination.
-        if ( pageNumber ) {
-            const pageIds = await this.getJournalIdsForPage(where, params, order, pageNumber)
+        if ( page > 0 ) {
+            const pageIds = await this.getJournalIdsForPage(query)
 
             if ( where.length > 0 ) {
                 where += ` AND journals.id = ANY($${params.length}::bigint[])`
@@ -248,35 +230,18 @@ export default class JournalDAO {
     /**
      * Get an array of `Journal.id` that correspond the page of a query
      * identified by `pageNumber`.
-     *
-     * @param {string}  whereStatement   (Optional) The `WHERE` portion of an
-     * SQL `SELECT` statement against the `journals` and `journal_members`
-     * tables parameterized for use with pg's `Pool.query()`.
-     * @param {any[]}   whereParameters  (Optional) An array of parameters for
-     * use with `whereStatement`.
-     * @param {string}  orderStatement  (Optional) The `ORDER` portion of an
-     * SQL `SELECT` statement.
-     * @param {number}  pageNumber  (Optional) The page number of the page we
-     * want to retrieve.
-     *
-     * @return {Promise<number[]>}  A Promise that results to an array
-     * containing the id numbers of the Journals on page `pageNumber` of the
-     * query.
      */
-    async getJournalIdsForPage(
-        whereStatement?: string, 
-        whereParameters?: any[], 
-        orderStatement?: string, 
-        pageNumber?: number
-    ): Promise<number[]> {
-        let where = whereStatement ? whereStatement : ''
-        const params = whereParameters? [ ...whereParameters] : [] // Need to copy here because we're going to reuse it in count.
-        let order = orderStatement ? orderStatement : 'journals.created_date desc'
+    async getJournalIdsForPage(query: DatabaseQuery): Promise<number[]> {
+        let where = `WHERE ${query.where}` || ''
+        const params = query.params ? [ ...query.params ] : [] // Need to copy here because we're going to reuse it in count.
+        let order = query.order || 'journals.created_date desc'
+
+        const page = query.page || 1
+        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
 
         let paging = ''
-        const page = pageNumber ? pageNumber : 1
 
-        const offset = (page-1) * PAGE_SIZE
+        const offset = (page-1) * itemsPerPage 
         let count = params.length 
 
         paging = `
@@ -284,7 +249,7 @@ export default class JournalDAO {
                 OFFSET $${count+2}
             `
 
-        params.push(PAGE_SIZE)
+        params.push(itemsPerPage)
         params.push(offset)
 
         const sql = `
@@ -309,23 +274,13 @@ export default class JournalDAO {
     /**
      * Get the paging metadata for the query defined by the given
      * `whereStatement` and `whereParams`.  
-     *
-     * @param {string}  whereStatement  The `WHERE` portion of an SQL `SELECT`
-     * query parameterized for use with pg's `Pool.query()`.
-     * @param {any[]}   whereParameters The parameters for `whereStatement`.
-     * @param {number}  pageNumber  The page number of the page we queried for,
-     * pass through to the metadata.
-     *
-     * @return {Promise<QueryMeta>}  The populated QueryMeta.
      */
-    async getJournalQueryMeta(
-        whereStatement: string, 
-        whereParameters: any[], 
-        pageNumber: number
-    ): Promise<QueryMeta> {
-        let where = whereStatement ? whereStatement : ''
-        let params = whereParameters ? [ ...whereParameters ] : []
-        let page = pageNumber ? pageNumber : 1
+    async getJournalQueryMeta(query: DatabaseQuery): Promise<QueryMeta> {
+        let where = `WHERE ${query.where}` || ''
+        const params = query.params ? [ ...query.params ] : [] // Need to copy here because we're going to reuse it in count.
+
+        const page = query.page || 0
+        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
 
         const sql = `
                SELECT 
@@ -340,7 +295,7 @@ export default class JournalDAO {
             return {
                 count: 0,
                 page: page,
-                pageSize: PAGE_SIZE,
+                pageSize: itemsPerPage,
                 numberOfPages: 1
             }
         }
@@ -349,8 +304,8 @@ export default class JournalDAO {
         return {
             count: count,
             page: page,
-            pageSize: PAGE_SIZE,
-            numberOfPages: Math.floor(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
+            pageSize: itemsPerPage,
+            numberOfPages: Math.floor(count / itemsPerPage) + ( count % itemsPerPage > 0 ? 1 : 0) 
         }
     }
 

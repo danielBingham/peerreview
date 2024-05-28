@@ -17,11 +17,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Pool, QueryResultRow } from 'pg'
-
+import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
-import { File, PartialFile, DatabaseResult, ModelDictionary } from '@danielbingham/peerreview-model'
+import { File, PartialFile, DatabaseQuery, DatabaseResult, ModelDictionary } from '@danielbingham/peerreview-model'
 
 /**
  * The data access object for the `files` table.
@@ -30,12 +29,18 @@ import { File, PartialFile, DatabaseResult, ModelDictionary } from '@danielbingh
  */
 export class FileDAO {
     core: Core
+    database: Pool | Client
 
     /**
      * Initialize the DAO with the Core.
      */
-    constructor(core: Core) {
+    constructor(core: Core, database?: Pool | Client) {
         this.core = core
+        this.database = core.database
+
+        if ( database ) {
+            this.database = database
+        }
     }
 
     /**
@@ -45,8 +50,15 @@ export class FileDAO {
      * @return {string} The selection string.
      */
     getFilesSelectionString(): string {
-        return `files.id as "File_id", files.user_id as "File_userId", files.location as "File_location", files.filepath as "File_filepath", files.type as "File_type",
-            files.created_date as "File_createdDate", files.updated_date as "File_updatedDate"` 
+        return `
+        files.id as "File_id", 
+        files.user_id as "File_userId", 
+        files.location as "File_location", 
+        files.filepath as "File_filepath", 
+        files.type as "File_type",
+        files.created_date as "File_createdDate", 
+        files.updated_date as "File_updatedDate"
+        ` 
     }
 
     /**
@@ -113,28 +125,19 @@ export class FileDAO {
     /**
      * Select File models from the `files` table using an optional
      * parameterized SQL `WHERE` statement.
-     *
-     * @param {string} where    (Optional) An SQL `WHERE` statement,
-     * parameterized for use with pg's `Pool.query()` function.
-     * @param {any[]} params    (Optional) Parameters for use with `where`.
-     * Must match the parameters in the `where` statement.
-     *
-     * @return {Promise<DatabaseResult<File>>} A Promise that resolves to a
-     * populated DatabaseResult<File> containing the hydrated File models that
-     * result from the query.
      */
-    async selectFiles(where?: string, params?: any[]): Promise<DatabaseResult<File>> {
-        where = where ? where : ''
-        params = params ? params : []
+    async selectFiles(query: DatabaseQuery): Promise<DatabaseResult<File>> {
+        const where = `WHERE ${query.where}` || ''
+        const params = query.params ? [ ...query.params ] : []
 
         const sql = `
             SELECT 
                 ${ this.getFilesSelectionString() } 
-                FROM files 
+            FROM files 
                 ${where}
         `
         
-        const results = await this.core.database.query(sql, params)
+        const results = await this.database.query(sql, params)
 
         return this.hydrateFiles(results.rows)
     }
@@ -148,7 +151,7 @@ export class FileDAO {
      * @return {Promise<void>}
      */
     async insertFile(file: File): Promise<void> {
-        const results = await this.core.database.query(`
+        const results = await this.database.query(`
             INSERT INTO files (id, user_id, location, filepath, type, created_date, updated_date)
                 VALUES ($1, $2, $3, $4, $5, now(), now())
         `, [ file.id, file.userId, file.location, file.filepath, file.type ])
@@ -168,7 +171,7 @@ export class FileDAO {
      *  @return {Promise<void>}
      */
     async updateFile(file: File): Promise<void> {
-        const results = await this.core.database.query(`
+        const results = await this.database.query(`
             UPDATE files SET user_id = $1, location=$2, filepath=$3, type=$4, updated_date=now()
                 WHERE id=$5
         `, [ file.userId, file.location, file.filepath, file.type, file.id ])
@@ -208,7 +211,7 @@ export class FileDAO {
         sql += 'updated_date = now() WHERE id = $' + count
         params.push(file.id)
 
-        const results = await this.core.database.query(sql, params)
+        const results = await this.database.query(sql, params)
 
         if ( ! results.rowCount || results.rowCount <= 0) {
             throw new DAOError('failed-update', `Failed to update files ${file.id}.`)
@@ -223,7 +226,7 @@ export class FileDAO {
      * @return {Promise<void>}
      */
     async deleteFile(fileId: number): Promise<void> {
-        const pathResults = await this.core.database.query(`
+        const pathResults = await this.database.query(`
             SELECT filepath FROM files WHERE id = $1
         `, [ fileId ])
 
@@ -233,7 +236,7 @@ export class FileDAO {
 
         // TECHDEBT TODO We need to delete the file here.
 
-        const results = await this.core.database.query(`
+        const results = await this.database.query(`
             DELETE FROM files WHERE id = $1
         `, [ fileId])
 

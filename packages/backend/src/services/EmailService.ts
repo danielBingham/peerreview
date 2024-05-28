@@ -1,25 +1,46 @@
-const ServiceError = require('../errors/ServiceError')
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
 
-module.exports = class EmailService {
+import { User, Token } from '@danielbingham/peerreview-model'
 
-    constructor(core) {
+import { Message } from 'postmark'
+
+export class EmailService {
+    core: Core
+
+    constructor(core: Core) {
         this.core = core 
-
-        this.logger = core.logger
-        this.config = core.config
     }
 
-    async sendEmail(data) {
+    async sendEmail(data: Message): Promise<void> {
         try {
             await this.core.postmarkClient.sendEmail(data)
         } catch (error) {
-            console.error(error)
+            this.core.logger.error(error)
             throw new ServiceError('email-failed', 
                 `Attempt to send an email failed with message: ${error.message}.`)
         }
     }
 
-    async sendNotificationEmail(address, subject, body) {
+    async sendNotificationEmail(address: string, subject: string, body: string): Promise<void> {
         await this.sendEmail({
             "From": "no-reply@peer-review.io",
             "To": address,
@@ -29,8 +50,8 @@ module.exports = class EmailService {
         })
     }
 
-    async sendEmailConfirmation(user, token) {
-        const confirmationLink = this.config.host + `email-confirmation?token=${token.token}`
+    async sendEmailConfirmation(user: User, token: Token): Promise<void> {
+        const confirmationLink = this.core.config.host + `email-confirmation?token=${token.token}`
 
 
         const emailTextBody = `Welcome to JournalHub, ${user.name}!
@@ -48,8 +69,8 @@ ${confirmationLink}`
         })
     }
 
-    async sendPasswordReset(user, token) {
-        const resetLink = this.config.host + `reset-password?token=${token.token}`
+    async sendPasswordReset(user: User, token: Token): Promise<void> {
+        const resetLink = this.core.config.host + `reset-password?token=${token.token}`
 
         const emailTextBody = `Hello ${user.name},
 
@@ -66,8 +87,8 @@ ${resetLink}`
         })
     }
 
-    async sendInvitation(inviter, user, token) {
-        const invitationLink = this.config.host + `accept-invitation?token=${token.token}`
+    async sendInvitation(inviter: User, user: User, token: Token): Promise<void> {
+        const invitationLink = this.core.config.host + `accept-invitation?token=${token.token}`
 
         const emailTextBody = `Hello ${user.name},
 
