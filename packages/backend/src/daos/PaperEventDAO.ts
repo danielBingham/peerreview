@@ -21,7 +21,9 @@ import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-import { PaperEvent, PartialPaperEvent, DatabaseQuery, ModelDictionary, DatabaseResult } from '@danielbingham/peerreview-model'
+import { PaperEvent, PartialPaperEvent, ModelDictionary } from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
 
 export class PaperEventDAO {
     core: Core
@@ -96,7 +98,7 @@ export class PaperEventDAO {
         return event
     }
 
-    hydrateEvents(rows: QueryResultRow[]): DatabaseResult<PaperEvent> {
+    hydrateEvents(rows: QueryResultRow[]): DAOResult<PaperEvent> {
         const dictionary: ModelDictionary<PaperEvent> = {}
         const list: number[] = []
 
@@ -112,13 +114,19 @@ export class PaperEventDAO {
         return { dictionary: dictionary, list: list }
     }
 
-    async selectEvents(query: DatabaseQuery): Promise<DatabaseResult<PaperEvent>> {
-        const where = query.where || ''
-        const params = query.params || []
-        const order = query.order || 'paper_events.event_date asc'
+    async selectEvents(query?: DAOQuery): Promise<DAOResult<PaperEvent>> {
+        const where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
 
-        const page = query.page || 0
-        const itemsPerPage = query.itemsPerPage || 20
+        let order = 'paper_events.event_date asc'
+        if ( query?.order == DAOQueryOrder.Oldest ) {
+            order = 'paper_events.event_date asc'
+        } else if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'paper_events.event_date desc'
+        }
+
+        const page = query?.page || 0
+        const itemsPerPage = query?.itemsPerPage || 20
 
         let paging = ''
         if ( page > 0 ) {

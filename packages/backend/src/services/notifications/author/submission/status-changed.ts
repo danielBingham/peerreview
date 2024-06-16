@@ -19,9 +19,9 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const Author_Submission_StatusChanged: NotificationTemplate = {
+export const Author_Submission_StatusChanged: NotificationDefinition = {
     email: {
         subject: Handlebars.compile(`TODO`),
         body: Handlebars.compile(`TODO`)

@@ -21,13 +21,10 @@ import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-import { 
-    PaperComment, 
-    PartialPaperComment,
-    DatabaseResult, 
-    ModelDictionary, 
-    DatabaseQuery 
-} from '@danielbingham/peerreview-model'
+import { PaperComment, PartialPaperComment, ModelDictionary } from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
+
 
 export class PaperCommentDAO {
     core: Core
@@ -67,7 +64,7 @@ export class PaperCommentDAO {
         }
     }
 
-    hydratePaperComments(rows: QueryResultRow[]): DatabaseResult<PaperComment> {
+    hydratePaperComments(rows: QueryResultRow[]): DAOResult<PaperComment> {
         const dictionary: ModelDictionary<PaperComment> = {}
         const list: number[] = []
 
@@ -91,12 +88,17 @@ export class PaperCommentDAO {
     }
 
     /**
-     * Select PaperComment models from the database using a DatabaseQuery.
+     * Select PaperComment models from the database using a DAOQuery.
      */
-    async selectPaperComments(query: DatabaseQuery): Promise<DatabaseResult<PaperComment>> {
+    async selectPaperComments(query: DAOQuery): Promise<DAOResult<PaperComment>> {
         const where = query.where || ''
         const params = query.params || []
-        const order = query.order || 'paper_comments.committed_date, paper_comments_created_date'
+
+        if ( query?.order !== undefined ) {
+            throw new DAOError('not-supported', 'Order not supported.')
+        }
+
+        let order = 'paper_comments.committed_date asc, paper_comments.created_date asc'
 
         const page = query.page || 0 
         const itemsPerPage = query.itemsPerPage || 20

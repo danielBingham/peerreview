@@ -19,9 +19,9 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const JournalMember_Journal_RoleChanged: NotificationTemplate = {
+export const JournalMember_Journal_RoleChanged: NotificationDefinition = {
     email: {
         subject: Handlebars.compile(`[JournalHub] {{user.name}} removed you from {{journal.name}}`),
         body: Handlebars.compile(`

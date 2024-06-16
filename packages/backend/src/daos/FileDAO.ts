@@ -20,7 +20,9 @@
 import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
-import { File, PartialFile, DatabaseQuery, DatabaseResult, ModelDictionary } from '@danielbingham/peerreview-model'
+import { File, PartialFile, ModelDictionary } from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOResult } from './DAO'
 
 /**
  * The data access object for the `files` table.
@@ -85,18 +87,18 @@ export class FileDAO {
     }
 
     /**
-     * Hydrate a `DatabaseResult` of File models from an array of pg's
+     * Hydrate a `DAOResult` of File models from an array of pg's
      * `QueryResultRow`, returned from a query to `Pool.query()`.  The query
      * must be formed using `getFileSelectionString()`.
      *
      * @param {QueryResultRow[]} rows   An array of QueryResultRow returned
      * from a call to `Pool.query()`.  
      *
-     * @return {DatabaseResult<File>} A populated Database result with a `list`
+     * @return {DAOResult<File>} A populated Database result with a `list`
      * preserving query order and a `Dictionary` allowing easy access to Models
      * by ID.
      */
-    hydrateFiles(rows: QueryResultRow[]): DatabaseResult<File> {
+    hydrateFiles(rows: QueryResultRow[]): DAOResult<File> {
         const dictionary: ModelDictionary<File> = {}
         const list: number[] = []
 
@@ -126,9 +128,9 @@ export class FileDAO {
      * Select File models from the `files` table using an optional
      * parameterized SQL `WHERE` statement.
      */
-    async selectFiles(query: DatabaseQuery): Promise<DatabaseResult<File>> {
-        const where = `WHERE ${query.where}` || ''
-        const params = query.params ? [ ...query.params ] : []
+    async selectFiles(query?: DAOQuery): Promise<DAOResult<File>> {
+        const where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
 
         const sql = `
             SELECT 

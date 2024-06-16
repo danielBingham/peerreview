@@ -91,3 +91,11 @@ export interface Paper extends Model {
     versions: PaperVersion[]
 
 }
+
+export interface PartialPaper {
+    id?: number
+    title?: string
+    isDraft?: boolean
+    showPreprint?: boolean
+    score?: number
+}

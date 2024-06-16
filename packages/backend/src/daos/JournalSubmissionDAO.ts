@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Pool, QueryResultRow } from 'pg'
+import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 import { 
@@ -27,9 +27,10 @@ import {
     JournalSubmissionReview,
     JournalSubmissionEditor,
     ModelDictionary,
-    DatabaseResult,
     QueryMeta
 } from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
 
 const PAGE_SIZE = 20
 
@@ -41,9 +42,9 @@ const PAGE_SIZE = 20
  */ 
 export class JournalSubmissionDAO {
     core: Core
-    database: Pool
+    database: Pool | Client
 
-    constructor(core: Core, database?: Pool) {
+    constructor(core: Core, database?: Pool | Client) {
         this.core = core
 
         // If a database override is provided, use that.  Otherwise, use the
@@ -203,16 +204,16 @@ export class JournalSubmissionDAO {
     /**
      * Hydrate a one or more JournalSubmission models from an array of
      * QueryResultRow returned by pg's `Pool` or `Client`.  Return a populated
-     * `DatabaseResult<JournalSubmission>`.
+     * `DAOResult<JournalSubmission>`.
      *
      * @param {QueryResultRow[]} rows   The rows containing the results of a
      * database query made with the contents of
      * `getJournalSubmissionSelectionString()`.  May include additional fields,
      * which will be ignored.
      *
-     * @return {DatabaseResult<JournalSubmission>} The populated DatabaseResult.
+     * @return {DAOResult<JournalSubmission>} The populated DAOResult.
      */
-    hydrateJournalSubmissions(rows: QueryResultRow[]): DatabaseResult<JournalSubmission> {
+    hydrateJournalSubmissions(rows: QueryResultRow[]): DAOResult<JournalSubmission> {
         const dictionary: ModelDictionary<JournalSubmission> = {}
         const list: number[] = []
 
@@ -255,18 +256,32 @@ export class JournalSubmissionDAO {
     /**
      * Select `JournalSubmission` models from the database using any SQL WHERE
      * statement, parameterized for use with pg's `Pool.query()`.
-     *
-     * @param {string} where    (Optional) The WHERE portion of an SQL SELECT
-     * statement, parameterized for use with pg's `Pool.query()`.
-     * @param {any[]} params    (Optional) Parameters for use with the `where` query.
-     *
-     * @return {Promise<DatabaseResult<JournalSubmission>>} A promise that
-     * resolves to a DatabaseResult populated with the hydrated
-     * JounalSubmissions that result from the query.
      */
-    async selectJournalSubmissions(where?: string, params?: any[]): Promise<DatabaseResult<JournalSubmission>> {
-        where = where || ''
-        params = params || []
+    async selectJournalSubmissions(query?: DAOQuery): Promise<DAOResult<JournalSubmission>> {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params || []
+        
+
+        let order = 'journal_submissions.created_date desc'
+        if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'journal_submissions.created_date desc'
+        } else if ( query?.order == DAOQueryOrder.Oldest ) {
+            order = 'journal_submissions.created_date asc'
+        }
+
+        const page = query?.page || 0
+
+        if ( page > 0 ) {
+            const pageIds = await this.getJournalSubmissionIdsForPage(query)
+
+            if ( where.length > 0 ) {
+                where += ` AND journal_submissions.id = ANY($${params.length}::bigint[])`
+                params.push(pageIds)
+            } else {
+                where = `WHERE journal_submissions.id = ANY($1::bigint[])`
+                params.push(pageIds)
+            }
+        }
 
         const sql = `
             SELECT
@@ -279,7 +294,7 @@ export class JournalSubmissionDAO {
                 LEFT OUTER JOIN reviews ON journal_submission_reviewers.user_id = reviews.user_id AND journal_submissions.paper_id = reviews.paper_id AND reviews.status='submitted'
                 LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
             ${where}
-            ORDER BY journal_submissions.created_date desc, reviews.created_date desc
+            ORDER BY ${order} 
         `
 
         const results = await this.database.query(sql, params)
@@ -292,20 +307,67 @@ export class JournalSubmissionDAO {
     }
 
     /**
+     * Get the ids of the JournalSubmission objects that should exist on a
+     * particular page of the query defined by `query`.
+     */
+    async getJournalSubmissionIdsForPage(query?: DAOQuery): Promise<number[]> {
+        const where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params || []
+
+        let order = 'journal_submissions.created_date desc'
+        if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'journal_submissions.created_date desc'
+        } else if ( query?.order == DAOQueryOrder.Oldest ) {
+            order = 'journal_submissions.created_date asc'
+        }
+
+        const page = query?.page || 0
+        const itemsPerPage = query?.itemsPerPage || PAGE_SIZE
+
+        let paging = ''
+
+        const offset = (page-1) * itemsPerPage 
+        let count = params.length 
+
+        paging = `
+                LIMIT $${count+1}
+                OFFSET $${count+2}
+            `
+
+        params.push(itemsPerPage)
+        params.push(offset)
+
+        const sql = `
+            SELECT DISTINCT ON ( journal_submissions.id )
+                journal_submissions.id as "JournalSubmission_id"
+            FROM journal_submissions
+                LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submission_id
+                LEFT OUTER JOIN reviews ON journal_submission_reviewers.user_id = reviews.user_id AND journal_submissions.paper_id = reviews.paper_id AND reviews.status='submitted'
+                LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
+            ${where}
+            GROUP BY journal_submissions.id
+            ORDER BY ${order} 
+            ${paging}
+        `
+
+        const results = await this.database.query(sql, params)
+
+        if ( results.rows.length > 0 ) {
+            return results.rows.map((r) => r.JournalSubmission_id)
+        } else {
+            return []
+        }
+    }
+
+    /**
      * Generate paging metadata for the given JournalSubmissions query.
-     *
-     * @param {string} where    (Optional) The WHERE portion of an SQL SELECT
-     * statement. Parameterized for use with pg's `Pool.query()`.
-     * @param {any[]} params    (Optional) An array of parameters to use with
-     * the `where` statement.
-     * @param {number} page     (Optional) The page to pull.
-     *
-     * @return {Promise<QueryMeta>} A promise that resolves with the QueryMeta
-     * data for the query defined by the parameters (paging metadata).
       */
-    async getJournalSubmissionQueryMeta(where: string, params: any[], page: number): Promise<QueryMeta> {
-        params = params ? params : []
-        where = where ? where : ''
+    async getJournalSubmissionQueryMeta(query?: DAOQuery): Promise<QueryMeta> {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
+
+        const page = query?.page || 0
+        const itemsPerPage = query?.itemsPerPage || PAGE_SIZE
 
         const sql = `
            SELECT 
@@ -322,8 +384,8 @@ export class JournalSubmissionDAO {
         if ( results.rows.length <= 0) {
             return {
                 count: 0,
-                page: page ? page : 1,
-                pageSize: PAGE_SIZE,
+                page: page,
+                pageSize: itemsPerPage,
                 numberOfPages: 1
             }
         }
@@ -331,59 +393,11 @@ export class JournalSubmissionDAO {
         const count = parseInt(results.rows[0].count)
         return {
             count: count,
-            page: page ? page : 1,
-            pageSize: PAGE_SIZE,
-            numberOfPages: Math.floor(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0) 
+            page: page,
+            pageSize: itemsPerPage,
+            numberOfPages: Math.floor(count / itemsPerPage) + ( count % itemsPerPage > 0 ? 1 : 0) 
         }
 
-    }
-
-
-    /**
-     * Get an array of JournalSubmission.id that represents the requested page
-     * of the defined query.
-     *
-     * @param {string} where    (Optional) The WHERE portion of an SQL SELECT query.
-     * @param {any[]} params    (Optional) Parameters for use with the parameterized `where` query.
-     * @param {string} order    (Optional) The ORDER portion of an SQL SELECT query.
-     * @param {number} page     (Optional) The page number of the page we want to retrieve.
-     *
-     * @return {Promise<number[]>} A promise that resolves to an array of id
-     * numbers defining which JournalSubmissions are on the requested page of
-     * the query defined by `where`, `params`, and `order`.
-     */
-    async getPage(where?: string, params?: any[], order?: string, page?: number): Promise<number[]> {
-        where = (where && where.length ? where : '')
-        params = (params && params.length ? [...params] : [])
-        order = (order && order.length ? order : 'journal_submissions.created_date desc')
-        page = (page || 1)
-
-        params.push(PAGE_SIZE)
-        params.push((page-1)*PAGE_SIZE)
-        const count = params.length
-
-        const sql = `
-            SELECT
-                journal_submissions.id as submission_id, journal_submissions.created_date as "submission_createdDate",
-
-            FROM journal_submissions
-                LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submission_id
-                LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
-                LEFT OUTER JOIN journals ON journal_submissions.journal_id = journals.id
-            ${where}
-            GROUP BY papers.id
-            ORDER BY ${order}
-            LIMIT $${count-1}
-            OFFSET $${count}
-
-        `
-        const results = await this.database.query(sql, params)
-
-        if ( results.rows.length <= 0 ) {
-            return []
-        }
-
-        return results.rows.map((r) => r.submission_id)
     }
 
     /**

@@ -19,9 +19,9 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const JournalMember_Journal_Invited: NotificationTemplate = {
+export const JournalMember_Journal_Invited: NotificationDefinition = {
     email: {
         subject: Handlebars.compile(`[JournalHub] {{user.name}} invited you to join {{journal.name}}`),
         body: Handlebars.compile(`

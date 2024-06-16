@@ -19,17 +19,17 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const Reviewer_Submission_ReviewerAssigned: NotificationTemplate = {
+export const Reviewer_Submission_ReviewerAssigned: NotificationDefinition = {
     email: {
-        subject: Handlebars.compile(`[JournalHub] {{editor.name}} assigned you to review "{{paper.title}}" for {{journal.name}}.`),
+        subject: Handlebars.compile(`[JournalHub] {{editorUser.name}} assigned you to review "{{partialPaper.title}}" for {{journal.name}}.`),
         body: Handlebars.compile(`
-                                 {{editor.name}} assigned you to review "{{paper.title}}" for {{journal.name}}.
+                                 {{editorUser.name}} assigned you to review "{{partialPaper.title}}" for {{journal.name}}.
 
-                                     You can find the paper here: {{host}}paper/{{paper.id}}/file
+                                     You can find the paper here: {{host}}paper/{{partialPaper.id}}/file
                                  `)
     },
-    text: Handlebars.compile(`{{editor.name}} assigned you to review "{{paper.title}}" for {{journal.name}}.`),
-    path: Handlebars.compile(`/paper/{{paper.id}}/file`)
+    text: Handlebars.compile(`{{editorUser.name}} assigned you to review "{{partialPaper.title}}" for {{journal.name}}.`),
+    path: Handlebars.compile(`/paper/{{partialPaper.id}}/file`)
 }

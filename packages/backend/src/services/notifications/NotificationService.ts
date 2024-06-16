@@ -22,16 +22,16 @@ import path from 'path'
 import { Core, ServiceError } from '@danielbingham/peerreview-core' 
 import { User, PaperEventVisibility, NotificationType } from '@danielbingham/peerreview-model'
 
-import { NotificationDAO } from '../daos/NotificationDAO'
-import { PaperEventDAO } from '../daos/PaperEventDAO'
-import { PaperDAO } from '../daos/PaperDAO'
+import { NotificationDAO } from '../../daos/NotificationDAO'
+import { PaperEventDAO } from '../../daos/PaperEventDAO'
+import { PaperDAO } from '../../daos/PaperDAO'
 
-import { EmailService } from './EmailService'
-const SubmissionService = require('./SubmissionService')
-const PaperEventService = require('./PaperEventService')
+import { EmailService } from '../EmailService'
+import { SubmissionService } from '../SubmissionService'
+import { PaperEventService } from '../PaperEventService'
 
-import { NotificationDefinition } from './notifications/NotificationDefinition'
-import { NotificationContext } from './notifications/NotificationContext'
+import { NotificationDefinition } from './NotificationDefinition'
+import { NotificationContext } from './NotificationContext'
 
 
 export class NotificationService {
@@ -93,7 +93,10 @@ export class NotificationService {
                                    `Notification context missing property "review".`)
         }
 
-        const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ context.review.paperId ])
+        const paperResults = await this.paperDAO.selectPapers({ 
+            where: 'papers.id = $1', 
+            params: [ context.review.paperId ]
+        })
         const paper = paperResults.dictionary[context.review.paperId]
 
         const eventResults = await this.paperEventDAO.selectEvents({ 
@@ -139,7 +142,7 @@ export class NotificationService {
                         {
                             paper: paper,
                             review: context.review,
-                            reviewer: currentUser
+                            reviewerUser: currentUser
                         }
                     )
                 }
@@ -160,7 +163,7 @@ export class NotificationService {
                     {
                         paper: paper,
                         review: context.review,
-                        reviewer: currentUser 
+                        reviewerUser: currentUser 
                     }
                 )
             }
@@ -179,7 +182,7 @@ export class NotificationService {
                     {
                         paper: paper,
                         review: context.review,
-                        reviewer: currentUser 
+                        reviewerUser: currentUser 
                     }
                 )
             }
@@ -195,7 +198,10 @@ export class NotificationService {
                                    "Missing required context 'comment'.")
         }
 
-        const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ context.comment.paperId ])
+        const paperResults = await this.paperDAO.selectPapers({ 
+            where: 'papers.id = $1', 
+            params: [ context.comment.paperId ]
+        })
         const paper = paperResults.dictionary[context.comment.paperId]
 
         const eventResults = await this.paperEventDAO.selectEvents({ 
@@ -564,7 +570,10 @@ export class NotificationService {
         }
         const event = eventResults.dictionary[eventResults.list[0]]
 
-        const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ context.paperId ])
+        const paperResults = await this.paperDAO.selectPapers({
+            where: 'papers.id = $1', 
+            params: [ context.paperId ]
+        })
         if ( paperResults.list.length <= 0 ) {
             throw new ServiceError('missing-paper',
                 `Missing Paper(${context.paperId}).`)
@@ -672,8 +681,8 @@ export class NotificationService {
             context.reviewer.userId,
             NotificationType.Reviewer_Submission_ReviewerAssigned,
             {
-                editor: currentUser,
-                paper: {
+                editorUser: currentUser,
+                partialPaper: {
                     id: context.paperId,
                     title: title
                 },
@@ -682,10 +691,19 @@ export class NotificationService {
         )
     }
 
-    async sendSubmissionReviewerUnassigned(currentUser, context) {
+    async sendSubmissionReviewerUnassigned(currentUser: User, context: NotificationContext): Promise<void> {
         if ( currentUser.id == context.reviewerId ) {
             return
         }
+
+        if ( ! ('reviewerId' in context) || ! context.reviewerId) {
+            throw new ServiceError('missing-context', `Field 'reviewerId' missing from context.`)
+        }
+
+        if ( ! ('paperId' in context) || ! context.paperId ) {
+            throw new ServiceError('missing-context', `Field 'paperId' missing from context.`)
+        }
+
 
         const notificationResults = await this.core.database.query(`
             SELECT papers.title FROM papers WHERE papers.id = $1
@@ -694,10 +712,10 @@ export class NotificationService {
 
         await this.createNotification(
             context.reviewerId,
-            'reviewer:submission:reviewer-unassigned',
+            NotificationType.Reviewer_Submission_ReviewerUnassigned,
             {
-                editor: currentUser,
-                paper: {
+                editorUser: currentUser,
+                partialPaper: {
                     id: context.paperId,
                     title: title
                 },
@@ -707,10 +725,15 @@ export class NotificationService {
         )
     }
 
-    async sendSubmissionEditorAssigned(currentUser, context) {
+    async sendSubmissionEditorAssigned(currentUser: User, context: NotificationContext): Promise<void> {
+        if ( ! ("editor" in context) || ! context.editor ) {
+            throw new ServiceError('missing-context', `Field 'editor' missing from context.`)
+        }
+
         if ( currentUser.id == context.editor.userId ) {
             return
         }
+
 
         const notificationResults = await this.core.database.query(`
             SELECT papers.title FROM papers WHERE papers.id = $1
@@ -719,10 +742,10 @@ export class NotificationService {
 
         await this.createNotification(
             context.editor.userId,
-            'editor:submission:editor-assigned',
+            NotificationType.Editor_Submission_EditorAssigned,
             {
-                editor: currentUser,
-                paper: {
+                editorUser: currentUser,
+                partialPaper: {
                     id: context.paperId,
                     title: title
                 },
@@ -732,7 +755,11 @@ export class NotificationService {
         )
     }
 
-    async sendSubmissionEditorUnassigned(currentUser, context) {
+    async sendSubmissionEditorUnassigned(currentUser: User, context: NotificationContext): Promise<void> {
+        if ( ! ("editorId" in context) || ! context.editorId ) {
+            throw new ServiceError('missing-context', `Field 'editorId' missing from context.`)
+        }
+
         if ( currentUser.id == context.editorId ) {
             return
         }
@@ -744,10 +771,10 @@ export class NotificationService {
 
         await this.createNotification(
             context.editorId,
-            'editor:submission:editor-unassigned',
+            NotificationType.Editor_Submission_EditorUnassigned,
             {
-                editor: currentUser,
-                paper: {
+                editorUser: currentUser,
+                partialPaper: {
                     id: context.paperId,
                     title: title
                 },

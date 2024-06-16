@@ -19,9 +19,9 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const Editor_Submission_NewVersion: NotificationTemplate = {
+export const Editor_Submission_NewVersion: NotificationDefinition = {
     email: {
         subject: Handlebars.compile(
             `[JournalHub] {{correspondingAuthor.name}} uploaded a new version of your editorial assignment, "{{paper.title}}"`),

@@ -19,9 +19,9 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const Author_Submission_NewComment: NotificationTemplate = {
+export const Author_Submission_NewComment: NotificationDefinition = {
     email: {
         subject: Handlebars.compile(`[JournalHub] {{user.name}} commented on your paper, "{{paper.title}}"`),
         body: Handlebars.compile(`

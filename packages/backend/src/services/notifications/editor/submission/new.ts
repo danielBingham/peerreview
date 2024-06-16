@@ -19,9 +19,9 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const Editor_Submission_New: NotificationTemplate = {
+export const Editor_Submission_New: NotificationDefinition = {
     email: {
         subject: Handlebars.compile(`[JournalHub] {{correspondingAuthor.name}} submitted "{{paper.title}}" to {{journal.name}}`),
         body: Handlebars.compile(`

@@ -21,7 +21,9 @@ import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-import { Journal, PartialJournal, JournalMember, DatabaseQuery, DatabaseResult, QueryMeta, ModelDictionary} from '@danielbingham/peerreview-model'
+import { Journal, PartialJournal, JournalMember, QueryMeta, ModelDictionary} from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
 
 const PAGE_SIZE = 20
 
@@ -29,7 +31,7 @@ const PAGE_SIZE = 20
  * Data Access Object for mapping the `journals` and `journal_members` tables
  * to the `Journal` model.
  */
-export default class JournalDAO {
+export class JournalDAO {
     core: Core
     database: Pool|Client
 
@@ -153,10 +155,10 @@ export default class JournalDAO {
      * the results of `getJournalSelectionString()` and
      * `getJournalMemberSelectionString()`.
      *
-     * @return {DatabaseResult<Journal>} A DatabaseResult populated with
+     * @return {DAOResult<Journal>} A DAOResult populated with
      * hydrated Journal models.
      */
-    hydrateJournals(rows: QueryResultRow[]): DatabaseResult<Journal> {
+    hydrateJournals(rows: QueryResultRow[]): DAOResult<Journal> {
         const dictionary: ModelDictionary<Journal> = {}
         const list: number[] = []
 
@@ -187,12 +189,18 @@ export default class JournalDAO {
      * Select Journal models from the database `journals` and `journal_members`
      * tables.
      */
-    async selectJournals(query: DatabaseQuery): Promise<DatabaseResult<Journal>> {
-        let where = `WHERE ${query.where}` || ''
-        const params = query.params ? [ ...query.params ] : [] // Need to copy here because we're going to reuse it in count.
-        let order = query.order || 'journals.created_date desc'
+    async selectJournals(query?: DAOQuery): Promise<DAOResult<Journal>> {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : [] // Need to copy here because we're going to reuse it in count.
 
-        const page = query.page || 0
+        let order = 'journals.created_date desc'
+        if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'journals.created_date desc'
+        } else if ( query?.order == DAOQueryOrder.Oldest ) {
+            order = 'journals.created_date asc'
+        }
+
+        const page = query?.page || 0
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we
         // probably don't want to have to deal with pagination.
@@ -231,13 +239,19 @@ export default class JournalDAO {
      * Get an array of `Journal.id` that correspond the page of a query
      * identified by `pageNumber`.
      */
-    async getJournalIdsForPage(query: DatabaseQuery): Promise<number[]> {
-        let where = `WHERE ${query.where}` || ''
-        const params = query.params ? [ ...query.params ] : [] // Need to copy here because we're going to reuse it in count.
-        let order = query.order || 'journals.created_date desc'
+    async getJournalIdsForPage(query?: DAOQuery): Promise<number[]> {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : [] 
 
-        const page = query.page || 1
-        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
+        let order = 'journals.created_date desc'
+        if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'journals.created_date desc'
+        } else if ( query?.order == DAOQueryOrder.Oldest ) {
+            order = 'journals.created_date asc'
+        }
+
+        const page = query?.page || 1
+        const itemsPerPage = query?.itemsPerPage || PAGE_SIZE
 
         let paging = ''
 
@@ -275,12 +289,12 @@ export default class JournalDAO {
      * Get the paging metadata for the query defined by the given
      * `whereStatement` and `whereParams`.  
      */
-    async getJournalQueryMeta(query: DatabaseQuery): Promise<QueryMeta> {
-        let where = `WHERE ${query.where}` || ''
-        const params = query.params ? [ ...query.params ] : [] // Need to copy here because we're going to reuse it in count.
+    async getJournalQueryMeta(query?: DAOQuery): Promise<QueryMeta> {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : [] 
 
-        const page = query.page || 0
-        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
+        const page = query?.page || 0
+        const itemsPerPage = query?.itemsPerPage || PAGE_SIZE
 
         const sql = `
                SELECT 

@@ -116,9 +116,14 @@ export class PermissionDAO {
     }
 
     async selectPermissions(query: DatabaseQuery): Promise<DatabaseResult<Permission>> {
-        const where = `WHERE ${query.where}` || ''
-        const params = query.params || []
-        const order = query.order || 'id asc'
+        const where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
+
+        if ( query?.order !== undefined ) {
+            throw new DAOError('not-supported', 'Order not supported.')
+        }
+
+        let order = 'permissions.id asc'
 
         const sql = `
             SELECT

@@ -18,16 +18,16 @@
  *
  ******************************************************************************/
 export { Model, ModelDictionary } from './types/Model'
-export { ResultType, DatabaseQuery, DatabaseResult, EntityResult, QueryMeta, QueryResult} from './types/Query'
+export { ResultType, EntityResult, QueryMeta, QueryResult} from './types/Query'
 
 export { Field } from './types/Field'
 export { File, PartialFile } from './types/File'
-export { Paper, PaperAuthor, PaperVersion } from './types/Paper'
+export { Paper, PartialPaper, PaperAuthor, PaperVersion } from './types/Paper'
 export { Journal, JournalModel, JournalAnonymity, PartialJournal, JournalMember, JournalMemberPermissions } from './types/Journal'
 export { JournalSubmission, PartialJournalSubmission, JournalSubmissionReviewer, JournalSubmissionReview, JournalSubmissionEditor } from './types/JournalSubmission'
 export { Notification, NotificationType, PartialNotification } from './types/Notification'
 export { PaperComment, PartialPaperComment } from './types/PaperComment'
-export { PaperEvent, PartialPaperEvent } from './types/PaperEvent'
+export { PaperEvent, PaperEventVisibility, PartialPaperEvent } from './types/PaperEvent'
 export { Permission } from './types/Permission'
 export { Review, ReviewThread, ReviewComment, ReviewStatus, ReviewRecommendation } from './types/Review'
 export { Token, PartialToken, TokenType } from './types/Token'

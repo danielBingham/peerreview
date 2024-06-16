@@ -27,11 +27,11 @@ import {
     UserJournalMembership,
     UserStatus,
     UserPermissions,
-    DatabaseQuery, 
-    DatabaseResult, 
     QueryMeta,
     ModelDictionary 
 } from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
 
 import { FileDAO } from './FileDAO'
 
@@ -115,7 +115,7 @@ export class UserDAO {
      *
      * @return {Object}     The users parsed into a dictionary keyed using user.id. 
      */
-    hydrateUsers(rows: QueryResultRow[]): DatabaseResult<User> {
+    hydrateUsers(rows: QueryResultRow[]): DAOResult<User> {
         const dictionary: ModelDictionary<User> = {}
         const list: number[] = []
 
@@ -154,7 +154,7 @@ export class UserDAO {
      *
      * @see this.selectUsers()
      */
-    async selectCleanUsers(query: DatabaseQuery) {
+    async selectCleanUsers(query: DAOQuery) {
         return await this.selectUsers(query, true)
     }
 
@@ -163,13 +163,61 @@ export class UserDAO {
      *
      * TODO Fix paging.
      */
-    async selectUsers(query: DatabaseQuery, clean?: boolean) {
-        const where = query.where ? `WHERE ${query.where}` : ''
-        const params = query.params ? query.params : []
-        const order = query.order ? query.order : 'users.created_date desc'
+    async selectUsers(query?: DAOQuery, clean?: boolean) {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
 
-        const page = query.page || 0
-        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
+        let order = 'users.created_date desc'
+        if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'users.created_date desc'
+        } else if ( query?.order == DAOQueryOrder.Oldest ) {
+            order = 'users.created_date asc'
+        }
+
+        const page = query?.page || 0
+        if ( page > 0) {
+            const pageIds = await this.getPage(query)
+            if ( where === '' ) {
+                where = `WHERE users.id = ANY(${params.length+1}::bigint[])`
+                params.push(pageIds)
+            } else {
+                where = `AND users.id = ANY(${params.length+1}::bigint[])`
+                params.push(pageIds)
+            }
+        }
+
+        const sql = `
+                SELECT 
+                    ${this.getUserSelectionString(clean)},
+
+                    ${this.fileDAO.getFilesSelectionString()},
+
+                    ${ this.core.features.hasFeature('journals-79') ? this.getUserJournalMembershipSelectionString() : '' }
+
+                FROM users
+                    LEFT OUTER JOIN files ON files.id = users.file_id
+                    ${ this.core.features.hasFeature('journals-79') ? `LEFT OUTER JOIN journal_members on journal_members.user_id = users.id` : '' }
+                ${where} 
+                ORDER BY ${order} 
+        `
+
+        const results = await this.database.query(sql, params)
+        return this.hydrateUsers(results.rows)
+    }
+
+    async getPage(query?: DAOQuery): Promise<number[]> {
+        const where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
+
+        let order = 'users.created_date desc'
+        if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'users.created_date desc'
+        } else if ( query?.order == DAOQueryOrder.Oldest ) {
+            order = 'users.created_date asc'
+        }
+
+        const page = query?.page || 0
+        const itemsPerPage = query?.itemsPerPage || PAGE_SIZE
 
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we
@@ -189,26 +237,22 @@ export class UserDAO {
         }
 
         const sql = `
-                SELECT 
-                    ${this.getUserSelectionString(clean)},
-
-                    ${this.fileDAO.getFilesSelectionString()},
-
-                    ${ this.core.features.hasFeature('journals-79') ? this.getUserJournalMembershipSelectionString() : '' }
-
+                SELECT DISTINCT
+                    users.id, users.created_date
                 FROM users
                     LEFT OUTER JOIN files ON files.id = users.file_id
                     ${ this.core.features.hasFeature('journals-79') ? `LEFT OUTER JOIN journal_members on journal_members.user_id = users.id` : '' }
                 ${where} 
+                GROUP BY users.id
                 ORDER BY ${order} 
                 ${paging}
         `
 
         const results = await this.database.query(sql, params)
-        return this.hydrateUsers(results.rows)
+        return results.rows.map((r) => r.id)
     }
 
-    async countUsers(query: DatabaseQuery): Promise<QueryMeta> {
+    async countUsers(query: DAOQuery): Promise<QueryMeta> {
         const where = query.where ? `WHERE ${query.where}` : ''
         const params = query.params ? query.params : []
         const order = query.order ? query.order : 'users.created_date desc'

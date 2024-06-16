@@ -19,6 +19,7 @@
  ******************************************************************************/
 import { 
     Paper, 
+    PartialPaper,
     PaperComment, 
     JournalSubmission, 
     Journal,
@@ -30,12 +31,25 @@ import {
 export interface NotificationContext {
     paper?: Paper
     paperId?: number
+    partialPaper?: PartialPaper
+
     correspondingAuthor?: User
     comment?: PaperComment 
 
+    user?: User
+
     journal?: Journal
     submission?: JournalSubmission
-    reviewer: JournalMember 
+
+    reviewerUser?: User
+    editorUser?: User 
+
+    editor?: JournalMember
+    editorId?: number
+
+    reviewer?: JournalMember 
+    reviewerId?: number
+
     member?: JournalMember
 
     review?: Review

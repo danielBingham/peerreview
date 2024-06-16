@@ -19,18 +19,18 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const Editor_Submission_NewReview: NotificationTemplate = {
+export const Editor_Submission_NewReview: NotificationDefinition = {
     email: {
         subject: Handlebars.compile(
-            `[JournalHub] {{reviewer.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
+            `[JournalHub] {{reviewerUser.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
         body: Handlebars.compile(`
-        {{reviewer.name}} posted a new review of "{{paper.title}}", which you are assigned to edit.
+        {{reviewerUser.name}} posted a new review of "{{paper.title}}", which you are assigned to edit.
 
         Read the review: {{host}}paper/{{paper.id}}/timeline#review-{{review.id}}
         `)
     },
-    text: Handlebars.compile(`{{reviewer.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
+    text: Handlebars.compile(`{{reviewerUser.name}} posted a new review of your editorial assignment, "{{paper.title}}"`),
     path: Handlebars.compile(`/paper/{{paper.id}}/timeline#review-{{review.id}}`)
 }

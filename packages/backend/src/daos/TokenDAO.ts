@@ -25,10 +25,10 @@ import {
     Token, 
     PartialToken, 
     TokenType, 
-    DatabaseQuery, 
-    DatabaseResult, 
     ModelDictionary 
 } from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOResult } from './DAO'
 
 
 export class TokenDAO {
@@ -67,7 +67,7 @@ export class TokenDAO {
         return token
     }
 
-    hydrateTokens(rows: QueryResultRow[]): DatabaseResult<Token> {
+    hydrateTokens(rows: QueryResultRow[]): DAOResult<Token> {
         const dictionary: ModelDictionary<Token> = {}
         const list = []
 
@@ -84,9 +84,17 @@ export class TokenDAO {
     /**
      * Select Token models from the `tokens` table.
      */
-    async selectTokens(query: DatabaseQuery): Promise<DatabaseResult<Token>> {
-        const where = `WHERE ${query.where}` || ''
-        const params = query.params || []
+    async selectTokens(query?: DAOQuery): Promise<DAOResult<Token>> {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
+
+        if ( query?.order !== undefined ) {
+            throw new DAOError('not-supported', 'Order not supported.')
+        }
+
+        if ( query?.page !== undefined ) {
+            throw new DAOError('not-supported', 'Paging not supported.')
+        }
 
         const sql = `
             SELECT 

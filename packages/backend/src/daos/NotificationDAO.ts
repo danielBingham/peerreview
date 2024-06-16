@@ -21,7 +21,9 @@ import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-import { Notification, PartialNotification, ModelDictionary, DatabaseQuery, DatabaseResult } from '@danielbingham/peerreview-model'
+import { Notification, PartialNotification, ModelDictionary } from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
 
 /**
  * Data Access Object for the `user_notificiations` table and associated
@@ -80,7 +82,7 @@ export class NotificationDAO {
      * from a query made using  `getNotificationSelectionString()`.  Rows may
      * contain other columns, which will be ignored.
      */
-    hydrateNotifications(rows: QueryResultRow[]): DatabaseResult<Notification> {
+    hydrateNotifications(rows: QueryResultRow[]): DAOResult<Notification> {
         const dictionary: ModelDictionary<Notification> = {}
         const list: number[] = []
 
@@ -96,13 +98,19 @@ export class NotificationDAO {
     }
 
     /**
-     * Select `Notification` models from the database using the DatabaseQuery
+     * Select `Notification` models from the database using the DAOQuery
      * defined in `query`.
      */
-    async selectNotifications(query?: DatabaseQuery): Promise<DatabaseResult<Notification>> {
+    async selectNotifications(query?: DAOQuery): Promise<DAOResult<Notification>> {
         const where = query?.where || ''
         const params = query?.params || []
-        const order = query?.order || 'user_notifications.created_date desc'
+
+        let order = 'user_notifications.created_date desc'
+        if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'user_notifications.created_date desc'
+        } else if ( query?.order == DAOQueryOrder.Oldest ) {
+            order = 'user_notifications.created_date asc'
+        }
 
         const page = query?.page || 1
         const itemsPerPage = query?.itemsPerPage || 20

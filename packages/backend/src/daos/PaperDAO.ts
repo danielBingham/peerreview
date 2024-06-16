@@ -22,9 +22,11 @@ import mime from 'mime'
 import sanitizeFilename from 'sanitize-filename'
 import pdfjslib from 'pdfjs-dist/legacy/build/pdf.js'
 
-import { Paper, PaperAuthor, PaperVersion, DatabaseResult, ModelDictionary, QueryMeta } from '@danielbingham/peerreview-model'
+import { Paper, PaperAuthor, PaperVersion, ModelDictionary, QueryMeta } from '@danielbingham/peerreview-model'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
 
 import { FileDAO } from './FileDAO'
 import S3FileService from '../services/S3FileService'
@@ -57,7 +59,7 @@ export class PaperDAO {
     /**
      * Translate the database rows returned by our join queries into objects.
      */
-    hydratePapers(rows: QueryResultRow[]): DatabaseResult<Paper>  {
+    hydratePapers(rows: QueryResultRow[]): DAOResult<Paper>  {
         const dictionary: ModelDictionary<Paper> = {}
         const list: number[] = []
 
@@ -144,31 +146,24 @@ export class PaperDAO {
      * Select papers from the database, along with all of the data necessary to
      * populate the `paper` object.  Uses a large join to pull all the
      * necessary data from across multiple tables.
-     *
-     * @param {string}  where   (Optional) An SQL where condition, including the 'WHERE'.
-     * @param {any[]}   params  (Optional) An array of parameters, matching the `where` conditional.
-     * @param {string}  order   (Optional) An SQL order phrase.  If "active", a proper order phrase will be generated.
      */
-    async selectPapers(where?: string, params?: any[], order?: string): Promise<DatabaseResult<Paper>> {
-        where = (where ? where : '')
-        params = (params ? params : [])
+    async selectPapers(query?: DAOQuery): Promise<DAOResult<Paper>> {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
+
+        let order = 'papers.created_date desc'
 
         // TECHDEBT - Definitely not the ideal way to handle this.  But so it goes.
         let activeOrderJoins = ''
-        if ( order == 'published-active' ) {
-            activeOrderJoins = `
-                LEFT OUTER JOIN responses ON responses.paper_id = papers.id
-            `
-            order = 'greatest(responses.updated_date, papers.updated_date) DESC NULLS LAST, '
-        } else if ( order == 'draft-active' ) {
+        if ( query?.order == DAOQueryOrder.MostActive ) {
             activeOrderJoins = `
                 LEFT OUTER JOIN reviews ON reviews.paper_id = papers.id AND reviews.status != 'in-progress'
                 LEFT OUTER JOIN review_comment_threads ON review_comment_threads.review_id = reviews.id
                 LEFT OUTER JOIN review_comments ON review_comments.thread_id = review_comment_threads.id AND review_comments.status != 'in-progress'
             `
             order = 'greatest(paper_versions.updated_date, reviews.updated_date, review_comments.updated_date) DESC NULLS LAST, '
-        } else {
-            order = ( order ? order+', ' : '')
+        } else if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'papers.created_date desc'
         }
 
         const sql = `
@@ -223,22 +218,19 @@ export class PaperDAO {
      * @return {Promise<number[]>} An array of `paper.id` numbers corresponding
      * to the papers on the requested page of the query.
      */
-    async getPage(where?: string, params?: any[], order?: string, page?: number): Promise<number[]> {
-        where = (where && where.length ? where : '')
-        params = (params && params.length ? [...params] : [])
-        order = (order && order.length ? order : 'papers.created_date desc')  
-        page = (page ? page : 1)
+    async getPage(query?: DAOQuery): Promise<number[]> {
+        let where = (query?.where && query.where.length ? `WHERE ${query.where}` : '')
+        const params = (query?.params && query.params.length ? [...query.params] : [])
+        
+        let page = query?.page || 1
+        let itemsPerPage = query?.itemsPerPage || PAGE_SIZE
+
+        let order = 'papers.created_date desc'
 
         // TECHDEBT - Definitely not the ideal way to handle this.  But so it goes.
         let activeOrderJoins = ''
         let activeOrderFields = ''
-        if ( order == 'published-active' ) {
-            activeOrderJoins = `
-                LEFT OUTER JOIN responses ON responses.paper_id = papers.id
-            `
-            activeOrderFields = ', greatest(max(responses.updated_date), max(papers.updated_date)) as activity_date' 
-            order = 'activity_date DESC NULLS LAST'
-        } else if ( order == 'draft-active' ) {
+        if ( query?.order == DAOQueryOrder.MostActive ) {
             activeOrderJoins = `
                 LEFT OUTER JOIN reviews ON reviews.paper_id = papers.id AND reviews.status != 'in-progress'
                 LEFT OUTER JOIN review_comment_threads ON review_comment_threads.review_id = reviews.id
@@ -246,10 +238,12 @@ export class PaperDAO {
             `
             activeOrderFields = ', greatest(max(paper_versions.updated_date), max(reviews.updated_date), max(review_comments.updated_date)) as activity_date'
             order = 'activity_date DESC NULLS LAST, papers.created_date desc'
+        } else if ( query?.order == DAOQueryOrder.Newest ) {
+            order = 'papers.created_date desc'
         }
 
-        params.push(PAGE_SIZE)
-        params.push((page-1)*PAGE_SIZE)
+        params.push(itemsPerPage)
+        params.push((page-1)*itemsPerPage)
         const count = params.length
 
         const sql = `
@@ -280,9 +274,12 @@ export class PaperDAO {
     /**
      *
      */
-    async countPapers(where: string, params: any[], page: number): Promise<QueryMeta> {
-        where = (where ? where : '')
-        params = (params ? params : [])
+    async countPapers(query?: DAOQuery): Promise<QueryMeta> {
+        let where = (query?.where ? `WHERE ${query.where}` : '')
+        const params = (query?.params ? [...query.params] : [])
+
+        let page = query?.page || 1
+        let itemsPerPage = query?.itemsPerPage || PAGE_SIZE
 
         const sql = `
                SELECT 
@@ -298,8 +295,8 @@ export class PaperDAO {
         if ( results.rows.length <= 0 || results.rows[0].paper_count == 0) {
             return { 
                 count: 0,
-                page: page ? page : 1,
-                pageSize: PAGE_SIZE,
+                page: page,
+                pageSize: itemsPerPage,
                 numberOfPages: 1
             }
         }
@@ -307,9 +304,9 @@ export class PaperDAO {
         const count = parseInt(results.rows[0].paper_count)
         return { 
             count: count,
-            page: page ? page : 1,
-            pageSize: PAGE_SIZE,
-            numberOfPages: Math.floor(count / PAGE_SIZE) + ( count % PAGE_SIZE > 0 ? 1 : 0)
+            page: page,
+            pageSize: itemsPerPage,
+            numberOfPages: Math.floor(count / itemsPerPage) + ( count % itemsPerPage > 0 ? 1 : 0)
         }
     }
 

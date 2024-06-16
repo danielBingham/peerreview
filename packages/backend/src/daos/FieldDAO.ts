@@ -20,9 +20,11 @@
 
 import { QueryResultRow, Pool, Client } from 'pg'
 
-import { Field, DatabaseQuery, DatabaseResult, ModelDictionary, QueryMeta } from '@danielbingham/peerreview-model'
+import { Field, ModelDictionary, QueryMeta } from '@danielbingham/peerreview-model'
 
 import { Core } from '@danielbingham/peerreview-core'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
 
 const PAGE_SIZE = 20 
 
@@ -96,7 +98,7 @@ export default class FieldDAO {
      *
      * @return {Object[]}   The data parsed into one or more objects.
      */
-    hydrateFields(rows: QueryResultRow[]): DatabaseResult<Field> {
+    hydrateFields(rows: QueryResultRow[]): DAOResult<Field> {
         const dictionary: ModelDictionary<Field> = {}
         const list: number[] = []
 
@@ -116,13 +118,19 @@ export default class FieldDAO {
      * Select fields using an optional parameterized SQL `WHERE` statement. May
      * also include an order statement and paging.
      */
-    async selectFields(query: DatabaseQuery): Promise<DatabaseResult<Field>> {
-        const params = query.params ? [ ...query.params ] : []
-        let where = `WHERE ${query.where}` || ''
-        let order = query.order || 'fields.depth asc, fields.name asc'
+    async selectFields(query?: DAOQuery): Promise<DAOResult<Field>> {
+        let where = query?.where ? `WHERE ${query.where}` : ''
+        const params = query?.params ? [ ...query.params ] : []
 
-        let page = query.page || 0
-        let itemsPerPage = query.itemsPerPage || PAGE_SIZE
+        let order = 'fields.depth asc, fields.name asc'
+        if ( query?.order == DAOQueryOrder.Heirarchy ) {
+            order = 'fields.depth asc, fields.name asc'
+        } else if ( query?.order == DAOQueryOrder.Alphabetically ) {
+            order = 'fields.name asc'
+        }
+
+        let page = query?.page || 0
+        let itemsPerPage = query?.itemsPerPage || PAGE_SIZE
 
         // We only want to include the paging terms if we actually want paging.
         // If we're making an internal call for another object, then we
@@ -158,12 +166,12 @@ export default class FieldDAO {
      * Gets the total number of fields included in a query and returns them in
      * the form of an initial QueryMeta.
      */
-    async getFieldQueryMeta(query: DatabaseQuery): Promise<QueryMeta> {
-        const params = query.params ? [ ...query.params ] : []
-        const where = query.where || ''
+    async getFieldQueryMeta(query?: DAOQuery): Promise<QueryMeta> {
+        const params = query?.params ? [ ...query.params ] : []
+        const where = query?.where ? `WHERE ${query.where}` : ''
         
-        const page = query.page || 0
-        const itemsPerPage = query.itemsPerPage || PAGE_SIZE
+        const page = query?.page || 0
+        const itemsPerPage = query?.itemsPerPage || PAGE_SIZE
 
         const sql = `
                SELECT 
@@ -186,7 +194,7 @@ export default class FieldDAO {
         const count = results.rows[0].count
         return {
             count: count,
-            page: page ? page : 1,
+            page: page,
             pageSize: itemsPerPage,
             numberOfPages: Math.floor(parseInt(count) / itemsPerPage) + ( count % itemsPerPage > 0 ? 1 : 0) 
         }

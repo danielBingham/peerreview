@@ -19,15 +19,15 @@
  ******************************************************************************/
 import Handlebars from 'handlebars'
 
-import { NotificationTemplate } from '../../NotificationTemplate'
+import { NotificationDefinition } from '../../NotificationDefinition'
 
-export const Reviewer_Submission_ReviewerUnassigned: NotificationTemplate = {
+export const Reviewer_Submission_ReviewerUnassigned: NotificationDefinition = {
     email: {
-        subject: Handlebars.compile(`[JournalHub] {{editor.name}} unassigned you from "{{paper.title}}"`),
+        subject: Handlebars.compile(`[JournalHub] {{editorUser.name}} unassigned you from "{{partialPaper.title}}"`),
         body: Handlebars.compile(`
-                                 {{editor.name}} unassigned you from "{{paper.title}}".
+                                 {{editorUser.name}} unassigned you from "{{partialPaper.title}}".
                                      `)
     },
-    text: Handlebars.compile(`{{editor.name}} unassigned you from "{{paper.title}}"`),
+    text: Handlebars.compile(`{{editorUser.name}} unassigned you from "{{partialPaper.title}}"`),
     path: Handlebars.compile(`/edit`)
 }

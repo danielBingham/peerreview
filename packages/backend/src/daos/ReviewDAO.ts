@@ -21,7 +21,9 @@ import { Pool, Client, QueryResultRow } from 'pg'
 
 import { Core, DAOError } from '@danielbingham/peerreview-core'
 
-import { Review, ReviewComment, ReviewThread, QueryMeta, ModelDictionary, DatabaseQuery, DatabaseResult } from '@danielbingham/peerreview-model'
+import { Review, ReviewComment, ReviewThread, QueryMeta, ModelDictionary } from '@danielbingham/peerreview-model'
+
+import { DAOQuery, DAOQueryOrder, DAOResult } from './DAO'
 
 export class ReviewDAO {
     core: Core
@@ -128,7 +130,7 @@ export class ReviewDAO {
     /**
      * Translate the database rows returned by our join queries into objects.
      */
-    hydrateReviews(rows: QueryResultRow[]): DatabaseResult<Review> {
+    hydrateReviews(rows: QueryResultRow[]): DAOResult<Review> {
         const dictionary: ModelDictionary<Review> = {}
         const list: number[] = []
 
@@ -175,10 +177,15 @@ export class ReviewDAO {
         return reviewDictionary 
     }
 
-    async selectReviews(query: DatabaseQuery): Promise<DatabaseResult<Review>> {
-        const where = query.where || '' 
-        const params = query.params || []
-        const order = query.order || 'reviews.created_date ASC, review_comments.thread_order ASC, review_comments.created_date ASC'
+    async selectReviews(query?: DAOQuery): Promise<DAOResult<Review>> {
+        const where = query?.where ? `WHERE ${query.where}` : '' 
+        const params = query?.params ? [ ...query.params ] : []
+
+        if ( query?.order !== undefined ) {
+            throw new DAOError('not-supported', 'Order not supported.')
+        }
+
+        let order = 'reviews.created_date ASC, review_comments.thread_order ASC, review_comments.created_date ASC'
 
         const sql = `
             SELECT
@@ -196,9 +203,49 @@ export class ReviewDAO {
         return this.hydrateReviews(results.rows)
     }
 
-    async countReviews(query: DatabaseQuery): Promise<QueryMeta> {
-        const where = query.where || '' 
-        const params = query.params || []
+    async getPage(query?: DAOQuery): Promise<number[]> {
+        const where = query?.where ? `WHERE ${query.where}` : '' 
+        const params = query?.params ? [ ...query.params ] : []
+
+        if ( query?.order !== undefined ) {
+            throw new DAOError('not-supported', 'Order not supported.')
+        }
+
+        let order = 'min(reviews.created_date) ASC, min(review_comments.thread_order) ASC, min(review_comments.created_date) ASC'
+
+        let page = query?.page || 0
+        let itemsPerPage = query?.itemsPerPage || 20
+
+        let paging = ''
+        if ( page > 0 ) {
+            paging = `
+                LIMIT ${itemsPerPage}
+                OFFSET ${(page-1) * itemsPerPage}
+            `
+        }
+
+        const sql = `
+            SELECT DISTINCT
+                reviews.id, min(reviews.created_date), min(review_comments.thread_order), min(review_comments.created_date)
+            FROM reviews
+                LEFT OUTER JOIN review_comment_threads on reviews.id = review_comment_threads.review_id
+                LEFT OUTER JOIN review_comments on review_comment_threads.id = review_comments.thread_id
+            ${where}
+            GROUP BY reviews.id
+            ORDER BY ${order} 
+            ${paging}
+        `
+
+        const results = await this.database.query(sql, params)
+        return results.rows.map((r) => r.id)
+    }
+
+    async countReviews(query?: DAOQuery): Promise<QueryMeta> {
+        const where = query?.where ? `WHERE ${query.where}` : '' 
+        const params = query?.params ? [ ...query.params ] : []
+
+        let page = query?.page || 0
+        let itemsPerPage = query?.itemsPerPage || 20
 
         const sql = `
             SELECT
@@ -212,8 +259,8 @@ export class ReviewDAO {
         if ( results.rows.length <= 0 || results.rows[0].review_count == 0 ) {
             return { 
                 count: 0,
-                page: query.page ? query.page : 1,
-                pageSize: 0,
+                page: page,
+                pageSize: itemsPerPage,
                 numberOfPages: 1
 
             }
@@ -222,8 +269,8 @@ export class ReviewDAO {
         const count = results.rows[0].review_count
         return { 
             count: count,
-            page: query.page ? query.page : 1,
-            pageSize: 0,
+            page: page,
+            pageSize: itemsPerPage,
             numberOfPages: 1 
         }
 
