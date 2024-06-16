@@ -1,13 +1,50 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Job } from 'bull'
 
-const ServiceError = require('../errors/ServiceError')
+import { Core, Logger, ServiceError } from '@danielbingham/peerreview-core' 
+
 
 
 const AUTHORS = 'https://api.openalex.org/authors'
 const WORKS = 'https://api.openalex.org/works'
 
-module.exports = class OpenAlexService {
+export interface OpenAlexParams {
+    filter?: string
+    mailto?: string
+}
 
-    constructor(core) {
+/**
+ * @deprecated This was used for reputation generation in PeerReview 0.1.  It
+ * is currently unused in JournalHub, but is retained in case we do choose to
+ * use OpenAlex for future features.
+ *
+ * TODO Techdebt If we do choose to use this, we will need to create types
+ * matching OpenAlex's return types. That work has been punted for now.
+ */
+export class OpenAlexService {
+    core: Core
+    logger: Logger
+
+    constructor(core: Core) {
+        this.core = core
         this.logger = core.logger
     }
 
@@ -19,10 +56,10 @@ module.exports = class OpenAlexService {
      *
      * @return {object} The response object from the `fetch()` query.
      */
-    async queryOpenAlex(endpoint, params) {
+    async queryOpenAlex(endpoint: string, params: OpenAlexParams): Promise<any> {
         params.mailto = "contact@peer-review.io"
         
-        const searchParams = new URLSearchParams(params)
+        const searchParams = new URLSearchParams(params as any)
         
         return await fetch(endpoint + "?" + searchParams.toString(), {
             method: "GET"
@@ -37,13 +74,13 @@ module.exports = class OpenAlexService {
      *
      * @return {Object} The populated Author record from OpenAlex: https://docs.openalex.org/about-the-data/author
      */
-    async getAuthor(openAlexId) {
+    async getAuthor(openAlexId: string): Promise<any> {
         const response = await this.queryOpenAlex(AUTHORS, { filter: `openalex_id:${openAlexId}` })
 
         if ( ! response.ok ) {
             this.logger.error(`${AUTHORS}?filter=openalex_id:${openAlexId}`)
             this.logger.error(response)
-            throw new Error(`Failed to retrieve author from OpenAlex for Open Alex ID: ${openAlexId}.`)
+            throw new ServiceError('authors-failed', `Failed to retrieve author from OpenAlex for Open Alex ID: ${openAlexId}.`)
         }
 
         const responseBody = await response.json()
@@ -66,7 +103,7 @@ module.exports = class OpenAlexService {
      *
      * @return {object} The populated Author record from OpenAlex: https://docs.openalex.org/about-the-data/author
      */
-    async getAuthorWithOrcidId(orcidId) {
+    async getAuthorWithOrcidId(orcidId: string): Promise<any> {
         const response = await this.queryOpenAlex(AUTHORS, { filter: `orcid:${orcidId}` }) 
 
         if ( ! response.ok ) {
@@ -96,16 +133,16 @@ module.exports = class OpenAlexService {
      *
      * @return {Object[]} An array of Open Alex Works records: https://docs.openalex.org/about-the-data/work
      */
-    async getAuthorsWorksPage(author, cursor) {
+    async getAuthorsWorksPage(author: any, cursor?: string): Promise<any> {
         cursor = cursor || '*'
         const response = await fetch(`${author.works_api_url}&per_page=200&cursor=${cursor}&mailto=contact@peer-review.io`, {
             method: "GET"
         })
 
         if ( ! response.ok ) {
-            this.logger.error(`Errored on ${author.works_api_url}&page=${page}&per_page=200&mailto=contact@peer-review.io`)
+            this.logger.error(`Errored on ${author.works_api_url}&page=${cursor}&per_page=200&mailto=contact@peer-review.io`)
             this.logger.error(response)
-            throw new ServiceError('request-failed', `Failed to retrieve works for author ${author.id}, page ${page}`)
+            throw new ServiceError('request-failed', `Failed to retrieve works for author ${author.id}, page ${cursor}`)
         }
 
         return await response.json()
@@ -122,7 +159,7 @@ module.exports = class OpenAlexService {
      * @return {Object[]} An array of all Works records for the given Author
      * from Open Alex: https://docs.openalex.org/about-the-data/work
      */
-    async getAuthorsWorks(author, job) {
+    async getAuthorsWorks(author: any, job?: Job<any>): Promise<any[]> {
         if ( job ) {
             job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: 0 })
         }
@@ -150,7 +187,7 @@ module.exports = class OpenAlexService {
         works.push(...firstResponse.results)
 
         if ( job ) {
-            job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: parseInt((count/total)*100) })
+            job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: Math.floor((count/total)*100) })
         }
 
         while (nextCursor != null) {
@@ -166,7 +203,7 @@ module.exports = class OpenAlexService {
             works.push(...worksResponse.results)
 
             if ( job ) {
-                job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: parseInt((count/total)*100) })
+                job.progress({ step: 'get-open-alex-author-works', stepDescription: `Getting works from Open Alex...`, progress: Math.floor((count/total)*100) })
             }
 
 
@@ -200,7 +237,7 @@ module.exports = class OpenAlexService {
      *
      * @return {string} A field name matching Peer Review's field naming conventions.
      */
-    getFieldNameFromConceptDisplayName(displayName) {
+    getFieldNameFromConceptDisplayName(displayName: string): string {
         return displayName.trim().replaceAll(/[\/\\]/g, '-').replaceAll(/[^a-zA-Z0-9\-\.\s]/g, '').replaceAll(/\s/g, '-').toLowerCase()
     }
 
@@ -226,7 +263,7 @@ module.exports = class OpenAlexService {
      * ]
      * ```
      */
-    async getPapers(author, job) {
+    async getPapers(author: any, job?: Job): Promise<any[]> {
         const works = await this.getAuthorsWorks(author, job)
 
         if ( job ) {
@@ -246,7 +283,7 @@ module.exports = class OpenAlexService {
             })
 
             if ( job ) {
-                job.progress({ step: 'get-papers-from-works', stepDescription: `Processing works...`, progress: parseInt((papers.length/works.length)*100) })
+                job.progress({ step: 'get-papers-from-works', stepDescription: `Processing works...`, progress: Math.floor((papers.length/works.length)*100) })
             }
         }
 
@@ -263,7 +300,7 @@ module.exports = class OpenAlexService {
      *
      * @return {Object[]}   An array of papers.  @see this.getPapers()
      */
-    async getPapersForOrcidId(orcidId, job) {
+    async getPapersForOrcidId(orcidId: string, job?: Job): Promise<any[]> {
         if ( job ) {
             job.progress({ step: 'get-open-alex-author', stepDescription: `Retrieving author record from Open Alex...`, progress: 0 })
         }
@@ -285,7 +322,7 @@ module.exports = class OpenAlexService {
      *
      * @return {Object[]}   An array of papers. @see this.getPapers()
      */
-    async getPapersForOpenAlexId(openAlexId) {
+    async getPapersForOpenAlexId(openAlexId: string): Promise<any[]> {
         const author = await this.getAuthor(openAlexId)
         return await this.getPapers(author)
     }
