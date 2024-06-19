@@ -1,5 +1,29 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Pool, Client } from 'pg'
 
-const SubmissionService = require('./SubmissionService')
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+
+import { User } from '@danielbingham/peerreview-model'
+
+import { SubmissionService } from './SubmissionService'
 
 /**
  * Manages Paper Visibility
@@ -15,11 +39,19 @@ const SubmissionService = require('./SubmissionService')
  * If the submission is visible, paper is visible
  *
  */
-module.exports = class PaperService {
+export class PaperService {
+    core: Core
+    database: Pool | Client
 
-    constructor(core)  {
+    submissionService: SubmissionService
+
+    constructor(core: Core, database?: Pool | Client)  {
+        this.core = core
+
         this.database = core.database
-        this.logger = core.logger
+        if ( database ) {
+            this.database = database
+        }
 
         this.submissionService = new SubmissionService(core)
     }
@@ -42,7 +74,7 @@ module.exports = class PaperService {
      *
      * @return {int[]}  An array containing the ids of the visible papers.
      */
-    async getVisiblePaperIds(user) {
+    async getVisiblePaperIds(user: User): Promise<number[]> {
         const visibleSubmissionIds = await this.submissionService.getVisibleSubmissionIds(user)
 
         const results = await this.database.query(`
@@ -71,7 +103,7 @@ module.exports = class PaperService {
      *
      * @return  {boolean}   True if `user` can see `paperId`, false otherwise.
      */
-    async canViewPaper(user, paperId) {
+    async canViewPaper(user: User, paperId: number): Promise<boolean> {
         const results = await this.database.query(`
             SELECT papers.id FROM papers
                 LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
@@ -85,7 +117,7 @@ module.exports = class PaperService {
         return await this.submissionService.canViewSubmission(user, paperId)
     }
 
-    async getPreprints() {
+    async getPreprints(): Promise<number[]> {
         const results = await this.database.query(`
             SELECT id FROM papers WHERE is_draft = true AND show_preprint = true
         `, [])
@@ -97,7 +129,7 @@ module.exports = class PaperService {
         return results.rows.map((r) => r.id)
     }
 
-    async getVisibleDraftSubmissions(userId) {
+    async getVisibleDraftSubmissions(userId: number): Promise<number[]> {
         const results = await this.database.query(`
             SELECT DISTINCT papers.id FROM papers
                 LEFT OUTER JOIN journal_submissions ON papers.id = journal_submissions.paper_id
@@ -116,7 +148,7 @@ module.exports = class PaperService {
         return results.rows.map((r) => r.id)
     }
 
-    async getDrafts(userId) {
+    async getDrafts(userId: number): Promise<number[]> {
         const results = await this.database.query(`
             SELECT DISTINCT id FROM papers
                 LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = papers.id
@@ -134,7 +166,7 @@ module.exports = class PaperService {
     /**
      * Retrieves all ids of the user's current private drafts.
      */
-    async getPrivateDrafts(userId) {
+    async getPrivateDrafts(userId: number): Promise<number[]> {
         const results = await this.database.query(`
             SELECT DISTINCT id FROM papers
                 LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = papers.id
@@ -153,7 +185,7 @@ module.exports = class PaperService {
     /**
      * Gets all of a user's submissions to journals. 
      */
-    async getUserSubmissions(userId) {
+    async getUserSubmissions(userId: number) {
         const results = await this.database.query(`
             SELECT DISTINCT id FROM papers
                 LEFT OUTER JOIN paper_authors ON paper_authors.paper_id = papers.id

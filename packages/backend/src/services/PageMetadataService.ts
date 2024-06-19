@@ -1,15 +1,45 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+
+export interface PageMetadata{
+    url: string
+    applicationName: string
+    title: string
+    description: string
+    image: string
+    twitterHandle: string
+    type: string
+    devAssets?: string[]
+}
 
 /**
  * A service to handle collecting page metadata to be rendered into the <head>
  * of the page.
  */
-module.exports = class PageMetadataService {
+export class PageMetadataService {
+    core: Core
+    baseMetadata: PageMetadata 
 
-    constructor(core) {
-        this.database = core.database
-        this.logger = core.logger
-        this.config = core.config
-
+    constructor(core: Core) {
+        this.core = core
 
         this.baseMetadata = {
             url: core.config.host,
@@ -28,7 +58,7 @@ module.exports = class PageMetadataService {
      * @return {Object} An object with the appropriate metadata.  See
      * constructor for object structure.
      */
-    getRoot() {
+    getRoot(): PageMetadata{
         return this.baseMetadata
     }
 
@@ -45,12 +75,12 @@ module.exports = class PageMetadataService {
      *
      * @return {object} The metadata object populated with development assets.
      */
-    getRootWithDevAssets(assetsByChunkName) {
+    getRootWithDevAssets(assetsByChunkName: any): PageMetadata {
         const metadata = { ...this.baseMetadata }
         
         const devAssets = []
         for(const asset of assetsByChunkName.main) {
-            devAssets.push(`<script defer="defer" src="${this.config.host}${asset}"></script>`)
+            devAssets.push(`<script defer="defer" src="${this.core.config.host}${asset}"></script>`)
         }
 
         metadata.devAssets = devAssets 

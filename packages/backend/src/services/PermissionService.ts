@@ -1,8 +1,46 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
 
-const PaperPermissionService = require('./permissions/PaperPermissionService')
+import { User } from '@danielbingham/peerreview-model'
 
-module.exports = class PermissionService {
-    constructor(core) {
+import { PaperPermissionService } from './permissions/PaperPermissionService'
+
+export interface EntityData {
+    paper_id?: number
+    version?: number
+    event_id?: number
+    review_id?: number
+    comment_id?: number
+    submission_id?: number
+}
+
+
+export class PermissionService {
+    core: Core
+
+    papers: PaperPermissionService
+
+    entityFields: { [ entity: string]: string[] }
+
+    constructor(core: Core) {
         this.core = core
 
         this.papers = new PaperPermissionService(core)
@@ -18,7 +56,7 @@ module.exports = class PermissionService {
         }
     }
 
-    entityDataHasRequiredFields(entity, entityData) {
+    entityDataHasRequiredFields(entity: string, entityData: EntityData): boolean {
         if ( ! (entity in this.entityFields ) ) {
             throw new Error(`"${entity}" is not an entity for which permissions can be defined.`)
         }
@@ -34,7 +72,7 @@ module.exports = class PermissionService {
         return ! missingField
     }
 
-    async canPublic(action, entity, entityData) {
+    async canPublic(action: string, entity: string, entityData: EntityData): Promise<boolean> {
         if ( ! this.entityDataHasRequiredFields(entity, entityData) ) {
             throw new Error(`Entity data for "${entity}" is missing required fields.`) 
         }
@@ -63,7 +101,7 @@ module.exports = class PermissionService {
         }
     }
 
-    async can(user, action, entity, entityData) {
+    async can(user: User, action: string, entity: string, entityData: EntityData): Promise<boolean> {
         if ( ! user ) {
             return await this.canPublic(action, entity, entityData)
         }

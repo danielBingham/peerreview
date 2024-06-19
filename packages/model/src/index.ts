@@ -27,7 +27,7 @@ export { Journal, JournalModel, JournalAnonymity, PartialJournal, JournalMember,
 export { JournalSubmission, PartialJournalSubmission, JournalSubmissionReviewer, JournalSubmissionReview, JournalSubmissionEditor } from './types/JournalSubmission'
 export { Notification, NotificationType, PartialNotification } from './types/Notification'
 export { PaperComment, PartialPaperComment } from './types/PaperComment'
-export { PaperEvent, PaperEventVisibility, PartialPaperEvent } from './types/PaperEvent'
+export { PaperEvent, PaperEventVisibility, PartialPaperEvent, PaperEventType, PaperEventRootType } from './types/PaperEvent'
 export { Permission } from './types/Permission'
 export { Review, ReviewThread, ReviewComment, ReviewStatus, ReviewRecommendation } from './types/Review'
 export { Token, PartialToken, TokenType } from './types/Token'

@@ -1,4 +1,24 @@
-/***
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+
+/******************************************************************************
  * Manages Submission Visibility
  *
  *
@@ -34,17 +54,25 @@
  * Status: published
  * - public
  *
- */
-module.exports = class SubmissionService {
+ ******************************************************************************/
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+import { User } from '@danielbingham/peerreview-model'
 
-    constructor(core) {
-        this.database = core.database
-        this.logger = core.logger
+export interface ActiveSubmission {
+    id: number
+    journalId: number
+}
+
+export class SubmissionService {
+    core: Core
+
+    constructor(core: Core) {
+        this.core = core
     }
 
-    async getActiveSubmission(user, paperId) {
+    async getActiveSubmission(user: User, paperId: number): Promise<ActiveSubmission|null> {
         // Get the currently active submission for the paper.
-        const results = await this.database.query(`
+        const results = await this.core.database.query(`
             SELECT journal_submissions.id, journal_submissions.journal_id as "journalId"
                 FROM journal_submissions
                 WHERE journal_submissions.status != 'published' 
@@ -60,7 +88,7 @@ module.exports = class SubmissionService {
 
         // Determine whether the user is an author or a member of the journal
         // with the active submission.
-        const userResults = await this.database.query(`
+        const userResults = await this.core.database.query(`
             SELECT journal_members.journal_id, paper_authors.paper_id
                 FROM journal_submissions
                     LEFT OUTER JOIN journal_members ON journal_submissions.journal_id = journal_members.journal_id
@@ -104,7 +132,7 @@ module.exports = class SubmissionService {
      *
      * @return  {int[]} An array of the visible submissionIds.
      */
-    async getVisibleSubmissionIds(user) {
+    async getVisibleSubmissionIds(user: User): Promise<number[]> {
         const sql = `
             SELECT DISTINCT journal_submissions.id
                 FROM journal_submissions
@@ -132,7 +160,7 @@ module.exports = class SubmissionService {
             params.push(user.id)
         }
 
-        const results = await this.database.query(sql, params)
+        const results = await this.core.database.query(sql, params)
 
         if ( results.rows.length <= 0 ) {
             return []
@@ -141,10 +169,10 @@ module.exports = class SubmissionService {
         return results.rows.map((r) => r.id)
     }
 
-    async canViewSubmission(user, paperId) {
+    async canViewSubmission(user: User, paperId: number): Promise<boolean> {
         const visibleSubmissionIds = await this.getVisibleSubmissionIds(user)
 
-        const results = await this.database.query(`
+        const results = await this.core.database.query(`
             SELECT paper_id FROM journal_submissions WHERE id = ANY($1::bigint[]) AND paper_id = $2
         `, [ visibleSubmissionIds, paperId])
 

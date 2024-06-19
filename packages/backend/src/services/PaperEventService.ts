@@ -1,4 +1,24 @@
 /******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+
+/******************************************************************************
  * PaperEventService
  *
  * In addition to creating events, the Paper Event Service is the primary
@@ -51,18 +71,34 @@
  * choose the level of visibility of their interactions.
  *
  * ****************************************************************************/
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
 
+import { User, Paper, PaperAuthor, PaperEvent, PartialPaperEvent, PaperEventType, PaperEventRootType } from '@danielbingham/peerreview-model'
 
-const PaperEventDAO = require('../daos/PaperEventDAO')
-const PaperDAO = require('../daos/PaperDAO')
+import { PaperEventDAO } from '../daos/PaperEventDAO'
+import { PaperDAO } from '../daos/PaperDAO'
 
-const SubmissionService = require('./SubmissionService')
+import { SubmissionService, ActiveSubmission } from './SubmissionService'
 
-const ServiceError = require('../errors/ServiceError')
+interface EventVisibility {
+    [ event: string ]: string[]
+}
 
-module.exports = class PaperEventService { 
+interface EventVisibilityByModel {
+    [ model: string]: EventVisibility
+}
 
-    constructor(core) {
+export class PaperEventService { 
+    core: Core
+
+    paperEventDAO: PaperEventDAO
+    paperDAO: PaperDAO
+
+    submissionService: SubmissionService
+
+    visibilityByModelAndEvent: EventVisibilityByModel
+
+    constructor(core: Core) {
         this.core = core
 
         this.paperEventDAO = new PaperEventDAO(core)
@@ -135,7 +171,7 @@ module.exports = class PaperEventService {
     // Event Creation
     // ========================================================================
 
-    async getEventVisibility(user, event, paper, activeSubmissionInfo) {
+    async getEventVisibility(user: User, event: PaperEvent, paper: Paper, activeSubmissionInfo: ActiveSubmission) {
         let visibility = [ 'authors' ]
 
         if ( activeSubmissionInfo && this.core.features.hasFeature('journal-permission-models-194') ) {
@@ -144,7 +180,7 @@ module.exports = class PaperEventService {
             `, [ activeSubmissionInfo.journalId ])
 
             if ( journalResults.rows.length <= 0 ) {
-                throw new DAOError('missing-journal', 
+                throw new ServiceError('missing-journal', 
                     `Unable to find Journal(${activeSubmissionInfo.journalId}) for Submission(${activeSubmissionInfo.id}).`)
             }
 
@@ -161,19 +197,26 @@ module.exports = class PaperEventService {
         return visibility
     }
 
-    async createEvent(user, event) {
+    async createEvent(user: User, event: PartialPaperEvent) {
+        if ( ! ("paperId" in event) || ! event.paperId ) {
+            throw new ServiceError('missing-field', `'event.paperId' must be defined.`)
+        }
+
         const activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, event.paperId)
         if ( ! event.submissionId && activeSubmissionInfo ) {
             event.submissionId = activeSubmissionInfo.id
         }
 
-        const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ event.paperId ])
+        const paperResults = await this.paperDAO.selectPapers({
+            where: 'papers.id = $1', 
+            params: [ event.paperId ]
+        })
         const paper = paperResults.dictionary[event.paperId]
         if ( ! event.version ) {
             event.version = paper.versions[0].version
         }
 
-        const isAuthor = paper.authors.find((a) => a.userId == user.id) ? true : false
+        const isAuthor = paper.authors.find((a: PaperAuthor) => a.userId == user.id) ? true : false
         if ( event.type == 'new-review' && isAuthor ) {
             event.type = 'paper:new-review'
             event.visibility = [ 'authors' ]

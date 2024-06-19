@@ -17,18 +17,21 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
 
+import { Paper, User } from '@danielbingham/peerreview-model'
 
-module.exports = class PaperPermissionService {
+export class PaperPermissionService {
+    core: Core
 
-    constructor(core) {
+    constructor(core: Core) {
         this.core = core
     }
 
     /**
      * Create the roles for the paper.
      */
-    async createRoles(paper) {
+    async createRoles(paper: Paper): Promise<void> {
         await this.core.database.query(`
         INSERT INTO roles (name, short_description, description, type, is_owner, paper_id)
             VALUES ('corresponding-author', 'Corresponding Author', 'An author responsible for corresponding on submissions.  Has full permissions over the paper.', 'author', true, $1),
@@ -71,7 +74,7 @@ module.exports = class PaperPermissionService {
         `, [ authorRoleId, paper.id ])
     }
 
-    async assignRoles(paper) {
+    async assignRoles(paper: Paper): Promise<void> {
         const roleResults = await this.core.database.query(`
             SELECT id, name FROM roles WHERE paper_id = $1
         `, [ paper.id ])
@@ -86,7 +89,7 @@ module.exports = class PaperPermissionService {
                 sql += ', '
             }
             sql += `($${count}, $${count})`
-            params.push(map[author.role], author.userId)
+            params.push(roleMap[author.role], author.userId)
         }
 
         await this.core.database.query(sql, params)
@@ -97,7 +100,7 @@ module.exports = class PaperPermissionService {
      *
      * @param {User} user   The user we want to get visible papers for.
      */
-    async getVisiblePaperIds(user) {
+    async getVisiblePaperIds(user: User): Promise<number[]> {
         let results = null
         if ( user ) {
             const sql = `
@@ -107,7 +110,7 @@ module.exports = class PaperPermissionService {
                     WHERE user_id = $1 AND permission = 'Paper:view'
             `
 
-            results = this.core.database.query(sql, [ user.id ])
+            results = await this.core.database.query(sql, [ user.id ])
         } else {
             const sql = `
                 SELECT
@@ -120,7 +123,7 @@ module.exports = class PaperPermissionService {
 
         }
 
-        if ( ! results || results.rows.length <= 0 ) {
+        if ( ! results || ! results.rows || results.rows.length <= 0 ) {
             return []
         }
         return results.rows.map((r) => r.paper_id)

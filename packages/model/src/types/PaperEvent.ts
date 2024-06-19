@@ -35,6 +35,10 @@ export enum PaperEventType {
     JournalSubmission_EditorUnassigned = 'submission:editor-unassigned',
 }
 
+export enum PaperEventRootType {
+    NewReview = 'new-review'
+}
+
 export enum PaperEventStatus {
     InProgress = 'in-progress',
     Committed = 'committed'
@@ -75,7 +79,7 @@ export interface PartialPaperEvent {
     actorId?: number
     version?: number
     status?: PaperEventStatus
-    type?: PaperEventType
+    type?: PaperEventType|PaperEventRootType
     visibility?: PaperEventVisibility[]
     eventDate?: string
 
