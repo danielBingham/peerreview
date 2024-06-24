@@ -10,7 +10,7 @@ if ( process.env.NODE_ENV == 'development' ) {
     require('dotenv').config()
 }
 
-module.exports = {
+export const config = {
     host: process.env.HOST,
     environment: process.env.NODE_ENV,
     backend: '/api/0.0.0',
@@ -27,7 +27,6 @@ module.exports = {
         port: process.env.REDIS_PORT 
     },
     session: {
-        key: 'peer_review_id',
         secret: process.env.SESSION_SECRET,
         secure_cookie: false
     },
@@ -49,4 +48,4 @@ module.exports = {
         api_token: process.env.POSTMARK_API_TOKEN
     },
     log_level: process.env.LOG_LEVEL 
-};
+}

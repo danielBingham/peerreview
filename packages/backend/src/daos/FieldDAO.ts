@@ -35,7 +35,7 @@ const PAGE_SIZE = 20
  * @see `fields` table in `database/initialization-scripts/schema.sql`
  * @see `packages/model/src/types/Field.ts`
  */
-export default class FieldDAO {
+export class FieldDAO {
     core: Core
     database: Pool | Client
 

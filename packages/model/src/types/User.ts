@@ -69,5 +69,3 @@ export interface PartialUser {
     institution?: string
 }
 
-
-}

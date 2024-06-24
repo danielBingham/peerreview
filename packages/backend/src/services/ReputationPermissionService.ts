@@ -1,3 +1,26 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Pool, Client } from 'pg'
+import { Core, Logger, ServiceError } from '@danielbingham/peerreview-core' 
+import { Paper } from '@danielbingham/peerreview-model'
+
 const THRESHOLDS = {
     /**
      * Can review papers. Multiple of field.average_reputation 
@@ -17,14 +40,19 @@ const THRESHOLDS = {
     publish: 0
 }
 
-module.exports = class ReputationPermissionService {
+export class ReputationPermissionService {
+    core: Core
+    database: Pool | Client
+    logger: Logger
 
-    constructor(core)  {
+    constructor(core: Core)  {
+        this.core = core
+
         this.database = core.database
         this.logger = core.logger
     }
 
-    async getVisibleDrafts(userId) {
+    async getVisibleDrafts(userId: number): Promise<number[]> {
         let admin = false
         const userResult = await this.database.query(`SELECT id, permissions FROM users WHERE users.id = $1`, [ userId ])
         if ( userResult.rows[0].permissions == 'superadmin' || userResult.rows[0].permissions == 'admin' ) {
@@ -57,7 +85,7 @@ module.exports = class ReputationPermissionService {
         return THRESHOLDS
     }
 
-    async canReview(userId, paperId) {
+    async canReview(userId: number, paperId: number): Promise<boolean> {
         let admin = false
         const userResult = await this.database.query(`SELECT id, permissions FROM users WHERE users.id = $1`, [ userId ])
         if ( userResult.rows[0].permissions == 'superadmin' || userResult.rows[0].permissions == 'admin' ) {
@@ -98,7 +126,7 @@ module.exports = class ReputationPermissionService {
         return false
     }
 
-    async canReferee(userId, paperId) {
+    async canReferee(userId: number, paperId: number): Promise<boolean> {
         let admin = false
         const userResult = await this.database.query(`SELECT id, permissions FROM users WHERE users.id = $1`, [ userId ])
         if ( userResult.rows[0].permissions == 'superadmin' || userResult.rows[0].permissions == 'admin' ) {
@@ -121,7 +149,7 @@ module.exports = class ReputationPermissionService {
         return results.rows.length > 0
     }
 
-    async canPublish(userId, paper) {
+    async canPublish(userId: number, paper: Paper): Promise<{ canPublish: boolean, missingFields: number[] }> {
         let admin = false
         const userResult = await this.database.query(`SELECT id, permissions FROM users WHERE users.id = $1`, [ userId ])
         if ( userResult.rows[0].permissions == 'superadmin' || userResult.rows[0].permissions == 'admin' ) {
@@ -135,7 +163,7 @@ module.exports = class ReputationPermissionService {
             }
         }
 
-        const fieldIds = paper.fields.map((f) => f.id)
+        const fieldIds = [ ...paper.fields ]
         const authorIds = paper.authors.map((a) => a.userId)
 
         // Must be an author to publish a paper.
@@ -148,7 +176,7 @@ module.exports = class ReputationPermissionService {
 
         const fieldResults = await this.database.query('SELECT id, average_reputation FROM fields WHERE id = ANY($1::bigint[])', [ fieldIds ])
         
-        const fieldReputationMap = {}
+        const fieldReputationMap: { [id: number]: { highest_author_reputation: boolean | number, average_field_reputation: number} } = {}
         for(const row of fieldResults.rows) {
             fieldReputationMap[row['id']] = {
                 highest_author_reputation: false,
@@ -182,7 +210,7 @@ WHERE users.id = ANY($1::bigint[]) AND user_field_reputation.field_id = ANY($2::
 
         for(const fieldId of fieldIds) {
             if ( fieldReputationMap[fieldId].highest_author_reputation !== false 
-                && fieldReputationMap[fieldId].highest_author_reputation < fieldReputationMap[fieldId].average_field_reputation * THRESHOLDS.publish ) 
+                && fieldReputationMap[fieldId].highest_author_reputation as number < fieldReputationMap[fieldId].average_field_reputation * THRESHOLDS.publish ) 
             {
                 missingFields.push(fieldId)
                 canPublish = false

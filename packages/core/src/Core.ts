@@ -18,21 +18,16 @@
  *
  ******************************************************************************/
 
-import fs from 'fs'
+import * as fs from 'fs'
 
 import { Pool } from 'pg'
+import { Queue } from 'bullmq'
 import { ServerClient } from 'postmark'
 
-// TECHDEBT: from here: https://github.com/OptimalBits/bull/issues/1772
-import _Queue from 'bull'
-import type Bull from 'bull/index.d'
 
 import { Logger } from './Logger'
 import { FeatureFlags } from './FeatureFlags'
 
-// TECHDEBT What the fucking shit Typescript+Bull.
-// From here: https://github.com/OptimalBits/bull/issues/1772
-const Queue = _Queue as typeof Bull
 
 /**
  * An object containing overrides for the core.  Can be used to create a core
@@ -44,7 +39,7 @@ export interface CoreOverrides {
     logger?: Logger
     database?: Pool
     postmarkClient?: ServerClient
-    queue?: Bull.Queue<any>
+    queue?: Queue
     features?: FeatureFlags
 }
 
@@ -80,7 +75,7 @@ export class Core {
     /**
      * Our Bull worker queue.  Used to starting and managing background jobs.
      */
-    queue: Bull.Queue<any> 
+    queue: Queue 
 
     /**
      * Our configuration values.  
@@ -197,8 +192,8 @@ export class Core {
     /**
      * Initialize our queue server for background jobs.
      */
-    initializeQueue(): Bull.Queue<any> {
-        return new Queue('peer-review', { redis: this.config.redis })
+    initializeQueue(): Queue {
+        return new Queue('peer-review', { connection: this.config.redis })
     }
 
 

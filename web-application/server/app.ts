@@ -1,37 +1,56 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 /**************************************************************************************************
- *      Peer Review -- API Backend Server
+ *  API Backend Server
  *
  * Provides the API backend for the Peer Review website.  Implements a RESTful API.  Runs as a
  * stateless node server, with state pushed out to either a Redis instance or a MySQL database.
  *
  **************************************************************************************************/
 
-const express = require('express')
-const session = require('express-session')
-const cors = require('cors')
+import express, { Request, Response, NextFunction } from 'express'
+import session from 'express-session'
+import cors from 'cors'
 
-const morgan = require('morgan')
-const debug = require('debug')('peer-review:server')
+import morgan from 'morgan'
 
-const { Client, Pool } = require('pg')
-const pgSession = require('connect-pg-simple')(session)
+import ConnectPg from 'connect-pg-simple'
+const pgSession = ConnectPg(session)
 
-const BullQueue = require('bull')
+import path from 'path'
+import Uuid from 'uuid'
 
-const path = require('path')
-const fs = require('fs')
-const Uuid = require('uuid')
+import { Core } from '@danielbingham/peerreview-core'
+import { FeatureService } from '@danielbingham/peerreview-features'
+import { User } from '@danielbingham/peerreview-model'
+import { ServerSideRenderingService, PageMetadataService } from '@danielbingham/peerreview-backend'
 
-const { Core, FeatureFlags, FeatureService, ServerSideRenderingService, PageMetadataService } = require('@danielbingham/peerreview-backend')
-const ControllerError = require('./errors/ControllerError')
+import { initializeAPIRouter } from './router'
+import { ControllerError } from './errors/ControllerError'
 
 /**********************************************************************
  * Load Configuration
  **********************************************************************/
-const config = require('./config') 
+import { config } from './config'
 
 const core = new Core('web-application', config)
-core.initialize()
 
 // Load express.
 const app = express()
@@ -48,6 +67,14 @@ app.use(morgan('dev'))
 app.use(express.json({ limit: "50mb" }))
 app.use(express.urlencoded({ limit: "50mb", extended: false }))
 
+// Setting up the session
+declare module 'express-session' {
+    export interface SessionData {
+        user?: User 
+        logId?: string
+    }
+}
+
 // Set up our session storage.  We're going to use database backed sessions to
 // maintain a stateless app.
 core.logger.info('Setting up the database backed session store.')
@@ -56,7 +83,6 @@ const sessionStore = new pgSession({
     createTableIfMissing: true
 })
 app.use(session({
-    key: core.config.session.key,
     secret: core.config.session.secret,
     store: sessionStore,
     resave: false,
@@ -77,9 +103,9 @@ app.use(session({
 // Set the id the logger will use to identify the session.  We don't want to
 // use the actual session id, since that value is considered sensitive.  So
 // instead we'll just use a uuid.
-app.use(function(request, response, next) {
+app.use(function(request: Request, response: Response, next: NextFunction) {
     if ( request.session.user ) {
-        core.logger.setId(request.session.user.id)
+        core.logger.setId(request.session.user.id+'') 
     } else {
         if ( request.session.logId ) {
             core.logger.setId(request.session.logId)
@@ -91,17 +117,9 @@ app.use(function(request, response, next) {
     next()
 })
 
-app.use(function(request, response, next) {
-    // initialize the settings
-    if ( ! request.session.settings ) {
-        request.session.settings = null 
-    }
-    next()
-})
-
 
 // Setup FeatureFlags and make it available through the core.
-app.use(function(request, response, next) {
+app.use(function(request: Request, response: Response, next: NextFunction) {
     const featureService = new FeatureService(core)
     featureService.getEnabledFeatures().then(function(features) {
         core.features.setFeatures(features)
@@ -112,7 +130,7 @@ app.use(function(request, response, next) {
 })
 
 // Get the api router, pre-wired up to the controllers.
-const router = require('./router')(core)
+const router = initializeAPIRouter(core) 
 
 // Load our router at the ``/api/v0/`` route.  This allows us to version our api. If,
 // in the future, we want to release an updated version of the api, we can load it at
@@ -120,7 +138,7 @@ const router = require('./router')(core)
 if( process.env?.MAINTENANCE_MODE === 'true' ) {
     core.logger.info('Entering maintenance mode.')
 
-    app.use(core.config.backend, function(request, response) {
+    app.use(core.config.backend, function(request: Request, response: Response) {
         response.json({
             maintenance_mode: true
         })
@@ -131,7 +149,7 @@ if( process.env?.MAINTENANCE_MODE === 'true' ) {
     app.use(core.config.backend, router)
 }
 
-app.get('/health', function(request, response) {
+app.get('/health', function(request: Request, response: Response) {
     response.status(200).send()
 })
 
@@ -139,7 +157,7 @@ app.get('/health', function(request, response) {
  * Send configuration information up to the front-end.  Be *very careful*
  * about what goes in here.
  */
-app.get('/config', function(request, response) {
+app.get('/config', function(request: Request, response: Response) {
     response.status(200).json({
         backend: core.config.backend, 
         environment: process.env.NODE_ENV,
@@ -157,7 +175,7 @@ app.get('/config', function(request, response) {
 /**
  * A route to get the hash of enabled features.
  */
-app.get('/features', function(request, response) {
+app.get('/features', function(request: Request, response: Response) {
     response.status(200).json(core.features.features)
 })
 
@@ -202,10 +220,10 @@ if ( core.config.environment == 'development' ) {
         index: false
     }))
 
-    app.use(function(request, response) {
+    app.use(function(request: Request, response: Response) {
         core.logger.debug(`Index File Request with webpack-dev-middleware server side rendering.`)
         const { devMiddleware } = response.locals.webpack
-        const { assetsByChunkName, outputPath } = devMiddleware.stats.toJson() 
+        const { assetsByChunkName } = devMiddleware.stats.toJson() 
      
         const metadata = pageMetadataService.getRootWithDevAssets(assetsByChunkName)
         const parsedTemplate = serverSideRenderingService.renderIndexTemplate(metadata) 
@@ -220,7 +238,7 @@ if ( core.config.environment == 'development' ) {
     })
 
     // Everything else goes to the index file.
-    app.use('*', function(request,response) {
+    app.use('*', function(request: Request, response: Response) {
         const metadata = pageMetadataService.getRoot()
         const parsedTemplate = serverSideRenderingService.renderIndexTemplate(metadata) 
         response.send(parsedTemplate)
@@ -228,7 +246,7 @@ if ( core.config.environment == 'development' ) {
 }
 
 // error handler
-app.use(function(error, request, response, next) {
+app.use(function(error: any, request: Request, response: Response, next: NextFunction) {
     try {
         // Log the error.
         if ( error instanceof ControllerError ) {

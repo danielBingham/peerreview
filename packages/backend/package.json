@@ -17,6 +17,7 @@
     "registry": "https://npm.pkg.github.com/"
   },
   "main": "dist/index.js",
+  "types": "src/index.ts",
   "scripts": {
     "build": "tsc",
     "jest": "jest",

@@ -32,9 +32,9 @@ export interface OpenAlexParams {
 }
 
 /**
- * @deprecated This was used for reputation generation in PeerReview 0.1.  It
- * is currently unused in JournalHub, but is retained in case we do choose to
- * use OpenAlex for future features.
+ * This was used for reputation generation in PeerReview 0.1.  It is currently
+ * unused in JournalHub, but is retained in case we do choose to use OpenAlex
+ * for future features.
  *
  * TODO Techdebt If we do choose to use this, we will need to create types
  * matching OpenAlex's return types. That work has been punted for now.

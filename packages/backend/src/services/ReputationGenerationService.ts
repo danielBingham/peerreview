@@ -1,23 +1,66 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+
 /**
+ * @deprecated This generated reputation in PeerReview 0.1.  We may repurpose
+ * the algorithm in the future.
+ *
  * Reputation Service
  *
  * Methods to help calculate and manage reputation.
  */
+import { Pool, Client } from 'pg'
+import { Job } from 'bull'
+import { Core, Logger, ServiceError } from '@danielbingham/peerreview-core' 
 
-const FieldDAO = require('../daos/FieldDAO')
-const UserDAO = require('../daos/UserDAO')
-const OpenAlexService = require('./OpenAlexService')
+import { Review } from '@danielbingham/peerreview-model'
 
-const ServiceError = require('../errors/ServiceError')
+import FieldDAO from '../daos/FieldDAO'
+import { UserDAO } from '../daos/UserDAO'
 
-module.exports = class ReputationGenerationService {
+import { FieldLibrary } from '../libraries/FieldLibrary'
 
-    constructor(core) {
+import { OpenAlexService } from './OpenAlexService'
+
+export class ReputationGenerationService {
+    core: Core
+    database: Pool | Client
+    logger: Logger
+
+    fieldDAO: FieldDAO
+    userDAO: UserDAO
+
+    fieldLibrary: FieldLibrary
+
+    openAlexService: OpenAlexService
+
+    constructor(core: Core) {
+        this.core = core
+
         this.database = core.database
         this.logger = core.logger
 
         this.fieldDAO = new FieldDAO(core)
         this.userDAO = new UserDAO(core)
+
+        this.fieldLibrary = new FieldLibrary(core)
 
         this.openAlexService = new OpenAlexService(core)
     }
@@ -31,7 +74,7 @@ module.exports = class ReputationGenerationService {
      *
      * TODO Update this to account for initial reputation.
      */
-    async recalculateReputation(userId) {
+    async recalculateReputation(userId: number): Promise<void> {
         // ======== Clear out the existing reputation =========================
 
         this.logger.debug(`Resetting reputation tables for ${userId}.`)
@@ -96,7 +139,7 @@ module.exports = class ReputationGenerationService {
      * @param {int} userId  The id of the user who's reputation we're calculating.
      * @param {int} paperId The id of the paper we're calculating reputation gained from.
      */
-    async recalculateUserReputationForPaper(userId, paperId) {
+    async recalculateUserReputationForPaper(userId: number, paperId: number): Promise<void> {
         const scoreResults = await this.database.query(`
             SELECT SUM(vote) as "totalScore" from responses where paper_id = $1
         `, [ paperId ])
@@ -129,7 +172,7 @@ module.exports = class ReputationGenerationService {
      * @param {int} paperId The id of the paper we're assessing reputation for.
      * @param {int} reputation  The total reputation the user gained from that paper.
      **/
-    async recalculateUserReputationForPaperFields(userId, paperId, reputation) {
+    async recalculateUserReputationForPaperFields(userId: number, paperId: number, reputation: number): Promise<void> {
         const fieldResults = await this.database.query(`
             SELECT field_id from paper_fields where paper_id = $1
         `, [ paperId ])
@@ -139,7 +182,7 @@ module.exports = class ReputationGenerationService {
         }
         const rootIds = fieldResults.rows.map((r) => r.field_id)
 
-        const fieldIds = await this.fieldDAO.selectFieldAncestors(rootIds)
+        const fieldIds = await this.fieldLibrary.selectFieldAncestors(rootIds)
         const uniqueFieldIds = [ ...new Set(fieldIds) ]
 
         // Upsert the reputation into the fields table.
@@ -162,7 +205,7 @@ module.exports = class ReputationGenerationService {
      *
      * @param {int} userId  The id of the user for which we'd like to calculate review reputation.
      */
-    async recalculateUserReviewReputation(userId) {
+    async recalculateUserReviewReputation(userId: number): Promise<void> {
         // Now get a list of papers and a count versions that earned
         // reputation.
         const reviewResults = await this.database.query(`
@@ -190,7 +233,7 @@ module.exports = class ReputationGenerationService {
     /**
      *
      */
-    async recalculateReputationForUser(userId) {
+    async recalculateReputationForUser(userId: number): Promise<void> {
         // ======== Get total reputation gained from works. ===================
 
         const worksResults = await this.database.query(`
@@ -269,7 +312,7 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async incrementUserReputationForPaperFields(userId, paperId, reputation) {
+    async incrementUserReputationForPaperFields(userId: number, paperId: number, reputation: number): Promise<void> {
 
         // Get fields for the paper identified by `paperId`.
         const fieldResults = await this.database.query(`
@@ -286,7 +329,7 @@ module.exports = class ReputationGenerationService {
         const rootIds = fieldResults.rows.map((r) => r.field_id)
 
         // Get all parents for the root fields.
-        const fieldIds = await this.fieldDAO.selectFieldAncestors(rootIds)
+        const fieldIds = await this.fieldLibrary.selectFieldAncestors(rootIds)
 
         // Get only unique ids from the set of [rootIds, parentIds]
         const set = new Set(fieldIds)
@@ -330,7 +373,7 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async incrementUserReputationForPaper(userId, paperId, score) {
+    async incrementUserReputationForPaper(userId: number, paperId: number, score: number): Promise<void> {
         const reputation = score*10
 
         const paperResults = await this.database.query(`
@@ -361,7 +404,7 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async incrementReputationForPaper(paperId, score) {
+    async incrementReputationForPaper(paperId: number, score: number): Promise<void> {
         const authorsResults = await this.database.query(`
             SELECT user_id from paper_authors WHERE paper_id = $1
         `, [ paperId ])
@@ -385,7 +428,7 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async incrementReputationForReview(review) {
+    async incrementReputationForReview(review: Review): Promise<void> {
         if ( review.status !== 'accepted') {
             return
         }
@@ -438,7 +481,7 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async incrementInitialUserReputationForWork(userId, workId, reputation) {
+    async incrementInitialUserReputationForWork(userId: number, workId: number, reputation: number): Promise<void> {
         const paperResults = await this.database.query(`
             INSERT INTO user_initial_works_reputation (user_id, works_id, reputation) VALUES ($1, $2, $3)
                 ON CONFLICT (works_id, user_id) DO
@@ -466,7 +509,7 @@ module.exports = class ReputationGenerationService {
      * @param {int} reputation  The reputation increment we'll add to the given
      * fields and their parents.
      */
-    async incrementInitialUserReputationForFields(userId, fieldNames, reputation) {
+    async incrementInitialUserReputationForFields(userId: number, fieldNames: string[], reputation: number): Promise<void> {
         // Get field ids from the array of field names.
         const fieldResults = await this.database.query(`
             SELECT fields.id FROM fields WHERE fields.name = ANY($1::text[])
@@ -482,7 +525,7 @@ module.exports = class ReputationGenerationService {
 
         // Select the full set of field ids we're going to be working with: our
         // root ids and all of their parents.
-        const fieldIds = await this.fieldDAO.selectFieldAncestors(rootIds)
+        const fieldIds = await this.fieldLibrary.selectFieldAncestors(rootIds)
 
         // Get only unique ids from the set of [rootIds, parentIds]
         const set = new Set(fieldIds)
@@ -525,7 +568,7 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async initializeReputationForUserWithWorks(userId, works, job) {
+    async initializeReputationForUserWithWorks(userId: number, works: any[], job?: Job): Promise<void> {
         // Before we initialize them, clear out the initial reputation tables.
         // This makes this Idempotent.
         this.logger.debug('Clearing initial reputation tables.') 
@@ -548,7 +591,7 @@ module.exports = class ReputationGenerationService {
             count += 1
 
             if ( job ) {
-                job.progress({ step: 'works-reputation', stepDescription: `Generating reputation for works...`, progress: parseInt((count/works.length)*100) })
+                job.progress({ step: 'works-reputation', stepDescription: `Generating reputation for works...`, progress: Math.floor((count/works.length)*100) })
             }
         } 
 
@@ -580,7 +623,7 @@ module.exports = class ReputationGenerationService {
             await this.incrementInitialUserReputationForFields(userId, work.fields, work.citations*10)
             count += 1
             if ( job ) {
-                job.progress({ step: 'calculate-field-reputation', stepDescription: `Calculating user's reputation in fields for work ${count} of ${works.length}...`, progress: parseInt((count/works.length)*100) })
+                job.progress({ step: 'calculate-field-reputation', stepDescription: `Calculating user's reputation in fields for work ${count} of ${works.length}...`, progress: Math.floor((count/works.length)*100) })
             }
         } 
 
@@ -600,13 +643,16 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async initializeReputationForUser(userId, job) {
+    async initializeReputationForUser(userId: number, job: Job): Promise<void> {
         if ( job ) {
             job.progress({ step: 'find-orcid', stepDescription: `Retrieving user's ORCID iD...`, progress: 0 })
         }
 
-        const users = await this.userDAO.selectUsers('WHERE users.id = $1', [ userId ])
-        const user = users[0]
+        const users = await this.userDAO.selectUsers({ 
+            where: 'users.id = $1', 
+            params: [ userId ]
+        })
+        const user = users.dictionary[userId]
 
         if ( ! user.orcidId ) {
             throw new ServiceError('no-orcid', `Cannot initialize reputation for a user(${userId}) with out a connected ORCID iD.`)
@@ -630,7 +676,7 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async initializeReputationForUserWithOrcidId(userId, orcidId, job) {
+    async initializeReputationForUserWithOrcidId(userId: number, orcidId: string, job?: Job): Promise<void> {
         const works = await this.openAlexService.getPapersForOrcidId(orcidId, job)
         await this.initializeReputationForUserWithWorks(userId, works, job)
     }
@@ -644,7 +690,7 @@ module.exports = class ReputationGenerationService {
      *
      * @return {void}
      */
-    async initializeReputationForUserWithOpenAlexId(userId, openAlexId) {
+    async initializeReputationForUserWithOpenAlexId(userId: number, openAlexId: string): Promise<void> {
         const works = await this.openAlexService.getPapersForOpenAlexId(openAlexId)
         await this.initializeReputationForUserWithWorks(userId, works)
     }

@@ -1,17 +1,38 @@
-const backend = require('@danielbingham/peerreview-backend')
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Request, Response } from 'express'
 
-const ControllerError = require('../errors/ControllerError')
+import { Job } from 'bullmq'
 
-module.exports = class JobController {
+import { Core } from '@danielbingham/peerreview-core' 
 
-    constructor(core) {
-        this.database = core.database
-        this.queue = core.queue 
-        this.logger = core.logger
-        this.config = core.config
+import { ControllerError } from '../errors/ControllerError'
+
+export class JobController {
+    core: Core
+
+    constructor(core: Core) {
+        this.core = core
     }
 
-    async getJobs(request, response) {
+    async getJobs(request: Request, response: Response): Promise<void> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -34,12 +55,13 @@ module.exports = class JobController {
             completed: []
         }
         
-        jobs.waiting = await this.queue.getJobs(['waiting'])
-        jobs.active = await this.queue.getJobs(['active'])
-        jobs.completed = await this.queue.getJobs(['completed'])
+        jobs.waiting = await this.core.queue.getJobs(['waiting'])
+        jobs.active = await this.core.queue.getJobs(['active'])
+        jobs.completed = await this.core.queue.getJobs(['completed'])
 
         if ( request.session.user.permissions == 'admin' || request.session.user.permissions == 'superadmin') {
-            return response.status(200).json(jobs)
+            response.status(200).json(jobs)
+            return
         }
 
         let returnJobs = {
@@ -66,10 +88,11 @@ module.exports = class JobController {
             }
         }
 
-        return response.status(200).json(returnJobs)
+        response.status(200).json(returnJobs)
+        return
     }
 
-    async getJob(request, response) {
+    async getJob(request: Request, response: Response): Promise<void> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -98,7 +121,7 @@ module.exports = class JobController {
                 `Unauthenticated user attempted to get Job(${jobId}).`)
         }
         
-        const job = await this.queue.getJob(jobId)
+        const job = await this.core.queue.getJob(jobId)
 
         // 2. User may only get their own job (or must be admin).
         if ( job.data.session.user.id !== request.session.user.id && request.session.user.permissions != 'admin' && request.session.user.permissions != 'superadmin' ) {
@@ -107,10 +130,11 @@ module.exports = class JobController {
         }
 
 
-        return response.status(200).json(job.toJSON())
+        response.status(200).json(job.toJSON())
+        return
     }
 
-    async postJob(request, response) {
+    async postJob(request: Request, response: Response): Promise<void> {
         const name = request.body.name
 
         /**********************************************************************
@@ -143,16 +167,17 @@ module.exports = class JobController {
                 `Attempt to trigger invalid job '${name}'.`)
         }
 
-        return response.status(200).json(job.toJSON())
+        response.status(200).json(job.toJSON())
+        return
     }
 
-    async patchJob(request, response) {
+    async patchJob(request: Request, response: Response): Promise<void> {
         throw new ControllerError(503, 'not-implemented', '')
 
         // TODO Implement me to allow for pausing and resuming of jobs.
     }
 
-    async deleteJob(request, response) {
+    async deleteJob(request: Request, response: Response): Promise<void> {
         throw new ControllerError(503, 'not-implemented', '')
 
         // TODO Implement me to allow for canceling of jobs.
@@ -161,7 +186,7 @@ module.exports = class JobController {
 
     // ================  JOBS ==========================
 
-    async initializeReputation(request, response) {
+    async initializeReputation(request: Request, response: Response): Promise<Job> {
         const userId = request.body.data.userId
 
         // Validation: 1. :user_id must be set.
@@ -185,14 +210,14 @@ module.exports = class JobController {
 
         // If we already have a reputation initialization job in progress for
         // this user, then return that job.
-        const jobs = await this.queue.getJobs(['active'])
+        const jobs = await this.core.queue.getJobs(['active'])
         for ( const job of jobs ) {
             if ( job.name == 'initialize-reputation' && job.data.userId == userId ) {
                 return job
             }
         }
 
-        const job = await this.queue.add('initialize-reputation', { session: { user: { id: request.session.user.id } }, userId: userId })
+        const job = await this.core.queue.add('initialize-reputation', { session: { user: { id: request.session.user.id } }, userId: userId })
         return job
     }
 

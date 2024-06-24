@@ -34,6 +34,7 @@ import { NotificationDefinition } from './NotificationDefinition'
 import { NotificationContext } from './NotificationContext'
 
 
+export { NotificationContext } from './NotificationContext'
 export class NotificationService {
     core: Core
 

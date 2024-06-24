@@ -1,16 +1,41 @@
-const backend = require('@danielbingham/peerreview-backend')
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Request, Response } from 'express'
 
-const ControllerError = require('../errors/ControllerError')
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+import { FeatureService, FeatureDAO } from '@danielbingham/peerreview-features'
 
-module.exports = class FeatureController {
+import ControllerError from '../errors/ControllerError'
 
-    constructor(core) {
-        this.database = core.database
-        this.logger = core.logger
-        this.config = core.config
+export class FeatureController {
 
-        this.featureService = new backend.FeatureService(core)
-        this.featureDAO = new backend.FeatureDAO(core)
+    core: Core
+
+    featureService: FeatureService
+    featureDAO: FeatureDAO
+
+    constructor(core: Core) {
+        this.core = core 
+
+        this.featureService = new FeatureService(core)
+        this.featureDAO = new FeatureDAO(core)
     }
 
     /**
@@ -22,7 +47,7 @@ module.exports = class FeatureController {
      *
      * @return {Promise} Resolves to void.
      */
-    async getFeatures(request, response) {
+    async getFeatures(request: Request, response: Response): Promise<void> {
         let results = {}
 
         /**********************************************************************
@@ -44,8 +69,8 @@ module.exports = class FeatureController {
             results = await this.featureDAO.selectFeatures()
 
             for ( const name in this.featureService.features ) {
-                 if ( ! results.dictionary[name] ) {
-                    results.dictionary[name] = {
+                 if ( ! (name in results) ) {
+                    results[name] = {
                         name: name,
                         status: 'uncreated'
                     }
@@ -59,7 +84,7 @@ module.exports = class FeatureController {
              results = await this.featureDAO.selectFeatures(`WHERE status = $1`, [ 'enabled' ])
         }
 
-        return response.status(200).json(results.dictionary)
+        response.status(200).json(results)
     }
 
     /**
@@ -72,7 +97,7 @@ module.exports = class FeatureController {
      *
      * @return {Promise} Resolves to void.
      */
-    async postFeatures(request, response) {
+    async postFeatures(request: Request, response: Response): Promise<void> {
 
         /**********************************************************************
          * Permissions Checking and Input Validation
@@ -119,7 +144,7 @@ module.exports = class FeatureController {
         const existing = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
 
         // 5. Feature(:name) must not already be in the database.
-        if ( existing.list.length > 0 ) {
+        if ( ! ( name in existing)) {
             throw new ControllerError(400, 'already-inserted',
                 `Attempt to insert Feature(${name}) that is already inserted.`)
         }
@@ -131,14 +156,14 @@ module.exports = class FeatureController {
 
         await this.featureService.insert(name)
 
-        const { dictionary } = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
+        const dictionary = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
 
-        if ( ! dictionary[name] ) {
-            throw new ControllerError(500, 'server-error'
+        if ( ! ( name in  dictionary) ) {
+            throw new ControllerError(500, 'server-error',
                 `Can't find Feature(${name}) after insertion.`)
         }
 
-        return response.status(200).json(dictionary[name])
+        response.status(200).json(dictionary[name])
     }
 
     /**
@@ -150,7 +175,7 @@ module.exports = class FeatureController {
      *
      * @return {Promise} Resolves to void.
      */
-    async getFeature(request, response) {
+    async getFeature(request: Request, response: Response): Promise<void> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -171,7 +196,8 @@ module.exports = class FeatureController {
 
         // 1. Feature(:name) is enabled => anyone may read it.
         if ( feature.status == 'enabled' ) {
-            return response.status(200).json(feature)
+            response.status(200).json(feature)
+            return
         }
 
         // 2. Feature(:name) is not enabled => only admins and superadmins may
@@ -186,7 +212,7 @@ module.exports = class FeatureController {
                 `Non-admin User(${request.session.user.id}) attempting to access Feature(${name}).`)
         }
 
-        return response.status(200).json(feature)
+        response.status(200).json(feature)
     }
 
     /**
@@ -197,7 +223,7 @@ module.exports = class FeatureController {
      * @param {string} request.body.status  The desired status for this feature.
      * @param {Object} response The started Express response object.
      */
-    async patchFeature(request, response) {
+    async patchFeature(request: Request, response: Response): Promise<void> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -411,12 +437,12 @@ module.exports = class FeatureController {
 
         const  after = await this.featureDAO.selectFeatures(`WHERE name = $1`, [ name ])
 
-        if ( ! after.dictionary[name]) {
+        if ( ! ( name in after)) {
             throw new ControllerError(500, 'server-error',
                 `Failed to find Feature(${name}) after updating status.`)
         }
 
-        return response.status(200).json(after.dictionary[name])
+        response.status(200).json(after[name])
     }
 
 }

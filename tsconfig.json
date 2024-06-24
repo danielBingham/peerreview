@@ -122,6 +122,9 @@
     },
     {
       "path": "./packages/features"
+    },
+    {
+      "path": "./web-application"
     }
   ]
 }

@@ -25,13 +25,12 @@
   },
   "dependencies": {
     "@babel/runtime": "^7.20.13",
-    "bull": "^4.10.4",
+    "bullmq": "^5.8.2",
     "pg": "^8.11.1",
     "postmark": "^3.0.15"
   },
   "devDependencies": {
     "@jest/globals": "^29.7.0",
-    "@types/bull": "^4.10.0",
     "@types/pg": "^8.11.2",
     "@types/postmark": "^2.0.3",
     "jest": "^29.4.3",

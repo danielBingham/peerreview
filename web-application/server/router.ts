@@ -1,4 +1,23 @@
-/**************************************************************************************************
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+/*******************************************************************************
  *         API Router v0 
  *
  * This is the RESTful API router.  It contains all of our backend API routes.
@@ -6,81 +25,22 @@
  * NOTE: This file is versioned and loaded on ``/api/0.0.0/``.  So ``/users`` is
  * really ``/api/0.0.0/users``.  This is so that we can load multiple versions
  * of the api as we make changes and leave past versions still accessible.
- **************************************************************************************************/
-module.exports = function(core) {
-    const express = require('express')
-    const multer = require('multer')
-    const backend = require('@danielbingham/peerreview-backend')
+ *
+ *******************************************************************************/
+import express from 'express'
+import multer from 'multer'
 
-    const ControllerError = require('./errors/ControllerError')
+import { Core } from '@danielbingham/peerreview-core' 
+import { ControllerError } from './errors/ControllerError'
 
+import { initializeFeatureRoutes } from './routes/features'
+import { initializeJobRoutes } from './routes/jobs'
+
+export function initializeAPIRouter(core: Core) {
     const router = express.Router()
 
-    /******************************************************************************
-     * Feature Flag Management and Migration Rest Routes
-     *****************************************************************************/
-    const FeatureController = require('./controllers/FeatureController')
-    const featureController = new FeatureController(core)
-
-    router.get('/features', function(request, response, next) {
-        featureController.getFeatures(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.post('/features', function(request, response, next) {
-        featureController.postFeatures(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/feature/:name', function(request, response, next) {
-        featureController.getFeature(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.patch('/feature/:name', function(request, response, next) {
-        featureController.patchFeature(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    /**************************************************************************
-     * Job REST Routes
-     **************************************************************************/
-    const JobController = require('./controllers/JobController')
-    const jobController = new JobController(core)
-
-    router.get('/jobs', function(request, response, next) {
-        jobController.getJobs(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.post('/jobs', function(request, response, next) {
-        jobController.postJob(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/job/:id', function(request, response, next) {
-        jobController.getJob(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.patch('/job/:id', function(request, response, next) {
-        jobController.patchJob(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.delete('/job/:id', function(request, response, next) {
-        jobController.deleteJob(request, response).catch(function(error) {
-            next(error)
-        })
-    })
+    initializeFeatureRoutes(core, router)
+    initializeJobRoutes(core, router)
 
     /******************************************************************************
      *          File REST Routes

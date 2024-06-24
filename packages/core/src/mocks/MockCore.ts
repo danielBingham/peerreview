@@ -2,10 +2,7 @@ import { jest } from '@jest/globals'
 
 import { Pool } from 'pg' 
 import { ServerClient } from 'postmark'
-import _Queue from 'bull'
-import type Bull from 'bull/index.d'
-
-const Queue = _Queue as typeof Bull
+import { Queue } from 'bullmq'
 
 import { Core, CoreOverrides } from '../Core'
 import { Logger } from '../Logger'
