@@ -15,6 +15,7 @@ const ControllerError = require('../errors/ControllerError')
 module.exports = class PaperController {
 
     constructor(core) {
+        this.core = core
         this.database = core.database
         this.logger = core.logger
 
@@ -28,8 +29,8 @@ module.exports = class PaperController {
         this.PaperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
-        this.permissionService = new backend.PermissionService(core)
 
+        this.permissionService = new backend.PermissionService(core)
     }
 
     async getRelations(user, results, requestedRelations) {
@@ -105,21 +106,21 @@ module.exports = class PaperController {
      * @param {Object}  query    The query object we get from the query string.
      * @param {boolean} query.isDraft   (Optional) A boolean indicating whether
      * we're selecting drafts or published papers.
-     * @param {integer} query.authorId  (Optional) The id of an author who's papers
+     * @param {number} query.authorId  (Optional) The id of an author who's papers
      * we wish to query for.
-     * @param {integer[]} query.fields  (Optional) An array of fields we want to
+     * @param {number[]} query.fields  (Optional) An array of fields we want to
      * restrict the paper query to.
-     * @param {integer[]} query.excludeFields   (Optional) An array of fields we
+     * @param {number[]} query.excludeFields   (Optional) An array of fields we
      * want to exclude from the query.
      * @param {string}  query.searchString  (Optional) A string of text we want to
      * search in paper bodies and titles for.
      * @param {string}  query.sort  (Optional) The sort we want to apply to our query.
-     * @param {integer} query.page  (Optional) The page we wish to return.
+     * @param {number} query.page  (Optional) The page we wish to return.
      * @param {Object} options  (Optional) An optional options object with
      * settings to tweak our parsing.
      * @param {boolean} options.ignoreOrder (Optional) Ignore the order clause.
      *
-     * @return {Object} Returns an object with the following structure:
+     * @return {Promise<Object>} Returns an object with the following structure:
      * ```
      * { 
      *  where: '', // The WHERE clause
@@ -145,6 +146,15 @@ module.exports = class PaperController {
 
         let count = 0
         let and = ''
+
+        if ( this.core.features.hasFeature('49-anonymity-and-permissions') ) {
+            const visiblePaperIds = this.permissionService.papers.getVisiblePaperIds(session.user)
+            
+            count += 1
+            and = ( count > 1 ? ' AND ' : '')
+            result.where += `${and} papers.id = ANY($${count}::bigint[])`
+            result.params.push(visiblePaperIds)
+        }
 
         // If we're not intentionally retrieving drafts then we're getting
         // published papers.
@@ -495,10 +505,19 @@ module.exports = class PaperController {
 
         const user = request.session.user
 
-        // 2. User must have 'Papers:create'
-        if ( ! this.permissionService.can(user, 'create', 'Papers', {}) ) {
-            throw new ControllerError(403, 'not-authorized',
-                `User(${user.id}) is not authorized to create new papers.`)
+        if ( this.core.features.hasFeature('49-anonymity-and-permissions') ) {
+            // 2. User must have 'Papers:create'
+            if ( ! this.permissionService.can(user, 'create', 'Papers', {}) ) {
+                throw new ControllerError(403, 'not-authorized',
+                    `User(${user.id}) is not authorized to create new papers.`)
+            }
+        } else {
+            // 2. User is an author and owner of the paper being submitted.
+            if ( ! paper.authors.find((a) => a.userId == user.id && a.owner) ) {
+                throw new ControllerError(403, 'not-authorized:not-owner', 
+                    `User(${user.id}) submitted a paper with out being an owner of that paper!`)
+            }
+
         }
 
         // 5. Paper has at least 1 valid author.
@@ -513,10 +532,12 @@ module.exports = class PaperController {
                 `User(${user.id}) submitted a paper they weren't an author on.`)
         }
 
-        // 4. Paper must have at least one corresponding author. 
-        if ( ! paper.authors.find((a) => a.role == 'corresponding-author') ) {
-            throw new ControllerError(400, 'no-corresponding-author', 
-                `User(${user.id}) submitted a paper without a corresponding author.`)
+        if ( this.core.features.hasFeature('49-anonymity-and-permissions') ) {
+            // 4. Paper must have at least one corresponding author. 
+            if ( ! paper.authors.find((a) => a.role == 'corresponding-author') ) {
+                throw new ControllerError(400, 'no-corresponding-author', 
+                    `User(${user.id}) submitted a paper without a corresponding author.`)
+            }
         }
 
         const authorIds = paper.authors.map((a) => a.userId)
@@ -544,14 +565,13 @@ module.exports = class PaperController {
                 `User(${user.id}) submitted a paper with no fields.`)
         }
         
-        const fieldIds = paper.fields.map((f) => f.id)
         const fieldResults = await this.database.query(`
             SELECT DISTINCT fields.id FROM fields WHERE fields.id = ANY($1::bigint[])
-        `, [ fieldIds ])
+        `, [ paper.fields ])
 
             
-        if ( fieldResults.rows.length != fieldIds.length ) {
-            for ( const fieldId of fieldIds ) {
+        if ( fieldResults.rows.length != paper.fields.length ) {
+            for ( const fieldId of paper.fields ) {
                 if ( ! fieldResults.rows.find((f) => f.id == fieldId)) {
                     throw new ControllerError(400, `invalid-field:${fieldId}`,
                         `User(${user.id}) submitted a paper with invalid Field(${fieldId}).`)
@@ -607,7 +627,6 @@ module.exports = class PaperController {
         
         const results = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
         const entity = results.dictionary[paper.id]
-        console.log(entity)
         if ( ! entity ) {
             throw new ControllerError(500, `server-error`, `Paper ${paper.id} does not exist after insert!`)
         }

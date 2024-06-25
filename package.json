@@ -1,0 +1,22 @@
+{
+  "name": "journalhub",
+  "version": "0.3.10",
+  "description": "A universal scholarly publishing platform.",
+  "scripts": {
+    "test": "jest",
+    "build": "tsc --build"
+  },
+  "author": "Daniel Bingham",
+  "license": "AGPL-3.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "dependencies": { },
+  "devDependencies": {
+    "ts-node": "^10.9.2",
+    "@types/jest": "^29.5.12",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.5"
+  }
+}

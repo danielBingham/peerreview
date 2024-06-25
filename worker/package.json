@@ -1,7 +1,8 @@
 {
   "name": "@peerreview/worker",
-  "version": "0.3.7",
+  "version": "0.3.10",
   "private": true,
+  "license": "AGPL-3.0",
   "main": "index.js",
   "repository": {
     "type": "git",
@@ -17,8 +18,8 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.294.0",
-    "@danielbingham/peerreview-backend": "^0.3.7",
-    "@danielbingham/peerreview-model": "^0.3.7",
+    "@danielbingham/peerreview-backend": "^0.3.10",
+    "@danielbingham/peerreview-model": "^0.3.10",
     "bull": "^4.10.4",
     "pg": "^8.7.3"
   },

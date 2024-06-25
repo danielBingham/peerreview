@@ -1,9 +1,9 @@
 {
   "name": "@danielbingham/peerreview-model",
-  "version": "0.3.7",
+  "version": "0.3.10",
   "description": "The model of Peer Review.",
   "author": "Daniel Bingham",
-  "license": "MIT",
+  "license": "AGPL-3.0",
   "homepage": "https://github.com/danielbingham/peerreview#README",
   "bugs": {
     "url": "https://github.com/danielbingham/peerreview/issues"
@@ -16,18 +16,14 @@
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
   },
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "src/index.ts",
   "scripts": {
-    "jest": "jest",
-    "test": "jest test"
+    "build": "rm -rf dist && tsc --build ./tsconfig.json",
+    "watch": "tsc --watch"
   },
-  "jest": {
-    "verbose": true
-  },
-  "dependencies": {
-    "@babel/runtime": "^7.20.13"
-  },
+  "dependencies": { },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "typescript": "^5.4.2"
   }
 }

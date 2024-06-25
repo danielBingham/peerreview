@@ -1,0 +1,40 @@
+{
+  "name": "@danielbingham/peerreview-core",
+  "version": "0.3.10",
+  "description": "The core of JournalHub.",
+  "author": "Daniel Bingham",
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/danielbingham/peerreview#README",
+  "bugs": {
+    "url": "https://github.com/danielbingham/peerreview/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielbingham/peerreview.git",
+    "directory": "packages/core"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "main": "dist/index.js",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "jest": "jest",
+    "test": "jest test"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.20.13",
+    "bullmq": "^5.8.2",
+    "pg": "^8.11.1",
+    "postmark": "^3.0.15"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/pg": "^8.11.2",
+    "@types/postmark": "^2.0.3",
+    "jest": "^29.4.3",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.2"
+  }
+}
