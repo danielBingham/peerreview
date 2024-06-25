@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import multer from 'multer'
 
 import { Core } from '@danielbingham/peerreview-core' 
@@ -28,14 +28,14 @@ export function initializeFileRoutes(core: Core, router: express.Router) {
     const upload = multer({ dest: 'public/uploads/tmp' })
 
     // Upload a version of the paper.
-    router.post('/upload', upload.single('file'), function(request, response, next) {
-        fileController.upload(request, response).catch(function(error) {
+    router.post('/upload', upload.single('file'), function(request: Request, response: Response, next: NextFunction) {
+        fileController.upload(request, response).catch(function(error: any) {
             next(error)
         })
     })
 
-    router.delete('/file/:id', function(request, response, next) {
-        fileController.deleteFile(request, response).catch(function(error) {
+    router.delete('/file/:id', function(request: Request, response: Response, next: NextFunction) {
+        fileController.deleteFile(request, response).catch(function(error: any) {
             next(error)
         })
     })

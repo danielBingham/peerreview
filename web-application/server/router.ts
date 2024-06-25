@@ -28,7 +28,6 @@
  *
  *******************************************************************************/
 import express from 'express'
-import multer from 'multer'
 
 import { Core } from '@danielbingham/peerreview-core' 
 import { ControllerError } from './errors/ControllerError'
@@ -45,23 +44,6 @@ export function initializeAPIRouter(core: Core) {
     /******************************************************************************
      *          File REST Routes
      ******************************************************************************/
-    const FileController = require('./controllers/FileController')
-    const fileController = new FileController(core)
-
-    const upload = new multer({ dest: 'public/uploads/tmp' })
-
-    // Upload a version of the paper.
-    router.post('/upload', upload.single('file'), function(request, response, next) {
-        fileController.upload(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.delete('/file/:id', function(request, response, next) {
-        fileController.deleteFile(request, response).catch(function(error) {
-            next(error)
-        })
-    })
 
     /******************************************************************************
      *          User REST Routes

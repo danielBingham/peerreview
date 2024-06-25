@@ -152,7 +152,7 @@ export class FileDAO {
      *
      * @return {Promise<void>}
      */
-    async insertFile(file: File): Promise<void> {
+    async insertFile(file: PartialFile): Promise<void> {
         const results = await this.database.query(`
             INSERT INTO files (id, user_id, location, filepath, type, created_date, updated_date)
                 VALUES ($1, $2, $3, $4, $5, now(), now())
@@ -227,7 +227,7 @@ export class FileDAO {
      *
      * @return {Promise<void>}
      */
-    async deleteFile(fileId: number): Promise<void> {
+    async deleteFile(fileId: string): Promise<void> {
         const pathResults = await this.database.query(`
             SELECT filepath FROM files WHERE id = $1
         `, [ fileId ])

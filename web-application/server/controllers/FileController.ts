@@ -1,19 +1,51 @@
-const mime = require('mime')
-const { v4: uuidv4 } = require('uuid')
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Request, Response } from 'express'
+import mime from 'mime'
+import { v4 as uuidv4 } from 'uuid'
 
-const backend = require('@danielbingham/peerreview-backend')
+import { Core } from '@danielbingham/peerreview-core' 
+import { S3FileService, FileDAO } from '@danielbingham/peerreview-backend'
 
-const ControllerError = require('../errors/ControllerError')
+import { ControllerError } from '../errors/ControllerError'
 
-module.exports = class FileController {
+/** 
+ * @todo TECHDEBT File uses a UUID as the primary key.  UUIDs are string.  Model
+* assumes id is a number.  Typescript doesn't notice, because File which
+* extends Model is only ever set from the database, and javascript doesn't
+* actually care whether id is a string or number.  PartialFile has id as a
+* string and that's the only one typescript can actually enforce a type on,
+* because that's what gets passed in. But this is significant tech debt that we
+* should resolve. 
+* **/
+export class FileController {
+    core: Core
 
-    constructor(core) {
-        this.database = core.database
-        this.logger = core.logger
-        this.config = core.config
+    fileService: S3FileService
+    fileDAO: FileDAO
 
-        this.fileService = new backend.S3FileService(core)
-        this.fileDAO = new backend.FileDAO(core)
+    constructor(core: Core) {
+        this.core = core
+
+        this.fileService = new S3FileService(core)
+        this.fileDAO = new FileDAO(core)
     }
 
     /**
@@ -28,7 +60,7 @@ module.exports = class FileController {
      *
      * @returns {Promise}   Resolves to void.
      */
-    async upload(request, response) {
+    async upload(request: Request, response: Response): Promise<void> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -84,19 +116,25 @@ module.exports = class FileController {
             id: id,
             userId: request.session.user.id,
             type: type,
-            location: this.config.s3.bucket_url,
+            location: this.core.config.s3.bucket_url,
             filepath: filepath
         }
 
         await this.fileDAO.insertFile(file)
 
-        const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ id ])
-        if ( files.length <= 0) {
+        const files = await this.fileDAO.selectFiles({ 
+            where: 'files.id = $1', 
+            params: [ id ]
+        })
+        if ( ! ( id in files.dictionary)) {
+            // If we don't clean this up, we could wind up with a memory leak.
+            this.fileService.removeLocalFile(currentPath)
             throw new ControllerError(500, 'insertion-failure', `Failed to select newly inserted file ${id}.`)
         }
 
         this.fileService.removeLocalFile(currentPath)
-        return response.status(200).json(files[0])
+        response.status(200).json(files[0])
+        return
     }
 
     /**
@@ -110,7 +148,7 @@ module.exports = class FileController {
      *
      * @returns {Promise}   Resolves to void.
      */
-    async deleteFile(request, response) {
+    async deleteFile(request: Request, response: Response) {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -131,20 +169,23 @@ module.exports = class FileController {
             throw new ControllerError(403, 'not-authorized', `Must have a logged in user to delete a file.`)
         }
 
-        const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ request.params.id ])
+        const files = await this.fileDAO.selectFiles({ 
+            where: 'files.id = $1', 
+            params: [ request.params.id ]
+        })
 
         // Validation: 1. File(:id) must exist.
-        if ( files.length <= 0 ) {
+        if ( ! (request.params.id in files.dictionary)) {
             throw new ControllerError(404, 'not-found', `File ${request.params.id} not found!`)
         } 
 
         // Permissions: 2. User must be owner of File(:id)
-        if ( files[0].userId !== request.session.user.id ) {
+        if ( files[request.params.id].userId !== request.session.user.id ) {
             // TODO Admin and moderator permissions.
             throw new ControllerError(403, 'not-authorized', `User(${request.session.user.id}) attempting to delete file(${files[0].id}, which they don't own.`)
         }
 
-        const results = await this.database.query(`
+        const results = await this.core.database.query(`
             SELECT
                 papers.id, papers.is_draft
             FROM papers

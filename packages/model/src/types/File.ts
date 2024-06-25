@@ -39,7 +39,10 @@ export interface File extends Model {
     updatedDate: string
 }
 
-export interface PartialFile extends Model {
+export interface PartialFile {
+    /** The database id of the file, a UUID. **/
+    id?: string 
+
     /** The User.id of the user who uploaded this file. */
     userId?: number
 
