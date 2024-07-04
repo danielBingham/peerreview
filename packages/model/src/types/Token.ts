@@ -35,6 +35,7 @@ export interface Token extends Model {
 
 export interface PartialToken {
     id?: number
+    userId?: number
     token?: string
     type?: TokenType
 }

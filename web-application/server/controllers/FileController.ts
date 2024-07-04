@@ -148,7 +148,7 @@ export class FileController {
      *
      * @returns {Promise}   Resolves to void.
      */
-    async deleteFile(request: Request, response: Response) {
+    async deleteFile(request: Request, response: Response): Promise<void> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -213,6 +213,6 @@ export class FileController {
         // Database constraints should handle any cascading here.
         const fileId = request.params.id
         await this.fileDAO.deleteFile(fileId)
-        return response.status(200).json({ fileId: fileId })
+        response.status(200).json({ fileId: fileId })
     }
 }

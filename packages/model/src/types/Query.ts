@@ -57,6 +57,11 @@ export interface QueryMeta {
     numberOfPages: number
 }
 
+export interface QueryRelations { 
+    [modelName: string]: ModelDictionary<Model> 
+}
+
+
 /**
  * Query results, returned by REST endpoints that return pageable lists of
  * results.
@@ -80,5 +85,5 @@ export interface QueryResult<Type extends Model> {
      * requested for, or should be included with, this query. Keyed by Model
      * name. 
      * **/
-    relations: { [modelName: string]: ModelDictionary<Model> }
+    relations: QueryRelations
 }

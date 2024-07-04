@@ -17,26 +17,15 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import express, { Request, Response, NextFunction } from 'express'
-import multer from 'multer'
+import { ModelDictionary, Paper, User, Journal, JournalSubmission } from '@danielbingham/peerreview-model'
+import { DAOQuery } from '@danielbingham/peerreview-backend'
 
-import { Core } from '@danielbingham/peerreview-core' 
-import { FileController } from '../controllers/FileController'
+export interface ControllerQueryOptions {
+    ignorePage?: boolean
+}
 
-export function initializeFileRoutes(core: Core, router: express.Router) {
-    const fileController = new FileController(core)
-    const upload = multer({ dest: 'public/uploads/tmp' })
-
-    // Upload a version of the paper.
-    router.post('/upload', upload.single('file'), function(request: Request, response: Response, next: NextFunction) {
-        fileController.upload(request, response).catch(function(error: any) {
-            next(error)
-        })
-    })
-
-    router.delete('/file/:id', function(request: Request, response: Response, next: NextFunction) {
-        fileController.deleteFile(request, response).catch(function(error: any) {
-            next(error)
-        })
-    })
+export interface ControllerQuery {
+    daoQuery: DAOQuery
+    emptyResult: boolean
+    requestedRelations: string[] 
 }

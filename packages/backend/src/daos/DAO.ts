@@ -34,7 +34,9 @@ export enum DAOQueryOrder {
     MostActive = 'most-active',
     LeastActive = 'least-active',
     Heirarchy = 'heirarchy',
-    Alphabetically = 'alphabetically'
+    Alphabetically = 'alphabetically',
+    Similarity = 'similarity',
+    Override = 'override'
 }
 
 /**
@@ -55,6 +57,11 @@ export interface DAOQuery {
      * with pg's `Pool.query`. 
      **/
     order?: DAOQueryOrder 
+
+    /**
+     * Override the order string directly.
+     */
+    orderOverride?: string
 
     /** The number of the page of the query we're requesting. **/
     page?: number

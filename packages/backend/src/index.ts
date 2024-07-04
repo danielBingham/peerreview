@@ -1,3 +1,4 @@
+export { DAOQueryOrder, DAOQuery, DAOResult } from './daos/DAO'
 export { FieldDAO } from './daos/FieldDAO'
 export { FileDAO } from './daos/FileDAO'
 export { JournalDAO } from './daos/JournalDAO'
@@ -27,6 +28,7 @@ export { S3FileService } from './services/S3FileService'
 export { ServerSideRenderingService } from './services/ServerSideRenderingService'
 export { SessionService } from './services/SessionService'
 export { SubmissionService } from './services/SubmissionService'
+export { TokenService } from './services/TokenService'
 
 export { getFieldsTableFixture } from './fixtures/database/FieldsTable'
 export { getFilesTableFixture } from './fixtures/database/FilesTable'

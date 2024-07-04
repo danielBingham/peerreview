@@ -172,7 +172,13 @@ export class UserDAO {
             order = 'users.created_date desc'
         } else if ( query?.order == DAOQueryOrder.Oldest ) {
             order = 'users.created_date asc'
-        }
+        } else if ( query?.order == DAOQueryOrder.Override ) {
+            if ( query.orderOverride ) {
+                order = query.orderOverride 
+            } else {
+                throw new DAOError('missing-order-override', 'No orderOverride set for query with order set to Override.')
+            }
+        } 
 
         const page = query?.page || 0
         if ( page > 0) {

@@ -18,7 +18,7 @@
  *
  ******************************************************************************/
 export { Model, ModelDictionary } from './types/Model'
-export { ResultType, EntityResult, QueryMeta, QueryResult} from './types/Query'
+export { ResultType, EntityResult, QueryMeta, QueryRelations, QueryResult} from './types/Query'
 
 export { Field } from './types/Field'
 export { File, PartialFile } from './types/File'
@@ -31,7 +31,7 @@ export { PaperEvent, PaperEventVisibility, PartialPaperEvent, PaperEventType, Pa
 export { Permission } from './types/Permission'
 export { Review, ReviewThread, ReviewComment, ReviewStatus, ReviewRecommendation } from './types/Review'
 export { Token, PartialToken, TokenType } from './types/Token'
-export { User, PartialUser, UserJournalMembership, UserStatus, UserPermissions } from './types/User'
+export { User, PartialUser, UserJournalMembership, UserAuthorization, UserStatus, UserPermissions, UserQuery } from './types/User'
 
 export { getFieldFixture } from './fixtures/Field'
 export { getFileFixture } from './fixtures/File'

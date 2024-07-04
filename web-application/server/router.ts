@@ -34,64 +34,18 @@ import { ControllerError } from './errors/ControllerError'
 
 import { initializeFeatureRoutes } from './routes/features'
 import { initializeJobRoutes } from './routes/jobs'
+import { initializeFileRoutes } from './routes/files'
 
 export function initializeAPIRouter(core: Core) {
     const router = express.Router()
 
     initializeFeatureRoutes(core, router)
     initializeJobRoutes(core, router)
-
-    /******************************************************************************
-     *          File REST Routes
-     ******************************************************************************/
+    initializeFileRoutes(core, router)
 
     /******************************************************************************
      *          User REST Routes
      ******************************************************************************/
-    const UserController = require('./controllers/UserController')
-    const userController = new UserController(core)
-
-    // Get a list of all users.
-    router.get('/users', function(request, response, next) {
-        userController.getUsers(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Create a new user 
-    router.post('/users', function(request, response, next) {
-        userController.postUsers(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Get the details of a single user 
-    router.get('/user/:id', function(request, response, next) {
-        userController.getUser(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Replace a user wholesale.
-    router.put('/user/:id', function(request, response, next) {
-        userController.putUser(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Edit an existing user with partial data.
-    router.patch('/user/:id', function(request, response, next) {
-        return userController.patchUser(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Delete an existing user.
-    router.delete('/user/:id', function(request, response, next) {
-        return userController.deleteUser(request, response).catch(function(error) {
-            next(error)
-        })
-    })
 
     /**************************************************************************
      *      User Notification REST Routes

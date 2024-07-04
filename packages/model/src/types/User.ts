@@ -67,5 +67,18 @@ export interface PartialUser {
     bio?: string
     location?: string
     institution?: string
+    file?: File | null
+    fileId?: number
 }
 
+export interface UserAuthorization {
+    token?: string
+    password?: string
+}
+
+export interface UserQuery {
+    name?: string
+    ids?: number[]
+    page?: number
+    relations: string[]
+}

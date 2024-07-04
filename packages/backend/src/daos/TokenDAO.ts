@@ -115,7 +115,13 @@ export class TokenDAO {
     /**
      * Create a row in the `tokens` table corresponding to a Token model.
      */
-    async insertToken(token: Token): Promise<number> {
+    async insertToken(token: PartialToken): Promise<number> {
+        if ( ! ("userId" in token) || ! ("token" in token) || ! ( "type" in token) 
+            || ! token.userId || ! token.token || ! token.type ) 
+        {
+            throw new DAOError('missing-input', "Data missing from the partial token.")
+        }
+
         const results = await this.database.query(`
             INSERT INTO tokens (user_id, token, type, created_date, updated_date)
                 VALUES ( $1, $2, $3, now(), now())
