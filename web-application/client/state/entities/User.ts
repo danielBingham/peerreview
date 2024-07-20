@@ -37,9 +37,9 @@ import {
 import { setRelationsInState } from '/libraries/relations'
 
 import { RequestType, RequestMethod } from '/types/Request'
-import { makeRequest } from '/state/requests'
+import { makeRequest } from '/state/foundation/Request'
 
-import { setCurrentUser } from '/state/authentication'
+import { setCurrentUser } from '/state/foundation/Authentication'
 
 
 /**
@@ -52,7 +52,7 @@ const initialState: UserSliceState = {
 }
 
 export const userSlice = createSlice({
-    name: 'users',
+    name: 'User',
     initialState: initialState,
     reducers: {
         setUsersInDictionary: setInDictionary<User, UserSliceState>,
