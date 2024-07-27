@@ -32,9 +32,12 @@ import express from 'express'
 import { Core } from '@danielbingham/peerreview-core' 
 import { ControllerError } from './errors/ControllerError'
 
-import { initializeFeatureRoutes } from './routes/features'
-import { initializeJobRoutes } from './routes/jobs'
-import { initializeFileRoutes } from './routes/files'
+import { initializeFeatureRoutes } from './routes/foundation/Feature'
+import { initializeJobRoutes } from './routes/foundation/Job'
+import { initializeFileRoutes } from './routes/foundation/File'
+
+import { initializeUserRoutes } from './routes/entities/User'
+import { initializeNotificationRoutes } from './routes/entities/Notification'
 
 export function initializeAPIRouter(core: Core) {
     const router = express.Router()
@@ -43,216 +46,12 @@ export function initializeAPIRouter(core: Core) {
     initializeJobRoutes(core, router)
     initializeFileRoutes(core, router)
 
-    /******************************************************************************
-     *          User REST Routes
-     ******************************************************************************/
-
-    /**************************************************************************
-     *      User Notification REST Routes
-     *************************************************************************/
-    const NotificationController = require('./controllers/NotificationController')
-    const notificationController = new NotificationController(core)
-
-    router.get('/notifications', function(request, response, next) {
-        notificationController.getNotifications(request, response).catch(function(error) {
-            next(error)
-        })
-
-    })
-
-    router.patch('/notification/:id', function(request, response, next) {
-        notificationController.patchNotification(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    /**************************************************************************
-     *  Reputation Routes 
-     **************************************************************************
-
-    const ReputationController = require('./controllers/ReputationController')
-    const reputationController = new ReputationController(core)
-
-    router.get('/reputation/thresholds', function(request, response, next) {
-        reputationController.getReputationThresholds(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/user/:user_id/reputation/initialization', function(request, response, next) {
-        return reputationController.initializeReputation(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/user/:user_id/reputations', function(request, response, next) {
-        return reputationController.getReputations(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.post('/user/:id/reputations', function(request, response) {
-        return response.status(501).send()
-    })
-
-    router.get('/user/:user_id/reputation/:field_id', function(request, response, next) {
-        return reputationController.getReputation(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.put('/user/:id/reputation/:field_id', function(request, response) {
-        return response.status(501).send()
-    })
-
-    router.patch('/user/:id/reputation/:field_id', function(request, response) {
-        return response.status(501).send()
-    })
-
-    router.delete('/user/:id/reputation/:field_id', function(request, response) {
-        return response.status(501).send()
-    })
-
-    /****************************************************************
-     * Reputation Administration Methods
-     ****************************************************************
-
-    // NOTE: These are here for testing and development purposes only.
-    // TODO Remove before we go to production.  (Or formalize into a
-    // admin/development interface only loaded on development and staging
-    // environments.)
-    const AdminController = require('./controllers/AdminController') 
-    const adminController = new AdminController(core)
-    router.get('/admin/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {
-        adminController.initializeReputationFromOrcid(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/admin/user/:id/initialize-reputation/openalex/:openAlexId', function(request, response, next) {
-        adminController.initializeReputationFromOpenAlex(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/admin/user/:id/recalculate-reputation', function(request, response, next) {
-        adminController.recalculateReputation(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    /**************************************************************************
-     * Testing Routes
-     *
-     * These routes are only used for testing and are removed from Production.
-     **************************************************************************/
-
-    const TestingController = require('./controllers/TestingController')
-    const testingController = new TestingController(core)
-
-    router.post('/testing/orcid', function(request, response, next) {
-        testingController.postOrcid(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/testing/orcid/reset', function(request, response, next) {
-        testingController.getOrcidReset(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    /******************************************************************************
-     *          User Settings REST Routes
-     ******************************************************************************/
-    const SettingsController = require('./controllers/SettingsController')
-    const settingsController = new SettingsController(core)
-
-    // Get a list of all settings.
-    router.get('/user/:user_id/settings', function(request, response, next) {
-        settingsController.getSettings(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Create a new setting 
-    router.post('/user/:user_id/settings', function(request, response, next) {
-        settingsController.postSettings(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // When we don't have a user, just store settings on the session.
-    router.post('/settings', function(request, response, next) {
-        settingsController.postSettings(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Get the details of a single setting 
-    router.get('/user/:user_id/setting/:id', function(request, response, next) {
-        settingsController.getSetting(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Replace a setting wholesale.
-    router.put('/user/:user_id/setting/:id', function(request, response, next) {
-        settingsController.putSetting(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Edit an existing setting with partial data.
-    router.patch('/user/:user_id/setting/:id', function(request, response, next) {
-        settingsController.patchSetting(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Delete an existing setting.
-    router.delete('/user/:user_id/setting/:id', function(request, response, next) {
-        settingsController.deleteSetting(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
+    initializeUserRoutes(core, router)
+    initializeNotificationRoutes(core, router)
 
     /******************************************************************************
      *          Authentication REST Routes
      ******************************************************************************/
-    const AuthenticationController = require('./controllers/AuthenticationController')
-    const authenticationController = new AuthenticationController(core)
-
-    router.post('/authentication', function(request, response, next) {
-        authenticationController.postAuthentication(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.patch('/authentication', function(request, response, next) {
-        authenticationController.patchAuthentication(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/authentication', function(request, response, next) {
-        authenticationController.getAuthentication(request,response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.delete('/authentication', function(request, response) {
-        // Delete isn't async
-        authenticationController.deleteAuthentication(request, response)
-    })
-    
-    router.post('/orcid/authentication', function(request, response, next) {
-        authenticationController.postOrcidAuthentication(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
     /**************************************************************************
      *      Token Handling REST Routes
      * ************************************************************************/

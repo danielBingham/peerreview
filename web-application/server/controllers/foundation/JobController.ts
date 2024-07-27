@@ -17,13 +17,13 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Request, Response } from 'express'
 
 import { Job } from 'bullmq'
 
 import { Core } from '@danielbingham/peerreview-core' 
+import { User, JobsResult } from '@danielbingham/peerreview-model'
 
-import { ControllerError } from '../errors/ControllerError'
+import { ControllerError } from '../../errors/ControllerError'
 
 export class JobController {
     core: Core
@@ -32,7 +32,7 @@ export class JobController {
         this.core = core
     }
 
-    async getJobs(request: Request, response: Response): Promise<void> {
+    async getJobs(currentUser: User): Promise<JobsResult> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -44,7 +44,7 @@ export class JobController {
          * ********************************************************************/
         
         // Permissions: 1. User must be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted retrieve jobs.`)
         }
@@ -59,9 +59,8 @@ export class JobController {
         jobs.active = await this.core.queue.getJobs(['active'])
         jobs.completed = await this.core.queue.getJobs(['completed'])
 
-        if ( request.session.user.permissions == 'admin' || request.session.user.permissions == 'superadmin') {
-            response.status(200).json(jobs)
-            return
+        if ( currentUser.permissions == 'admin' || currentUser.permissions == 'superadmin') {
+            return jobs
         }
 
         let returnJobs = {
@@ -71,28 +70,27 @@ export class JobController {
         }
 
         for ( const job of jobs.waiting ) {
-            if ( job.data.session.user.id == request.session.user.id ) {
+            if ( job.data.session.user.id == currentUser.id ) {
                 returnJobs.waiting.push(job)
             }
         }
 
         for ( const job of jobs.active) {
-            if ( job.data.session.user.id == request.session.user.id ) {
+            if ( job.data.session.user.id == currentUser.id ) {
                 returnJobs.active.push(job)
             }
         }
 
         for ( const job of jobs.completed) {
-            if ( job.data.session.user.id == request.session.user.id ) {
+            if ( job.data.session.user.id == currentUser.id ) {
                 returnJobs.completed.push(job)
             }
         }
 
-        response.status(200).json(returnJobs)
-        return
+        return returnJobs
     }
 
-    async getJob(request: Request, response: Response): Promise<void> {
+    async getJob(currentUser: User, id: string): Promise<Job> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -107,7 +105,7 @@ export class JobController {
          * 
          * ********************************************************************/
 
-        const jobId = request.params.id
+        const jobId = id
 
         // Validation: 1. :id must be set
         if ( ! jobId ) {
@@ -116,7 +114,7 @@ export class JobController {
         }
 
         // Permissions: 1. User must be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted to get Job(${jobId}).`)
         }
@@ -124,19 +122,15 @@ export class JobController {
         const job = await this.core.queue.getJob(jobId)
 
         // 2. User may only get their own job (or must be admin).
-        if ( job.data.session.user.id !== request.session.user.id && request.session.user.permissions != 'admin' && request.session.user.permissions != 'superadmin' ) {
+        if ( job.data.session.user.id !== currentUser.id && currentUser.permissions != 'admin' && currentUser.permissions != 'superadmin' ) {
             throw new ControllerError(403, 'not-authorized',
-                `User(${request.session.user.id}) attempted to access Job(${jobId}) which they did not trigger.`)
+                `User(${currentUser.id}) attempted to access Job(${jobId}) which they did not trigger.`)
         }
 
-
-        response.status(200).json(job.toJSON())
-        return
+        return job
     }
 
-    async postJob(request: Request, response: Response): Promise<void> {
-        const name = request.body.name
-
+    async postJob(currentUser: User, name: string, data: any): Promise<Job> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -151,14 +145,14 @@ export class JobController {
          * ********************************************************************/
        
         // Permissions: 1. User must be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted start a job.`)
         }
 
         let job = null 
         if ( name == 'initialize-reputation' ) {
-            job = await this.initializeReputation(request, response)
+            //job = await this.initializeReputation(request, response)
         } 
 
         // Validation: 1. body.name must be set and be a valid job.
@@ -167,17 +161,16 @@ export class JobController {
                 `Attempt to trigger invalid job '${name}'.`)
         }
 
-        response.status(200).json(job.toJSON())
-        return
+        return job
     }
 
-    async patchJob(request: Request, response: Response): Promise<void> {
+    async patchJob(): Promise<void> {
         throw new ControllerError(503, 'not-implemented', '')
 
         // TODO Implement me to allow for pausing and resuming of jobs.
     }
 
-    async deleteJob(request: Request, response: Response): Promise<void> {
+    async deleteJob(): Promise<void> {
         throw new ControllerError(503, 'not-implemented', '')
 
         // TODO Implement me to allow for canceling of jobs.
@@ -186,8 +179,8 @@ export class JobController {
 
     // ================  JOBS ==========================
 
-    async initializeReputation(request: Request, response: Response): Promise<Job> {
-        const userId = request.body.data.userId
+    async initializeReputation(currentUser: User, data: any): Promise<Job> {
+        const userId = data.userId
 
         // Validation: 1. :user_id must be set.
         if ( ! userId ) {
@@ -195,7 +188,7 @@ export class JobController {
         }
 
         // Permissions: 1. User must be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted to initialize reputation for User(${userId}).`)
         }
@@ -203,9 +196,9 @@ export class JobController {
         // Permissions: 2. User must be initializing their own reputation.
         // Users may only initialize their own reputation.  We'll add admins
         // who can initialize other users reputation later.
-        if ( request.session.user.id != userId ) {
+        if ( currentUser.id != userId ) {
             throw new ControllerError(403, 'not-authorized:wrong-user',
-                `User(${request.session.user.id}) attempted to initialize reputation for User(${userId}).`)
+                `User(${currentUser.id}) attempted to initialize reputation for User(${userId}).`)
         }
 
         // If we already have a reputation initialization job in progress for
@@ -217,7 +210,7 @@ export class JobController {
             }
         }
 
-        const job = await this.core.queue.add('initialize-reputation', { session: { user: { id: request.session.user.id } }, userId: userId })
+        const job = await this.core.queue.add('initialize-reputation', { session: { user: { id: currentUser.id } }, userId: userId })
         return job
     }
 

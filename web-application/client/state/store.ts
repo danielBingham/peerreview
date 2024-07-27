@@ -1,11 +1,11 @@
-import { configureStore } from '@reduxjs/toolkit'
+import { configureStore, PayloadAction } from '@reduxjs/toolkit'
 import { combineReducers } from 'redux'
 
-import systemReducer from './system'
-import featuresReducer from './features'
-import jobsReducer from './jobs'
-import authenticationReducer from './authentication'
-import usersReducer from './users'
+import systemReducer from '/state/foundation/System'
+import featureReducer from '/state/foundation/Feature'
+import jobsReducer from '/state/foundation/Job'
+import authenticationReducer from '/state/foundation/Authentication'
+import userReducer from '/state/entities/User'
 import notificationsReducer from './notifications'
 import papersReducer from './papers'
 import paperEventsReducer from './paperEvents'
@@ -14,18 +14,15 @@ import reviewsReducer from './reviews'
 import journalsReducer from './journals'
 import journalSubmissionsReducer from './journalSubmissions'
 import fieldsReducer from './fields'
-import settingsReducer from './settings'
 import filesReducer from './files'
-import responsesReducer from './responses'
-import testingReducer from './testing'
-
+import testingReducer from '/state/foundation/Test'
 
 const reducers = combineReducers({
     system: systemReducer,
-    features: featuresReducer,
+    features: featureReducer,
     jobs: jobsReducer,
     authentication: authenticationReducer,
-    users: usersReducer,
+    users: userReducer,
     notifications: notificationsReducer,
     papers: papersReducer,
     paperEvents: paperEventsReducer,
@@ -34,13 +31,11 @@ const reducers = combineReducers({
     journals: journalsReducer,
     journalSubmissions: journalSubmissionsReducer,
     fields: fieldsReducer,
-    settings: settingsReducer,
     files: filesReducer,
-    responses: responsesReducer,
     testing: testingReducer
 })
 
-const rootReducer = function(state, action) {
+const rootReducer = function(state: any, action: PayloadAction) {
     if (action.type === 'system/reset') {
         state = undefined
     }

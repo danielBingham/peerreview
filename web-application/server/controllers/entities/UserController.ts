@@ -48,8 +48,8 @@ import {
     TokenService
 } from '@danielbingham/peerreview-backend'
 
-import { ControllerQueryOptions, ControllerQuery } from '../types/ControllerQuery'
-import { ControllerError } from '../errors/ControllerError'
+import { ControllerQueryOptions, ControllerQuery } from '../../types/ControllerQuery'
+import { ControllerError } from '../../errors/ControllerError'
 
 export class UserController {
     core: Core

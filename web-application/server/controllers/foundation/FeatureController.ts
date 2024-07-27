@@ -17,12 +17,11 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Request, Response } from 'express'
+import { Core } from '@danielbingham/peerreview-core' 
+import { Feature, PartialFeature, FeatureService, FeatureDAO, FeatureDictionary } from '@danielbingham/peerreview-features'
+import { User } from '@danielbingham/peerreview-model'
 
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
-import { FeatureService, FeatureDAO } from '@danielbingham/peerreview-features'
-
-import ControllerError from '../errors/ControllerError'
+import { ControllerError } from '../../errors/ControllerError'
 
 export class FeatureController {
 
@@ -39,15 +38,10 @@ export class FeatureController {
     }
 
     /**
-     * If the user is an admin, give them the full list of features.
-     * If the user is not an admin, only give them the features that are enabled.
-     *
-     * @param {Object} request  Standard express request object.
-     * @param {Object} response Standard express response object.
-     *
-     * @return {Promise} Resolves to void.
+     * If the user is an admin, give them the full list of features. If the
+     * user is not an admin, only give them the features that are enabled.
      */
-    async getFeatures(request: Request, response: Response): Promise<void> {
+    async getFeatures(permissions?: string): Promise<FeatureDictionary> {
         let results = {}
 
         /**********************************************************************
@@ -65,7 +59,7 @@ export class FeatureController {
          * ********************************************************************/
 
         // 1. User is an admin => give them the full list.
-        if (request.session?.user?.permissions == 'admin' || request.session?.user?.permissions == 'superadmin') {
+        if (permissions == 'admin' || permissions == 'superadmin') {
             results = await this.featureDAO.selectFeatures()
 
             for ( const name in this.featureService.features ) {
@@ -84,20 +78,14 @@ export class FeatureController {
              results = await this.featureDAO.selectFeatures(`WHERE status = $1`, [ 'enabled' ])
         }
 
-        response.status(200).json(results)
+        return results
     }
 
     /**
      * Insert a feature defined in FeatureService but not yet inserted into the
      * database.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {string} request.body.name  The name of the feature we want to initialize.  Defined in FeatureService
-     * @param {Object} response Standard Express response object.
-     *
-     * @return {Promise} Resolves to void.
      */
-    async postFeatures(request: Request, response: Response): Promise<void> {
+    async postFeatures(currentUser: User, feature: PartialFeature): Promise<Feature> {
 
         /**********************************************************************
          * Permissions Checking and Input Validation
@@ -116,18 +104,18 @@ export class FeatureController {
          * ********************************************************************/
 
         // 1. User must be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 'not-authenticated',
                 `Attempt to initialize a feature from a non-authenticated user.`)
         }
 
         // 2. User must be an admin or a superadmin.
-        if ( request.session.user.permissions != 'admin' && request.session.user.permissions != 'superadmin' ) {
+        if ( currentUser.permissions != 'admin' && currentUser.permissions != 'superadmin' ) {
             throw new ControllerError(403, 'not-authorized',
                 `Attempt to initialize a feature from a non-admin user.`)
         }
 
-        const name = request.body.name
+        const name = feature.name
 
         // 3. Request body must contain a feature :name.
         if ( ! name ) {
@@ -163,19 +151,14 @@ export class FeatureController {
                 `Can't find Feature(${name}) after insertion.`)
         }
 
-        response.status(200).json(dictionary[name])
+        return dictionary[name]
     }
 
     /**
      * If they are an admin, give them the feature.  If they are a user, only
      * give it to them if its enabled.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {String} request.params.name    The name of the feature we want to get.
-     *
-     * @return {Promise} Resolves to void.
      */
-    async getFeature(request: Request, response: Response): Promise<void> {
+    async getFeature(currentUser: User, name: string): Promise<Feature> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -185,45 +168,37 @@ export class FeatureController {
          * 
          * ********************************************************************/
 
-        const name = request.params.name
-
         const feature = await this.featureService.getFeature(name)
 
         if ( ! feature ) {
             throw new ControllerError(404, 'no-resource',
-                `Failed to find Feature(${request.params.id}).`)
+                `Failed to find Feature(${name}).`)
         }
 
         // 1. Feature(:name) is enabled => anyone may read it.
         if ( feature.status == 'enabled' ) {
-            response.status(200).json(feature)
-            return
+            return feature
         }
 
         // 2. Feature(:name) is not enabled => only admins and superadmins may
         // read it.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(404, 'no-resource',
                 `Unauthenticated user attempt to access non-enabled Feature(${name}).`)
         }
 
-        if ( request.session.user.permissions != 'admin' && request.session.user.permissions != 'superadmin') {
+        if ( currentUser.permissions != 'admin' && currentUser.permissions != 'superadmin') {
             throw new ControllerError(404, 'no-resource',
-                `Non-admin User(${request.session.user.id}) attempting to access Feature(${name}).`)
+                `Non-admin User(${currentUser.id}) attempting to access Feature(${name}).`)
         }
 
-        response.status(200).json(feature)
+        return feature
     }
 
     /**
      * Updates to the `status` field of a feature trigger the appropriate migrations.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {string} request.params.name  The name of the feature.
-     * @param {string} request.body.status  The desired status for this feature.
-     * @param {Object} response The started Express response object.
      */
-    async patchFeature(request: Request, response: Response): Promise<void> {
+    async patchFeature(currentUser: User, name: string, featurePatch: PartialFeature): Promise<Feature> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -244,18 +219,16 @@ export class FeatureController {
          * ********************************************************************/
 
         // 1. User must be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(404, 'no-resource',
-                `Unauthenticated user attempt to access non-enabled Feature(${request.params.id}).`)
+                `Unauthenticated user attempt to access non-enabled Feature(${name}).`)
         }
 
         // 2. User must be an admin or a superadmin.
-        if ( request.session.user.permissions != 'admin' && request.session.user.permissions != 'superadmin') {
+        if ( currentUser.permissions != 'admin' && currentUser.permissions != 'superadmin') {
             throw new ControllerError(404, 'no-resource',
-                `Non-admin attempting to access Feature(${request.params.id}).`)
+                `Non-admin attempting to access Feature(${name}).`)
         }
-
-        const name = request.params.name
 
         // 3. :name must exist
         if ( ! name ) {
@@ -263,7 +236,7 @@ export class FeatureController {
                 `Attempt to PATCH a feature with out a name.`)
         }
 
-        const status = request.body.status
+        const status = featurePatch.status
 
         // 6. Request body must contain a `status` parameter.
         if ( ! status ) {
@@ -277,7 +250,7 @@ export class FeatureController {
         // 4. Feature(:name) must exist.
         if ( ! feature ) {
             throw new ControllerError(404, 'no-resource',
-                `Attempt to update Feature(${request.params.id}) that doesn't exist.`)
+                `Attempt to update Feature(${name}) that doesn't exist.`)
         }
 
         // 5. Feature(:name) must be inserted.
@@ -311,7 +284,7 @@ export class FeatureController {
             || feature.status == 'initializing' || feature.status == 'uninitializing' ) 
         {
             throw new ControllerError(400, 'in-progress',
-                `Attempt to change status of Feature(${request.params.id}) which is currently ${feature.status}.`)
+                `Attempt to change status of Feature(${name}) which is currently ${feature.status}.`)
         }
         
         /**********************************************************************
@@ -442,7 +415,7 @@ export class FeatureController {
                 `Failed to find Feature(${name}) after updating status.`)
         }
 
-        response.status(200).json(after[name])
+        return after[name]
     }
 
 }

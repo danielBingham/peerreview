@@ -1,13 +1,29 @@
 /******************************************************************************
- * Authentication Controller
  *
- * Provides endpoints to authenticate a user.
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
  *
- * ***************************************************************************/
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+import { User } from '@danielbingham/peerreview-model'
 
-const backend = require('@danielbingham/peerreview-backend')
+import { AuthenticationService, Credentials, UserDAO } from '@danielbingham/peerreview-backend'
 
-const ControllerError = require('../errors/ControllerError')
+
+import { ControllerError } from '../../errors/ControllerError'
 
 /**
  * Controller for the authentication resource.
@@ -15,16 +31,17 @@ const ControllerError = require('../errors/ControllerError')
  * The authentication resource represents the user's authentication state,
  * whether they are logged in or not.
  */
-module.exports = class AuthenticationController {
+export class AuthenticationController {
+    core: Core
 
-    constructor(core) {
-        this.database = core.database
-        this.logger = core.logger
-        this.config = core.config
+    auth: AuthenticationService
+    userDAO: UserDAO
 
-        this.auth = new backend.AuthenticationService(core)
-        this.userDAO = new backend.UserDAO(core)
-        this.settingsDAO = new backend.SettingsDAO(core)
+    constructor(core: Core) {
+        this.core = core
+
+        this.auth = new AuthenticationService(core)
+        this.userDAO = new UserDAO(core)
     }
 
 
@@ -32,13 +49,8 @@ module.exports = class AuthenticationController {
      * GET /authentication
      *
      * Check the session and get the user (or null) and their settings.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {Promise}   Resolves to void.
      */
-    async getAuthentication(request, response) {
+    async getAuthentication(currentUser: User): Promise<User|null> {
         /*************************************************************
          * Permissions Checking and Input Validation
          *
@@ -46,21 +58,10 @@ module.exports = class AuthenticationController {
          * returns what it finds.
          * 
          * **********************************************************/
-        if (request.session.user) {
-            const settings = await this.settingsDAO.selectSettings('WHERE user_settings.user_id = $1', [ request.session.user.id ])
-            if ( settings.length == 0 ) {
-                throw new ControllerError(500, 'server-error', `Failed to retrieve settings for authenticated user ${request.session.user.id}.`)
-            }
-            return response.status(200).json({
-                user: request.session.user,
-                settings: settings[0] 
-            })
-
+        if (currentUser) {
+            return currentUser
         } else {
-            return response.status(200).json({
-                user: null,
-                settings: request.session.settings
-            })
+            return null
         }
     }
 
@@ -70,17 +71,11 @@ module.exports = class AuthenticationController {
      * Used to authenticate a user using the credentials provided in the
      * request body, and logs them into the application, storing their user
      * object in the session.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {Object} request.body The user's authentication credentials.
-     * @param {string} request.body.email   The user's email.
-     * @param {string} request.body.password    The user's password.
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {Promise}   Resolves to void.
      */
-    async postAuthentication(request, response) {
-        const credentials = request.body
+    async postAuthentication(
+        credentials: Credentials, 
+        updateSession: (user: User) => void
+    ): Promise<User> {
         credentials.email = credentials.email.toLowerCase()
 
         /************************************************************
@@ -91,11 +86,19 @@ module.exports = class AuthenticationController {
         try {
             const userId = await this.auth.authenticateUser(credentials)
 
-            const responseBody = await this.auth.loginUser(userId, request)
+            const results = await this.userDAO.selectUsers({ 
+                where: 'users.id=$1', 
+                params: [userId] 
+            })
+            if ( results.list.length <= 0) {
+                throw new ControllerError(403, 'authentication-failed', 
+                                          'Failed to get full record for authenticated user!')
+            } 
+            updateSession(results.dictionary[userId])
 
-            return response.status(200).json(responseBody)
+            return results.dictionary[userId]
         } catch (error ) {
-            if ( error instanceof backend.ServiceError ) {
+            if ( error instanceof ServiceError ) {
                 if ( error.type == 'no-user' ) {
                     throw new ControllerError(403, 'authentication-failed', error.message)
                 } else if ( error.type == 'multiple-users') {
@@ -120,17 +123,8 @@ module.exports = class AuthenticationController {
      *
      * Can be used to check a user's authentication with out modifying the
      * session.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {Object} request.body Should contain the authentication credentials.
-     * @param {string} request.body.email   The user's email.
-     * @param {string} request.body.password    The user's password.
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {Promise}   Resolves to void.
      */
-    async patchAuthentication(request, response) {
-        const credentials = request.body
+    async patchAuthentication(credentials: Credentials): Promise<User> {
         credentials.email = credentials.email.toLowerCase()
 
         /************************************************************
@@ -142,15 +136,19 @@ module.exports = class AuthenticationController {
         try {
             const userId = await this.auth.authenticateUser(credentials)
 
-            const userResults = await this.userDAO.selectUsers('WHERE users.id = $1', [ userId ])
+            const userResults = await this.userDAO.selectUsers({
+                where: 'users.id = $1', 
+                params: [ userId ]
+            })
 
             if ( ! userResults.dictionary[userId] ) {
-                throw new ControllerError(500, 'server-error', `Failed to find User(${userId}) after authenticating them!`)
+                throw new ControllerError(500, 'server-error', 
+                    `Failed to find User(${userId}) after authenticating them!`)
             }
 
-            return response.status(200).json(userResults.dictionary[userId])
+            return userResults.dictionary[userId]
         } catch (error ) {
-            if ( error instanceof backend.ServiceError ) {
+            if ( error instanceof ServiceError ) {
                 if ( error.type == 'no-user' ) {
                     throw new ControllerError(403, 'authentication-failed', error.message)
                 } else if ( error.type == 'multiple-users') {
@@ -180,20 +178,12 @@ module.exports = class AuthenticationController {
      *
      * @returns {void} 
      */
-    deleteAuthentication(request, response) {
+    deleteAuthentication(destroySession: (callback: (error: any) => void) => void) {
         /**********************************************************************
          * This endpoint simply destroys the session, logging out the user.
          * Anyone may call it.
          **********************************************************************/
 
-        request.session.destroy(function(error) {
-            if (error) {
-                console.error(error)
-                response.status(500).json({error: 'server-error'})
-            } else {
-                response.status(200).json(null)
-            }
-        })
     }
 
     /**
@@ -238,15 +228,15 @@ module.exports = class AuthenticationController {
         }
 
         const authorizationRequestParams= new URLSearchParams({
-            client_id:  this.config.orcid.client_id,
-            client_secret: this.config.orcid.client_secret,
+            client_id:  this.core.config.orcid.client_id,
+            client_secret: this.core.config.orcid.client_secret,
             grant_type:  'authorization_code',
             code:  request.body.code,
-            redirect_uri: request.body.connect ? this.config.orcid.connect_redirect_uri : this.config.orcid.authentication_redirect_uri
+            redirect_uri: request.body.connect ? this.core.config.orcid.connect_redirect_uri : this.core.config.orcid.authentication_redirect_uri
         })
         const data = authorizationRequestParams.toString()
 
-        const authorizationResponse = await fetch(this.config.orcid.authorization_host + '/oauth/token', {
+        const authorizationResponse = await fetch(this.core.config.orcid.authorization_host + '/oauth/token', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -266,7 +256,7 @@ module.exports = class AuthenticationController {
         const orcidAuthorization = await authorizationResponse.json()
         const orcidId = orcidAuthorization.orcid
 
-        const orcidResults = await this.database.query(`
+        const orcidResults = await this.core.database.query(`
                 SELECT users.id FROM users WHERE users.orcid_id = $1
             `, [ orcidId])
 
@@ -296,7 +286,7 @@ module.exports = class AuthenticationController {
         }
 
         // get their full record
-        const recordResponse = await fetch(this.config.orcid.api_host + '/v3.0/' + orcidAuthorization.orcid, {
+        const recordResponse = await fetch(this.core.config.orcid.api_host + '/v3.0/' + orcidAuthorization.orcid, {
             method: 'GET',
             headers: {
                 'Accept': 'application/vnd.orcid+json',
@@ -328,7 +318,7 @@ module.exports = class AuthenticationController {
             params.push(email.email)
         }
 
-        const userResults = await this.database.query(`
+        const userResults = await this.core.database.query(`
                     SELECT users.id FROM users
                         WHERE ${where}
                  `, params)

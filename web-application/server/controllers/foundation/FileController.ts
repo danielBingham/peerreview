@@ -17,14 +17,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Request, Response } from 'express'
-import mime from 'mime'
+import * as mime from 'mime'
 import { v4 as uuidv4 } from 'uuid'
 
 import { Core } from '@danielbingham/peerreview-core' 
+import { User, File } from '@danielbingham/peerreview-model'
 import { S3FileService, FileDAO } from '@danielbingham/peerreview-backend'
 
-import { ControllerError } from '../errors/ControllerError'
+import { ControllerError } from '../../errors/ControllerError'
 
 /** 
  * @todo TECHDEBT File uses a UUID as the primary key.  UUIDs are string.  Model
@@ -53,14 +53,8 @@ export class FileController {
      *
      * Allows the user to upload a file, which can then be used by other
      * entities.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {Object} request.file The file information, defined by multer.
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {Promise}   Resolves to void.
      */
-    async upload(request: Request, response: Response): Promise<void> {
+    async upload(currentUser: User, rawFile: Express.Multer.File): Promise<File> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -75,7 +69,7 @@ export class FileController {
          * ********************************************************************/
 
         // 1. User must be logged in.
-        if ( ! request.session || ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(403, 'not-authorized', `Must have a logged in user to upload a file.`)
         }
 
@@ -83,7 +77,7 @@ export class FileController {
          * Validation
          **********************************************************************/
 
-        const type = request.file.mimetype 
+        const type = rawFile.mimetype 
         // Define which file types are valid.
         const validTypes = [
             // For papers.
@@ -97,7 +91,7 @@ export class FileController {
         // 1. File must be PDF, JPEG, or PNG.
         if ( ! validTypes.includes(type) ) {
             throw new ControllerError(400, 'invalid-type',
-                `User(${request.session.user.id}) attempted to upload an invalid file of type ${type}.`)
+                `User(${currentUser.id}) attempted to upload an invalid file of type ${type}.`)
         }
 
         /**********************************************************************
@@ -105,7 +99,7 @@ export class FileController {
          *      Upload the file.
          **********************************************************************/
 
-        const currentPath = request.file.path
+        const currentPath = rawFile.path
 
         const id = uuidv4()
         const filepath = `files/${id}.${mime.getExtension(type)}`
@@ -114,7 +108,7 @@ export class FileController {
 
         const file = {
             id: id,
-            userId: request.session.user.id,
+            userId: currentUser.id,
             type: type,
             location: this.core.config.s3.bucket_url,
             filepath: filepath
@@ -133,22 +127,15 @@ export class FileController {
         }
 
         this.fileService.removeLocalFile(currentPath)
-        response.status(200).json(files[0])
-        return
+        return files[0]
     }
 
     /**
      * DELETE /file/:id
      *
      * Delete a file, remove it from the database and from file storage.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {int} request.params.id   The database id of the file we wish to delete.
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {Promise}   Resolves to void.
      */
-    async deleteFile(request: Request, response: Response): Promise<void> {
+    async deleteFile(currentUser: User, id: string): Promise<{ fileId: string }> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -165,24 +152,24 @@ export class FileController {
          * ********************************************************************/
 
         // Permissions: 1. User must be logged in.
-        if ( ! request.session || ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(403, 'not-authorized', `Must have a logged in user to delete a file.`)
         }
 
         const files = await this.fileDAO.selectFiles({ 
             where: 'files.id = $1', 
-            params: [ request.params.id ]
+            params: [ id ]
         })
 
         // Validation: 1. File(:id) must exist.
-        if ( ! (request.params.id in files.dictionary)) {
-            throw new ControllerError(404, 'not-found', `File ${request.params.id} not found!`)
+        if ( ! (id in files.dictionary)) {
+            throw new ControllerError(404, 'not-found', `File ${id} not found!`)
         } 
 
         // Permissions: 2. User must be owner of File(:id)
-        if ( files[request.params.id].userId !== request.session.user.id ) {
+        if ( files[id].userId !== currentUser.id ) {
             // TODO Admin and moderator permissions.
-            throw new ControllerError(403, 'not-authorized', `User(${request.session.user.id}) attempting to delete file(${files[0].id}, which they don't own.`)
+            throw new ControllerError(403, 'not-authorized', `User(${currentUser.id}) attempting to delete file(${files[0].id}, which they don't own.`)
         }
 
         const results = await this.core.database.query(`
@@ -191,12 +178,12 @@ export class FileController {
             FROM papers
                 LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
             WHERE paper_versions.file_id = $1 AND papers.is_draft = false
-        `, [ request.params.id ])
+        `, [ id ])
 
         // 3. File must not be in use by a published paper.
         if ( results.rows.length > 0 ) {
             throw new ControllerError(403, 'not-authorized:published',
-                `User(${request.session.user.id}) attempting to delete File(${request.params.id}) that is attached to a published paper.`)
+                `User(${currentUser.id}) attempting to delete File(${id}) that is attached to a published paper.`)
         }
 
         // NOTE: We don't need to worry about files in use as profile images,
@@ -211,8 +198,8 @@ export class FileController {
         await this.fileService.removeFile(files[0].filepath)
 
         // Database constraints should handle any cascading here.
-        const fileId = request.params.id
+        const fileId = id
         await this.fileDAO.deleteFile(fileId)
-        response.status(200).json({ fileId: fileId })
+        return { fileId: fileId }
     }
 }

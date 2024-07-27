@@ -17,41 +17,55 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import express, { Request, Response, NextFunction } from 'express'
+import express, { RequestHandler } from 'express'
+import { Job } from 'bullmq'
+
 import { Core } from '@danielbingham/peerreview-core' 
-import { JobController } from '../controllers/JobController'
+import { JobsResult } from '@danielbingham/peerreview-model'
+
+import { JobController } from '../../controllers/foundation/JobController'
 
 export function initializeJobRoutes(core: Core, router: express.Router) {
     const jobController = new JobController(core)
 
-    router.get('/jobs', function(request: Request, response: Response, next: NextFunction) {
-        jobController.getJobs(request, response).catch(function(error: any) {
+    const getJobs: RequestHandler<{},JobsResult,{},{}> = function(
+        req, res, next
+    ) {
+        jobController.getJobs(req.session.user)
+        .then(function(result) {
+            res.status(200).json(result)
+        })
+        .catch(function(error) {
             next(error)
         })
-    })
+    }
+    router.get('/jobs', getJobs)
 
-    router.post('/jobs', function(request: Request, response: Response, next: NextFunction) {
-        jobController.postJob(request, response).catch(function(error: any) {
+    const postJobs: RequestHandler<{}, Job, { name: string, data: any }, {}> = function(
+        req,res,next
+    ) {
+        jobController.postJob(req.session.user, req.body.name, req.body.data)
+        .then(function(results) {
+            res.status(200).json(results)
+        })
+        .catch(function(error) {
             next(error)
         })
-    })
 
-    router.get('/job/:id', function(request: Request, response: Response, next: NextFunction) {
-        jobController.getJob(request, response).catch(function(error: any) {
-            next(error)
-        })
-    })
+    }
+    router.post('/jobs', postJobs)
 
-    router.patch('/job/:id', function(request: Request, response: Response, next: NextFunction) {
-        jobController.patchJob(request, response).catch(function(error: any) {
+    const getJob: RequestHandler<{id: string}, Job, {}, {}> = function(
+        req, res, next
+    ){ 
+        jobController.getJob(req.session.user, req.params.id)
+        .then(function(results) {
+            res.status(200).json(results)
+        })
+        .catch(function(error) {
             next(error)
         })
-    })
-
-    router.delete('/job/:id', function(request: Request, response: Response, next: NextFunction) {
-        jobController.deleteJob(request, response).catch(function(error: any) {
-            next(error)
-        })
-    })
+    }
+    router.get('/job/:id', getJob)
 
 }

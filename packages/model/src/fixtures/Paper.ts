@@ -1,11 +1,11 @@
-import { ResultType, DatabaseResult } from "../types/Query"
+import { ResultType, QueryResult} from "../types/Query"
 import { Paper } from "../types/Paper"
 import { File } from '../types/File'
 import { getFileFixture } from "./File"
 
 import { generateFixture } from './generateFixture'
 
-const files = getFileFixture(ResultType.Database) as DatabaseResult<File>
+const files = getFileFixture(ResultType.Query) as QueryResult<File>
 
 const papers: Paper[] = [ 
     // Fixture 1: Single Author, Single Version Paper

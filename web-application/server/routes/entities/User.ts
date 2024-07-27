@@ -17,11 +17,11 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import express, { RequestHandler, Request, Response, NextFunction } from 'express'
+import express, { RequestHandler } from 'express'
 import { Core } from '@danielbingham/peerreview-core' 
 import { User, PartialUser, UserQuery, UserAuthorization, QueryResult, EntityResult } from '@danielbingham/peerreview-model'
     
-import { UserController } from '../controllers/UserController'
+import { UserController } from '../../controllers/entities/UserController'
 
 interface UserParams { id: number }
 
@@ -36,7 +36,7 @@ export function initializeUserRoutes(core: Core, router: express.Router) {
      * Query for User models.
      *
      * ************************************************************************/
-    const getUsers: RequestHandler<unknown, QueryResult<User>, unknown, UserQuery> = function(req, res, next) {
+    const getUsers: RequestHandler<{}, QueryResult<User>, {}, UserQuery> = function(req, res, next) {
         userController.getUsers(req.query)
             .then(function(result: QueryResult<User>) {
                 res.status(200).json(result)
@@ -52,7 +52,7 @@ export function initializeUserRoutes(core: Core, router: express.Router) {
      * Create a new user.
      *
      * ************************************************************************/
-    const postUsers: RequestHandler<unknown, EntityResult<User>, PartialUser, unknown> = function(req, res, next) {
+    const postUsers: RequestHandler<{}, EntityResult<User>, PartialUser, {}> = function(req, res, next) {
         userController.postUsers(req.session?.user, req.body)
             .then(function(result: EntityResult<User>) {
                 res.status(201).json(result)
@@ -70,7 +70,7 @@ export function initializeUserRoutes(core: Core, router: express.Router) {
      * Get the User model identified by `:id`.
      *
      * ************************************************************************/
-    const getUser: RequestHandler<UserParams, EntityResult<User>, unknown, unknown> = function(req, res, next) {
+    const getUser: RequestHandler<UserParams, EntityResult<User>, {}, {}> = function(req, res, next) {
         userController.getUser(req.params.id)
             .then(function(result: EntityResult<User>) {
                 res.status(200).json(result)
@@ -93,7 +93,7 @@ export function initializeUserRoutes(core: Core, router: express.Router) {
         authorization: UserAuthorization
     }
 
-    const patchUser: RequestHandler< UserParams, EntityResult<User>, PatchUserBody, unknown> = function(req, res, next) {
+    const patchUser: RequestHandler< UserParams, EntityResult<User>, PatchUserBody, {}> = function(req, res, next) {
 
         userController.patchUser(
             req.session.user, 
@@ -119,10 +119,9 @@ export function initializeUserRoutes(core: Core, router: express.Router) {
      * Delete an existing user.
      *
      * ************************************************************************/
-    const userDelete: RequestHandler<UserParams, unknown, unknown, unknown> = function(req, res, next) {
+    const userDelete: RequestHandler<UserParams, {}, {}, {}> = function(req, res, next) {
         userController.deleteUser(req.params.id)
-        .then(function(result) {
-            res.send(200).json(result)
+        .then(function() {
         })
         .catch(function(error: any) {
             next(error)

@@ -1,5 +1,5 @@
 import { Model, ModelDictionary } from '../types/Model'
-import { ResultType, DatabaseResult, EntityResult, QueryResult, } from "../types/Query"
+import { ResultType, EntityResult, QueryResult, } from "../types/Query"
 export { ResultType } from '../types/Query'
 
 /**
@@ -20,7 +20,7 @@ export function generateFixture<Type extends Model>(
     fixtures: Type[], 
     resultType: ResultType, 
     filter?: (element: any, index: any, array: any[]) => boolean
-): DatabaseResult<Type> | EntityResult<Type> | QueryResult<Type> {
+): EntityResult<Type> | QueryResult<Type> {
 
     let fixtureList: Type[] = structuredClone(fixtures)
     if ( filter ) {
@@ -32,12 +32,7 @@ export function generateFixture<Type extends Model>(
         fixtureDictionary[feature.id] = feature
     }
 
-    if ( resultType == ResultType.Database) {
-        return {
-            dictionary: fixtureDictionary,
-            list: fixtureList.map((f) => f.id)
-        }
-    } else if ( resultType == ResultType.Entity) {
+    if ( resultType == ResultType.Entity) {
         return {
             entity: fixtureList[0],
             relations: {}

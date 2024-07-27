@@ -13,7 +13,7 @@ export { UserDAO } from './daos/UserDAO'
 
 export { FieldLibrary } from './libraries/FieldLibrary'
 
-export { AuthenticationService } from './services/AuthenticationService'
+export { AuthenticationService, Credentials } from './services/AuthenticationService'
 export { EmailService } from './services/EmailService'
 export { FileService } from './services/FileService'
 export { NotificationService, NotificationContext } from './services/notifications/NotificationService'

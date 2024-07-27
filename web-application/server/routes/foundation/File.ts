@@ -17,26 +17,41 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import express, { Request, Response, NextFunction } from 'express'
+import express, { RequestHandler } from 'express'
 import multer from 'multer'
-
 import { Core } from '@danielbingham/peerreview-core' 
-import { FileController } from '../controllers/FileController'
+import { File } from '@danielbingham/peerreview-model'
+import { FileController } from '../../controllers/foundation/FileController'
 
+// RequestHandler<Request Params, Response Body, Request Body, Request Query>
 export function initializeFileRoutes(core: Core, router: express.Router) {
     const fileController = new FileController(core)
     const upload = multer({ dest: 'public/uploads/tmp' })
 
     // Upload a version of the paper.
-    router.post('/upload', upload.single('file'), function(request: Request, response: Response, next: NextFunction) {
-        fileController.upload(request, response).catch(function(error: any) {
+    const postFile: RequestHandler<{}, File, {}, {}> = function(
+        req, res, next
+    ){
+        fileController.upload(req.session.user, req.file)
+        .then(function(results) {
+            res.status(200).json(results)
+        })
+        .catch(function(error) {
             next(error)
         })
-    })
+    }
+    router.post('/upload', upload.single('file'), postFile)
 
-    router.delete('/file/:id', function(request: Request, response: Response, next: NextFunction) {
-        fileController.deleteFile(request, response).catch(function(error: any) {
+    const deleteFile: RequestHandler<{ id: string}, { fileId: string }, {}, {}> = function(
+        req, res, next
+    ) {
+        fileController.deleteFile(req.session.user, req.params.id)
+        .then(function(results) {
+            res.status(200).json(results)
+        })
+        .catch(function(error) {
             next(error)
         })
-    })
+    }
+    router.delete('/file/:id', deleteFile)
 }
