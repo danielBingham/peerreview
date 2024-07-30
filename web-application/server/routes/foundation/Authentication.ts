@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import express, { RequestHandler, Request, Response } from 'express'
+import express, { RequestHandler } from 'express'
 import { Core } from '@danielbingham/peerreview-core' 
 import { User } from '@danielbingham/peerreview-model'
 import { Credentials } from '@danielbingham/peerreview-backend'
@@ -44,9 +44,7 @@ export function initializeAuthenticationRoutes(core: Core, router: express.Route
     const postAuthentication: RequestHandler<{}, User, Credentials, {}> = function(
         req, res, next
     ) {
-        authenticationController.postAuthentication(req.body, function(user: User) {
-            req.session.user = user
-        })
+        authenticationController.postAuthentication(req.body)
         .then(function(result) {
             res.status(200).json(result)
         })
@@ -70,17 +68,18 @@ export function initializeAuthenticationRoutes(core: Core, router: express.Route
     router.patch('/authentication', patchAuthentication)
 
 
-    router.delete('/authentication', function(request: Request, response: Response) {
-        request.session.destroy(function(error) {
-            if (error) {
-                console.error(error)
-                response.status(500).json({error: 'server-error'})
-            } else {
-                response.status(200).json(null)
-            }
+    const deleteAuthentication: RequestHandler<{}, {}, {}, {}> = function(
+        req, res, next
+    ) {
+        authenticationController.deleteAuthentication()
+        .then(function() {
+            res.status(200).send()
         })
-
-    })
+        .catch(function(error) {
+            next(error)
+        })
+    }
+    router.delete('/authentication', deleteAuthentication)
     
     router.post('/orcid/authentication', function(request, response, next) {
         authenticationController.postOrcidAuthentication(request, response).catch(function(error) {

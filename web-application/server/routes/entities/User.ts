@@ -99,10 +99,7 @@ export function initializeUserRoutes(core: Core, router: express.Router) {
             req.session.user, 
             req.params.id, 
             req.body.user, 
-            req.body.authorization,
-            function(user: User) {
-                req.session.user = user
-            }
+            req.body.authorization
         ).then(function(results: EntityResult<User>) {
             res.status(200).json(results)
         })

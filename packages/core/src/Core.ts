@@ -27,6 +27,7 @@ import { ServerClient } from 'postmark'
 
 import { Logger } from './Logger'
 import { FeatureFlags } from './FeatureFlags'
+import { Session } from './Session'
 
 
 /**
@@ -41,6 +42,7 @@ export interface CoreOverrides {
     postmarkClient?: ServerClient
     queue?: Queue
     features?: FeatureFlags
+    session?: Session
 }
 
 /***
@@ -56,9 +58,16 @@ export class Core {
     contextName: string
 
     /**
-     * An instance of backend.Logger that we'll use to write to the logs.
+     * An instance of Logger that we'll use to write to the logs.
      */
     logger: Logger
+
+    /**
+     * An instance of the Session handler allowing the session to be updated
+     * or destroyed.  It's methods will need to be replaced in middleware with
+     * closures that allow access to `request.session`.
+     */
+    session: Session
 
     /**
      * An instance of pg.Pool that we'll use to interact with the Postgres
@@ -121,6 +130,13 @@ export class Core {
         }
 
         this.logger.info(`Starting ${this.config.environment} ${this.contextName}...`)
+
+        this.logger.info(`Initializing session handler...`)
+        if ( overrides && overrides.session ) {
+            this.session = overrides.session
+        } else {
+            this.session = new Session()
+        }
 
         this.logger.info(`Connecting to postgres database at ${this.config.database.host}:${this.config.database.port} with ${this.config.database.user}.`)
         if ( overrides && overrides.database) {

@@ -100,6 +100,30 @@ app.use(session({
     } 
 }))
 
+// Initialize the session handler.
+app.use(function(request: Request, response: Response, next: NextFunction) {
+
+    // Allow the session to be updated.
+    core.session.update = function(session: any) {
+        request.session = session
+    }
+
+    // Allow the session to be destroyed.
+    core.session.destroy = function() {
+        const promise = new Promise<void>((resolve, reject) => {
+            request.session.destroy(function(error) {
+                if ( error ) {
+                    reject(error)
+                } else {
+                    resolve()
+                }
+            })
+        })
+        return promise
+    }
+    next()
+})
+
 // Set the id the logger will use to identify the session.  We don't want to
 // use the actual session id, since that value is considered sensitive.  So
 // instead we'll just use a uuid.

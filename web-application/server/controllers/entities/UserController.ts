@@ -362,8 +362,7 @@ export class UserController {
         currentUser: User, 
         id: number, 
         user: PartialUser, 
-        authorization: UserAuthorization,
-        updateSessionUser: (user: User) => void
+        authorization: UserAuthorization
     ): Promise<EntityResult<User>> {
         /*************************************************************
          * Permissions Checking and Input Validation
@@ -545,7 +544,7 @@ export class UserController {
         // If we get to this point, we know the user being updated is the same
         // as the user in the session.  No one else is allowed to update the
         // user.
-        updateSessionUser(results.dictionary[user.id])
+        this.core.session.update({ user: results.dictionary[user.id] })
 
         // If we've changed the email, then we need to send out a new
         // confirmation token.

@@ -18,7 +18,7 @@
  *
  ******************************************************************************/
 import { Core, ServiceError } from '@danielbingham/peerreview-core' 
-import { User } from '@danielbingham/peerreview-model'
+import { User, PartialUser, UserStatus } from '@danielbingham/peerreview-model'
 
 import { AuthenticationService, Credentials, UserDAO } from '@danielbingham/peerreview-backend'
 
@@ -73,8 +73,7 @@ export class AuthenticationController {
      * object in the session.
      */
     async postAuthentication(
-        credentials: Credentials, 
-        updateSession: (user: User) => void
+        credentials: Credentials
     ): Promise<User> {
         credentials.email = credentials.email.toLowerCase()
 
@@ -94,7 +93,7 @@ export class AuthenticationController {
                 throw new ControllerError(403, 'authentication-failed', 
                                           'Failed to get full record for authenticated user!')
             } 
-            updateSession(results.dictionary[userId])
+            this.core.session.update(results.dictionary[userId])
 
             return results.dictionary[userId]
         } catch (error ) {
@@ -172,18 +171,18 @@ export class AuthenticationController {
      * DELETE /authentication
      *
      * Destroy the session and logout the user.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {void} 
      */
-    deleteAuthentication(destroySession: (callback: (error: any) => void) => void) {
+    async deleteAuthentication(): Promise<void> {
         /**********************************************************************
          * This endpoint simply destroys the session, logging out the user.
          * Anyone may call it.
          **********************************************************************/
-
+        try { 
+            await this.core.session.destroy()   
+        } catch (error) {
+            throw new ControllerError(500, 'server-error',
+                `Failed to destroy the session.`)
+        }
     }
 
     /**
@@ -202,15 +201,8 @@ export class AuthenticationController {
      *   future.
      * - It can be called to login a user who previously registered with ORCID
      *   or connected their ORCID to their account.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {string} request.body.code    An ORCID authorization code
-     * obtained from the frontend ORCID authentication flow.
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {Promise}   Resolves to void.
      */
-    async postOrcidAuthentication(request, response) {
+    async postOrcidAuthentication(currentUser: User, body: any): Promise<{ user: User, type: string }> {
 
         /*************************************************************
          * Permissions Checking and Input Validation
@@ -223,7 +215,7 @@ export class AuthenticationController {
          * **********************************************************/
 
         // 1. The request body contains an ORCID authorization code.
-        if ( ! request.body.code ) {
+        if ( ! body.code ) {
             throw new ControllerError(400, 'no-authorization-code', `User attempted orcid authentication with no authorization code!`)
         }
 
@@ -231,8 +223,8 @@ export class AuthenticationController {
             client_id:  this.core.config.orcid.client_id,
             client_secret: this.core.config.orcid.client_secret,
             grant_type:  'authorization_code',
-            code:  request.body.code,
-            redirect_uri: request.body.connect ? this.core.config.orcid.connect_redirect_uri : this.core.config.orcid.authentication_redirect_uri
+            code:  body.code,
+            redirect_uri: body.connect ? this.core.config.orcid.connect_redirect_uri : this.core.config.orcid.authentication_redirect_uri
         })
         const data = authorizationRequestParams.toString()
 
@@ -265,12 +257,12 @@ export class AuthenticationController {
         //
         //  If we have orcidResults, then that means this ORCID iD is already
         //  linked to an account - either this one or another one. 
-        if ( request.session.user &&  orcidResults.rows.length <= 0 ) {
-            const responseBody = await this.auth.connectOrcid(request, orcidId)
-            return response.status(200).json(responseBody)
-        } else if ( request.session.user ) {
+        if ( currentUser &&  orcidResults.rows.length <= 0 ) {
+            const responseBody = await this.auth.connectOrcid(currentUser.id, orcidId)
+            return responseBody
+        } else if ( currentUser ) {
             throw new ControllerError(400, 'already-linked',
-                `User(${request.session.user.id}) attempting to link ORCID iD (${orcidId}) already connected to User(${orcidResults.rows[0].id}).`)
+                `User(${currentUser.id}) attempting to link ORCID iD (${orcidId}) already connected to User(${orcidResults.rows[0].id}).`)
         }
 
 
@@ -278,9 +270,11 @@ export class AuthenticationController {
         // - Find the user by their orcid id.
         // -- Just log them in.
         if ( orcidResults.rows.length == 1 ) {
-            const responseBody = await this.auth.loginUser(orcidResults.rows[0].id, request)
-            responseBody.type = "login"
-            return response.status(200).json(responseBody)    
+            const fullUser = await this.auth.loginUser(orcidResults.rows[0].id)
+            return {
+                type: "login",
+                user: fullUser
+            }
         } else if ( orcidResults.rows.length > 1 ) {
             throw new ControllerError(500, 'server-error', `Multiple users(${ orcidResults.rows.map((r) => r.id).join(',') }) with the same Orcid.  How did that happen?!`)
         }
@@ -339,10 +333,10 @@ export class AuthenticationController {
         // - None of the emails.
         // -- Register them and then log them in.
         if ( userResults.rows.length <= 0) {
-            const user = {
+            const user: PartialUser = {
                 name: orcidRecord.person.name["given-names"].value + ' ' + orcidRecord.person.name["family-name"].value,
                 email: primary_email,
-                status: 'confirmed',
+                status: UserStatus.Confirmed,
                 orcidId: orcidId,
                 institution: '',
                 password: null,
@@ -352,11 +346,11 @@ export class AuthenticationController {
             user.id = await this.userDAO.insertUser(user)
             await this.userDAO.updatePartialUser(user)
 
-            await this.settingsDAO.initializeSettingsForUser(user)
-
-            const responseBody = await this.auth.loginUser(user.id, request)
-            responseBody.type = "registration"
-            return response.status(200).json(responseBody)
+            const fullUser = await this.auth.loginUser(user.id)
+            return {
+                user: fullUser,
+                type: "registration"
+            }
         }
 
         // We have the user registered with one of the emails
@@ -366,22 +360,27 @@ export class AuthenticationController {
         if ( userResults.rows.length == 1) {
             const id = userResults.rows[0].id
 
-            const user = {
+            const user: PartialUser = {
                 id: id,
                 orcidId: orcidId,
-                status: 'confirmed'
+                status: UserStatus.Confirmed 
             }
             await this.userDAO.updatePartialUser(user)
 
-            const responseBody = await this.auth.loginUser(id, request)
-            responseBody.type = "connection"
-            return response.status(200).json(responseBody)
+            const fullUser = await this.auth.loginUser(id)
+            return {
+                user: fullUser,
+                type: "connection"
+            }
         }
 
         // The user has registered multiple accounts with different emails
         // - We get multiple users, merge them.
         if ( userResults.rows.length > 1 ) {
             throw new ControllerError(501, 'multiple-user-merging-unimplemented', `Found multiple user accounts, but we haven't implemented merging yet!`)
+        } else {
+            throw new ControllerError(500, 'unhandled-case',
+                `Unhandled case in ORCID registration flow.`)
         }
     
     }

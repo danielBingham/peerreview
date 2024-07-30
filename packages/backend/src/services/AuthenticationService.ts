@@ -72,6 +72,8 @@ export class AuthenticationService {
             throw new ServiceError('no-user', 'Failed to get full record for authenticated user!')
         } 
 
+        this.core.session.update({ user: results.dictionary[id] })
+
         return results.dictionary[id]
     }
 
