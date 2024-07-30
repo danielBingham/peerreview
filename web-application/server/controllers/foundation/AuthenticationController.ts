@@ -84,18 +84,7 @@ export class AuthenticationController {
          ************************************************************/
         try {
             const userId = await this.auth.authenticateUser(credentials)
-
-            const results = await this.userDAO.selectUsers({ 
-                where: 'users.id=$1', 
-                params: [userId] 
-            })
-            if ( results.list.length <= 0) {
-                throw new ControllerError(403, 'authentication-failed', 
-                                          'Failed to get full record for authenticated user!')
-            } 
-            this.core.session.update(results.dictionary[userId])
-
-            return results.dictionary[userId]
+            return await this.auth.loginUser(userId)
         } catch (error ) {
             if ( error instanceof ServiceError ) {
                 if ( error.type == 'no-user' ) {
