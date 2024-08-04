@@ -17,11 +17,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-
-import { ResultType } from "../types/Query"
 import { Notification, NotificationType } from '../types/Notification'
 
-import { generateFixture } from './generateFixture'
+import { generateFixture, generateEntityFixture, generateQueryFixture } from './generateFixture'
 
 const notifications: Notification[] = [
     {
@@ -48,4 +46,10 @@ const notifications: Notification[] = [
 
 export function getNotificationFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
     return generateFixture<Notification>(notifications, filter)
+}
+export function getNotificationEntityFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
+    return generateEntityFixture<Notification>(notifications, filter)
+}
+export function getNotificationQueryFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
+    return generateQueryFixture<Notification>(notifications, filter)
 }

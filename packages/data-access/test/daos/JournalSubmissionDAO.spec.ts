@@ -22,9 +22,10 @@ import { beforeEach, describe, expect, it } from '@jest/globals'
 import { QueryResult } from 'pg'
 
 import { JournalSubmissionDAO } from '../../src/daos/JournalSubmissionDAO'
-import { DAOResult } from '../../src/types/DAO'
 
 import { getJournalSubmissionsTableJoinFixture } from '../../src/fixtures/database/JournalSubmissionsTable'
+import { getDAOResultFixture } from '../../src/fixtures/getDAOResultFixture'
+
 import { JournalSubmission, getJournalSubmissionFixture, ResultType } from '@journalhub/model'
 import { FeatureStatus } from '@journalhub/features'
 
@@ -48,7 +49,7 @@ describe('JournalSubmissionDAO', function() {
             const tableFixture = getJournalSubmissionsTableJoinFixture()
             const hydratedResult = journalSubmissionDAO.hydrateJournalSubmission(tableFixture.rows[0])
 
-            const fixture = getJournalSubmissionFixture(ResultType.Database) as DAOResult<JournalSubmission>
+            const fixture = getDAOResultFixture<JournalSubmission>(getJournalSubmissionFixture())
             fixture.dictionary[1].reviewers = []
             fixture.dictionary[1].editors = []
 
@@ -63,7 +64,7 @@ describe('JournalSubmissionDAO', function() {
             const tableFixture = getJournalSubmissionsTableJoinFixture()
             const hydratedResults = journalSubmissionDAO.hydrateJournalSubmissions(tableFixture.rows)
 
-            const fixture = getJournalSubmissionFixture(ResultType.Database) as DAOResult<JournalSubmission>
+            const fixture = getDAOResultFixture<JournalSubmission>(getJournalSubmissionFixture())
             expect(hydratedResults).toEqual(fixture)
         })
     })
@@ -79,7 +80,7 @@ describe('JournalSubmissionDAO', function() {
 
             const results = await journalSubmissionDAO.selectJournalSubmissions()
 
-            const fixture = getJournalSubmissionFixture(ResultType.Database) as DAOResult<JournalSubmission>
+            const fixture = getDAOResultFixture<JournalSubmission>(getJournalSubmissionFixture())
             expect(results).toEqual(fixture)
         })
     })

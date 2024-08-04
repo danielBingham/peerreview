@@ -2,10 +2,11 @@ import { beforeEach, describe, expect, it } from '@jest/globals'
 import { QueryResult } from 'pg'
 
 import { PaperDAO }  from '../../src/daos/PaperDAO'
-import { DAOResult } from '../../src/types/DAO'
 
 import { getPapersTableJoinFixture } from '../../src/fixtures/database/PapersTable'
-import { Paper, getPaperFixture, ResultType } from '@journalhub/model'
+import { getDAOResultFixture } from '../../src/fixtures/getDAOResultFixture'
+
+import { Paper, getPaperFixture } from '@journalhub/model'
 
 import { mockCore } from '@journalhub/core'
 
@@ -22,7 +23,7 @@ describe('PaperDAO', function() {
             const tableFixture = getPapersTableJoinFixture()
             const hydratedResults = paperDAO.hydratePapers(tableFixture.rows)
 
-            const fixture = getPaperFixture(ResultType.Database) as DAOResult<Paper>
+            const fixture = getDAOResultFixture<Paper>(getPaperFixture())
             expect(hydratedResults).toEqual(fixture)
         })
     })
@@ -37,7 +38,7 @@ describe('PaperDAO', function() {
             const paperDAO = new PaperDAO(mockCore)
             const results = await paperDAO.selectPapers()
 
-            const fixture = getPaperFixture(ResultType.Database) as DAOResult<Paper>
+            const fixture = getDAOResultFixture<Paper>(getPaperFixture())
             expect(results).toEqual(fixture)
         })
     })

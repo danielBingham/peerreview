@@ -2,10 +2,10 @@ import { beforeEach, describe, expect, it } from '@jest/globals'
 import { QueryResult } from 'pg'
 
 import { FileDAO } from '../../src/daos/FileDAO'
-import { DAOResult } from '../../src/types/DAO'
+import { getDAOResultFixture } from '../../src/fixtures/getDAOResultFixture'
 
 import { getFilesTableFixture } from '../../src/fixtures/database/FilesTable'
-import { File, getFileFixture, ResultType } from '@journalhub/model'
+import { File, getFileFixture } from '@journalhub/model'
 
 import { mockCore } from '@journalhub/core'
 
@@ -20,11 +20,10 @@ describe('FilesDAO', function() {
         it('should properly hydrate a single File based on a single QueryResultRow', async function() {
             const fileDAO = new FileDAO(mockCore)
 
-
             const tableFixture = getFilesTableFixture()
             const hydratedResult = fileDAO.hydrateFile(tableFixture.rows[0])
 
-            const fixture = getFileFixture(ResultType.Database) as DAOResult<File>
+            const fixture = getDAOResultFixture<File>(getFileFixture())
             expect(hydratedResult).toEqual(fixture.dictionary[1])
         })
     })
@@ -36,7 +35,7 @@ describe('FilesDAO', function() {
             const tableFixture = getFilesTableFixture()
             const hydratedResults = fileDAO.hydrateFiles(tableFixture.rows)
 
-            const fixture = getFileFixture(ResultType.Database) as DAOResult<File>
+            const fixture = getDAOResultFixture<File>(getFileFixture())
             expect(hydratedResults).toEqual(fixture)
         })
     })
@@ -52,7 +51,7 @@ describe('FilesDAO', function() {
 
             const results = await fileDAO.selectFiles()
 
-            const fixture = getFileFixture(ResultType.Database) as DAOResult<File>
+            const fixture = getDAOResultFixture<File>(getFileFixture())
             expect(results).toEqual(fixture)
         })
     })

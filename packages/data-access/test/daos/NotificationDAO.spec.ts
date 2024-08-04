@@ -22,9 +22,10 @@ import { beforeEach, describe, expect, it } from '@jest/globals'
 import { QueryResult } from 'pg'
 
 import { NotificationDAO } from '../../src/daos/NotificationDAO'
-import { DAOResult } from '../../src/types/DAO'
 
 import { getUserNotificationsTableFixture } from '../../src/fixtures/database/UserNotificationsTable'
+import { getDAOResultFixture } from '../../src/fixtures/getDAOResultFixture'
+
 import { Notification, getNotificationFixture, ResultType } from '@journalhub/model'
 
 import { mockCore } from '@journalhub/core'
@@ -43,7 +44,7 @@ describe('NotificationDAO', function() {
             const tableFixture = getUserNotificationsTableFixture()
             const hydratedResult = journalSubmissionDAO.hydrateNotification(tableFixture.rows[0])
 
-            const fixture = getNotificationFixture(ResultType.Database) as DAOResult<Notification>
+            const fixture = getDAOResultFixture<Notification>(getNotificationFixture())
 
             expect(hydratedResult).toEqual(fixture.dictionary[1])
         })
@@ -56,7 +57,7 @@ describe('NotificationDAO', function() {
             const tableFixture = getUserNotificationsTableFixture()
             const hydratedResults = journalSubmissionDAO.hydrateNotifications(tableFixture.rows)
 
-            const fixture = getNotificationFixture(ResultType.Database) as DAOResult<Notification>
+            const fixture = getDAOResultFixture<Notification>(getNotificationFixture())
             expect(hydratedResults).toEqual(fixture)
         })
     })
@@ -72,7 +73,7 @@ describe('NotificationDAO', function() {
 
             const results = await journalSubmissionDAO.selectNotifications()
 
-            const fixture = getNotificationFixture(ResultType.Database) as DAOResult<Notification>
+            const fixture = getDAOResultFixture<Notification>(getNotificationFixture())
             expect(results).toEqual(fixture)
         })
     })

@@ -22,10 +22,11 @@ import { beforeEach, describe, expect, it } from '@jest/globals'
 import { QueryResult } from 'pg'
 
 import { JournalDAO } from '../../src/daos/JournalDAO'
-import { DAOResult } from '../../src/types/DAO'
 
 import { getJournalsTableJoinFixture } from '../../src/fixtures/database/JournalsTable'
-import { Journal, getJournalFixture, ResultType } from '@journalhub/model'
+import { getDAOResultFixture } from '../../src/fixtures/getDAOResultFixture'
+
+import { Journal, getJournalFixture } from '@journalhub/model'
 import { FeatureStatus } from '@journalhub/features'
 
 import { mockCore } from '@journalhub/core'
@@ -48,7 +49,7 @@ describe('JournalDAO', function() {
             const tableFixture = getJournalsTableJoinFixture()
             const hydratedResult = journalDAO.hydrateJournal(tableFixture.rows[0])
 
-            const fixture = getJournalFixture(ResultType.Database) as DAOResult<Journal>
+            const fixture = getDAOResultFixture<Journal>(getJournalFixture())
             fixture.dictionary[1].members = []
 
             expect(hydratedResult).toEqual(fixture.dictionary[1])
@@ -62,7 +63,7 @@ describe('JournalDAO', function() {
             const tableFixture = getJournalsTableJoinFixture()
             const hydratedResults = journalDAO.hydrateJournals(tableFixture.rows)
 
-            const fixture = getJournalFixture(ResultType.Database) as DAOResult<Journal>
+            const fixture = getDAOResultFixture<Journal>(getJournalFixture())
             expect(hydratedResults).toEqual(fixture)
         })
     })
@@ -78,7 +79,7 @@ describe('JournalDAO', function() {
 
             const results = await fileDAO.selectJournals()
 
-            const fixture = getJournalFixture(ResultType.Database) as DAOResult<Journal>
+            const fixture = getDAOResultFixture<Journal>(getJournalFixture())
             expect(results).toEqual(fixture)
         })
     })

@@ -17,11 +17,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-
-import { ResultType } from "../types/Query"
 import { Journal, JournalModel, JournalMemberPermissions } from "../types/Journal"
 
-import { generateFixture } from './generateFixture'
+import { generateFixture, generateEntityFixture, generateQueryFixture } from './generateFixture'
 
 const journals: Journal[] = [
    // Fixture 1: Journal of Traditional Publishing
@@ -137,3 +135,12 @@ const journals: Journal[] = [
 export function getJournalFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
     return generateFixture<Journal>(journals, filter)
 }
+
+export function getJournalEntityFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
+   return generateEntityFixture<Journal>(journals, filter)
+}
+
+export function getJournalQueryFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
+   return generateQueryFixture<Journal>(journals, filter)
+}
+
