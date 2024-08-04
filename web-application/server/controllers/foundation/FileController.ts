@@ -22,7 +22,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { Core } from '@danielbingham/peerreview-core' 
 import { User, File } from '@danielbingham/peerreview-model'
-import { S3FileService, FileDAO } from '@danielbingham/peerreview-backend'
+import { DataAccess, S3FileService, FileDAO } from '@danielbingham/peerreview-backend'
 
 import { ControllerError } from '../../errors/ControllerError'
 
@@ -37,15 +37,17 @@ import { ControllerError } from '../../errors/ControllerError'
 * **/
 export class FileController {
     core: Core
+    dao: DataAccess
 
     fileService: S3FileService
     fileDAO: FileDAO
 
-    constructor(core: Core) {
+    constructor(core: Core, dao: DataAccess) {
         this.core = core
+        this.dao = dao
 
         this.fileService = new S3FileService(core)
-        this.fileDAO = new FileDAO(core)
+        this.dao.file = new FileDAO(core)
     }
 
     /**
@@ -114,9 +116,9 @@ export class FileController {
             filepath: filepath
         }
 
-        await this.fileDAO.insertFile(file)
+        await this.dao.file.insertFile(file)
 
-        const files = await this.fileDAO.selectFiles({ 
+        const files = await this.dao.file.selectFiles({ 
             where: 'files.id = $1', 
             params: [ id ]
         })
@@ -156,7 +158,7 @@ export class FileController {
             throw new ControllerError(403, 'not-authorized', `Must have a logged in user to delete a file.`)
         }
 
-        const files = await this.fileDAO.selectFiles({ 
+        const files = await this.dao.file.selectFiles({ 
             where: 'files.id = $1', 
             params: [ id ]
         })
@@ -199,7 +201,7 @@ export class FileController {
 
         // Database constraints should handle any cascading here.
         const fileId = id
-        await this.fileDAO.deleteFile(fileId)
+        await this.dao.file.deleteFile(fileId)
         return { fileId: fileId }
     }
 }

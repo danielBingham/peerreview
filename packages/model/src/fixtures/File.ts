@@ -70,6 +70,6 @@ const files: File[] = [
     }
 ]
 
-export function getFileFixture(resultType: ResultType, filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateFixture(files, resultType, filter)
+export function getFileFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
+    return generateFixture(files, filter)
 }

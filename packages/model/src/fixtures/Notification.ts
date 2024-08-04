@@ -46,6 +46,6 @@ const notifications: Notification[] = [
     }
 ]
 
-export function getNotificationFixture(resultType: ResultType, filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateFixture<Notification>(notifications, resultType, filter)
+export function getNotificationFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
+    return generateFixture<Notification>(notifications, filter)
 }

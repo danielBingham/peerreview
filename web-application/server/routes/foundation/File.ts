@@ -21,11 +21,12 @@ import express, { RequestHandler } from 'express'
 import multer from 'multer'
 import { Core } from '@danielbingham/peerreview-core' 
 import { File } from '@danielbingham/peerreview-model'
+import { DataAccess } from '@danielbingham/peerreview-backend'
 import { FileController } from '../../controllers/foundation/FileController'
 
 // RequestHandler<Request Params, Response Body, Request Body, Request Query>
-export function initializeFileRoutes(core: Core, router: express.Router) {
-    const fileController = new FileController(core)
+export function initializeFileRoutes(core: Core, dao: DataAccess, router: express.Router) {
+    const fileController = new FileController(core, dao)
     const upload = multer({ dest: 'public/uploads/tmp' })
 
     // Upload a version of the paper.

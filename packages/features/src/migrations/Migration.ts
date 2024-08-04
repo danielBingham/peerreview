@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core } from '@danielbingham/peerreview-core'
+import { Core } from '@journalhub/core'
 import MigrationError from '../errors/MigrationError'
 
 export default class Migration {

@@ -9,7 +9,7 @@ import { Logger } from '../Logger'
 
 jest.mock('pg')
 jest.mock('postmark')
-jest.mock('bull')
+jest.mock('bullmq')
 jest.mock('../../src/Logger')
 
 const dummyConfig = {

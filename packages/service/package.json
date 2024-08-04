@@ -1,0 +1,43 @@
+{
+  "name": "@journalhub/service",
+  "version": "0.3.10",
+  "description": "The service layer of JournalHub.",
+  "author": "Daniel Bingham",
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/danielbingham/peerreview#README",
+  "bugs": {
+    "url": "https://github.com/danielbingham/peerreview/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielbingham/peerreview.git",
+    "directory": "packages/service"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "main": "dist/index.js",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "jest": "jest",
+    "test": "jest test"
+  },
+  "dependencies": {
+    "@babel/runtime": "^7.20.13",
+    "@journalhub/core": "^0.3.10",
+    "@journalhub/model": "^0.3.10",
+    "@types/mime": "^3.0.4",
+    "mime": "^3.0.0",
+    "pdfjs-dist": "^3.3.122",
+    "pg": "^8.11.1",
+    "sanitize-filename": "^1.6.3"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/pg": "^8.11.2",
+    "jest": "^29.4.3",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.2"
+  }
+}

@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 import { Feature, FeatureStatus, FeatureDictionary } from '../types/Feature'
-import { Core, ServiceError } from '@danielbingham/peerreview-core'
+import { Core, ServiceError } from '@journalhub/core'
 
 import { FeatureDAO } from '../daos/FeatureDAO'
 

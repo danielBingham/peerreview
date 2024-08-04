@@ -84,6 +84,6 @@ const journalSubmissions: JournalSubmission[] = [
     }
 ]
 
-export function getJournalSubmissionFixture(resultType: ResultType, filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateFixture<JournalSubmission>(journalSubmissions, resultType, filter)
+export function getJournalSubmissionFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
+    return generateFixture<JournalSubmission>(journalSubmissions, filter)
 }

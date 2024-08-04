@@ -52,3 +52,17 @@ export interface Field extends Model{
     /** A timestamp marking when this field was most recently updated. **/
     updatedDate: string
 }
+
+export interface FieldQuery {
+    id?: number | number[]
+    name?: string | string[]
+    type?: string | string[]
+    depth?: number | number[]
+
+    child?: number | number[]
+    parent?: number | number[]
+
+    itemsPerPage?: number
+    page?: number
+    relations?: string[]
+}

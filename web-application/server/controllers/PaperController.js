@@ -623,7 +623,13 @@ module.exports = class PaperController {
         paper.id = await this.paperDAO.insertPaper(paper) 
         await this.paperDAO.insertAuthors(paper) 
         await this.paperDAO.insertFields(paper)
-        await this.paperDAO.insertVersions(paper)
+        for(const version of paper.versions ) {
+            version.content = await this.pdfService.getContent(version.file.id)
+
+            await this.insertVersion(paper, version)
+            
+            await this.paperVersionService.savePaperVersionFile(paper, version)
+        }
         
         const results = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
         const entity = results.dictionary[paper.id]
@@ -970,8 +976,11 @@ module.exports = class PaperController {
          * Permissions Checks and Validation Complete
          *      POST the new version.
          ********************************************************/
+        version.content = await this.pdfService.getContent(version.file.id)
 
         await this.paperDAO.insertVersion(existing, version)
+
+        await this.paperVersionService.savePaperVersionFile(paper, version)
 
         const results = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
         const entity = results.dictionary[paperId]

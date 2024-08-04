@@ -7,20 +7,11 @@ export { ResultType } from '../types/Query'
  * appropriate result set based on the passed result type and an optional
  * filter function which is passed directly to `Array.prototype.filter` run
  * against the fixture array.
- *
- * @param {Type[]} fixtures     An array of fixtures that extend `Model`.
- * @param {ResultType} resultType   The type of result set we want returned (DatabaseResult, EntityResult, or QueryResult). 
- * @param {Function} filter     (Optional) An optional filter function passed to `fixtures.filter()`.
- *
- * @return {DatabaseResult<type> | EntityResult<Type> | QueryResult<Type>}  The
- * requested result type populated with the fixtures selected by the filter
- * function, or all the fixtures if no filter function is provided.
  */
 export function generateFixture<Type extends Model>(
-    fixtures: Type[], 
-    resultType: ResultType, 
+    fixtures: Type[],
     filter?: (element: any, index: any, array: any[]) => boolean
-): EntityResult<Type> | QueryResult<Type> {
+): { dictionary: ModelDictionary<Type>, list: Type[] } {
 
     let fixtureList: Type[] = structuredClone(fixtures)
     if ( filter ) {
@@ -28,28 +19,41 @@ export function generateFixture<Type extends Model>(
     }
 
     const fixtureDictionary: ModelDictionary<Type> = {}
-    for(const feature of fixtureList) {
-        fixtureDictionary[feature.id] = feature
+    for(const fixture of fixtureList) {
+        fixtureDictionary[fixture.id] = fixture 
     }
 
-    if ( resultType == ResultType.Entity) {
-        return {
-            entity: fixtureList[0],
-            relations: {}
-        }
-    } else if ( resultType == ResultType.Query) {
-        return {
-            dictionary: fixtureDictionary,
-            list: fixtureList.map((f) => f.id),
-            meta: {
-                count: fixtureList.length,
-                page: 1,
-                pageSize: 20,
-                numberOfPages: Math.floor(fixtureList.length / 20) + (fixtureList.length % 20 ? 1 : 0)
-            },
-            relations: {}
-        }
-    } else {
-        throw new TypeError(`${resultType} is not a valid result type.`)
+    return {
+        dictionary: fixtureDictionary,
+        list: fixtureList
+    }
+}
+
+export function generateEntityFixture<Type extends Model>(
+    fixtures: Type[],
+    filter?: (element: any, index: any, array: any[]) => boolean
+): EntityResult<Type> {
+    const { dictionary, list } = generateFixture<Type>(fixtures, filter)
+    return {
+        entity: list[0],
+        relations: {}
+    }
+}
+
+export function generateQueryFixture<Type extends Model>(
+    fixtures: Type[],
+    filter?: (element: any, index: any, array: any[]) => boolean
+): QueryResult<Type> {
+    const { dictionary, list } = generateFixture<Type>(fixtures, filter)
+    return {
+        dictionary: dictionary,
+        list: list.map((f) => f.id),
+        meta: {
+            count: list.length,
+            page: 1,
+            pageSize: 20,
+            numberOfPages: Math.floor(list.length / 20) + (list.length % 20 ? 1 : 0)
+        },
+        relations: {}
     }
 }

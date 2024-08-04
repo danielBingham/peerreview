@@ -40,7 +40,7 @@ import Uuid from 'uuid'
 import { Core } from '@danielbingham/peerreview-core'
 import { FeatureService } from '@danielbingham/peerreview-features'
 import { User } from '@danielbingham/peerreview-model'
-import { ServerSideRenderingService, PageMetadataService } from '@danielbingham/peerreview-backend'
+import { DataAccess, ServerSideRenderingService, PageMetadataService } from '@danielbingham/peerreview-backend'
 
 import { initializeAPIRouter } from './router'
 import { ControllerError } from './errors/ControllerError'
@@ -153,8 +153,15 @@ app.use(function(request: Request, response: Response, next: NextFunction) {
     })
 })
 
+// A wrapper object around all of our data access objects using core, which
+// uses the primary Pool for connection to the database.  If a controller needs
+// its own Client separate from the Pool on Core (for a transaction for
+// example), it can instantiate its own instance of the DAO it needs with the
+// Client overriding the Core.
+const dao = new DataAccess(core)
+
 // Get the api router, pre-wired up to the controllers.
-const router = initializeAPIRouter(core) 
+const router = initializeAPIRouter(core, dao) 
 
 // Load our router at the ``/api/v0/`` route.  This allows us to version our api. If,
 // in the future, we want to release an updated version of the api, we can load it at

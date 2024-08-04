@@ -30,95 +30,38 @@
 import express from 'express'
 
 import { Core } from '@danielbingham/peerreview-core' 
+import { DataAccess } from '@danielbingham/peerreview-backend'
+
 import { ControllerError } from './errors/ControllerError'
 
+import { initializeAuthenticationRoutes } from './routes/foundation/Authentication'
 import { initializeFeatureRoutes } from './routes/foundation/Feature'
 import { initializeJobRoutes } from './routes/foundation/Job'
 import { initializeFileRoutes } from './routes/foundation/File'
+import { initializeTokenRoutes } from './routes/foundation/Token'
 
 import { initializeUserRoutes } from './routes/entities/User'
 import { initializeNotificationRoutes } from './routes/entities/Notification'
+import { initializeFieldRoutes } from './routes/entities/Field'
 
-export function initializeAPIRouter(core: Core) {
+export function initializeAPIRouter(core: Core, dao: DataAccess) {
     const router = express.Router()
 
+    initializeAuthenticationRoutes(core, dao, router)
     initializeFeatureRoutes(core, router)
     initializeJobRoutes(core, router)
-    initializeFileRoutes(core, router)
+    initializeFileRoutes(core, dao, router)
+    initializeTokenRoutes(core, dao, router)
 
-    initializeUserRoutes(core, router)
-    initializeNotificationRoutes(core, router)
-
-    /******************************************************************************
-     *          Authentication REST Routes
-     ******************************************************************************/
-    /**************************************************************************
-     *      Token Handling REST Routes
-     * ************************************************************************/
-    const TokenController = require('./controllers/TokenController')
-    const tokenController = new TokenController(core)
-
-    router.get('/token/:token', function(request, response, next) {
-        tokenController.getToken(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.post('/tokens', function(request, response, next) {
-        tokenController.postToken(request, response).catch(function(error) {
-            next(error)
-        })
-    })
+    initializeUserRoutes(core, dao, router)
+    initializeNotificationRoutes(core, dao, router)
+    initializeFieldRoutes(core, dao, router)
 
 
     /******************************************************************************
      *          Field REST Routes
      ******************************************************************************/
 
-    const FieldController = require('./controllers/FieldController')
-    const fieldController = new FieldController(core)
-
-    // Get a list of all fields.
-    router.get('/fields', function(request, response, next) {
-        fieldController.getFields(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Create a new field 
-    router.post('/fields', function(request, response, next) {
-        fieldController.postFields(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Get the details of a single field 
-    router.get('/field/:id', function(request, response, next) {
-        fieldController.getField(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Replace a field wholesale.
-    router.put('/field/:id', function(request, response, next) {
-        fieldController.putField(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Edit an existing field with partial data.
-    router.patch('/field/:id', function(request, response, next) {
-        fieldController.patchField(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Delete an existing field.
-    router.delete('/field/:id', function(request, response, next) {
-        fieldController.deleteField(request, response).catch(function(error) {
-            next(error)
-        })
-    })
 
     /******************************************************************************
      *          Paper REST Routes
@@ -334,58 +277,6 @@ export function initializeAPIRouter(core: Core) {
         reviewController.deleteComment(request, response).catch(function(error) {
             next(error)
         })
-    })
-
-    /**************************************************************************
-     *      Paper Response REST Routes
-     *************************************************************************/
-
-    const ResponseController = require('./controllers/ResponseController')
-    const responseController = new ResponseController(core)
-
-    router.get('/responses/count', function(request, response, next) {
-        responseController.countResponses(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/paper/:paper_id/responses', function(request, response, next) {
-        responseController.getResponses(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.post('/paper/:paper_id/responses', function(request, response, next) {
-        responseController.postResponses(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/paper/:paper_id/response/:id', function(request, response, next) {
-        responseController.getResponse(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.put('/paper/:paper_id/response/:id', function(request, response, next) {
-        throw new ControllerError(501, 'not-implemented', `PUT Response is not implemented.`)
-        /*responseController.putResponse(request, response).catch(function(error) {
-            next(error)
-        })*/
-    })
-
-    router.patch('/paper/:paper_id/response/:id', function(request, response, next) {
-        throw new ControllerError(501, 'not-implemented', `PATCH Response is not implemented.`)
-        /*responseController.patchResponse(request, response).catch(function(error) {
-            next(error)
-        })*/
-    })
-
-    router.delete('/paper/:paper_id/response/:id', function(request, response, next) {
-        throw new ControllerError(501, 'not-implemented', `DELETE Response is not implemented.`)
-        /*responseController.deleteResponse(request, response).catch(function(error) {
-            next(error)
-        })*/
     })
 
     /**************************************************************************

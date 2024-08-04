@@ -20,7 +20,7 @@
 
 import { QueryResultRow } from 'pg'
 
-import { Core, DAOError } from '@danielbingham/peerreview-core'
+import { Core, DAOError } from '@journalhub/core'
 import { Feature, FeatureStatus, PartialFeature, FeatureDictionary } from '../types/Feature'
 
 

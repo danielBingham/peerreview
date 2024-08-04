@@ -1,5 +1,8 @@
-import { generateFixture, ResultType } from './generateFixture'
-import { Field, } from "../types/Field"
+import { ModelDictionary } from '../types/Model'
+import { EntityResult, QueryResult } from '../types/Query'
+
+import { generateFixture, generateEntityFixture, generateQueryFixture } from './generateFixture'
+import { Field } from "../types/Field"
 
 export const fields: Field[] = [ 
     // Fixture 1 - top level field 
@@ -28,6 +31,14 @@ export const fields: Field[] = [
     },
 ]
 
-export function getFieldFixture(resultType: ResultType, filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateFixture(fields, resultType, filter)
+export function getFieldFixture(filter?: (element: any, index: any, array: any[]) => boolean): { dictionary: ModelDictionary<Field>, list: Field[] } {
+    return generateFixture<Field>(fields, filter)
+}
+
+export function getFieldEntityFixture(filter?: (element: any, index: any, array: any[]) => boolean): EntityResult<Field> {
+    return generateEntityFixture<Field>(fields, filter)
+}
+
+export function getFieldQueryFixture(filter?: (element: any, index: any, array: any[]) => boolean): QueryResult<Field> {
+    return generateQueryFixture<Field>(fields, filter)
 }

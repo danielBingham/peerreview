@@ -25,7 +25,7 @@
  *
  *
  ********************************************************************/
-import { Core } from '@danielbingham/peerreview-core'
+import { Core } from '@journalhub/core'
 import Migration from './Migration'
 
 export default  class PaperEventStatusMigration extends Migration {

@@ -1,5 +1,5 @@
 {
-  "name": "@danielbingham/peerreview-features",
+  "name": "@journalhub/features",
   "version": "0.3.10",
   "description": "Feature flagging and migrations for JournalHub.",
   "author": "Daniel Bingham",
@@ -11,7 +11,7 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/danielbingham/peerreview.git",
-    "directory": "packages/model"
+    "directory": "packages/features"
   },
   "publishConfig": {
     "registry": "https://npm.pkg.github.com/"
@@ -25,9 +25,7 @@
     "test": "jest test"
   },
   "dependencies": {
-    "@danielbingham/peerreview-backend": "^0.3.10",
-    "@danielbingham/peerreview-core": "^0.3.10",
-    "@danielbingham/peerreview-model": "^0.3.10",
+    "@journalhub/core": "^0.3.10",
     "@types/pg": "^8.11.5",
     "pg": "^8.11.5"
   },

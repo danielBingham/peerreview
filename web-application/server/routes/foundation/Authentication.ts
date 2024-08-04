@@ -20,13 +20,13 @@
 import express, { RequestHandler } from 'express'
 import { Core } from '@danielbingham/peerreview-core' 
 import { User } from '@danielbingham/peerreview-model'
-import { Credentials } from '@danielbingham/peerreview-backend'
+import { DataAccess, Credentials } from '@danielbingham/peerreview-backend'
 import { AuthenticationController } from '../../controllers/foundation/AuthenticationController'
 
 
 // RequestHandler<Request Params, Response Body, Request Body, Request Query>
-export function initializeAuthenticationRoutes(core: Core, router: express.Router) {
-    const authenticationController = new AuthenticationController(core)
+export function initializeAuthenticationRoutes(core: Core, dao: DataAccess, router: express.Router) {
+    const authenticationController = new AuthenticationController(core, dao)
 
     const getAuthentication: RequestHandler<{},User,{},{}> = function(
         req, res, next
@@ -80,12 +80,24 @@ export function initializeAuthenticationRoutes(core: Core, router: express.Route
         })
     }
     router.delete('/authentication', deleteAuthentication)
-    
-    router.post('/orcid/authentication', function(request, response, next) {
-        authenticationController.postOrcidAuthentication(request, response).catch(function(error) {
+  
+    const postOrcidAuthentication: RequestHandler<
+        {}, 
+        { user: User, type: string},
+        { code: string, connect : boolean },  
+        {}
+    > = function(
+        req, res, next
+    ) {
+        authenticationController.postOrcidAuthentication(req.session.user, req.body)
+        .then(function(result) {
+            res.status(200).json(result)
+        })
+        .catch(function(error) {
             next(error)
         })
-    })
+    }
+    router.post('/orcid/authentication', postOrcidAuthentication)
 
 
 

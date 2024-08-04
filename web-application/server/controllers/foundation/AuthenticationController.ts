@@ -20,7 +20,7 @@
 import { Core, ServiceError } from '@danielbingham/peerreview-core' 
 import { User, PartialUser, UserStatus } from '@danielbingham/peerreview-model'
 
-import { AuthenticationService, Credentials, UserDAO } from '@danielbingham/peerreview-backend'
+import { DataAccess, AuthenticationService, Credentials } from '@danielbingham/peerreview-backend'
 
 
 import { ControllerError } from '../../errors/ControllerError'
@@ -33,15 +33,15 @@ import { ControllerError } from '../../errors/ControllerError'
  */
 export class AuthenticationController {
     core: Core
+    dao: DataAccess
 
     auth: AuthenticationService
-    userDAO: UserDAO
 
-    constructor(core: Core) {
+    constructor(core: Core, dao: DataAccess) {
         this.core = core
+        this.dao = dao
 
         this.auth = new AuthenticationService(core)
-        this.userDAO = new UserDAO(core)
     }
 
 
@@ -124,7 +124,7 @@ export class AuthenticationController {
         try {
             const userId = await this.auth.authenticateUser(credentials)
 
-            const userResults = await this.userDAO.selectUsers({
+            const userResults = await this.dao.user.selectUsers({
                 where: 'users.id = $1', 
                 params: [ userId ]
             })
@@ -191,7 +191,7 @@ export class AuthenticationController {
      * - It can be called to login a user who previously registered with ORCID
      *   or connected their ORCID to their account.
      */
-    async postOrcidAuthentication(currentUser: User, body: any): Promise<{ user: User, type: string }> {
+    async postOrcidAuthentication(currentUser: User, body: { code: string, connect: boolean }): Promise<{ user: User, type: string }> {
 
         /*************************************************************
          * Permissions Checking and Input Validation
@@ -332,8 +332,8 @@ export class AuthenticationController {
                 bio: '',
                 location: ''
             }
-            user.id = await this.userDAO.insertUser(user)
-            await this.userDAO.updatePartialUser(user)
+            user.id = await this.dao.user.insertUser(user)
+            await this.dao.user.updatePartialUser(user)
 
             const fullUser = await this.auth.loginUser(user.id)
             return {
@@ -354,7 +354,7 @@ export class AuthenticationController {
                 orcidId: orcidId,
                 status: UserStatus.Confirmed 
             }
-            await this.userDAO.updatePartialUser(user)
+            await this.dao.user.updatePartialUser(user)
 
             const fullUser = await this.auth.loginUser(id)
             return {

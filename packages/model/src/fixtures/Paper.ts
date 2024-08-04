@@ -5,7 +5,7 @@ import { getFileFixture } from "./File"
 
 import { generateFixture } from './generateFixture'
 
-const files = getFileFixture(ResultType.Query) as QueryResult<File>
+const files = getFileFixture() 
 
 const papers: Paper[] = [ 
     // Fixture 1: Single Author, Single Version Paper
@@ -190,6 +190,6 @@ const papers: Paper[] = [
     }
 ]
 
-export function getPaperFixture(resultType: ResultType, filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateFixture(papers, resultType, filter)
+export function getPaperFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
+    return generateFixture(papers, filter)
 }

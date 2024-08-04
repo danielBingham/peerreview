@@ -1,5 +1,5 @@
 {
-  "name": "@danielbingham/peerreview-core",
+  "name": "@journalhub/core",
   "version": "0.3.10",
   "description": "The core of JournalHub.",
   "author": "Daniel Bingham",
@@ -24,7 +24,7 @@
     "test": "jest test"
   },
   "dependencies": {
-    "@babel/runtime": "^7.20.13",
+    "@journalhub/features": "^0.3.10",
     "bullmq": "^5.8.2",
     "pg": "^8.11.1",
     "postmark": "^3.0.15"

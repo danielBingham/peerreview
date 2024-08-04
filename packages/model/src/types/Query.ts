@@ -17,7 +17,7 @@ import { Model, ModelDictionary } from "./Model"
  * An enum defining the different result types we define.
  */
 export enum ResultType {
-    Database = 'database',
+    Dictionary = 'dictionary',
     Entity = 'entity',
     Query = 'query'
 }
