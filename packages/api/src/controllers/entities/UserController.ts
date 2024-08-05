@@ -23,142 +23,143 @@
  * Restful routes for manipulating users.
  *
  ******************************************************************************/
-import { Pool, Client } from 'pg'
-import { Core, ServiceError, DAOError } from '@danielbingham/peerreview-core' 
+import { Core } from '@journalhub/core' 
 import { 
     User, 
     PartialUser,
     UserAuthorization,
     UserStatus,
     UserQuery, 
-    TokenType,
-    QueryResult,
-    QueryRelations,
-    EntityResult
-} from '@danielbingham/peerreview-model'
+    TokenType
+} from '@journalhub/model'
 import { 
+    DataAccess,
+    DAOQuery,
     DAOQueryOrder, 
-    DAOResult, 
-
-    UserDAO, 
-    TokenDAO,
-
+    DAOResult,
+    DAOError
+} from '@journalhub/data-access'
+import {
     AuthenticationService, 
     EmailService,
-    TokenService
-} from '@danielbingham/peerreview-backend'
+    TokenService,
+    ServiceError
+} from '@journalhub/service'
 
-import { ControllerQueryOptions, ControllerQuery } from '../../types/ControllerQuery'
-import { ControllerError } from '../../errors/ControllerError'
+import { APIQueryOptions } from '../../types/APIQuery'
+import { APIError} from '../../errors/APIError'
+import { APIQueryResult, APIEntityResult, APIRelations } from '../../types/APIResult' 
 
 export class UserController {
     core: Core
-    database: Pool | Client
+    dao: DataAccess
 
     auth: AuthenticationService
     emailService: EmailService
     tokenService: TokenService
 
-    userDAO: UserDAO
-    tokenDAO: TokenDAO
-
-    constructor(core: Core, database?: Pool | Client) {
+    constructor(core: Core, dao: DataAccess) {
         this.core = core
-
-        this.database = core.database
-        if ( database ) {
-            this.database = database
-        }
+        this.dao = dao
 
         this.auth = new AuthenticationService(core)
         this.emailService = new EmailService(core)
         this.tokenService = new TokenService(core)
-
-        this.userDAO = new UserDAO(core)
-        this.tokenDAO = new TokenDAO(core)
     }
 
-    async getRelations(results: DAOResult<User>, requestedRelations?: string[]): Promise<QueryRelations> {
-        return {}
+    /**
+     * Get models with relationships to the Users returned in the result set.
+     */
+    async getRelations(
+        results: DAOResult<User>, requestedRelations?: string[]
+    ): Promise<APIRelations> {
+        const relations: APIRelations = {}
+      
+        // Get Papers authored by the Users.
+        if ( requestedRelations && "paper" in requestedRelations ) {
+            const paperResults = await this.dao.paper.selectPapers({
+                where: 'paper_authors.user_id = ANY($1::bigint[])',
+                params: [ results.list ]
+            })
+            relations.papers = paperResults.dictionary
+        }
+        return relations
     }
 
     /**
      * Parse a query string from the `GET /users` endpoint for use with both
      * `UsersDAO::selectUsers()` and `UsersDAO::countUsers()`.
-     *
-     * @param {Object} query    The query string (from `request.query`) that we
-     * wish to parse.
-     * @param {string} query.name   (Optional) A string to compare to user's names for
-     * matches.  Compared using trigram matching.
-     * @param {int} quer.page    (Optional) A page number indicating which page of
-     * results we want.  
-     * @param {string} query.sort (Optional) A sort parameter describing how we want
-     * to sort users.
-     * @param {Object} options  A dictionary of options that adjust how we
-     * parse it.
-     * @param {boolean} options.ignorePage  Skip the page parameter.  It will
-     * still be in the result object and will default to `1`.
-     *
-     * @return {Object} A result object with the results in a form
-     * understandable to `selectUsers()` and `countUsers()`.  Of the following
-     * format:
-     * ```
-     * { 
-     *  where: 'WHERE ...', // An SQL where statement.
-     *  params: [], // An array of paramters matching the $1,$2, parameterization of `where`
-     *  page: 1, // A page parameter, to select which page of results we want.
-     *  order: '', // An SQL order statement.
-     *  emptyResult: false // When `true` we can skip the selectUsers() call,
-     *  // because we know we have no results to return.
-     * }
-     * ```
      */
-    async parseQuery(query: UserQuery, options?: ControllerQueryOptions): Promise<ControllerQuery> {
+    async parseQuery(query: UserQuery, options?: APIQueryOptions): Promise<DAOQuery> {
         options = options || {
             ignorePage: false
         }
 
-        const result: ControllerQuery = {
-            daoQuery: {
-                where: '',
-                params: [],
-                page: 1
-            },
-            emptyResult: false,
-            requestedRelations: query.relations ? query.relations : []
-        }
+        const result: DAOQuery = {}
 
         if ( ! query) {
             return result
         }
 
-        let count = 0
+        result.where = ''
+        result.params = []
+        result.page = 1
+        result.empty = false
 
-
-        if ( query.name && query.name.length > 0) {
-            count += 1
-            const and = count > 1 ? ' AND ' : ''
-            result.daoQuery.where += `${and} SIMILARITY(users.name, $${count}) > 0`
-            result.daoQuery.params.push(query.name)
-
-            result.daoQuery.order = DAOQueryOrder.Override
-            result.daoQuery.orderOverride = `SIMILARITY(users.name, $${count}) desc`
-            // TODO We have access to the name here, but if we're paging with DISTINCT we don't want to allow
-            // arbitrary orders.  This is a problem.
+        if ( typeof query.id !== "undefined" ) {
+            if ( Array.isArray(query.id) ) {
+                result.params.push(query.id)
+                result.where += `${result.params.length > 1 ? ' AND ' : ''} 
+                    users.id = ANY($${result.params.length}::bigint[])`
+            } else if ( typeof query.id === "number" ) {
+                result.params.push(query.id)
+                result.where += `${result.params.length > 1 ? ' AND ' : ''} 
+                    users.id = $${result.params.length}`
+            } else {
+                throw new APIError(400, 'invalid-id',
+                    `Invalid id "${query.id}" provided.`)
+            }
         }
 
-        if ( query.ids && query.ids.length > 0 ) {
-            count += 1
-            const and = count > 1 ? ' AND ' : ''
+        if ( typeof query.name !== "undefined") {
+            if ( Array.isArray(query.name) ) {
+                result.params.push(query.name)
+                result.where += `${result.params.length > 1 ? ' AND ' : ''} 
+                    users.name = ANY($${result.params.length}::varchar[])`
+            } else if ( typeof query.name === "string" ) {
+                result.params.push(query.name)
+                result.where += `${result.params.length > 1 ? ' AND ' : ''} 
+                    SIMILARITY(users.name, $${result.params.length}) > 0`
 
-            result.daoQuery.where += `${and} users.id = ANY($${count}::bigint[])`
-            result.daoQuery.params.push(query.ids)
+                // TODO We have access to the name here, but if we're paging with DISTINCT we don't want to allow
+                // arbitrary orders.  This is a problem.
+                result.order = DAOQueryOrder.Override
+                result.orderOverride = `SIMILARITY(users.name, $${result.params.length}) desc`
+            } else {
+                throw new APIError(400, 'invalid-name',
+                    `Invalid name "${query.name}" provided.`)
+            }
+        }
+
+        if ( typeof query.orcidId !== "undefined" ) {
+            if ( Array.isArray(query.orcidId) ) {
+                result.params.push(query.orcidId)
+                result.where += `${result.params.length > 1 ? ' AND ' : ''} 
+                    users.orcid_id = ANY($${result.params.length}::bigint[])`
+            } else if ( typeof query.id === "number" ) {
+                result.params.push(query.orcidId)
+                result.where += `${result.params.length > 1 ? ' AND ' : ''} 
+                    users.orcid_id = $${result.params.length}`
+            } else {
+                throw new APIError(400, 'invalid-orcidId',
+                    `Invalid orcidId "${query.orcidId}" provided.`)
+            }
         }
 
         if ( query.page && ! options.ignorePage ) {
-            result.daoQuery.page = query.page
+            result.page = query.page
         } else if ( ! options.ignorePage ) {
-            result.daoQuery.page = 1
+            result.page = 1
         }
 
         return result
@@ -170,7 +171,7 @@ export class UserController {
      * Respond with a list of `users` matching the query in the meta/result
      * format.
      */
-    async getUsers(query: UserQuery): Promise<QueryResult<User>> {
+    async getUsers(query: UserQuery): Promise<APIQueryResult<User>> {
         /*************************************************************
          * Permissions Checking and Input Validation
          *
@@ -178,9 +179,9 @@ export class UserController {
          * 
          * **********************************************************/
 
-        const { daoQuery, emptyResult, requestedRelations } = await this.parseQuery(query)
+        const daoQuery = await this.parseQuery(query)
 
-        if ( emptyResult ) {
+        if ( daoQuery.empty) {
             return {
                 dictionary: {},
                 list: [],
@@ -193,11 +194,11 @@ export class UserController {
                 relations: {} 
             }
         }
-        const meta = await this.userDAO.countUsers(daoQuery)
-        const daoResult = await this.userDAO.selectCleanUsers(daoQuery)
-        const relations = await this.getRelations(daoResult, requestedRelations) 
+        const meta = await this.dao.user.countUsers(daoQuery)
+        const daoResult = await this.dao.user.selectCleanUsers(daoQuery)
+        const relations = await this.getRelations(daoResult, query.relations) 
 
-        const result: QueryResult<User> = {
+        const result: APIQueryResult<User> = {
             dictionary: daoResult.dictionary,
             list: daoResult.list,
             meta: meta,
@@ -212,7 +213,7 @@ export class UserController {
      *
      * Create a new `user`.
      */
-    async postUsers(loggedInUser: User, user: PartialUser): Promise<EntityResult<User>> {
+    async postUsers(loggedInUser: User, user: PartialUser): Promise<APIEntityResult<User>> {
         /*************************************************************
          * Permissions Checking and Input Validation
          *
@@ -228,12 +229,12 @@ export class UserController {
          * Anyone can call this endpoint.
          *
          * Validation:
-         * 1. request.body.email must not already be attached to a user in the
+         * 1. user.email must not already be attached to a user in the
          * database.
          * 2. Invitation => no password needed
          * 3. Registration => must include password
-         * 4. request.body.name is required.
-         * 5. request.body.email is required. 
+         * 4. user.name is required.
+         * 5. user.email is required. 
          *
          * **********************************************************/
         user.email = user.email.toLowerCase()
@@ -241,15 +242,16 @@ export class UserController {
         // If a user already exists with that email, send a 409 Conflict
         // response.
         //
-        const userExistsResults = await this.database.query(
+        const userExistsResults = await this.core.database.query(
             'SELECT id, email FROM users WHERE email=$1',
             [ user.email ]
         )
 
         // 1. request.body.email must not already be attached to a user in the
         // database.
-        if (userExistsResults.rowCount > 0) {
-            throw new ControllerError(409, 'user-exists', `Attempting to create a user(${userExistsResults.rows[0].id}) that already exists!`)
+        if (userExistsResults.rows.length > 0) {
+            throw new APIError(409, 'user-exists', 
+                `Creation failed, User(${userExistsResults.rows[0].id}) already exists!`)
         }
 
         // If we're creating a user with a password, then this is just a normal
@@ -265,21 +267,21 @@ export class UserController {
         } else if ( loggedInUser ) {
             user.status = UserStatus.Invited
         } else {
-            throw new ControllerError(400, 'bad-data:no-password',
+            throw new APIError(400, 'no-password',
                 `Users creating accounts must include a password!`)
         }
 
         try {
-            user.id = await this.userDAO.insertUser(user)
+            user.id = await this.dao.user.insertUser(user)
         } catch ( error ) {
             if ( error instanceof DAOError ) {
                 // `insertUser()` check both of the following:
                 // 4. request.body.name is required.
                 // 5. request.body.email is required. 
                 if ( error.type == 'name-missing' ) {
-                    throw new ControllerError(400, 'bad-data:no-name', error.message)
+                    throw new APIError(400, 'bad-data:no-name', error.message)
                 } else if ( error.type == 'email-missing' ) {
-                    throw new ControllerError(400, 'bad-data:no-email', error.message)
+                    throw new APIError(400, 'bad-data:no-email', error.message)
                 } else {
                     throw error
                 }
@@ -288,34 +290,34 @@ export class UserController {
             }
         }
 
-        const createdUserResults = await this.userDAO.selectUsers({ where: 'users.id=$1', params: [user.id]})
+        const createdUserResults = await this.dao.user.selectUsers({ where: 'users.id=$1', params: [user.id]})
 
         if ( ! createdUserResults.dictionary[user.id] ) {
-            throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
+            throw new APIError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
         }
 
         const createdUser = createdUserResults.dictionary[user.id]
 
         if ( loggedInUser ) {
             const partialToken = this.tokenService.createToken(createdUser.id, TokenType.Invitation)
-            const id = await this.tokenDAO.insertToken(partialToken)
+            const id = await this.dao.token.insertToken(partialToken)
 
-            const results = await this.tokenDAO.selectTokens({ where: 'tokens.id = $1', params: [ id ] })
+            const results = await this.dao.token.selectTokens({ where: 'tokens.id = $1', params: [ id ] })
 
             await this.emailService.sendInvitation(loggedInUser, createdUser, results.dictionary[id])
         } else {
             const partialToken = this.tokenService.createToken(createdUser.id, TokenType.EmailConfirmation)
-            const id = await this.tokenDAO.insertToken(partialToken)
+            const id = await this.dao.token.insertToken(partialToken)
 
-            const results = await this.tokenDAO.selectTokens({ where: 'tokens.id = $1', params: [ id ]})
+            const results = await this.dao.token.selectTokens({ where: 'tokens.id = $1', params: [ id ]})
 
             await this.emailService.sendEmailConfirmation(createdUser, results.dictionary[id])
         }
 
-        const results = await this.userDAO.selectCleanUsers({ where: 'users.id=$1', params: [ user.id ] })
+        const results = await this.dao.user.selectCleanUsers({ where: 'users.id=$1', params: [ user.id ] })
 
         if (! results.dictionary[user.id] ) {
-            throw new ControllerError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
+            throw new APIError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
         }
 
         const relations = await this.getRelations(results)
@@ -329,19 +331,19 @@ export class UserController {
     /**
      * GET /user/:id
      *
-     * Get details for a single user in thethis.database.
+     * Get details for a single user in thethis.core.database.
      */
-    async getUser(id: number): Promise<EntityResult<User>> {
+    async getUser(id: number): Promise<APIEntityResult<User>> {
         /*************************************************************
          * Permissions Checking and Input Validation
          *
          * Anyone may call this endpoint.
          * 
          * **********************************************************/
-        const results = await this.userDAO.selectCleanUsers({ where: 'users.id = $1', params: [id] })
+        const results = await this.dao.user.selectCleanUsers({ where: 'users.id = $1', params: [id] })
 
         if ( ! results.dictionary[id] ) {
-            throw new ControllerError(404, 'not-found', `User(${id}) not found.`)
+            throw new APIError(404, 'not-found', `User(${id}) not found.`)
         }
 
         const relations = await this.getRelations(results)
@@ -363,7 +365,7 @@ export class UserController {
         id: number, 
         user: PartialUser, 
         authorization: UserAuthorization
-    ): Promise<EntityResult<User>> {
+    ): Promise<APIEntityResult<User>> {
         /*************************************************************
          * Permissions Checking and Input Validation
          *
@@ -381,7 +383,7 @@ export class UserController {
 
         // 1. User must be logged in.
         if ( ! currentUser ) {
-            throw new ControllerError(403, 'not-authorized', 
+            throw new APIError(403, 'not-authorized', 
                 `Unauthenticated user attempting to update User(${user.id}).`)
         } 
 
@@ -393,23 +395,23 @@ export class UserController {
         // user at the botton of this function.  Or at least, spend some time
         // considering whether you need to.
         if ( currentUser.id != id) {
-            throw new ControllerError(403, 'not-authorized', 
+            throw new APIError(403, 'not-authorized', 
                 `User(${currentUser.id}) attempted to update another User(${id}).`)
         }
 
         // 2. User being patched must be the same as the logged in user.
         // 2b. :id must equal request.body.id
         if ( id != user.id ) {
-            throw new ControllerError(403, 'not-authorized:id-mismatch',
+            throw new APIError(403, 'not-authorized:id-mismatch',
                 `User(${id}) attempted to update another User(${user.id}).`)
         }
-        const existingUsers = await this.userDAO.selectUsers({ where: `users.id = $1`, params: [ id ] })
+        const existingUsers = await this.dao.user.selectUsers({ where: `users.id = $1`, params: [ id ] })
 
         // 3. User(:id) must exist.
         // If they don't exist, something is really, really wrong -- since they
         // are logged in and in the session!
         if ( ! existingUsers.dictionary[id] ) {
-            throw new ControllerError(500, 'server-error',
+            throw new APIError(500, 'server-error',
                 `User(${id}) attempted to update themselves, but we couldn't find their database record!`)
         }
 
@@ -428,14 +430,14 @@ export class UserController {
                     token = await this.tokenService.validateToken(authorization.token, [ TokenType.ResetPassword, TokenType.Invitation ])
                 } catch (error ) {
                     if ( error instanceof DAOError ) {
-                        throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
+                        throw new APIError(403, 'not-authorized:authentication-failure', error.message)
                     } else {
                         throw error
                     }
                 }
                 
                 if ( token.userId != user.id ) {
-                    throw new ControllerError(403, 'not-authorized:authentication-failure',
+                    throw new APIError(403, 'not-authorized:authentication-failure',
                         `User(${user.id}) attempted to change their password with a valid token that wasn't theirs!`)
                 }
 
@@ -444,7 +446,7 @@ export class UserController {
                     user.status = UserStatus.Confirmed
                 }
 
-                await this.tokenDAO.deleteToken(token)
+                await this.dao.token.deleteToken(token)
             } else if ( authorization.password ) {
                 try {
                     const existingUserId = await this.auth.authenticateUser({ 
@@ -453,17 +455,17 @@ export class UserController {
                     })
 
                     if ( existingUserId != user.id) {
-                        throw new ControllerError(403, 'not-authorized:authentication-failure',
+                        throw new APIError(403, 'not-authorized:authentication-failure',
                             `User(${user.id}) gave credentials that matched User(${existingUserId})!`)
                     }
                 } catch (error ) {
                     if ( error instanceof ServiceError ) {
                         if ( error.type == 'authentication-failed' || error.type == 'no-user' || error.type == 'no-user-password' ) {
-                            throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
+                            throw new APIError(403, 'not-authorized:authentication-failure', error.message)
                         } else if ( error.type == 'multiple-users' ) {
-                            throw new ControllerError(400, 'multiple-users', error.message)
+                            throw new APIError(400, 'multiple-users', error.message)
                         } else if ( error.type == 'no-credential-password' ) {
-                            throw new ControllerError(400, 'no-password', error.message)
+                            throw new APIError(400, 'no-password', error.message)
                         } else {
                             throw error
                         }
@@ -474,7 +476,7 @@ export class UserController {
 
                 // User authenticated successfully.
             } else {
-                throw new ControllerError(403, 'authentication-failure',
+                throw new APIError(403, 'authentication-failure',
                     `User(${user.id}) attempted to change their password with out reauthenticating.`)
             }
 
@@ -492,7 +494,7 @@ export class UserController {
                     })
 
                     if ( existingUserId != user.id) {
-                        throw new ControllerError(403, 'not-authorized:authentication-failure',
+                        throw new APIError(403, 'not-authorized:authentication-failure',
                             `User(${user.id}) gave credentials that matched User(${existingUserId})!`)
                     }
 
@@ -502,11 +504,11 @@ export class UserController {
                 } catch (error ) {
                     if ( error instanceof ServiceError ) {
                         if ( error.type == 'authentication-failed' || error.type == 'no-user' || error.type == 'no-user-password' ) {
-                            throw new ControllerError(403, 'not-authorized:authentication-failure', error.message)
+                            throw new APIError(403, 'not-authorized:authentication-failure', error.message)
                         } else if ( error.type == 'multiple-users' ) {
-                            throw new ControllerError(400, 'multiple-users', error.message)
+                            throw new APIError(400, 'multiple-users', error.message)
                         } else if ( error.type == 'no-credential-password' ) {
-                            throw new ControllerError(400, 'no-password', error.message)
+                            throw new APIError(400, 'no-password', error.message)
                         } else {
                             throw error
                         }
@@ -517,7 +519,7 @@ export class UserController {
 
                 // User authenticated successfully.
             } else {
-                throw new ControllerError(403, 'authentication-failure',
+                throw new APIError(403, 'authentication-failure',
                     `User(${user.id}) attempted to change their password with out reauthenticating.`)
             }
         }
@@ -530,15 +532,15 @@ export class UserController {
             delete user.file
         }
 
-        await this.userDAO.updatePartialUser(user)
+        await this.dao.user.updatePartialUser(user)
 
         // Issue #132 - We're going to allow the user's email to be returned in this case,
         // because only authenticated users may call this endpoint and then
         // only on themselves.
-        const results = await this.userDAO.selectUsers({ where: 'users.id=$1', params: [user.id] })
+        const results = await this.dao.user.selectUsers({ where: 'users.id=$1', params: [user.id] })
 
         if ( ! results.dictionary[user.id] ) {
-            throw new ControllerError(500, 'server-error', `Failed to find user(${user.id}) after update!`)
+            throw new APIError(500, 'server-error', `Failed to find user(${user.id}) after update!`)
         }
 
         // If we get to this point, we know the user being updated is the same
@@ -552,10 +554,10 @@ export class UserController {
             const partialToken = this.tokenService.createToken(currentUser.id, TokenType.EmailConfirmation)
             partialToken.userId = results.dictionary[user.id].id
 
-            const tokenId = await this.tokenDAO.insertToken(partialToken)
-            const tokenResults = await this.tokenDAO.selectTokens({ where: 'tokens.id = $1', params: [ tokenId] })
+            const tokenId = await this.dao.token.insertToken(partialToken)
+            const tokenResults = await this.dao.token.selectTokens({ where: 'tokens.id = $1', params: [ tokenId] })
 
-            await this.emailService.sendEmailConfirmation(results.dictionary[user.id], tokenResults.dictionary[tokenId])
+            await this.emailService.sendEmailConfirmation(results.dictionary[user.id], tokenResults.dictionary[tokenId].token)
         }
 
 
@@ -587,8 +589,8 @@ export class UserController {
         // users to delete themselves.  Probably some day soon.  But it is not
         // this day.  Trying to reduce the maintenance surface by removing
         // anything we're not actively using for now.
-        throw new ControllerError(501, 'not-implemented', `Attempt to delete User(${id}).`)
-        /*const results = await this.database.query(
+        throw new APIError(501, 'not-implemented', `Attempt to delete User(${id}).`)
+        /*const results = await this.core.database.query(
             'delete from users where id = $1',
             [ request.params.id ]
         )

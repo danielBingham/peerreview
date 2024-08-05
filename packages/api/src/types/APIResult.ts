@@ -1,33 +1,34 @@
 /******************************************************************************
- * Result Set Types
  *
- * Defines various result set types that will used in a variety of contexts.
- * All are intended to be used with our model types.
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
  *
- * Types:
- * - DatabaseResult: Returned by the DAOs.
- * - EntityResult: Returned by REST endpoints that respond with a single entity.
- * - QueryResult: Returned by REST endpoints that respond with lists of entities.
- * 
- * ****************************************************************************/
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+import { Model, ModelDictionary } from "@journalhub/model"
 
-import { Model, ModelDictionary } from "./Model"
 
-/**
- * An enum defining the different result types we define.
- */
-export enum ResultType {
-    Dictionary = 'dictionary',
-    Entity = 'entity',
-    Query = 'query'
+export interface APIRelations { 
+    [modelName: string]: ModelDictionary<Model> 
 }
-
 
 /**
  * Single entity results, returned by REST endpoints that return a single
  * entity.
  */
-export interface EntityResult<Type extends Model> {
+export interface APIEntityResult<Type extends Model> {
 
     /** The returned entity. **/
     entity: Type,
@@ -36,14 +37,14 @@ export interface EntityResult<Type extends Model> {
      * A dictionary of related models connected to `entity` in some way.
      * Keyed by Model name. 
      * **/
-    relations: { [modelName: string]: ModelDictionary<Model> }
+    relations: APIRelations 
 }
 
 /**
  * Metadata describing the results of a query, primarily used for paging but
  * could be extended with other kinds of metadata in the future.
  */
-export interface QueryMeta { 
+export interface APIQueryMeta { 
     /**  The total number of results. **/
     count: number,
 
@@ -57,16 +58,13 @@ export interface QueryMeta {
     numberOfPages: number
 }
 
-export interface QueryRelations { 
-    [modelName: string]: ModelDictionary<Model> 
-}
 
 
 /**
  * Query results, returned by REST endpoints that return pageable lists of
  * results.
  */
-export interface QueryResult<Type extends Model> {
+export interface APIQueryResult<Type extends Model> {
 
     /** A dictionary of the wrapped result models, keyed by `Type.id`. **/
     dictionary: ModelDictionary<Type>,
@@ -78,12 +76,12 @@ export interface QueryResult<Type extends Model> {
     list: number[],
 
     /** Paging meta data for the query. **/
-    meta: QueryMeta,
+    meta: APIQueryMeta,
 
     /** 
      * A dictionary of `ModelDictionary` storing related objects that were
      * requested for, or should be included with, this query. Keyed by Model
      * name. 
      * **/
-    relations: QueryRelations
+    relations: APIRelations 
 }

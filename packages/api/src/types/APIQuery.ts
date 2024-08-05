@@ -17,22 +17,13 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-export class ControllerError extends Error {
-    status: number 
-    type: string
 
-    data: any
+export interface APIQueryOptions {
+    ignorePage?: boolean
+}
 
-    constructor(status: number, type: string, message: string, data?: any) {
-        super(message)
-
-        this.status = status
-        this.type = type
-
-        // Optional
-        this.data = {} 
-        if ( data ) {
-            this.data = data
-        }
-    }
+export interface APIQuery {
+    itemsPerPage?: number
+    page?: number
+    relations?: string[]
 }

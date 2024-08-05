@@ -17,11 +17,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
-import { User, PartialUser, UserStatus } from '@danielbingham/peerreview-model'
-
-import { DataAccess, AuthenticationService, Credentials } from '@danielbingham/peerreview-backend'
-
+import { Core, ServiceError } from '@journalhub/core' 
+import { User, PartialUser, UserStatus } from '@journalhub/model'
+import { DataAccess } from '@journalhub/data-access'
+import { AuthenticationService, Credentials } from '@journalhub/service'
 
 import { ControllerError } from '../../errors/ControllerError'
 

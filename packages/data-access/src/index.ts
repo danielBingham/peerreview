@@ -17,6 +17,8 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+export { DAOError } from './errors/DAOError'
+
 export { DAOQueryOrder, DAOQuery, DAOResult } from './types/DAO'
 
 export { FieldDAO } from './daos/FieldDAO'

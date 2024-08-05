@@ -17,15 +17,5 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { ModelDictionary, Paper, User, Journal, JournalSubmission } from '@danielbingham/peerreview-model'
-import { DAOQuery } from '@danielbingham/peerreview-backend'
 
-export interface ControllerQueryOptions {
-    ignorePage?: boolean
-}
-
-export interface ControllerQuery {
-    daoQuery: DAOQuery
-    emptyResult: boolean
-    requestedRelations: string[] 
-}
+export { FieldController } from './controllers/entities/FieldController'

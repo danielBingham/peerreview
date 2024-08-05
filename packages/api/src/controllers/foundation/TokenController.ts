@@ -17,32 +17,28 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core, ServiceError} from '@danielbingham/peerreview-core' 
-import { User, PartialUser, UserStatus, TokenType } from '@danielbingham/peerreview-model'
-
-import { UserDAO, TokenDAO, TokenService, AuthenticationService, EmailService } from '@danielbingham/peerreview-backend'
+import { Core, ServiceError} from '@journalhub/core' 
+import { User, PartialUser, UserStatus, TokenType } from '@journalhub/model'
+import { DataAccess } from '@journalhub/data-access'
+import { TokenService, AuthenticationService, EmailService } from '@journalhub/service'
 
 import { ControllerError } from '../../errors/ControllerError'
 
 export class TokenController {
     core: Core
-
-    tokenDAO: TokenDAO
-    userDAO: UserDAO
+    dao: DataAccess
 
     tokenService: TokenService
     authenticationService: AuthenticationService
     emailService: EmailService
 
-    constructor(core: Core) {
+    constructor(core: Core, dao: DataAccess) {
         this.core = core
+        this.dao = dao
 
         this.tokenService = new TokenService(core)
         this.authenticationService = new AuthenticationService(core)
         this.emailService = new EmailService(core)
-
-        this.tokenDAO = new TokenDAO(core)
-        this.userDAO = new UserDAO(core)
     }
 
     /**
@@ -103,9 +99,9 @@ export class TokenController {
                 id: token.userId,
                 status: UserStatus.Confirmed 
             }
-            await this.userDAO.updatePartialUser(userUpdate)
+            await this.dao.user.updatePartialUser(userUpdate)
             // TODO better to hang on to it and mark it as used?
-            await this.tokenDAO.deleteToken(token)
+            await this.dao.token.deleteToken(token)
 
             return await this.authenticationService.loginUser(token.userId)
         } else if ( token.type == TokenType.ResetPassword ) {
@@ -143,7 +139,7 @@ export class TokenController {
         // Validation: 2. request.body.type must be 'reset-password'
         if ( tokenParams.type == TokenType.ResetPassword ) {
             // Validation: 1. A User with request.body.email must exist.
-            const userResults = await this.userDAO.selectUsers({
+            const userResults = await this.dao.user.selectUsers({
                 where: 'email=$1',
                 params: [ tokenParams.email ]
             })
@@ -154,7 +150,7 @@ export class TokenController {
             const user = userResults.dictionary[userResults.list[0]]
 
             const token = this.tokenService.createToken(user.id, tokenParams.type)
-            token.id = await this.tokenDAO.insertToken(token)
+            token.id = await this.dao.token.insertToken(token)
 
             await this.emailService.sendPasswordReset(user, token.token)
         } else {

@@ -77,8 +77,10 @@ export interface UserAuthorization {
 }
 
 export interface UserQuery {
-    name?: string
-    ids?: number[]
+    id: number | number[]
+    name?: string | string[]
+    orcidId: string | string[]
+
     page?: number
     relations: string[]
 }

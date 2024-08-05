@@ -1,0 +1,43 @@
+{
+  "name": "@journalhub/api",
+  "version": "0.3.10",
+  "description": "The api of JournalHub.",
+  "author": "Daniel Bingham",
+  "license": "AGPL-3.0",
+  "homepage": "https://github.com/danielbingham/peerreview#README",
+  "bugs": {
+    "url": "https://github.com/danielbingham/peerreview/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/danielbingham/peerreview.git",
+    "directory": "packages/api"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com/"
+  },
+  "main": "dist/index.js",
+  "types": "src/index.ts",
+  "scripts": {
+    "build": "rm -rf dist && tsc --build ./tsconfig.json",
+    "watch": "tsc --watch",
+    "jest": "jest",
+    "test": "jest test"
+  },
+  "dependencies": {
+    "@journalhub/core": "^0.3.10",
+    "@journalhub/features": "^0.3.10",
+    "@journalhub/model": "^0.3.10",
+    "@journalhub/data-access": "^0.3.10",
+    "@journalhub/service": "^0.3.10",
+    "@journalhub/library": "^0.3.10",
+    "pg": "^8.11.1"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/pg": "^8.11.2",
+    "jest": "^29.4.3",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.2"
+  }
+}

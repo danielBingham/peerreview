@@ -18,14 +18,13 @@
  *
  ******************************************************************************/
 export { Model, ModelDictionary } from './types/Model'
-export { ResultType, EntityResult, QueryMeta, QueryRelations, QueryResult} from './types/Query'
 
 export { JobsResult } from './types/Job'
 export { File, PartialFile } from './types/File'
 export { Notification, NotificationType, PartialNotification } from './types/Notification'
 export { Permission } from './types/Permission'
 
-export { Field, FieldQuery } from './types/Field'
+export { Field } from './types/Field'
 export { Paper, PartialPaper, PaperAuthor, PaperVersion } from './types/Paper'
 export { Journal, JournalModel, JournalAnonymity, PartialJournal, JournalMember, JournalMemberPermissions } from './types/Journal'
 export { JournalSubmission, PartialJournalSubmission, JournalSubmissionReviewer, JournalSubmissionReview, JournalSubmissionEditor } from './types/JournalSubmission'
@@ -35,7 +34,7 @@ export { Review, ReviewThread, ReviewComment, ReviewStatus, ReviewRecommendation
 export { Token, PartialToken, TokenType } from './types/Token'
 export { User, PartialUser, UserJournalMembership, UserAuthorization, UserStatus, UserPermissions, UserQuery } from './types/User'
 
-export { getFieldFixture, getFieldEntityFixture, getFieldQueryFixture } from './fixtures/Field'
+export { getFieldFixture } from './fixtures/Field'
 export { getFileFixture } from './fixtures/File'
 export { getPaperFixture } from './fixtures/Paper'
 export { getJournalFixture } from './fixtures/Journal'

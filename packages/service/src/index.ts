@@ -17,9 +17,11 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+export { ServiceError } from './errors/ServiceError'
+
 export { AuthenticationService, Credentials } from './services/AuthenticationService'
 export { EmailService } from './services/EmailService'
-export { FileService } from './services/FileService'
+export { FileService } from './services/files/FileService'
 export { NotificationService, NotificationContext } from './services/notifications/NotificationService'
 export { OpenAlexService } from './services/OpenAlexService'
 export { PageMetadataService } from './services/PageMetadataService'
@@ -28,7 +30,7 @@ export { PaperEventService } from './services/PaperEventService'
 export { PaperService } from './services/PaperService'
 export { ReputationGenerationService } from './services/ReputationGenerationService'
 export { ReputationPermissionService } from './services/ReputationPermissionService'
-export { S3FileService } from './services/S3FileService'
+export { S3FileService } from './services/files/S3FileService'
 export { ServerSideRenderingService } from './services/ServerSideRenderingService'
 export { SessionService } from './services/SessionService'
 export { SubmissionService } from './services/SubmissionService'

@@ -17,52 +17,42 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import express, { RouteHandler } from 'express'
-import { Core } from '@danielbingham/peerreview-core' 
+import express, { RequestHandler } from 'express'
 
-export function initializeFieldRoutes(core: Core, router: express.Router) {
-    const FieldController = require('./controllers/FieldController')
-    const fieldController = new FieldController(core)
+import { Core } from '@journalhub/core' 
+import { Field, FieldQuery, QueryResult, EntityResult } from '@journalhub/model'
+import { DataAccess } from '@journalhub/data-access'
+import { FieldController } from '@journalhub/api'
+
+// RequestHandler<Request Params, Response Body, Request Body, Request Query>
+export function initializeFieldRoutes(core: Core, dao: DataAccess, router: express.Router) {
+    const fieldController = new FieldController(core, dao)
 
     // Get a list of all fields.
-    router.get('/fields', function(request, response, next) {
-        fieldController.getFields(request, response).catch(function(error) {
+    const getFields: RequestHandler<{}, QueryResult<Field>, {}, FieldQuery> = function(
+        req, res, next
+    ) {
+        fieldController.getFields(req.query)
+        .then(function(results) {
+            res.status(200).json(results)
+        })
+        .catch(function(error) {
             next(error)
         })
-    })
-
-    // Create a new field 
-    router.post('/fields', function(request, response, next) {
-        fieldController.postFields(request, response).catch(function(error) {
-            next(error)
-        })
-    })
+    }
+    router.get('/fields', getFields)
 
     // Get the details of a single field 
-    router.get('/field/:id', function(request, response, next) {
-        fieldController.getField(request, response).catch(function(error) {
+    const getField: RequestHandler<{id: number}, EntityResult<Field>, {}, {}> = function(
+        req, res, next
+    ) {
+        fieldController.getField(req.params.id)
+        .then(function(results) {
+            res.status(200).json(results)
+        })
+        .catch(function(error) {
             next(error)
         })
-    })
-
-    // Replace a field wholesale.
-    router.put('/field/:id', function(request, response, next) {
-        fieldController.putField(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Edit an existing field with partial data.
-    router.patch('/field/:id', function(request, response, next) {
-        fieldController.patchField(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    // Delete an existing field.
-    router.delete('/field/:id', function(request, response, next) {
-        fieldController.deleteField(request, response).catch(function(error) {
-            next(error)
-        })
-    })
+    }
+    router.get('/field/:id', getField)
 }

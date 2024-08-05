@@ -17,9 +17,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core } from '@danielbingham/peerreview-core' 
-import { Feature, PartialFeature, FeatureService, FeatureDAO, FeatureDictionary } from '@danielbingham/peerreview-features'
-import { User } from '@danielbingham/peerreview-model'
+import { Core } from '@journalhub/core' 
+import { Feature, PartialFeature, FeatureService, FeatureDAO, FeatureDictionary } from '@journalhub/features'
+import { User } from '@journalhub/model'
 
 import { ControllerError } from '../../errors/ControllerError'
 

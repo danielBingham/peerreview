@@ -20,8 +20,8 @@
 
 import { Job } from 'bullmq'
 
-import { Core } from '@danielbingham/peerreview-core' 
-import { User, JobsResult } from '@danielbingham/peerreview-model'
+import { Core } from '@journalhub/core' 
+import { User, JobsResult } from '@journalhub/model'
 
 import { ControllerError } from '../../errors/ControllerError'
 

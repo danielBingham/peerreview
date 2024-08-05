@@ -20,9 +20,10 @@
 import * as mime from 'mime'
 import { v4 as uuidv4 } from 'uuid'
 
-import { Core } from '@danielbingham/peerreview-core' 
-import { User, File } from '@danielbingham/peerreview-model'
-import { DataAccess, S3FileService, FileDAO } from '@danielbingham/peerreview-backend'
+import { Core } from '@journalhub/core' 
+import { User, File } from '@journalhub/model'
+import { DataAccess } from '@journalhub/data-access'
+import { S3FileService } from '@journalhub/service'
 
 import { ControllerError } from '../../errors/ControllerError'
 
@@ -40,14 +41,12 @@ export class FileController {
     dao: DataAccess
 
     fileService: S3FileService
-    fileDAO: FileDAO
 
     constructor(core: Core, dao: DataAccess) {
         this.core = core
         this.dao = dao
 
         this.fileService = new S3FileService(core)
-        this.dao.file = new FileDAO(core)
     }
 
     /**

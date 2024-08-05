@@ -17,31 +17,22 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Model, ModelDictionary } from '../types/Model'
+export class APIError extends Error {
+    status: number 
+    type: string
 
-/**
- * A helper function used to generate fixtures for tests.  Constructs the
- * appropriate result set based on the passed result type and an optional
- * filter function which is passed directly to `Array.prototype.filter` run
- * against the fixture array.
- */
-export function generateFixture<Type extends Model>(
-    fixtures: Type[],
-    filter?: (element: any, index: any, array: any[]) => boolean
-): { dictionary: ModelDictionary<Type>, list: Type[] } {
+    data: any
 
-    let fixtureList: Type[] = structuredClone(fixtures)
-    if ( filter ) {
-        fixtureList = fixtureList.filter(filter)
-    }
+    constructor(status: number, type: string, message: string, data?: any) {
+        super(message)
 
-    const fixtureDictionary: ModelDictionary<Type> = {}
-    for(const fixture of fixtureList) {
-        fixtureDictionary[fixture.id] = fixture 
-    }
+        this.status = status
+        this.type = type
 
-    return {
-        dictionary: fixtureDictionary,
-        list: fixtureList
+        // Optional
+        this.data = {} 
+        if ( data ) {
+            this.data = data
+        }
     }
 }

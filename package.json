@@ -9,7 +9,8 @@
   "author": "Daniel Bingham",
   "license": "AGPL-3.0",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "web-application"
   ],
   "dependencies": { },
   "devDependencies": {

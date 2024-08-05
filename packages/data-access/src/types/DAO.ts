@@ -68,6 +68,9 @@ export interface DAOQuery {
 
     /** The number of items we want to retrieve in each page. **/
     itemsPerPage?: number
+
+    /** If true, the query should return an empty result. TECHDEBT placed here to avoid needing a different type for parsed api queries. **/
+    empty?: boolean
 }
 
 /**

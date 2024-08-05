@@ -17,24 +17,23 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core } from '@danielbingham/peerreview-core' 
-import { NotificationDAO } from '@danielbingham/peerreview-backend'
-import { User, QueryResult, EntityResult, Notification, PartialNotification } from '@danielbingham/peerreview-model'
+import { Core } from '@journalhub/core' 
+import { DataAccess } from '@journalhub/data-access'
+import { User, Notification, PartialNotification } from '@journalhub/model'
 
-import { ControllerError } from '../../errors/ControllerError'
+import { APIError } from '../../errors/APIError'
+import { APIQueryResult, APIEntityResult } from '../../types/APIResult'
 
 export class NotificationController {
     core: Core
+    dao: DataAccess
 
-    notificationDAO: NotificationDAO
-
-    constructor(core: Core) {
+    constructor(core: Core, dao: DataAccess) {
         this.core = core
-
-        this.notificationDAO = new NotificationDAO(core)
+        this.dao = dao
     }
 
-    async getNotifications(currentUser: User): Promise<QueryResult<Notification>> {
+    async getNotifications(currentUser: User): Promise<APIQueryResult<Notification>> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -45,15 +44,15 @@ export class NotificationController {
         
         // 1. User must be authenticated.
         if ( ! currentUser ) {
-            throw new ControllerError(401, 'not-authenticated', 'Must be authenticated to retrieve notifications!')
+            throw new APIError(401, 'not-authenticated', 'Must be authenticated to retrieve notifications!')
         }
 
-        const databaseResult = await this.notificationDAO.selectNotifications({
+        const databaseResult = await this.dao.notification.selectNotifications({
             where: 'user_notifications.user_id = $1', 
             params: [ currentUser.id]
         })
 
-        const results: QueryResult<Notification> = {
+        const results: APIQueryResult<Notification> = {
             dictionary: databaseResult.dictionary,
             list: databaseResult.list,
             meta: {
@@ -68,7 +67,9 @@ export class NotificationController {
         return results
     }
 
-    async patchNotification(currentUser: User, id: number, notificationPatch: PartialNotification): Promise<EntityResult<Notification>> {
+    async patchNotification(
+        currentUser: User, id: number, notificationPatch: PartialNotification
+    ): Promise<APIEntityResult<Notification>> {
         /**********************************************************************
          * Permissions Checking and Input Validation
          *
@@ -79,23 +80,23 @@ export class NotificationController {
         
         // 1. User must be authenticated.
         if ( ! currentUser ) {
-            throw new ControllerError(401, 'not-authenticated', 'Must be authenticated to retrieve notifications!')
+            throw new APIError(401, 'not-authenticated', 'Must be authenticated to retrieve notifications!')
         }
 
         notificationPatch.id = id
 
-        const updateResult = await this.notificationDAO.updateNotification(notificationPatch)
+        const updateResult = await this.dao.notification.updateNotification(notificationPatch)
         if ( ! updateResult ) {
-            throw new ControllerError(400, 'no-content', `Failed to update a notification because no content was provided.`)
+            throw new APIError(400, 'no-content', `Failed to update a notification because no content was provided.`)
         }
 
-        const results = await this.notificationDAO.selectNotifications({ 
+        const results = await this.dao.notification.selectNotifications({ 
             where: 'user_notifications.id = $1', 
             params: [ id ] 
         })
         const entity = results.dictionary[id]
         if ( ! entity ) {
-            throw new ControllerError(500, 'server-error', `Notification(${id}) doesn't exist after update.`)
+            throw new APIError(500, 'server-error', `Notification(${id}) doesn't exist after update.`)
         }
 
         return {
