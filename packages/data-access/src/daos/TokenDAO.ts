@@ -19,14 +19,14 @@
  ******************************************************************************/
 import { Pool, Client, QueryResultRow } from 'pg'
 
-import { Core, DAOError } from '@journalhub/core'
-
+import { Core } from '@journalhub/core'
 import { 
     Token, 
     PartialToken, 
     ModelDictionary 
 } from '@journalhub/model'
 
+import { DAOError } from '../errors/DAOError'
 import { DAOQuery, DAOResult } from '../types/DAO'
 
 

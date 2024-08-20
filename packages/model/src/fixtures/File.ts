@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { generateFixture, generateEntityFixture, generateQueryFixture } from './generateFixture'
+import { generateFixture } from './generateFixture'
 import { File } from "../types/File"
 
 const files: File[] = [
@@ -92,12 +92,3 @@ const files: File[] = [
 export function getFileFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
     return generateFixture<File>(files, filter)
 }
-
-export function getFileEntityFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateEntityFixture<File>(files, filter)
-}
-
-export function getFileQueryFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateQueryFixture<File>(files, filter)
-}
-

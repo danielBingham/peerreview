@@ -19,7 +19,7 @@
  ******************************************************************************/
 
 import { Feature, FeatureStatus, FeatureDictionary } from '../types/Feature'
-import { Core, ServiceError } from '@journalhub/core'
+import { Core } from '@journalhub/core'
 
 import { FeatureDAO } from '../daos/FeatureDAO'
 
@@ -34,6 +34,7 @@ import PaperEventStatusMigration from '../migrations/PaperEventStatusMigration'
 import PaperTimelineCommentsMigration from '../migrations/PaperTimelineCommentsMigration'
 import RolesAndPermissionsMigration from '../migrations/RolesAndPermissionsMigration'
 
+import { FeatureError } from '../errors/FeatureError'
 import MigrationError from '../errors/MigrationError'
 
 
@@ -230,9 +231,9 @@ export class FeatureService {
      *
      * @param {string} name     The name of the feature to insert into the database.
      *
-     * @throws {ServiceError}   When the given `name` isn't a key of the
+     * @throws {FeatureError}   When the given `name` isn't a key of the
      * Features Dictionary.
-     * @throws {ServiceError}   When attempting to insert a feature already inserted.
+     * @throws {FeatureError}   When attempting to insert a feature already inserted.
      * @throws {DAOError}       If something goes awry when inserting the feature.
      *
      * @return {Promise<void>}
@@ -240,12 +241,12 @@ export class FeatureService {
     async insert(name: string): Promise<void> {
         const feature = await this.getFeature(name)
         if ( ! feature ) {
-            throw new ServiceError('missing-feature',
+            throw new FeatureError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
         if ( feature.status !== FeatureStatus.uncreated ) {
-            throw new ServiceError('invalid-status',
+            throw new FeatureError('invalid-status',
                `Attempt to insert Feature(${name}) which is already inserted.`)
         }
 
@@ -261,7 +262,7 @@ export class FeatureService {
      *
      * @param {string} name     The name of the feature we'd like to initialize.
      *
-     * @throws {ServiceError}   When `name` doesn't exist in the Features
+     * @throws {FeatureError}   When `name` doesn't exist in the Features
      * Dictionary.
      * @throws {MigrationError} When the migration fails with a MigrationError.
      * @throws {Error} If other errors occur.
@@ -271,12 +272,12 @@ export class FeatureService {
     async initialize(name: string): Promise<void> {
         const feature = await this.getFeature(name)
         if ( ! feature ) {
-            throw new ServiceError('missing-feature',
+            throw new FeatureError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
         if ( feature.status !== FeatureStatus.created && feature.status !== FeatureStatus.uninitialized) {
-            throw new ServiceError('invalid-status',
+            throw new FeatureError('invalid-status',
                 `Attempt to initialize Feature(${name}) currently in invalid status "${feature.status}".`)
         }
 
@@ -316,7 +317,7 @@ export class FeatureService {
      *
      * @param {string} name     The name of the feature to migrate.
      *
-     * @throws {ServiceError}   When the feature isn't in the Feature
+     * @throws {FeatureError}   When the feature isn't in the Feature
      * Dictionary.
      * @throws {MigrationError} When the mgiration fails in a catchable way.
      * @throws {Error}          When something else goes wrong.
@@ -326,12 +327,12 @@ export class FeatureService {
     async migrate(name:string ): Promise<void> {
         const feature = await this.getFeature(name)
         if ( ! feature ) {
-            throw new ServiceError('missing-feature',
+            throw new FeatureError('missing-feature',
                 `Attempt to migrate Feature(${name}) which doesn't exist.`)
         }
 
         if ( feature.status !== FeatureStatus.initialized  && feature.status !== FeatureStatus.rolledBack) {
-            throw new ServiceError('invalid-status',
+            throw new FeatureError('invalid-status',
                 `Attempt to migrate Feature(${name}) in invalid status "${feature.status}".`)
         }
 
@@ -358,8 +359,8 @@ export class FeatureService {
      *
      * @param {string} name     The name of the feature we want to enable.
      *
-     * @throws {ServiceError}   When `name` doesn't exist in Feature Dictionary.
-     * @throws {ServiceError}   When the named feature isn't already migrated
+     * @throws {FeatureError}   When `name` doesn't exist in Feature Dictionary.
+     * @throws {FeatureError}   When the named feature isn't already migrated
      * or previously disabled.
      * @throws {DAOError}       If something goes awry updating the `features`
      * table.
@@ -369,14 +370,14 @@ export class FeatureService {
     async enable(name: string): Promise<void> {
         const feature = await this.getFeature(name)
         if ( ! feature ) {
-            throw new ServiceError('missing-feature',
+            throw new FeatureError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
         if ( feature.status !== FeatureStatus.migrated  
             && feature.status !== FeatureStatus.disabled) 
         {
-            throw new ServiceError('invalid-status',
+            throw new FeatureError('invalid-status',
                 `Attempt to enable Feature(${name}) in invalid status "${feature.status}".`)
         }
 
@@ -391,9 +392,9 @@ export class FeatureService {
      *
      * @param {string} name     The name of the feature to disable.
      *
-     * @throws {ServiceError}   When the feature doesn't exist in the Feature
+     * @throws {FeatureError}   When the feature doesn't exist in the Feature
      * Dictionary.
-     * @throws {ServiceError}   When the feature isn't enabled.
+     * @throws {FeatureError}   When the feature isn't enabled.
      * @throws {DAOError}       When something goes awry while updating the
      * `features` table.
      *
@@ -402,12 +403,12 @@ export class FeatureService {
     async disable(name: string): Promise<void> {
         const feature = await this.getFeature(name)
         if ( ! feature ) {
-            throw new ServiceError('missing-feature',
+            throw new FeatureError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
         if ( feature.status !== FeatureStatus.enabled ) {
-            throw new ServiceError('invalid-status',
+            throw new FeatureError('invalid-status',
                 `Attempt to disable Feature(${name}) in invalid status "${feature.status}".`)
         }
 
@@ -422,20 +423,20 @@ export class FeatureService {
      *
      * @param {string} name     The name of the feature to rollback.
      * 
-     * @throws {ServiceError}   When the feature doesn't exist in the Features
+     * @throws {FeatureError}   When the feature doesn't exist in the Features
      * Dictionary.
-     * @throws {ServiceError}   When the feature isn't migrated or disabled.
+     * @throws {FeatureError}   When the feature isn't migrated or disabled.
      * @throws {MigrationError} When something goes awry with the migration.
      */
     async rollback(name: string): Promise<void> {
         const feature = await this.getFeature(name)
         if ( ! feature ) {
-            throw new ServiceError('missing-feature',
+            throw new FeatureError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 
         if ( feature.status !== FeatureStatus.migrated && feature.status !== FeatureStatus.disabled) {
-            throw new ServiceError('invalid-status',
+            throw new FeatureError('invalid-status',
                 `Attempt to rollback Feature(${name}) in invalid status "${feature.status}".`)
         }
 
@@ -456,7 +457,7 @@ export class FeatureService {
 
     async uninitialize(name: string): Promise<void> {
         if ( ! this.features[name] ) {
-            throw new ServiceError('missing-feature',
+            throw new FeatureError('missing-feature',
                 `Attempt to initialize Feature(${name}) which doesn't exist.`)
         }
 

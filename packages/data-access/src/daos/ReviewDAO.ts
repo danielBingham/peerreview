@@ -19,10 +19,11 @@
  ******************************************************************************/
 import { Pool, Client, QueryResultRow } from 'pg'
 
-import { Core, DAOError } from '@journalhub/core'
-import { Review, ReviewComment, ReviewThread, QueryMeta, ModelDictionary } from '@journalhub/model'
+import { Core } from '@journalhub/core'
+import { Review, ReviewComment, ReviewThread, ModelDictionary } from '@journalhub/model'
 
-import { DAOQuery, DAOResult } from '../types/DAO'
+import { DAOError } from '../errors/DAOError'
+import { DAOQuery, DAOResult, PageMeta } from '../types/DAO'
 
 export class ReviewDAO {
     core: Core
@@ -202,7 +203,7 @@ export class ReviewDAO {
         return this.hydrateReviews(results.rows)
     }
 
-    async getPage(query?: DAOQuery): Promise<number[]> {
+    async getReviewsPage(query?: DAOQuery): Promise<number[]> {
         const where = query?.where ? `WHERE ${query.where}` : '' 
         const params = query?.params ? [ ...query.params ] : []
 
@@ -239,7 +240,7 @@ export class ReviewDAO {
         return results.rows.map((r) => r.id)
     }
 
-    async countReviews(query?: DAOQuery): Promise<QueryMeta> {
+    async getReviewsPageMeta(query?: DAOQuery): Promise<PageMeta> {
         const where = query?.where ? `WHERE ${query.where}` : '' 
         const params = query?.params ? [ ...query.params ] : []
 
@@ -252,7 +253,7 @@ export class ReviewDAO {
             FROM reviews
             ${where}
        `
-
+         
         const results = await this.database.query(sql, params)
 
         if ( results.rows.length <= 0 || results.rows[0].review_count == 0 ) {

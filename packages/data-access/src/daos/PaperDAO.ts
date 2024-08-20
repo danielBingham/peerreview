@@ -19,11 +19,12 @@
  ******************************************************************************/
 import { Pool, QueryResultRow } from 'pg'
 
-import { Paper, PaperAuthor, PaperVersion, ModelDictionary, QueryMeta } from '@journalhub/model'
+import { Paper, PaperAuthor, PaperVersion, ModelDictionary } from '@journalhub/model'
 
-import { Core, DAOError } from '@journalhub/core'
+import { Core } from '@journalhub/core'
 
-import { DAOQuery, DAOQueryOrder, DAOResult } from '../types/DAO'
+import { DAOError } from '../errors/DAOError'
+import { DAOQuery, DAOQueryOrder, DAOResult, PageMeta } from '../types/DAO'
 
 import { FileDAO } from './FileDAO'
 
@@ -268,7 +269,7 @@ export class PaperDAO {
     /**
      *
      */
-    async countPapers(query?: DAOQuery): Promise<QueryMeta> {
+    async getPapersPageMeta(query?: DAOQuery): Promise<PageMeta> {
         let where = (query?.where ? `WHERE ${query.where}` : '')
         const params = (query?.params ? [...query.params] : [])
 

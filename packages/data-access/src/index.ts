@@ -19,7 +19,7 @@
  ******************************************************************************/
 export { DAOError } from './errors/DAOError'
 
-export { DAOQueryOrder, DAOQuery, DAOResult } from './types/DAO'
+export { DAOQueryOrder, DAOQuery, DAOResult, PageMeta } from './types/DAO'
 
 export { FieldDAO } from './daos/FieldDAO'
 export { FileDAO } from './daos/FileDAO'

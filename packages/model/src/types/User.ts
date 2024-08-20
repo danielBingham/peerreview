@@ -41,12 +41,12 @@ export interface UserJournalMembership {
     updatedDate: string
 }
 
+/**
+ * This is the user's public facing data.
+ */
 export interface User extends Model {
     orcidId: string
     name: string
-    email?: string
-    status?: UserStatus 
-    permissions?: UserPermissions 
     bio: string
     location: string
     institution: string
@@ -54,6 +54,15 @@ export interface User extends Model {
     createdDate: string
     updatedDate: string
     memberships: UserJournalMembership[]
+}
+
+/**
+ * This extends the public facing User model with the user's private data.
+ */
+export interface FullUser extends User {
+    email: string
+    status: UserStatus 
+    permissions: UserPermissions 
 }
 
 export interface PartialUser {

@@ -26,7 +26,7 @@ import { NotificationDAO } from '../../src/daos/NotificationDAO'
 import { getUserNotificationsTableFixture } from '../../src/fixtures/database/UserNotificationsTable'
 import { getDAOResultFixture } from '../../src/fixtures/getDAOResultFixture'
 
-import { Notification, getNotificationFixture, ResultType } from '@journalhub/model'
+import { Notification, getNotificationFixture } from '@journalhub/model'
 
 import { mockCore } from '@journalhub/core'
 

@@ -21,7 +21,7 @@ import {
     JournalSubmission
 } from "../types/JournalSubmission"
 
-import { generateFixture, generateEntityFixture, generateQueryFixture } from './generateFixture'
+import { generateFixture } from './generateFixture'
 
 const journalSubmissions: JournalSubmission[] = [
     // Fixture 1: New Submission with no Assignees
@@ -86,10 +86,3 @@ export function getJournalSubmissionFixture(filter?: (element: any, index: any, 
     return generateFixture<JournalSubmission>(journalSubmissions, filter)
 }
 
-export function getJournalSubmissionEntityFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateEntityFixture<JournalSubmission>(journalSubmissions, filter)
-}
-
-export function getJournalSubmissionQueryFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateQueryFixture<JournalSubmission>(journalSubmissions, filter)
-}

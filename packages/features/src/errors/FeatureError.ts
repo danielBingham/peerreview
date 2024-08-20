@@ -17,33 +17,13 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Notification, NotificationType } from '../types/Notification'
 
-import { generateFixture } from './generateFixture'
+export class FeatureError extends Error {
+    status: string
 
-const notifications: Notification[] = [
-    {
-        id: 1,
-        userId: 1,
-        type: NotificationType.Author_Paper_Submitted,
-        description: 'Your co-author has submitted your paper!',
-        path: '/paper/1',
-        isRead: false,
-        createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP'
-    },
-    {
-        id: 2,
-        userId: 2,
-        type: NotificationType.Author_Paper_Submitted,
-        description: 'Your co-author has submitted your paper!',
-        path: '/paper/1',
-        isRead: true,
-        createdDate: 'TIMESTAMP',
-        updatedDate: 'TIMESTAMP'
+    constructor(status: string, message: string) {
+        super(message)
+
+        this.status = status
     }
-]
-
-export function getNotificationFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateFixture<Notification>(notifications, filter)
 }

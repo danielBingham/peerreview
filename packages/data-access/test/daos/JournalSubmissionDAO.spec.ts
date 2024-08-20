@@ -26,7 +26,7 @@ import { JournalSubmissionDAO } from '../../src/daos/JournalSubmissionDAO'
 import { getJournalSubmissionsTableJoinFixture } from '../../src/fixtures/database/JournalSubmissionsTable'
 import { getDAOResultFixture } from '../../src/fixtures/getDAOResultFixture'
 
-import { JournalSubmission, getJournalSubmissionFixture, ResultType } from '@journalhub/model'
+import { JournalSubmission, getJournalSubmissionFixture } from '@journalhub/model'
 import { FeatureStatus } from '@journalhub/features'
 
 import { mockCore } from '@journalhub/core'

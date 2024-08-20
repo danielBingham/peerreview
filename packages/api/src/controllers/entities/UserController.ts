@@ -25,6 +25,7 @@
  ******************************************************************************/
 import { Core } from '@journalhub/core' 
 import { 
+    FullUser,
     User, 
     PartialUser,
     UserAuthorization,
@@ -213,7 +214,7 @@ export class UserController {
      *
      * Create a new `user`.
      */
-    async postUsers(loggedInUser: User, user: PartialUser): Promise<APIEntityResult<User>> {
+    async postUsers(loggedInUser: FullUser, user: PartialUser): Promise<APIEntityResult<User>> {
         /*************************************************************
          * Permissions Checking and Input Validation
          *
@@ -229,14 +230,23 @@ export class UserController {
          * Anyone can call this endpoint.
          *
          * Validation:
-         * 1. user.email must not already be attached to a user in the
+         * 1. user.email must be present and a valid email.
+         * 2. user.email must not already be attached to a user in the
          * database.
-         * 2. Invitation => no password needed
-         * 3. Registration => must include password
-         * 4. user.name is required.
-         * 5. user.email is required. 
+         * 3. Invitation => no password needed
+         * 4. Registration => must include password
+         * 5. user.name is required.
          *
          * **********************************************************/
+       
+        // 1. Must include an email.
+        if ( typeof user.email === "undefined" || user.email === null ) {
+            throw new APIError(400, 'no-email',
+                `Creation failed, User posted with no email.`)
+        } else if ( ! user.email.match(/^[^\s@]+@[^\s@]+$/) ) {
+            throw new APIError(400, 'inavlid-email',
+                `Creation failed, User posted invalid email "${user.email}".`)
+        }
         user.email = user.email.toLowerCase()
 
         // If a user already exists with that email, send a 409 Conflict
@@ -247,7 +257,7 @@ export class UserController {
             [ user.email ]
         )
 
-        // 1. request.body.email must not already be attached to a user in the
+        // 1. user.email must not already be attached to a user in the
         // database.
         if (userExistsResults.rows.length > 0) {
             throw new APIError(409, 'user-exists', 
@@ -299,25 +309,39 @@ export class UserController {
         const createdUser = createdUserResults.dictionary[user.id]
 
         if ( loggedInUser ) {
-            const partialToken = this.tokenService.createToken(createdUser.id, TokenType.Invitation)
+            const partialToken = this.tokenService.createToken(
+                createdUser.id, TokenType.Invitation)
             const id = await this.dao.token.insertToken(partialToken)
 
-            const results = await this.dao.token.selectTokens({ where: 'tokens.id = $1', params: [ id ] })
+            const results = await this.dao.token.selectTokens({ 
+                where: 'tokens.id = $1', 
+                params: [ id ] 
+            })
 
-            await this.emailService.sendInvitation(loggedInUser, createdUser, results.dictionary[id])
+            await this.emailService.sendInvitation(
+                loggedInUser, createdUser, results.dictionary[id].token)
         } else {
-            const partialToken = this.tokenService.createToken(createdUser.id, TokenType.EmailConfirmation)
+            const partialToken = this.tokenService.createToken(
+                createdUser.id, TokenType.EmailConfirmation)
             const id = await this.dao.token.insertToken(partialToken)
 
-            const results = await this.dao.token.selectTokens({ where: 'tokens.id = $1', params: [ id ]})
+            const results = await this.dao.token.selectTokens({
+                where: 'tokens.id = $1', 
+                params: [ id ]
+            })
 
-            await this.emailService.sendEmailConfirmation(createdUser, results.dictionary[id])
+            await this.emailService.sendEmailConfirmation(
+                createdUser, results.dictionary[id].token)
         }
 
-        const results = await this.dao.user.selectCleanUsers({ where: 'users.id=$1', params: [ user.id ] })
+        const results = await this.dao.user.selectCleanUsers({
+            where: 'users.id=$1', 
+            params: [ user.id ] 
+        })
 
         if (! results.dictionary[user.id] ) {
-            throw new APIError(500, 'server-error', `No user found after insertion. Looking for id ${user.id}.`)
+            throw new APIError(500, 'server-error', 
+                `No user found after insertion. Looking for id ${user.id}.`)
         }
 
         const relations = await this.getRelations(results)
@@ -340,7 +364,10 @@ export class UserController {
          * Anyone may call this endpoint.
          * 
          * **********************************************************/
-        const results = await this.dao.user.selectCleanUsers({ where: 'users.id = $1', params: [id] })
+        const results = await this.dao.user.selectCleanUsers({ 
+            where: 'users.id = $1', 
+            params: [id] 
+        })
 
         if ( ! results.dictionary[id] ) {
             throw new APIError(404, 'not-found', `User(${id}) not found.`)
@@ -361,7 +388,7 @@ export class UserController {
      *
      */
     async patchUser(
-        currentUser: User, 
+        currentUser: FullUser, 
         id: number, 
         user: PartialUser, 
         authorization: UserAuthorization

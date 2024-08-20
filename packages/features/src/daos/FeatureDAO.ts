@@ -20,7 +20,9 @@
 
 import { QueryResultRow } from 'pg'
 
-import { Core, DAOError } from '@journalhub/core'
+import { Core } from '@journalhub/core'
+
+import { FeatureError } from '../errors/FeatureError'
 import { Feature, FeatureStatus, PartialFeature, FeatureDictionary } from '../types/Feature'
 
 
@@ -128,7 +130,7 @@ export class FeatureDAO {
      * @param {Feature} feature     The feature to translate to the database
      * and insert.
      *
-     * @throws {DAOError}   If something goes awry when inserting.
+     * @throws {FeatureError}   If something goes awry when inserting.
      *
      * @return {Promise<void>}
      */
@@ -141,7 +143,7 @@ export class FeatureDAO {
         const result = await this.core.database.query(sql, [ feature.name, feature.status ])
         
         if ( ! result.rowCount || result.rowCount <= 0 ) {
-            throw new DAOError('insert-failed', `Failed to insert Feature(${feature.name}).`)
+            throw new FeatureError('insert-failed', `Failed to insert Feature(${feature.name}).`)
         }
     }
 
@@ -181,7 +183,7 @@ export class FeatureDAO {
         const results = await this.core.database.query(sql, params)
 
         if ( ! results.rowCount || results.rowCount <= 0 ) {
-            throw new DAOError('update-failure', `Failed to update Feature(${feature.name}) with partial update.`) 
+            throw new FeatureError('update-failure', `Failed to update Feature(${feature.name}) with partial update.`) 
         }
     }
 

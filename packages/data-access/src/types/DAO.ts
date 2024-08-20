@@ -84,3 +84,21 @@ export interface DAOResult<Type extends Model> {
     /** A list of `Type` containing the same objects as `dictionary`, preserving query order. **/
     list: number[],
 }
+
+
+/**
+ * Meta data describing the paging characteristics of a query.
+ */
+export interface PageMeta { 
+    /**  The total number of results. **/
+    count: number,
+
+    /** The current page in the result set. **/
+    page: number,
+
+    /** The maximum number of results on a page. **/
+    pageSize: number,
+
+    /** The total number of pages. **/
+    numberOfPages: number
+}

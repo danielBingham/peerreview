@@ -20,7 +20,7 @@
 import { Paper } from "../types/Paper"
 import { getFileFixture } from "./File"
 
-import { generateFixture, generateEntityFixture, generateQueryFixture } from './generateFixture'
+import { generateFixture } from './generateFixture'
 
 const files = getFileFixture() 
 
@@ -209,10 +209,4 @@ const papers: Paper[] = [
 
 export function getPaperFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
     return generateFixture(papers, filter)
-}
-export function getPaperEntityFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateEntityFixture(papers, filter)
-}
-export function getPaperQueryFixture(filter?: (element: any, index: any, array: any[]) => boolean) {
-    return generateQueryFixture(papers, filter)
 }

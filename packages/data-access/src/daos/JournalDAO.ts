@@ -19,11 +19,12 @@
  ******************************************************************************/
 import { Pool, Client, QueryResultRow } from 'pg'
 
-import { Core, DAOError } from '@journalhub/core'
+import { Core } from '@journalhub/core'
 
-import { Journal, PartialJournal, JournalMember, QueryMeta, ModelDictionary} from '@journalhub/model'
+import { Journal, PartialJournal, JournalMember, ModelDictionary} from '@journalhub/model'
 
-import { DAOQuery, DAOQueryOrder, DAOResult } from '../types/DAO'
+import { DAOError } from '../errors/DAOError'
+import { DAOQuery, DAOQueryOrder, DAOResult, PageMeta } from '../types/DAO'
 
 const PAGE_SIZE = 20
 
@@ -289,7 +290,7 @@ export class JournalDAO {
      * Get the paging metadata for the query defined by the given
      * `whereStatement` and `whereParams`.  
      */
-    async getJournalQueryMeta(query?: DAOQuery): Promise<QueryMeta> {
+    async getJournalPageMeta(query?: DAOQuery): Promise<PageMeta> {
         let where = query?.where ? `WHERE ${query.where}` : ''
         const params = query?.params ? [ ...query.params ] : [] 
 

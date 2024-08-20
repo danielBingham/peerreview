@@ -19,18 +19,19 @@
  ******************************************************************************/
 import { Pool, Client, QueryResultRow } from 'pg'
 
-import { Core, DAOError } from '@journalhub/core'
+import { Core } from '@journalhub/core'
 
 import { 
+    FullUser,
     User, 
     PartialUser,
     UserJournalMembership,
     UserStatus,
-    QueryMeta,
     ModelDictionary 
 } from '@journalhub/model'
 
-import { DAOQuery, DAOQueryOrder, DAOResult } from '../types/DAO'
+import { DAOError } from '../errors/DAOError'
+import { DAOQuery, DAOQueryOrder, DAOResult, PageMeta } from '../types/DAO'
 
 import { FileDAO } from './FileDAO'
 
@@ -53,15 +54,12 @@ export class UserDAO {
         this.fileDAO = new FileDAO(core)
     }
 
-    getUserSelectionString(clean?: boolean): string {
+    getUserSelectionString(): string {
         return `
         users.id as "User_id", 
         users.orcid_id as "User_orcidId", 
         users.file_id as "User_fileId",
-        ${ ! clean ? 'users.status as "User_status"' : ''}, 
-        ${ ! clean ? 'users.permissions as "User_permissions"' : ''},
         users.name as "User_name", 
-        ${ ! clean ? 'users.email as "User_email"' : ''}, 
         users.bio as "User_bio", 
         users.location as "User_location", 
         users.institution as "User_institution", 
@@ -70,22 +68,41 @@ export class UserDAO {
         `
     }
 
+    getFullUserSelectionString(): string {
+        const userSelectionString = this.getUserSelectionString()
+        return userSelectionString + `, 
+         users.status as "User_status", 
+         users.permissions as "User_permissions",
+         users.email as "User_email" 
+        `
+    }
+
     hydrateUser(row: QueryResultRow): User {
-        return {
+        const user: User = {
             id: ( row.user_id !== undefined ? row.user_id : null),
             orcidId: ( row.user_orcidId !== undefined ? row.user_orcidId : null),
             name: ( row.user_name !== undefined ? row.user_name : null),
-            email: ( row.user_email !== undefined ? row.user_email : null),
-            status: ( row.user_status !== undefined ? row.user_status : null),
             bio: ( row.user_bio !== undefined ? row.user_bio : null),
             location: ( row.user_location !== undefined ? row.user_location : null), 
             institution: ( row.user_institution !== undefined ? row.user_institution : null), 
-            permissions: ( row.user_permissions !== undefined ? row.user_permissions : null),
             createdDate: ( row.user_createdDate !== undefined ? row.user_createdDate : null),
             updatedDate: ( row.user_updatedDate !== undefined ? row.user_updatedDate : null),
             file: null,
             memberships: []
         }
+
+        return user
+    }
+
+    hydrateFullUser(row: QueryResultRow): FullUser {
+        const user = this.hydrateUser(row)
+        const fullUser: FullUser = {
+            ...user,
+            email: ( row.user_email !== undefined ? row.user_email : null ),
+            status: ( row.user_status !== undefined ? row.user_status : null),
+            permissions: ( row.user_permissions !== undefined ? row.user_permissions : null),
+        }
+        return fullUser
     }
 
     getUserJournalMembershipSelectionString(): string {
@@ -114,7 +131,7 @@ export class UserDAO {
      *
      * @return {Object}     The users parsed into a dictionary keyed using user.id. 
      */
-    hydrateUsers(rows: QueryResultRow[]): DAOResult<User> {
+    hydrateUsers(rows: QueryResultRow[], getFull?: boolean): DAOResult<User> {
         const dictionary: ModelDictionary<User> = {}
         const list: number[] = []
 
@@ -124,7 +141,13 @@ export class UserDAO {
         for( const row of rows ) {
 
             if ( ! ( row.User_id in dictionary)) {
-                const user = this.hydrateUser(row) 
+                let user: User 
+                if ( getFull ) {
+                    user = this.hydrateFullUser(row) 
+                } else { 
+                    user = this.hydrateUser(row)
+                }
+
                 if ( row.User_fileId ) {
                     user.file = this.fileDAO.hydrateFile(row)
                 } else {
@@ -153,8 +176,12 @@ export class UserDAO {
      *
      * @see this.selectUsers()
      */
-    async selectCleanUsers(query: DAOQuery) {
-        return await this.selectUsers(query, true)
+    async selectCleanUsers(query: DAOQuery): Promise<DAOResult<User>> {
+        return await this.selectUsers(query, false)
+    }
+
+    async selectFullUsers(query: DAOQuery): Promise<DAOResult<FullUser>> {
+        return await this.selectUsers(query, true) as DAOResult<FullUser>
     }
 
     /**
@@ -162,7 +189,7 @@ export class UserDAO {
      *
      * TODO Fix paging.
      */
-    async selectUsers(query?: DAOQuery, clean?: boolean) {
+    async selectUsers(query?: DAOQuery, getFull?: boolean) {
         let where = query?.where ? `WHERE ${query.where}` : ''
         const params = query?.params ? [ ...query.params ] : []
 
@@ -181,7 +208,7 @@ export class UserDAO {
 
         const page = query?.page || 0
         if ( page > 0) {
-            const pageIds = await this.getPage(query)
+            const pageIds = await this.getUsersPage(query)
             if ( where === '' ) {
                 where = `WHERE users.id = ANY(${params.length+1}::bigint[])`
                 params.push(pageIds)
@@ -193,7 +220,7 @@ export class UserDAO {
 
         const sql = `
                 SELECT 
-                    ${this.getUserSelectionString(clean)},
+                    ${( getFull ? this.getFullUserSelectionString() : this.getUserSelectionString() )},
 
                     ${this.fileDAO.getFilesSelectionString()},
 
@@ -207,10 +234,10 @@ export class UserDAO {
         `
 
         const results = await this.database.query(sql, params)
-        return this.hydrateUsers(results.rows)
+        return this.hydrateUsers(results.rows, getFull)
     }
 
-    async getPage(query?: DAOQuery): Promise<number[]> {
+    async getUsersPage(query?: DAOQuery): Promise<number[]> {
         const where = query?.where ? `WHERE ${query.where}` : ''
         const params = query?.params ? [ ...query.params ] : []
 
@@ -257,7 +284,7 @@ export class UserDAO {
         return results.rows.map((r) => r.id)
     }
 
-    async countUsers(query: DAOQuery): Promise<QueryMeta> {
+    async getUsersPageMeta(query: DAOQuery): Promise<PageMeta> {
         const where = query.where ? `WHERE ${query.where}` : ''
         const params = query.params ? query.params : []
         const order = query.order ? query.order : 'users.created_date desc'

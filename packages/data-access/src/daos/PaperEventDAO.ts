@@ -19,10 +19,11 @@
  ******************************************************************************/
 import { Pool, Client, QueryResultRow } from 'pg'
 
-import { Core, DAOError } from '@journalhub/core'
+import { Core } from '@journalhub/core'
 
 import { PaperEvent, PartialPaperEvent, ModelDictionary } from '@journalhub/model'
 
+import { DAOError } from '../errors/DAOError'
 import { DAOQuery, DAOQueryOrder, DAOResult } from '../types/DAO'
 
 export class PaperEventDAO {

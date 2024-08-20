@@ -32,7 +32,7 @@ export { PaperComment, PartialPaperComment } from './types/PaperComment'
 export { PaperEvent, PaperEventVisibility, PartialPaperEvent, PaperEventType, PaperEventRootType } from './types/PaperEvent'
 export { Review, ReviewThread, ReviewComment, ReviewStatus, ReviewRecommendation } from './types/Review'
 export { Token, PartialToken, TokenType } from './types/Token'
-export { User, PartialUser, UserJournalMembership, UserAuthorization, UserStatus, UserPermissions, UserQuery } from './types/User'
+export { FullUser, User, PartialUser, UserJournalMembership, UserAuthorization, UserStatus, UserPermissions, UserQuery } from './types/User'
 
 export { getFieldFixture } from './fixtures/Field'
 export { getFileFixture } from './fixtures/File'

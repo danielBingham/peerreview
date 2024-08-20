@@ -18,6 +18,7 @@
  *
  ******************************************************************************/
 import { Model, ModelDictionary } from "@journalhub/model"
+import { PageMeta } from "@journalhub/data-access"
 
 
 export interface APIRelations { 
@@ -41,26 +42,6 @@ export interface APIEntityResult<Type extends Model> {
 }
 
 /**
- * Metadata describing the results of a query, primarily used for paging but
- * could be extended with other kinds of metadata in the future.
- */
-export interface APIQueryMeta { 
-    /**  The total number of results. **/
-    count: number,
-
-    /** The current page in the result set. **/
-    page: number,
-
-    /** The maximum number of results on a page. **/
-    pageSize: number,
-
-    /** The total number of pages. **/
-    numberOfPages: number
-}
-
-
-
-/**
  * Query results, returned by REST endpoints that return pageable lists of
  * results.
  */
@@ -76,7 +57,7 @@ export interface APIQueryResult<Type extends Model> {
     list: number[],
 
     /** Paging meta data for the query. **/
-    meta: APIQueryMeta,
+    meta: PageMeta,
 
     /** 
      * A dictionary of `ModelDictionary` storing related objects that were

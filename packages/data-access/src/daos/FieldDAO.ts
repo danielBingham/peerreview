@@ -20,11 +20,11 @@
 
 import { QueryResultRow, Pool, Client } from 'pg'
 
-import { Field, ModelDictionary, QueryMeta } from '@journalhub/model'
+import { Field, ModelDictionary } from '@journalhub/model'
 
 import { Core } from '@journalhub/core'
 
-import { DAOQuery, DAOQueryOrder, DAOResult } from '../types/DAO'
+import { DAOQuery, DAOQueryOrder, DAOResult, PageMeta } from '../types/DAO'
 
 const PAGE_SIZE = 20 
 
@@ -164,9 +164,9 @@ export class FieldDAO {
 
     /**
      * Gets the total number of fields included in a query and returns them in
-     * the form of an initial QueryMeta.
+     * the form of an initial PageMeta.
      */
-    async getFieldQueryMeta(query?: DAOQuery): Promise<QueryMeta> {
+    async getFieldPageMeta(query?: DAOQuery): Promise<PageMeta> {
         const params = query?.params ? [ ...query.params ] : []
         const where = query?.where ? `WHERE ${query.where}` : ''
         
