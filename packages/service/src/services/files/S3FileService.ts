@@ -20,10 +20,9 @@
 import fs from 'fs'
 
 import { S3 } from '@aws-sdk/client-s3'
-import { PutObjectCommand, DeleteObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3'
+import { PutObjectCommand, DeleteObjectCommand, CopyObjectCommand, ObjectCannedACL } from '@aws-sdk/client-s3'
 
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
-
+import { Core } from '@journalhub/core' 
 
 export class S3FileService {
     core: Core
@@ -51,7 +50,7 @@ export class S3FileService {
             Bucket: this.core.config.s3.bucket,
             Key: targetPath,
             Body: filestream,
-            ACL: 'public-read'
+            ACL: 'public-read' as ObjectCannedACL
         }
 
         await this.s3Client.send(new PutObjectCommand(params))
@@ -62,7 +61,7 @@ export class S3FileService {
             Bucket: this.core.config.s3.bucket,
             CopySource: this.core.config.s3.bucket + '/' + currentPath,
             Key: newPath,
-            ACL: 'public-read'
+            ACL: 'public-read' as ObjectCannedACL
 
         }
 

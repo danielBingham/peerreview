@@ -26,7 +26,7 @@ import {
     JournalMember,
     Review, 
     User
-} from '@danielbingham/peerreview-model'
+} from '@journalhub/model'
 
 export interface NotificationContext {
     paper?: Paper

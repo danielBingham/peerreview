@@ -19,9 +19,8 @@
  ******************************************************************************/
 import { Pool, Client } from 'pg'
 
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
-
-import { User } from '@danielbingham/peerreview-model'
+import { Core } from '@journalhub/core' 
+import { User } from '@journalhub/model'
 
 import { SubmissionService } from './SubmissionService'
 

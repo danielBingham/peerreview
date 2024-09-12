@@ -20,11 +20,11 @@
 import bcrypt from 'bcrypt'
 import { Client, Pool } from 'pg'
 
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+import { Core } from '@journalhub/core' 
+import { User } from '@journalhub/model'
+import { UserDAO } from '@journalhub/data-access'
 
-import { User } from '@danielbingham/peerreview-model'
-
-import { UserDAO } from '../daos/UserDAO'
+import { ServiceError } from '../errors/ServiceError'
 
 export interface Credentials {
     email: string

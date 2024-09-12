@@ -71,12 +71,11 @@
  * choose the level of visibility of their interactions.
  *
  * ****************************************************************************/
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+import { Core } from '@journalhub/core' 
+import { User, Paper, PaperAuthor, PaperEvent, PartialPaperEvent, JournalModel } from '@journalhub/model'
+import { PaperDAO, PaperEventDAO } from '@journalhub/data-access'
 
-import { User, Paper, PaperAuthor, PaperEvent, PartialPaperEvent, PaperEventType, PaperEventRootType } from '@danielbingham/peerreview-model'
-
-import { PaperEventDAO } from '../daos/PaperEventDAO'
-import { PaperDAO } from '../daos/PaperDAO'
+import { ServiceError } from '../errors/ServiceError'
 
 import { SubmissionService, ActiveSubmission } from './SubmissionService'
 
@@ -85,7 +84,7 @@ interface EventVisibility {
 }
 
 interface EventVisibilityByModel {
-    [ model: string]: EventVisibility
+    [ model: string ]: EventVisibility
 }
 
 export class PaperEventService { 
@@ -122,21 +121,7 @@ export class PaperEventService {
                 'submission:editor-assigned': [ 'public' ],
                 'submission:editor-unassigned': [ 'public' ]
             }, 
-            'open-public': {
-                'paper:new-version': [ 'editors', 'reviewers', 'authors' ],
-                'paper:preprint-posted': [ 'public' ],
-                'paper:new-review': [ 'editors', 'reviewers', 'authors' ], 
-                'paper:new-comment': [ 'editors', 'reviewers', 'authors' ],
-                'submission:new': [ 'editors', 'reviewers', 'authors' ], 
-                'submission:new-review': [ 'editors', 'reviewers', 'authors' ], 
-                'submission:new-comment': [ 'editors', 'reviewers', 'authors' ],
-                'submission:status-changed': [ 'editors', 'reviewers', 'authors' ],
-                'submission:reviewer-assigned': [ 'editors', 'reviewers', 'authors' ],
-                'submission:reviewer-unassigned': [ 'editors', 'reviewers', 'authors' ],
-                'submission:editor-assigned': [ 'editors', 'reviewers', 'authors' ],                
-                'submission:editor-unassigned': [ 'editors', 'reviewers', 'authors' ]
-            }, 
-            'open-closed': {
+            'open': {
                 'paper:new-version': [ 'editors', 'reviewers', 'authors' ],
                 'paper:preprint-posted': [ 'public' ],
                 'paper:new-review': [ 'editors', 'reviewers', 'authors' ], 
@@ -171,7 +156,12 @@ export class PaperEventService {
     // Event Creation
     // ========================================================================
 
-    async getEventVisibility(user: User, event: PaperEvent, paper: Paper, activeSubmissionInfo: ActiveSubmission) {
+    async getEventVisibility(user: User, event: PartialPaperEvent, paper: Paper, activeSubmissionInfo: ActiveSubmission | null) {
+
+        if ( ! event.type ) {
+            throw new ServiceError('missing-input', `'event.type' is required.`)
+        }
+
         let visibility = [ 'authors' ]
 
         if ( activeSubmissionInfo && this.core.features.hasFeature('journal-permission-models-194') ) {
@@ -199,7 +189,7 @@ export class PaperEventService {
 
     async createEvent(user: User, event: PartialPaperEvent) {
         if ( ! ("paperId" in event) || ! event.paperId ) {
-            throw new ServiceError('missing-field', `'event.paperId' must be defined.`)
+            throw new ServiceError('missing-input', `'event.paperId' is required.`)
         }
 
         const activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, event.paperId)
@@ -245,11 +235,18 @@ export class PaperEventService {
     // Event Acessing 
     // ========================================================================
     
-    async getVisibleEventIds(userId) {
-        const userRoles = ['public']
+    async getVisibleEventIds(userId: number): Promise<number[]> {
+        const userRoles: string[] = ['public']
 
-        let submissionMap = {}
-        let authorMap = {}
+        let submissionMap: {
+            [ submissionId: number ]: {
+                journalId: number
+                role: string
+                assignedEditor?: boolean
+                assignedReviewer?: boolean
+            }
+        } = {}
+        let authorMap: { [ paperId: number]: string[] } = {}
 
         // ======== Collect Journal Roles for the current user ========================
 
@@ -274,7 +271,7 @@ export class PaperEventService {
                              ${ userId ? 'OR journal_members.user_id = $1' : '' }
                         
             `
-            const params = []
+            const params: any[] = []
             if ( userId ) {
                 params.push(userId)
             }
@@ -321,7 +318,7 @@ export class PaperEventService {
         // ======== start with public and committed =========================================
         
         let eventConditions = `(paper_events.visibility && $1 AND paper_events.status = 'committed')`
-        const params = [ userRoles ]
+        const params: any[] = [ userRoles ]
         let count = 2
 
         if ( userId ) {
@@ -350,7 +347,7 @@ export class PaperEventService {
         // ======== Submission Roles =========================================================
         // ======== managing-editors, editors, reviewers, assigned-editors, assigned-reviewers 
       
-        const permissionsToRoleMap = {
+        const permissionsToRoleMap: { [ permission: string ]: string[] } = {
             'owner': [ 'managing-editors', 'editors' ],
             'editor': [ 'editors' ],
             'reviewer': [ 'reviewers' ]
@@ -409,7 +406,7 @@ export class PaperEventService {
         return visibleEventIds
     }
 
-    async isEventVisible(eventId, userId) {
+    async isEventVisible(eventId: number, userId: number) {
 
     }
 
@@ -428,8 +425,11 @@ export class PaperEventService {
     'submission:editor-assigned',
     'submission:editor-unassigned'
      */
-    async canEditEvent(user, eventId) {
-        const eventResults = await this.paperEventDAO.selectEvents('WHERE paper_events.id = $1', [ eventId ])
+    async canEditEvent(user: User, eventId: number) {
+        const eventResults = await this.paperEventDAO.selectEvents({ 
+            where: 'paper_events.id = $1', 
+            params: [ eventId ]
+        })
         if ( ! eventResults.dictionary[eventId] ) {
             return false
         }
@@ -477,10 +477,10 @@ export class PaperEventService {
             if ( submissionResults.rows.length > 0 ) {
                 const membership = user.memberships.find((m) => m.journalId == submissionResults.rows[0].journal_id)
                 // Managing editor
-                if ( membership.permissions == 'owner' ) {
+                if ( membership && membership.permissions == 'owner' ) {
                     return true
                 // assigned editor
-                } else if ( membership.permissions == 'editor' ) {
+                } else if ( membership && membership.permissions == 'editor' ) {
                     const userAssigned = submissionResults.rows.find((r) => r.user_id == user.id)
                     if ( userAssigned ) {
                         return true
@@ -492,7 +492,7 @@ export class PaperEventService {
         return false 
     }
 
-    async canViewAnonymous(user, eventIds) {
+    async canViewAnonymous(user: User, eventIds: number[]) {
         /*const results = await this.database.query(`
             SELECT paper_events.id
                 FROM paper_events

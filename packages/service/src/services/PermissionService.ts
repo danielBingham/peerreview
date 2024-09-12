@@ -17,9 +17,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+import { Core } from '@journalhub/core' 
 
-import { User } from '@danielbingham/peerreview-model'
+import { User } from '@journalhub/model'
 
 import { PaperPermissionService } from './permissions/PaperPermissionService'
 

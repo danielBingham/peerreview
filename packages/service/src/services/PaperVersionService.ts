@@ -21,9 +21,9 @@ import { Pool, Client } from 'pg'
 import mime from 'mime'
 import sanitizeFilename from 'sanitize-filename'
 
-import { Core } from '@JournalHub/core' 
-import { DataAccess } from '@JournalHub/data-access'
-import { Paper, PaperVersion } from '@JournalHub/model'
+import { Core } from '@journalhub/core' 
+import { Paper, PaperVersion } from '@journalhub/model'
+import { DataAccess } from '@journalhub/data-access'
 
 import { S3FileService } from './files/S3FileService'
 
@@ -45,7 +45,7 @@ export class PaperVersionService {
             this.database = core.database
         }
         
-        this.fileService = new S3FileService(core, dao)
+        this.fileService = new S3FileService(core)
     }
 
     async savePaperVersionFile(paper: Paper, version: PaperVersion): Promise<void> {

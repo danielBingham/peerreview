@@ -28,15 +28,13 @@
  */
 import { Pool, Client } from 'pg'
 import { Job } from 'bull'
-import { Core, Logger, ServiceError } from '@danielbingham/peerreview-core' 
+import { Core, Logger } from '@journalhub/core' 
 
-import { Review } from '@danielbingham/peerreview-model'
+import { Review } from '@journalhub/model'
+import { FieldDAO, UserDAO } from '@journalhub/data-access'
+import { FieldLibrary } from '@journalhub/library'
 
-import FieldDAO from '../daos/FieldDAO'
-import { UserDAO } from '../daos/UserDAO'
-
-import { FieldLibrary } from '../libraries/FieldLibrary'
-
+import { ServiceError } from '../errors/ServiceError'
 import { OpenAlexService } from './OpenAlexService'
 
 export class ReputationGenerationService {

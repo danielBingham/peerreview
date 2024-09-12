@@ -19,12 +19,11 @@
  ******************************************************************************/
 import path from 'path'
 
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
-import { User, PaperEventVisibility, NotificationType } from '@danielbingham/peerreview-model'
+import { Core } from '@journalhub/core' 
+import { User, NotificationType } from '@journalhub/model'
+import { NotificationDAO, PaperEventDAO,PaperDAO } from '@journalhub/data-access'
 
-import { NotificationDAO } from '../../daos/NotificationDAO'
-import { PaperEventDAO } from '../../daos/PaperEventDAO'
-import { PaperDAO } from '../../daos/PaperDAO'
+import { ServiceError } from '../../errors/ServiceError'
 
 import { EmailService } from '../EmailService'
 import { SubmissionService } from '../SubmissionService'
@@ -33,8 +32,8 @@ import { PaperEventService } from '../PaperEventService'
 import { NotificationDefinition } from './NotificationDefinition'
 import { NotificationContext } from './NotificationContext'
 
-
 export { NotificationContext } from './NotificationContext'
+
 export class NotificationService {
     core: Core
 
@@ -125,8 +124,8 @@ export class NotificationService {
             
             // ==== Editors ===================================================
             
-            if ( event.visibility.includes(PaperEventVisibility.Editors) 
-                || event.visibility.includes(PaperEventVisibility.AssignedEditors) 
+            if ( event.visibility.includes('editors') 
+                || event.visibility.includes('assigned-editors') 
                ) {
                 const assignedEditorResults = await this.core.database.query(`
                     SELECT user_id FROM journal_submission_editors WHERE submission_id = $1
@@ -152,7 +151,7 @@ export class NotificationService {
 
         // ======== Authors ===================================================
 
-        if ( event.visibility.includes(PaperEventVisibility.Public) || event.visibility.includes(PaperEventVisibility.Authors) ) {
+        if ( event.visibility.includes('public') || event.visibility.includes('authors') ) {
             for(const author of paper.authors) {
                 if ( author.userId == currentUser.id ) {
                     continue
@@ -168,7 +167,7 @@ export class NotificationService {
                     }
                 )
             }
-        } else if ( event.visibility.includes(PaperEventVisibility.CorrespondingAuthors) ) {
+        } else if ( event.visibility.includes('corresponding-authors') ) {
             for(const author of paper.authors) {
                 if ( author.userId == currentUser.id ) {
                     continue
@@ -225,8 +224,8 @@ export class NotificationService {
 
             // ==== Assigned Reviewers ========================================
 
-            const isVisibleToAssignedReviewers = event.visibility.includes(PaperEventVisibility.AssignedReviewers) 
-                || event.visibility.includes(PaperEventVisibility.Reviewers) || event.visibility.includes(PaperEventVisibility.Public)
+            const isVisibleToAssignedReviewers = event.visibility.includes('assigned-reviewers') 
+                || event.visibility.includes('reviewers') || event.visibility.includes('public')
 
             if ( isVisibleToAssignedReviewers ) {
                 const assignedReviewerResults = await this.core.database.query(`
@@ -256,7 +255,7 @@ export class NotificationService {
             
             // ==== Editors ===================================================
             
-            if ( event.visibility.includes(PaperEventVisibility.Editors) || event.visibility.includes(PaperEventVisibility.AssignedEditors) ) {
+            if ( event.visibility.includes('editors') || event.visibility.includes('assigned-editors') ) {
                 const assignedEditorResults = await this.core.database.query(`
                     SELECT user_id FROM journal_submission_editors WHERE submission_id = $1
                 `, [ activeSubmissionInfo.id ])
@@ -282,7 +281,7 @@ export class NotificationService {
 
         // ======== Authors ===================================================
 
-        if ( event.visibility.includes(PaperEventVisibility.Public) || event.visibility.includes(PaperEventVisibility.Authors) ) {
+        if ( event.visibility.includes('public') || event.visibility.includes('authors') ) {
             for(const author of paper.authors) {
                 if ( notifiedUserIds.includes(author.userId)) {
                     continue
@@ -299,7 +298,7 @@ export class NotificationService {
                     }
                 )
             }
-        } else if ( event.visibility.includes(PaperEventVisibility.CorrespondingAuthors) ) {
+        } else if ( event.visibility.includes('corresponding-authors') ) {
             for(const author of paper.authors) {
                 if ( notifiedUserIds.includes(author.userId)) {
                     continue
@@ -354,9 +353,9 @@ export class NotificationService {
 
         // ======== Authors ===================================================
 
-        const isVisibleToAuthors = event.visibility.includes(PaperEventVisibility.Authors) || event.visibility.includes(PaperEventVisibility.Public)
-        const isVisibleToCorrespondingAuthors = event.visibility.includes(PaperEventVisibility.CorrespondingAuthors) 
-            || event.visibility.includes(PaperEventVisibility.Authors) || event.visibility.includes(PaperEventVisibility.Public)
+        const isVisibleToAuthors = event.visibility.includes('authors') || event.visibility.includes('public')
+        const isVisibleToCorrespondingAuthors = event.visibility.includes('corresponding-authors') 
+            || event.visibility.includes('authors') || event.visibility.includes('public')
 
         if ( isVisibleToAuthors || isVisibleToCorrespondingAuthors ) {
             for ( const author of context.paper.authors) {
@@ -383,8 +382,8 @@ export class NotificationService {
         if ( activeSubmissionInfo ) {
             // ==== Assigned Reviewers ========================================
 
-            const isVisibleToAssignedReviewers = event.visibility.includes(PaperEventVisibility.AssignedReviewers) 
-                || event.visibility.includes(PaperEventVisibility.Reviewers) || event.visibility.includes(PaperEventVisibility.Public)
+            const isVisibleToAssignedReviewers = event.visibility.includes('assigned-reviewers') 
+                || event.visibility.includes('reviewers') || event.visibility.includes('public')
 
             if ( isVisibleToAssignedReviewers ) {
                 const assignedReviewerResults = await this.core.database.query(`
@@ -413,8 +412,8 @@ export class NotificationService {
           
             // ==== Assigned Editors ==========================================
             
-            const isVisibleToAssignedEditors = event.visibility.includes(PaperEventVisibility.AssignedEditors)
-                || event.visibility.includes(PaperEventVisibility.Editors) || event.visibility.includes(PaperEventVisibility.Public)
+            const isVisibleToAssignedEditors = event.visibility.includes('assigned-editors')
+                || event.visibility.includes('editors') || event.visibility.includes('public')
             if ( isVisibleToAssignedEditors ) {
                 const assignedEditorResults = await this.core.database.query(`
                     SELECT user_id FROM journal_submission_editors
@@ -440,7 +439,7 @@ export class NotificationService {
 
         // ======== Preprint Reviewers ========================================
         
-        if ( event.visibility.includes(PaperEventVisibility.Public) ) {
+        if ( event.visibility.includes('public') ) {
             // TODO Figure out where preprint reviewers fit in all this.
             //
             // Reviewers who reviewed a preprint
@@ -584,7 +583,7 @@ export class NotificationService {
         // ======== Authors ===================================================
        
         let notifiedAuthors = []
-        if ( event.visibility.includes(PaperEventVisibility.Authors) || event.visibility.includes(PaperEventVisibility.Public) ) {
+        if ( event.visibility.includes('authors') || event.visibility.includes('public') ) {
             for(const author of paper.authors) {
                 if ( author.userId == currentUser.id) {
                     continue
@@ -605,9 +604,9 @@ export class NotificationService {
 
         // ======== Editors ===================================================
 
-        const visibleToEditors = event.visibility.includes(PaperEventVisibility.Editors) || event.visibility.includes(PaperEventVisibility.Public)
-        const visibleToManagingEditors = event.visibility.includes(PaperEventVisibility.ManagingEditors) 
-            || event.visibility.includes(PaperEventVisibility.Editors) || event.visibility.includes(PaperEventVisibility.Public)
+        const visibleToEditors = event.visibility.includes('editors') || event.visibility.includes('public')
+        const visibleToManagingEditors = event.visibility.includes('managing-editors') 
+            || event.visibility.includes('editors') || event.visibility.includes('public')
         
         for(const member of context.journal.members) {
             if ( member.userId == currentUser.id ) {

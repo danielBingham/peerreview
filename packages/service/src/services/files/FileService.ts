@@ -19,7 +19,7 @@
  ******************************************************************************/
 import fs from 'fs'
 
-import { Core } from '@danielbingham/peerreview-core' 
+import { Core } from '@journalhub/core' 
 
 export class FileService {
     core: Core

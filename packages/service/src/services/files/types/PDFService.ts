@@ -17,12 +17,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core, ServiceError } from '@JournalHub/core' 
-import { FileDAO } from '@JournalHub/data-access'
+import { Core } from '@journalhub/core' 
+import { FileDAO } from '@journalhub/data-access'
 
 import mime from 'mime'
 import sanitizeFilename from 'sanitize-filename'
 import pdfjslib from 'pdfjs-dist/legacy/build/pdf.js'
+
+import { ServiceError } from '../../../errors/ServiceError'
 
 export class PDFService {
     core: Core

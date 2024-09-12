@@ -17,11 +17,12 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
-
-import { User } from '@danielbingham/peerreview-model'
-
 import { Message } from 'postmark'
+
+import { Core } from '@journalhub/core' 
+import { FullUser, PartialUser } from '@journalhub/model'
+
+import { ServiceError } from '../errors/ServiceError'
 
 export class EmailService {
     core: Core
@@ -50,7 +51,7 @@ export class EmailService {
         })
     }
 
-    async sendEmailConfirmation(user: User, token: string): Promise<void> {
+    async sendEmailConfirmation(user: FullUser, token: string): Promise<void> {
         const confirmationLink = this.core.config.host + `email-confirmation?token=${token}`
 
 
@@ -69,7 +70,7 @@ ${confirmationLink}`
         })
     }
 
-    async sendPasswordReset(user: User, token: string): Promise<void> {
+    async sendPasswordReset(user: FullUser, token: string): Promise<void> {
         const resetLink = this.core.config.host + `reset-password?token=${token}`
 
         const emailTextBody = `Hello ${user.name},
@@ -87,7 +88,11 @@ ${resetLink}`
         })
     }
 
-    async sendInvitation(inviter: User, user: User, token: string): Promise<void> {
+    async sendInvitation(inviter: FullUser, user: PartialUser, token: string): Promise<void> {
+        if ( ! user.email || ! user.name ) {
+            throw new ServiceError('missing-input', `User is missing required fields.`)
+        }
+
         const invitationLink = this.core.config.host + `accept-invitation?token=${token}`
 
         const emailTextBody = `Hello ${user.name},

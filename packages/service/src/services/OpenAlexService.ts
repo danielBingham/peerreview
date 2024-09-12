@@ -19,9 +19,9 @@
  ******************************************************************************/
 import { Job } from 'bull'
 
-import { Core, Logger, ServiceError } from '@danielbingham/peerreview-core' 
+import { Core, Logger } from '@journalhub/core' 
 
-
+import { ServiceError } from "../errors/ServiceError"
 
 const AUTHORS = 'https://api.openalex.org/authors'
 const WORKS = 'https://api.openalex.org/works'

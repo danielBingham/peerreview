@@ -19,15 +19,12 @@
  ******************************************************************************/
 import crypto from 'node:crypto'
 
-import { Core, ServiceError } from '@danielbingham/peerreview-core'
+import { Core } from '@journalhub/core'
 
-import { 
-    Token, 
-    PartialToken, 
-    TokenType, 
-} from '@danielbingham/peerreview-model'
+import { PartialToken, TokenType } from '@journalhub/model'
+import { TokenDAO } from '@journalhub/data-access'
 
-import { TokenDAO } from '../daos/TokenDAO'
+import { ServiceError } from '../errors/ServiceError'
 
 const TOKEN_TTL: { [type in TokenType]: number } = {
     'email-confirmation': 1000*60*60*24, // 1 day

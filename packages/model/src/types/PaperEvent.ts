@@ -19,22 +19,6 @@
  ******************************************************************************/
 import { Model } from './Model'
 
-export enum PaperEventType {
-    Paper_NewVersion = 'paper:new-version', 
-    Paper_PreprintPosted = 'paper:preprint-posted',
-    Paper_NewReview = 'paper:new-review', 
-    Paper_NewComment = 'paper:new-comment',
-    Review_CommentReplyPosted = 'review:comment-reply-posted',
-    JournalSubmission_New = 'submission:new', 
-    JournalSubmission_NewReview = 'submission:new-review',
-    JournalSubmission_NewComment = 'submission:new-comment',
-    JournalSubmission_StatusChanged = 'submission:status-changed',
-    JournalSubmission_ReviewerAssigned = 'submission:reviewer-assigned',
-    JournalSubmission_ReviewerUnassigned = 'submission:reviewer-unassigned',
-    JournalSubmission_EditorAssigned = 'submission:editor-assigned',
-    JournalSubmission_EditorUnassigned = 'submission:editor-unassigned',
-}
-
 export enum PaperEventRootType {
     NewReview = 'new-review'
 }
@@ -45,24 +29,13 @@ export enum PaperEventStatus {
 
 }
 
-export enum PaperEventVisibility {
-    ManagingEditors = 'managing-editors',
-    Editors = 'editors',
-    AssignedEditors = 'assigned-editors',
-    Reviewers = 'reviewers',
-    AssignedReviewers = 'assigned-reviewers',
-    CorrespondingAuthors = 'corresponding-authors',
-    Authors = 'authors',
-    Public = 'public'
-}
-
 export interface PaperEvent extends Model {
     paperId: number
     actorId: number
     version: number
     status: PaperEventStatus 
-    type: PaperEventType 
-    visibility: PaperEventVisibility[]
+    type: string 
+    visibility: string[]
     eventDate: string
 
     assigneeId?: number
@@ -79,8 +52,8 @@ export interface PartialPaperEvent {
     actorId?: number
     version?: number
     status?: PaperEventStatus
-    type?: PaperEventType|PaperEventRootType
-    visibility?: PaperEventVisibility[]
+    type?: string 
+    visibility?: string[]
     eventDate?: string
 
 

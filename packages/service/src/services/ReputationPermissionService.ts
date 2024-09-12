@@ -17,9 +17,14 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+
+/** 
+ * @deprecated This is the deprecated reputation permission service from
+ * PeerReview 0.1. 
+ **/
 import { Pool, Client } from 'pg'
-import { Core, Logger, ServiceError } from '@danielbingham/peerreview-core' 
-import { Paper } from '@danielbingham/peerreview-model'
+import { Core, Logger } from '@journalhub/core' 
+import { Paper } from '@journalhub/model'
 
 const THRESHOLDS = {
     /**

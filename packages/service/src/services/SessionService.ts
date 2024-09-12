@@ -17,7 +17,9 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+import { Core } from '@journalhub/core' 
+
+import { ServiceError } from '../errors/ServiceError'
 
 export class SessionService {
     core: Core

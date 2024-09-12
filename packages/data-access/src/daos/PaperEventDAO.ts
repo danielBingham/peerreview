@@ -154,7 +154,7 @@ export class PaperEventDAO {
     /**
      * Insert a new row into the `paper_events` table from a PaperEvent model.
      */
-    async insertEvent(event: PaperEvent): Promise<void> {
+    async insertEvent(event: PartialPaperEvent): Promise<void> {
         let columns = ``
         let values = ``
         let params = []

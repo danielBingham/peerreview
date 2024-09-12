@@ -23,7 +23,7 @@ import fs from 'fs'
 import * as Handlebars from 'handlebars'
 import { Client, Pool } from 'pg'
 
-import { Core, ServiceError } from '@danielbingham/peerreview-core' 
+import { Core } from '@journalhub/core' 
 
 import { PageMetadata } from './PageMetadataService'
 
