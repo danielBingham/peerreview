@@ -23,31 +23,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
 
-      # Build and publish @danielbingham/peerreview-model
-      - name: Install Model Dependencies 
-        working-directory: ./packages/model
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm ci
-
-      - name: Run Model Unit Tests
-        working-directory: ./packages/model
-        run: |
-          npm run test
-
-      - name: Version the Model Package
-        working-directory: ./packages/model
-        run: |
-          npm version ${{ github.event.inputs.version }}
-
-      - name: Publish to Github Packages
-        working-directory: ./packages/model
-        env:
-          TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm publish
-
       # Build and publish @danielbingham/peerreview-backend
       - name: Install Backend NPM Modules
         working-directory: ./packages/backend
