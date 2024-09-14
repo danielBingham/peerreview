@@ -1,3 +1,22 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 import React, { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
@@ -11,7 +30,7 @@ import {
     FloatingMenuBody
 } from '/components/generic/floating-menu/FloatingMenu'
 
-import { getNotifications, cleanupRequest } from '/state/notifications'
+import { getNotifications, patchNotifications, cleanupRequest } from '/state/notifications'
 
 import NotificationMenuItem from './NotificationMenuItem'
 
@@ -25,6 +44,15 @@ const NotificationMenu = function({ }) {
     const request = useSelector(function(state) {
         if ( requestId ) {
             return state.notifications.dictionary[requestId]
+        } else {
+            return null
+        }
+    })
+
+    const [ markReadRequestId, setMarkReadRequestId ] = useState(null)
+    const markReadRequest = useSelector(function(state) {
+        if ( markReadRequestId ) {
+            return state.notifications.dictionary[markReadRequestId]
         } else {
             return null
         }
@@ -54,6 +82,22 @@ const NotificationMenu = function({ }) {
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
+    const markAllRead = function(event) {
+        event.preventDefault()
+        
+        const notifications = []
+        for(const notification of unreadNotifications) {
+            notifications.push({
+                ...notification,
+                isRead: true
+            })
+        }
+
+        setMarkReadRequestId(dispatch(patchNotifications(notifications)))  
+    }
+
+
+
     // ============ Effect Handling ===========================================
 
     useEffect(function() {
@@ -68,6 +112,13 @@ const NotificationMenu = function({ }) {
         }
     }, [requestId])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( markReadRequestId ) {
+                dispatch(cleanupRequest({ requestId: markReadRequestId }))
+            }
+        }
+    }, [ markReadRequestId ])
 
     // ============ Render ====================================================
 
@@ -94,6 +145,9 @@ const NotificationMenu = function({ }) {
                 { unread > 0 && <div className="unread-indicator">{unread}</div> }
             </FloatingMenuTrigger>
             <FloatingMenuBody className="notification-body">
+                <div className="notification-header">
+                    <span className="mark-read"><a href="" onClick={(e) =>  markAllRead(e) }>Mark All Read</a></span>
+                </div>
                 { notificationViews }
             </FloatingMenuBody>
         </FloatingMenu>

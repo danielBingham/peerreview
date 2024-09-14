@@ -1,3 +1,22 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 import { createSlice } from '@reduxjs/toolkit'
 import { v4 as uuidv4 } from 'uuid'
 
@@ -111,7 +130,7 @@ export const notificationsSlice = createSlice({
 
 
 /**
- * GET /paper/:paperId/notifications
+ * GET /notifications
  *
  * Get all notifications in the database.  Populates state.notifications.
  *
@@ -152,7 +171,34 @@ export const getNotifications = function(name, params) {
 }
 
 /**
- * PATCH /paper/:paperId/notification/:id
+ * PATCH /notifications
+ *
+ * Update a batch of notifications from a partial `notification` object.
+ *
+ * Makes the request asynchronously and returns a id that can be used to track
+ * the request and retreive the results from the state slice.
+ *
+ * @param {object[]} notifications - A populate notification object.
+ *
+ * @returns {string} A uuid requestId that can be used to track this request.
+ */
+export const patchNotifications = function(notifications) {
+    return function(dispatch, getState) {
+        dispatch(notificationsSlice.actions.bustRequestCache())
+        return makeTrackedRequest(dispatch, getState, notificationsSlice,
+            'PATCH', `/notifications`, notifications,
+            function(response) {
+                dispatch(notificationsSlice.actions.setNotificationsInDictionary({ dictionary: response.dictionary }))
+
+                dispatch(setRelationsInState(response.relations))
+            }
+        )
+    }
+
+}
+
+/**
+ * PATCH /notification/:id
  *
  * Update a notification from a partial `notification` object. 
  *
