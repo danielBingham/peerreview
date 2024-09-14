@@ -164,6 +164,12 @@ module.exports = function(core) {
 
     })
 
+    router.patch('/notifications', function(request, response, next) {
+        notificationController.patchNotifications(request,response).catch(function(error) {
+            next(error)
+        })
+    })
+
     router.patch('/notification/:id', function(request, response, next) {
         notificationController.patchNotification(request, response).catch(function(error) {
             next(error)
