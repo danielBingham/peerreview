@@ -1,3 +1,22 @@
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 const backend = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
@@ -18,6 +37,7 @@ module.exports = class ReviewController {
         this.paperDAO = new backend.PaperDAO(core)
         this.paperEventDAO = new backend.PaperEventDAO(core)
 
+        this.paperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
     }
@@ -77,32 +97,29 @@ module.exports = class ReviewController {
          * Permission checking on this endpoint is pretty simple:
          *
          * 1. Paper(:paper_id) exists.
-         * 2. Visibility is controlled on the PaperEvent.
-         * 2a. Except for the users reviews in progress.
+         * 2. Paper(:paper_id) is visible to CurrentUser or Public.
+         * 3. Review(:review_id) visibility is controlled on the PaperEvent.
+         * 3a. Except for the users reviews in progress.
          * 
          * **********************************************************/
 
-        const paperResults = await this.database.query(
-            'SELECT is_draft as "isDraft", show_preprint as "showPreprint" FROM papers WHERE papers.id = $1',
-            [ paperId ]
-        )
+
+        const canViewPaper = await this.paperService.canViewPaper(request.session.user, paperId)
 
         // 1. Paper(:paper_id) exists.
-        if ( paperResults.rows.length <= 0) {
+        // 2. Paper(:paper_id) is visible to CurrentUser or Public.
+        if ( ! canViewPaper ) {
             throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) to return reviews for.`)
         }
 
-        const isDraft = paperResults.rows[0].isDraft
-        const showPreprint = paperResults.rows[0].showPreprint
-
         // 2. Visibility is controlled on the event.
+        // TECHDEBT This is not going to be efficient.
         const visibleIds = await this.paperEventService.getVisibleEventIds(userId)
         const eventResults = await this.database.query(`
             SELECT review_id FROM paper_events WHERE id = ANY($1::bigint[])
         `, [ visibleIds ])
 
         const reviewIds = eventResults.rows.map((r) => r.review_id)
-
 
        
         /********************************************************
@@ -157,16 +174,8 @@ module.exports = class ReviewController {
          * To call this endpoint, User must:
          *
          * 1. Be logged in.
-         * 2. Have Review permissions on Paper(:paper_id)
-         *
-         * We also need to do basic input validation:
-         *
-         * 3. Paper(:paper_id) exists.
-         *
-         * And we need to ensure that Paper is in a state where it can be
-         * reviewed:
-         *
-         * 4. Paper(:paper_id) must be a draft.
+         * 2. Paper(:paper_id) exists.
+         * 3. Paper(:paper_id) is visible to the CurrentUser.
          *
          * Finally, we need to validate the POST body:
          *
@@ -185,18 +194,12 @@ module.exports = class ReviewController {
 
         const userId = request.session.user.id
 
-        const paperResults = await this.paperDAO.selectPapers(`WHERE papers.id = $1`, [ paperId ])
-        const paper = paperResults.dictionary[paperId]
-        
-        // 3. Paper(:paper_id) exists and has at least one version.
-        if ( ! paper ) {
-            throw new ControllerError(404, 'no-resource', `No Paper(${review.paperId}) to return reviews for.`)
-        }
+        const canViewPaper = await this.paperService.canViewPaper(request.session.user, paperId)
 
-        // 4. Paper(:paper_id) must be a draft.
-        if ( ! paper.isDraft ) {
-            throw new ControllerError(403, 'not-authorized:published-paper', 
-                `User(${userId}) attempted to add a review to published Paper(${review.paperId}).`)
+        // 2. Paper(:paper_id) exists.
+        // 3. Paper(:paper_id) is visible to CurrentUser.
+        if ( ! canViewPaper ) {
+            throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) to return reviews for.`)
         }
 
         /********************************************************
@@ -206,7 +209,9 @@ module.exports = class ReviewController {
 
         // 5. If review.version is provided, it must be the most recent version for
         //      Paper(:paper_id).
-       
+        const paperResults = await this.paperDAO.selectPapers(`WHERE papers.id = $1`, [ paperId ])
+        const paper = paperResults.dictionary[paperId]
+
         const currentVersion = paper.versions[0].version
         if ( review.version && (review.version < 0 || review.version > currentVersion) ) {
             throw new ControllerError(400, 'invalid-version',
@@ -388,8 +393,11 @@ module.exports = class ReviewController {
 
         }
 
-        // 5. Review(:review_id) is not in-progress AND Paper(:paper_id) is NOT
-        //      a draft. (Anyone may view.)
+        // 5. Review(:review_id) is not in-progress then CurrentUser must have permission to view the paper. 
+        const canViewPaper = await this.paperService.canViewPaper(request.session.user, paperId)
+        if ( ! canViewPaper ) {
+            throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) or User doesn't have permission.`)
+        }
 
         /********************************************************
          * Permissions Checks Complete
@@ -474,12 +482,6 @@ module.exports = class ReviewController {
          * 3. Review(:review_id) exists.
          * 4. Review(:review_id) is on Paper(:paper_id)
          *
-         * We need to check that this review may be editted:
-         *
-         * 5. Paper(:paper_id) is a draft.
-         * 6. Review(:review_id) is in progress or User is paper author and
-         *      patch is changing status to 'accepted' or 'rejected'.
-         *
          * Finally, we need to validate the review content (PATCH body): 
          *
          * 7. Paper authors may only edit the `status` field.
@@ -521,37 +523,14 @@ module.exports = class ReviewController {
         }
 
         const isReviewAuthor = (existing.review_userId == userId)
-        let paperAuthor = null
-
         // 2. Be the author of Review(:review_id)...
         if ( ! isReviewAuthor ) {
-
-            // ... OR an owning author of Paper(:paper_id)
-            const paperAuthorsResults = await this.database.query(`
-                SELECT user_id as "userId", owner FROM paper_authors where paper_id = $1
-             `, [ paperId ])
-
-            if ( paperAuthorsResults.rows.length <= 0 ) {
-                throw new ControllerError(403, 'not-authorized:not-author',
-                    `User(${userId}) attempted to PATCH Review(${reviewId}) that they did not write on a Paper(${paperId}) they are not an owning author on.`)
-            }
-
-            paperAuthor = paperAuthorsResults.rows.find((a) => a.userId == userId)
-            if ( ! paperAuthor || ! paperAuthor.owner ) {
-                throw new ControllerError(403, 'not-authorized:not-owning-author',
-                    `User(${userId}) attempted to PATCH Review(${reviewId}) that they did not write on a Paper(${paperId}) they are not an owning author on.`)
-
-            }
-        }
-
-        // 5. Paper(:paper_id) is a draft.
-        if ( ! existing.paper_isDraft ) {
-            throw new ControllerError(403, 'not-authorized:published-paper', 
-                `User(${userId}) attempted to PATCH a review on a published Paper(${paperId}).`)
+            throw new ControllError(403, 'not-authorized',
+                `User(${userid}) attempted to PATCH Review(${reviewId}) that they didn't author.`)
         }
 
         // 6. Review(:review_id) is in progress or User is paper author and patch is changing status to 'accepted' or 'rejected'.
-        if (existing.review_status != 'in-progress' && ! ( paperAuthor && ( review.status == 'accepted' || review.status == 'rejected')) ) {
+        if (existing.review_status != 'in-progress' ) {
             throw new ControllerError(403, 'not-authorized:not-in-progress',
                 `User(${userId}) attempted to PATCH Review(${reviewId}), but it was not in progress.`)
         }
@@ -688,8 +667,7 @@ module.exports = class ReviewController {
          *
          * Finally we need to check that this review may be deleted:
          *
-         * 5. Paper(:paper_id) is a draft.
-         * 6. Review(:review_id) is in progress.
+         * 5. Review(:review_id) is in progress.
          *
          * ***********************************************************/
 
@@ -730,13 +708,7 @@ module.exports = class ReviewController {
                 `Review(${reviewId}) is on Paper(${existing.paper_id}) not Paper(${paperId}).`)
         }
 
-        // 5. Paper(:paper_id) is a draft.
-        if ( ! existing.paper_isDraft ) {
-            throw new ControllerError(400,
-                'published-paper', `User(${userId}) attempted to add a review to published Paper(${paperId}).`)
-        }
-
-        // 6. Review(:review_id) is in progress.
+        // 5. Review(:review_id) is in progress.
         if (existing.review_status != 'in-progress' ) {
             throw new ControllerError(400, 'not-in-progress',
                 `User(${userId}) attempted to PUT Review(${reviewId}), but it was not in progress.`)
@@ -797,8 +769,7 @@ module.exports = class ReviewController {
          * Finally, we need to check that the paper and review are in a state
          * that allows a new thread to be created:
          *
-         * 5. Paper(:paper_id) is a draft.
-         * 6. Review(:review_id) is in progress.
+         * 5. Review(:review_id) is in progress.
          *
          * ***********************************************************/
 
@@ -840,14 +811,7 @@ module.exports = class ReviewController {
                 `Review(${reviewId}) is on Paper(${existing.paper_id}) not Paper(${paperId}).`)
         }
 
-        // 5. Paper(:paper_id) is a draft.
-        if ( ! existing.paper_isDraft ) {
-            throw new ControllerError(400,
-                'published-paper', `User(${userId}) attempted to add a review to published Paper(${review.paperId}).`)
-        }
-
-
-        // 6. Review(:review_id) is in progress
+        // 5. Review(:review_id) is in progress
         if ( existing.review_status != 'in-progress') {
             throw new ControllerError(400, 'not-in-progress',
                 `User(${userId}) attempting to add a new thread to Review(${reviewId}) after it has been submitted.`)
@@ -924,8 +888,7 @@ module.exports = class ReviewController {
          * Finally we need to confirm the paper and review are in an editable
          * state:
          *
-         * 6. Paper(:paper_id) is a draft.
-         * 7. Review(:review_id) is in progress.
+         * 6. Review(:review_id) is in progress.
          *
          * ***********************************************************/
 
@@ -974,13 +937,7 @@ module.exports = class ReviewController {
                 `Review(${reviewId}) is on Paper(${existing.paper_id}) not Paper(${paperId}).`)
         }
 
-        // 6. Paper(:paper_id) is a draft.
-        if ( ! existing.paper_isDraft ) {
-            throw new ControllerError(400, 'published-paper', 
-                `User(${userId}) attempted to add a review to published Paper(${review.paperId}).`)
-        }
-
-        // 7. Review(:review_id) is in progress.
+        // 6. Review(:review_id) is in progress.
         if ( existing.review_status != 'in-progress') {
             throw new ControllerError(400, 'not-in-progress',
                 `User(${userId}) attempted to add a thread to Review(${reviewId}) that was not in progress.`)
@@ -1056,13 +1013,12 @@ module.exports = class ReviewController {
          * Then we need to confirm that the paper and review are in a state
          * that allows posting comments:
          *
-         * 6. Paper(:paper_id) is a draft.
-         * 7. Review(:review_id) is NOT in progress 
+         * 6. Review(:review_id) is NOT in progress 
          *      OR user is author of Review(:review_id)
          *
          * Finally, we need to validate the posted data:
          *
-         * 8. Each posted comment should have UserId as comment.userId.
+         * 7. Each posted comment should have UserId as comment.userId.
          *
          * ***********************************************************/
 
@@ -1104,28 +1060,16 @@ module.exports = class ReviewController {
                 `Thread(${threadId}) is on Paper(${existing.paper_id}) not Paper(${paperId}).`)
         }
 
-        // 6. Paper(:paper_id) is a draft.
-        const isDraft = existing.paper_isDraft
-        if ( ! isDraft ) {
-            throw new ControllerError(403, 'not-authorized:published-paper', 
-                `User(${userId}) attempted to add a review comment to published Paper(${paperId}).`)
-        }
-
         const isAuthor = (existing.review_userId == userId)
 
-        //  2. Be author of the review...
-        if ( ! isAuthor ) {
-            // ...OR have Review permissions on Paper(:paper_id)
-        }
-
-        // 7. Review(:review_id) is NOT in progress 
+        // 6. Review(:review_id) is NOT in progress 
         //      OR user is author of Review(:review_id)
         if ( existing.review_status == 'in-progress' && ! isAuthor ) {
             throw new ControllerError(403, 'not-authorized:not-review-author',
                 `User(${userId}) attempting to add comment to in-progress Review(${reviewId}) they didn't start.`)
         }
 
-        // 8. Each posted comment should have UserId as comment.userId.
+        // 7. Each posted comment should have UserId as comment.userId.
         for( const comment of comments ) {
             if ( comment.userId != userId) {
                 throw new ControllerError(403, 'not-authorized:not-comment-author',
@@ -1206,14 +1150,13 @@ module.exports = class ReviewController {
          * We need to make sure that the paper, review, and comment are in a
          * PATCHable state:
          *
-         * 7. Paper(:paper_id) is a draft.
-         * 8. Review(:review_id) is in progress AND User is author of Review(:review_id)
+         * 7. Review(:review_id) is in progress AND User is author of Review(:review_id)
          *      OR Comment(:comment_id) is in progress AND User is author of Comment(:comment_id)
          *
          * Finally we need to validate the comment body:
          *
-         * 9. comment.userId must be userId
-         * 10. Only `status` and `content` may be changed.
+         * 8. comment.userId must be userId
+         * 9. Only `status` and `content` may be changed.
          *
          * ***********************************************************/
 
@@ -1264,13 +1207,6 @@ module.exports = class ReviewController {
                 `Thread(${threadId}) is on Paper(${existing.paper_id}) not Paper(${paperId}).`)
         }
 
-        // 7. Paper(:paper_id) is a draft.
-        const isDraft = existing.paper_isDraft
-        if ( ! isDraft ) {
-            throw new ControllerError(403, 'not-authorized:published-paper', 
-                `User(${userId}) attempted to PATCH a comment to published Paper(${paperId}).`)
-        }
-
         const isReviewAuthor = (existing.review_userId == userId) 
         const isCommentAuthor = (existing.comment_userId == userId)
 
@@ -1280,7 +1216,7 @@ module.exports = class ReviewController {
                 `Unauthorized User(${userId}) attempting to PATCH Comment(${commentId}).`)
         }
 
-        // 8. Review(:review_id) is in progress AND User is author of Review(:review_id)
+        // 7. Review(:review_id) is in progress AND User is author of Review(:review_id)
         //       OR Comment(:comment_id) is in progress AND User is author of Comment(:comment_id)
         //
         //       This is a complex one to invert.
@@ -1309,13 +1245,13 @@ module.exports = class ReviewController {
                 `Unauthorized User(${userId}) attempting to PATCH Comment(${commentId}).`)
         }
 
-        // 9. comment.userId must be userId
+        // 8. comment.userId must be userId
         if ( comment.userId && comment.userId != userId ) {
             throw new ControllerError(403, 'not-authorized:change-author',
                 `User(${userId}) attempting to change comment author to User(${comment.userId}).`)
         }
 
-        // 10. Only `status` and `content` may be changed.
+        // 9. Only `status` and `content` may be changed.
         if ( comment.userId || comment.threadId || comment.number || comment.threadOrder ) {
             throw new ControllerError(403, 'not-authorized:field',
                 `User(${userId}) attempting to PATCH unauthorized fields on Comment(${commentId}).`)
@@ -1424,8 +1360,7 @@ module.exports = class ReviewController {
          *
          * And then we need to check that the comment may be deleted:
          *
-         * 7. Paper(:paper_id) is a draft.
-         * 8. Review(:review_id) is in progress AND User is author of Review(:review_id)
+         * 7. Review(:review_id) is in progress AND User is author of Review(:review_id)
          *      OR Comment(:comment_id) is in progress AND User is author of Comment(:comment_id)
          *
          * ***********************************************************/
@@ -1474,13 +1409,6 @@ module.exports = class ReviewController {
         if ( existing.paper_id != paperId) {
             throw new ControllerError(400, 'id-mismatch', 
                 `Thread(${threadId}) is on Paper(${existing.paper_id}) not Paper(${paperId}).`)
-        }
-
-        // 7. Paper(:paper_id) is a draft.
-        const isDraft = existing.paper_isDraft
-        if ( ! isDraft ) {
-            throw new ControllerError(400,
-                'published-paper', `User(${userId}) attempted to DELETE a comment to published Paper(${paperId}).`)
         }
 
         const isReviewAuthor = (existing.review_userId == userId) 

@@ -81,7 +81,6 @@ const ReviewCommentThreadView = function(props) {
     // ======= Rendering ============================================
 
     let inProgress = false
-    const viewOnly = ! props.paper.isDraft
 
     const commentViews = []
     
@@ -122,7 +121,7 @@ const ReviewCommentThreadView = function(props) {
         <div  className="comment-thread-outer">
             <div key={thread.id} id={`comment-thread-${thread.id}`} className="comment-thread" >
                 { commentViews }
-                { ! inProgress && ! viewOnly && <div className="reply"><a href="" onClick={newComment}>Post a reply...</a></div> }
+                { ! inProgress &&  <div className="reply"><a href="" onClick={newComment}>Post a reply...</a></div> }
             </div>
         </div>
     )

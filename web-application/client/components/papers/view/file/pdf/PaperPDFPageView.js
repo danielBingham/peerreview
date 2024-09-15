@@ -112,10 +112,6 @@ const PaperPDFPageView = function(props) {
      * progress, start one.  Otherwise, start a new thread.
      */
     const handleClick = useCallback(function(event) {
-        if ( ! paper.isDraft ) {
-            return
-        }
-
         if ( ! reviewInProgress ) {
             return
         }
