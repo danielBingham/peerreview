@@ -39,7 +39,14 @@ const StartReviewButton = function({ id }) {
         return state.papers.dictionary[id]
     })
 
-    const versionNumber = paper.versions[0].version
+    const paperVersions = useSelector(function(state) {
+        return state.paperVersions.dictionary[id]
+    })
+   
+    let versionNumber = 0
+    if (paperVersions) {
+        versionNumber = Object.values(paperVersions).reduce((max, v) => v.version > max ? v.version : max)
+    }
 
     const reviewInProgress = useSelector(function(state) {
         if ( ! state.reviews.inProgress[paper.id] ) {

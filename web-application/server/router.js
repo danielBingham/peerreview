@@ -177,81 +177,6 @@ module.exports = function(core) {
     })
 
     /**************************************************************************
-     *  Reputation Routes 
-     **************************************************************************
-
-    const ReputationController = require('./controllers/ReputationController')
-    const reputationController = new ReputationController(core)
-
-    router.get('/reputation/thresholds', function(request, response, next) {
-        reputationController.getReputationThresholds(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/user/:user_id/reputation/initialization', function(request, response, next) {
-        return reputationController.initializeReputation(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/user/:user_id/reputations', function(request, response, next) {
-        return reputationController.getReputations(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.post('/user/:id/reputations', function(request, response) {
-        return response.status(501).send()
-    })
-
-    router.get('/user/:user_id/reputation/:field_id', function(request, response, next) {
-        return reputationController.getReputation(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.put('/user/:id/reputation/:field_id', function(request, response) {
-        return response.status(501).send()
-    })
-
-    router.patch('/user/:id/reputation/:field_id', function(request, response) {
-        return response.status(501).send()
-    })
-
-    router.delete('/user/:id/reputation/:field_id', function(request, response) {
-        return response.status(501).send()
-    })
-
-    /****************************************************************
-     * Reputation Administration Methods
-     ****************************************************************
-
-    // NOTE: These are here for testing and development purposes only.
-    // TODO Remove before we go to production.  (Or formalize into a
-    // admin/development interface only loaded on development and staging
-    // environments.)
-    const AdminController = require('./controllers/AdminController') 
-    const adminController = new AdminController(core)
-    router.get('/admin/user/:id/initialize-reputation/orcid/:orcidId', function(request, response, next) {
-        adminController.initializeReputationFromOrcid(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/admin/user/:id/initialize-reputation/openalex/:openAlexId', function(request, response, next) {
-        adminController.initializeReputationFromOpenAlex(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    router.get('/admin/user/:id/recalculate-reputation', function(request, response, next) {
-        adminController.recalculateReputation(request, response).catch(function(error) {
-            next(error)
-        })
-    })
-
-    /**************************************************************************
      * Testing Routes
      *
      * These routes are only used for testing and are removed from Production.
@@ -488,17 +413,31 @@ module.exports = function(core) {
     })
 
     /******************************************************************************
-     *          Version REST Routes
+     *          Paper Version REST Routes
      ******************************************************************************/
+    const PaperVersionController = require('./controllers/PaperVersionController')
+    const paperVersionController = new PaperVersionController(core)
 
-    router.post('/paper/:paper_id/versions', function(request, response, next) {
-        paperController.postPaperVersions(request, response).catch(function(error) {
+    router.get('/paper/:paperId/versions', function(request, response, next) {
+        paperVersionController.getPaperVersions(request, response).catch(function(error) {
             next(error)
         })
     })
 
-    router.patch('/paper/:paper_id/version/:version', function(request, response, next) {
-        paperController.patchPaperVersion(request, response).catch(function(error) {
+    router.post('/paper/:paperId/versions', function(request, response, next) {
+        paperVersionController.postPaperVersions(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.get('/paper/:paperId/verion/:version', function(request, response, next) {
+        paperVersionController.getPaperVersion(request, response).catch(function(error) {
+            next(error)
+        })
+    })
+
+    router.patch('/paper/:paperId/version/:version', function(request, response, next) {
+        paperVersionController.patchPaperVersion(request, response).catch(function(error) {
             next(error)
         })
     })

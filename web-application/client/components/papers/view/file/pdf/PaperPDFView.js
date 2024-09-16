@@ -103,12 +103,7 @@ const PaperPDFView = function(props) {
 
     // ================= Render ===============================================
 
-    if ( paper.versions.length > 0 && file) {
-
-        let version = paper.versions.find((v) => v.version == props.versionNumber)
-        if ( ! version ) {
-            version = paper.versions[0]
-        }
+    if ( file) {
         const pageViews = []
         if ( props.versionNumber == loadedVersion) {
             for(let pageNumber = 1; pageNumber <= numberOfPages; pageNumber++) {

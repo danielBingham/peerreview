@@ -290,6 +290,8 @@ CREATE TABLE paper_versions (
     version int NOT NULL,
     file_id uuid REFERENCES files(id) ON DELETE CASCADE,
     is_published boolean DEFAULT false,
+    is_preprint boolean DEFAULT false,
+    is_submitted boolean DEFAULT false,
     review_count int default 0,
     content text NOT NULL,
     searchable_content tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,

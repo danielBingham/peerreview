@@ -10,6 +10,7 @@ const NotificationsMigration = require('../migrations/NotificationsMigration')
 const JournalTransparencyModelsMigration = require('../migrations/JournalTransparencyModelsMigration')
 const PaperEventStatusMigration = require('../migrations/PaperEventStatusMigration')
 const PaperTimelineCommentsMigration = require('../migrations/PaperTimelineCommentsMigration')
+const PreprintSubmissionTiedToPaperVersion = require('../migrations/PreprintSubmissionTiedToPaperVersion') 
 
 const ServiceError = require('../errors/ServiceError')
 const MigrationError = require('../errors/MigrationError')
@@ -99,6 +100,12 @@ module.exports = class FeatureService {
                 dependsOn: [ 'paper-events-189', 'paper-event-status-215', 'journal-permissions-models-194' ],
                 conflictsWith: [],
                 migration: new PaperTimelineCommentsMigration(core)
+            },
+
+            'preprint-submission-tied-to-paper-version-217': {
+                dependsOn: [ 'paper-events-189', 'paper-event-status-215', 'journal-permissions-models-194', 'paper-timeline-comments-190' ],
+                conflictsWith: [],
+                migration: new PreprintSubmissionTiedToPaperVersion(core)
             }
         }
     }

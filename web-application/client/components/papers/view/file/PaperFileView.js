@@ -47,7 +47,17 @@ const PaperFileView = function({ id }) {
         return state.papers.dictionary[id]
     })
 
-    const versionNumber = ( searchParams.get('version') ? searchParams.get('version') : paper.versions[0].version )
+    const paperVersions = useSelector(function(state) {
+        return state.paperVersions.dictionary[id]
+    })
+   
+    console.log(paperVersions)
+    let versionNumber = 0
+    if ( searchParams.get('version') ) {
+        versionNumber = searchParams.get('version')
+    } else if (paperVersions) {
+        versionNumber = Object.values(paperVersions).reduce((max, v) => v.version > max ? v.version : max)
+    }
 
     // ======= Effect Handling =====================
    
