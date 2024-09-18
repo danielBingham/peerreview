@@ -31,7 +31,7 @@
     text-align: left;
     background-color: white; 
     border: thin solid var(--floating-menu-border-color);
-    box-shadow: 0 0 3px 1px rgba(100,100,100,0.2);
+    box-shadow: 0 0 10px rgba(100,100,100,0.2);
     padding: 0;
     z-index: 1000;
 

@@ -209,10 +209,9 @@ module.exports = class ReviewController {
 
         // 5. If review.version is provided, it must be the most recent version for
         //      Paper(:paper_id).
-        const paperResults = await this.paperDAO.selectPapers(`WHERE papers.id = $1`, [ paperId ])
-        const paper = paperResults.dictionary[paperId]
+        const paperVersionResults = await this.paperDAO.selectPaperVersions(`WHERE paper_versions.paper_id = $1`, [ paperId ])
 
-        const currentVersion = paper.versions[0].version
+        const currentVersion = paperVersionResults.list[0] 
         if ( review.version && (review.version < 0 || review.version > currentVersion) ) {
             throw new ControllerError(400, 'invalid-version',
                 `User(${userId}) attempting to create review for invalid Version(${review.version}) of Paper(${paperId}).`)

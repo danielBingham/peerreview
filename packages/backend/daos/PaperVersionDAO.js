@@ -50,7 +50,7 @@ module.exports = class PaperVersionDAO {
 
         for(const row of rows) {
             const paperVersion = {
-                paperId: this.PaperVersion_paperId,
+                paperId: row.PaperVersion_paperId,
                 file: this.fileDAO.hydrateFile(row),
                 version: row.PaperVersion_version,
                 isPublished: row.PaperVersion_isPublished,
@@ -74,7 +74,7 @@ module.exports = class PaperVersionDAO {
     async selectPaperVersions(where, params, order) {
         where = (where ? where : '')
         params = (params ? params : [])
-        order = ( order ? order : 'paper_versions.version asc')
+        order = ( order ? order : 'paper_versions.created_date desc')
 
         const sql = `
             SELECT

@@ -75,10 +75,6 @@ export const papersSlice = createSlice({
          */
         draft: null,
 
-        /**
-         * Loaded paper files. 
-         */
-        files: {}
 
     },
     reducers: {
@@ -132,25 +128,6 @@ export const papersSlice = createSlice({
             state.draft = action.payload   
         },
 
-        setFile: function(state, action) {
-            console.log(`setFile()`)
-            console.log(action)
-            if ( ! state.files[action.payload.paperId] ) {
-                state.files[action.payload.paperId] = {}
-            }
-            state.files[action.payload.paperId][action.payload.version] = action.payload.url
-        },
-
-        clearFiles: function(state, action) {
-            if ( state.files[action.payload.paperId] ) {
-                for(const [version, url] of Object.entries(state.files[action.payload.paperId])) {
-                    URL.revokeObjectURL(url)
-                }
-                delete state.files[action.payload.paperId]
-            }
-        },
-
-
         // ========== Request Tracking Methods =============
 
         makeRequest: startRequestTracking, 
@@ -168,27 +145,6 @@ export const papersSlice = createSlice({
         }
     }
 })
-
-export const loadFiles = function(paper) {
-    return function(dispatch, getState) {
-        console.log(`loadFiles()`)
-        console.log(paper)
-        for(const version of paper.versions ) {
-            const url = new URL(version.file.filepath, version.file.location)
-            const urlString = url.toString()
-
-            fetch(urlString)
-                .then(response => response.blob())
-                .then(blob => dispatch(papersSlice.actions.setFile({ paperId: paper.id, version: version.version, url: URL.createObjectURL(blob) })))
-        }
-    }
-}
-
-export const clearFiles  = function(paper) {
-    return function(dispatch, getState) {
-        dispatch(papersSlice.actions.clearFiles({ paperId: paper.id }))
-    }
-}
 
 
 /**

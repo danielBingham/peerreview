@@ -52,12 +52,11 @@ const AssignmentWidget = function(props) {
         }
     })
 
-    const paper = useSelector(function(state) {
-        if ( submission && state.papers.dictionary[submission.paperId] ) {
-            return state.papers.dictionary[submission.paperId]
-        } else {
-            return null
+    const mostRecentVisibleVersion = useSelector(function(state) {
+        if ( ! (submission.paperId in state.paperVersions.queries) ) {
+            throw new Error(`Paper(${submission.paperId}) missing from version query!`)
         }
+        return state.paperVersions.queries[submission.paperId].list[0].version
     })
 
     const journal = useSelector(function(state) {
@@ -120,14 +119,12 @@ const AssignmentWidget = function(props) {
 
     const assignees = (props.type == 'editor' ? submission.editors : submission.reviewers)
 
-    const version = paper.versions[0]
-
     let assignedMenuViews = []
     let assignedViews = []
     for(const assignee of assignees) {
         let reviewRecommendation = null
         if ( props.type == 'reviewer' ) {
-            const review = assignee.reviews.find((r) => r.version == version.version)
+            const review = assignee.reviews.find((r) => r.version == mostRecentVisibleVersion)
             if ( review ) {
                 if ( review.recommendation == 'commentary' ) {
                     reviewRecommendation = (<span className="commentary"><ChatBubbleLeftRightIcon /> </span>)

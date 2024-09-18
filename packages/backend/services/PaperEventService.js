@@ -55,6 +55,7 @@
 
 const PaperEventDAO = require('../daos/PaperEventDAO')
 const PaperDAO = require('../daos/PaperDAO')
+const PaperVersionDAO = require('../daos/PaperVersionDAO')
 
 const SubmissionService = require('./SubmissionService')
 
@@ -67,6 +68,7 @@ module.exports = class PaperEventService {
 
         this.paperEventDAO = new PaperEventDAO(core)
         this.paperDAO = new PaperDAO(core)
+        this.paperVersionDAO = new PaperVersionDAO(core)
 
         this.submissionService = new SubmissionService(core)
 
@@ -169,8 +171,10 @@ module.exports = class PaperEventService {
 
         const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ event.paperId ])
         const paper = paperResults.dictionary[event.paperId]
+
+        const paperVersionResults = await this.paperVersionDAO.selectPaperVersions('WHERE paper_versions.paper_id = $1', [ event.paperId])
         if ( ! event.version ) {
-            event.version = paper.versions[0].version
+            event.version = paperVersionResults.list[0] 
         }
 
         const isAuthor = paper.authors.find((a) => a.userId == user.id) ? true : false

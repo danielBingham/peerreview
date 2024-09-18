@@ -20,12 +20,12 @@ const PaperVersionEvent = function({ eventId }) {
         return state.paperEvents.dictionary[eventId]
     })
 
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[event.paperId]
+    const version = useSelector(function(state) {
+        if ( ! ( event.paperId in state.paperVersions.dictionary ) ) {
+            throw new Error(`Paper(${event.paperId}) missing from state.paperVersions!`)
+        }
+        return state.paperVersions.dictionary[event.paperId][event.version]
     })
-
-
-    const version = paper.versions.find((v) => v.version == event.version)
 
     // ================= Render ===============================================
     

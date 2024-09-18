@@ -45,7 +45,7 @@ const StartReviewButton = function({ id }) {
    
     let versionNumber = 0
     if (paperVersions) {
-        versionNumber = Object.values(paperVersions).reduce((max, v) => v.version > max ? v.version : max)
+        versionNumber = Object.values(paperVersions).reduce((max, v) => v.version > max ? v.version : max, 0)
     }
 
     const reviewInProgress = useSelector(function(state) {

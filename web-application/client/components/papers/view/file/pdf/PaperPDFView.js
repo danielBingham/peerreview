@@ -39,21 +39,12 @@ const PaperPDFView = function(props) {
 
     // ======= Redux State ==========================================
 
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
-
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[props.paperId]
-    })
-
-
     const file = useSelector(function(state) {
-        if ( ! state.papers.files[props.paperId] ) {
+        if ( ! state.paperVersions.files[props.paperId] ) {
             return null
         }
 
-        return state.papers.files[props.paperId][props.versionNumber]
+        return state.paperVersions.files[props.paperId][props.versionNumber]
     })
 
     // We need this to be a ref because the callback can be called mutliple

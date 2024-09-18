@@ -30,6 +30,17 @@ const PaperVersionSelector = function({ paperId }) {
         return state.papers.dictionary[paperId]
     })
 
+    const paperVersions = useSelector(function(state) {
+        return state.paperVersions.dictionary[paperId]
+    })
+  
+    let versionNumber = 0
+    if ( searchParams.get('version') ) {
+        versionNumber = searchParams.get('version')
+    } else if (paperVersions) {
+        versionNumber = Object.values(paperVersions).reduce((max, v) => v.version > max ? v.version : max, 0)
+    }
+
     // ================= User Action Handling  ================================
 
     const changeVersion = function(event) {
@@ -47,10 +58,8 @@ const PaperVersionSelector = function({ paperId }) {
 
     // ======= Render ===============================================
 
-    const versionNumber = ( searchParams.get('version') ? searchParams.get('version') : paper.versions[0].version)
-
     const paperVersionOptions = []
-    for( const paperVersion of paper.versions ) {
+    for( const paperVersion of Object.values(paperVersions) ) {
         paperVersionOptions.push(<option key={paperVersion.version} value={paperVersion.version}>{ paperVersion.version }</option>)     
     }
 

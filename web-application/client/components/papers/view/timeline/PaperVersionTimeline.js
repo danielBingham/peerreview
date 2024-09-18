@@ -13,21 +13,13 @@ import PaperVersionTimelineEventsWrapper from './PaperVersionTimelineEventsWrapp
 const PaperVersionTimeline = function({ paperId, versionNumber }) {
     
     // ================= Redux State ==========================================
-    
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
-
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[paperId]
-    })
 
     const file = useSelector(function(state) {
-        if ( ! state.papers.files[paperId] ) {
+        if ( ! state.paperVersions.files[paperId] ) {
             return null
         }
 
-        return state.papers.files[paperId][versionNumber]
+        return state.paperVersions.files[paperId][versionNumber]
     })
 
     // ====== User Action Handling  ================================

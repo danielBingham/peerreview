@@ -4,8 +4,8 @@ import { useParams } from 'react-router-dom'
 
 import { DocumentCheckIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline'
 
-import { getPaper, loadFiles, clearFiles, cleanupRequest } from '/state/papers'
-import { getPaperVersions, cleanupRequest as cleanupVersionRequest } from '/state/paperVersions'
+import { getPaper, cleanupRequest } from '/state/papers'
+import { getPaperVersions, loadFiles, clearFiles, cleanupRequest as cleanupVersionRequest } from '/state/paperVersions'
 
 import Spinner from '/components/Spinner'
 import { Page, PageBody, PageHeader, PageHeaderGrid, PageTabBar, PageTab } from '/components/generic/Page'
@@ -61,21 +61,21 @@ const PaperPage = function({}) {
      * retrieve it from the paper endpoint to get full and up to date data.
      */
     useEffect(function() {
-        setRequestId(dispatch(getPaper(id, 'PaperPage')))
-        setVersionRequestId(dispatch(getPaperVersions(id)))
+        setRequestId(dispatch(getPaper(id)))
+        setVersionRequestId(dispatch(getPaperVersions(id, id)))
     }, [ id ])
 
     useEffect(function() {
-        if ( paper ) {
-            dispatch(loadFiles(paper))
+        if ( paper && versionRequest && versionRequest.state == 'fulfilled') {
+            dispatch(loadFiles(paper.id))
         }
 
         return function cleanup() {
             if ( paper ) {
-                dispatch(clearFiles(paper))
+                dispatch(clearFiles(paper.id))
             }
         }
-    }, [ paper ])
+    }, [ paper, versionRequest ])
 
     // Clean up our request.
     useEffect(function() {
@@ -102,7 +102,7 @@ const PaperPage = function({}) {
         )
     }
 
-    const selectedTab = 'file' 
+    const selectedTab = ( pageTab ? pageTab : 'file' )
     
     let content = ( <Spinner local={true} /> )
     if ( request && request.state == 'fulfilled' && versionRequest && versionRequest.state == 'fulfilled') {

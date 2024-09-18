@@ -224,7 +224,8 @@ module.exports = class PaperVersionController {
             currentUser,
             'new-version',
             {
-                paper: entity
+                paper: entity,
+                version: versionNumber
             }
         )
 
@@ -406,7 +407,8 @@ module.exports = class PaperVersionController {
         }
 
         // 5. PaperVersion(:version) must exist.
-        if ( ! paper.versions.find((v) => v.version == paper_version.version) ) {
+        const paperVersions = await this.paperVersionDAO.selectPaperVersions('WHERE paper_versions.paper_id = $1', [ paperId ])
+        if ( ! paper_version.version in paperVersions.list ) {
             throw new ControllerError(404, 'version-not-found',
                 `User(${user.id}) attempted to patch Version(${paper_version.version}) on Paper(${paperId}), but it didn't exist!`)
         }

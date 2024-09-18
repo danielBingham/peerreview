@@ -29,15 +29,10 @@ const PaperTimeline = function({ paperId }) {
     // ================= Request Tracking =====================================
 
     // ================= Redux State ==========================================
-    
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
 
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[paperId]
+    const paperVersions = useSelector(function(state) {
+        return state.paperVersions.dictionary[paperId]
     })
-
 
     // ================= User Action Handling  ================================
     
@@ -47,26 +42,26 @@ const PaperTimeline = function({ paperId }) {
     // ================= Render ===============================================
     
     // Error checking.
-    if ( ! paper ) {
+    if ( ! paperVersions ) {
         return ( <Error404 /> ) 
     } 
 
-    const sortedVersions = [ ...paper.versions ]
+    const sortedVersions = Object.values(paperVersions)
     sortedVersions.sort((a,b) => new Date(a.createdDate) - new Date(b.createdDate))
 
     const versionViews = []
     for(const version of sortedVersions) {
         versionViews.push(
-            <PaperVersionTimeline key={version.version} paperId={paper.id} versionNumber={version.version} />
+            <PaperVersionTimeline key={version.version} paperId={paperId} versionNumber={version.version} />
         )
     }
 
     return (
         <div id={`paper-${paperId}-timeline`} className="paper-timeline">
             <Timeline>
-                <PaperCreationEvent paperId={paper.id} /> 
+                <PaperCreationEvent paperId={paperId} /> 
                 { versionViews }
-                <PaperTimelineCommentForm paperId={paper.id} />
+                <PaperTimelineCommentForm paperId={paperId} />
             </Timeline>
         </div>
     )

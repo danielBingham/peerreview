@@ -64,7 +64,15 @@ export const paperVersionsSlice = createSlice({
          *  ...
          * }
          */
-        queries: {}
+        queries: {},
+
+        // ======== Specific State ============================================
+        
+        /**
+         * Loaded paper files. 
+         */
+        files: {},
+
     },
     reducers: {
 
@@ -109,10 +117,47 @@ export const paperVersionsSlice = createSlice({
         garbageCollectRequests: function(state, action) {
             action.payload = cacheTTL
             garbageCollectTrackedRequests(state, action)
-        }
+        },
+
+        setFile: function(state, action) { if ( ! state.files[action.payload.paperId] ) {
+                state.files[action.payload.paperId] = {}
+            }
+            state.files[action.payload.paperId][action.payload.version] = action.payload.url
+        },
+
+        clearFiles: function(state, action) {
+            if ( state.files[action.payload.paperId] ) {
+                for(const [version, url] of Object.entries(state.files[action.payload.paperId])) {
+                    URL.revokeObjectURL(url)
+                }
+                delete state.files[action.payload.paperId]
+            }
+        },
     }
 })
 
+export const loadFiles = function(paperId) {
+    return function(dispatch, getState) {
+        const state = getState()
+
+        for(const versionIds of state.paperVersions.queries[paperId].list) {
+            const version = state.paperVersions.dictionary[versionIds.paperId][versionIds.version]
+
+            const url = new URL(version.file.filepath, version.file.location)
+            const urlString = url.toString()
+
+            fetch(urlString)
+                .then(response => response.blob())
+                .then(blob => dispatch(paperVersionsSlice.actions.setFile({ paperId: paperId, version: version.version, url: URL.createObjectURL(blob) })))
+        }
+    }
+}
+
+export const clearFiles  = function(paperId) {
+    return function(dispatch, getState) {
+        dispatch(paperVersionsSlice.actions.clearFiles({ paperId: paperId }))
+    }
+}
 
 /**
  * GET /papers/:paperId/verions
