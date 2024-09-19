@@ -1,6 +1,7 @@
 const { 
     PaperEventDAO, 
     PaperDAO, 
+    PaperVersionDAO,
     PaperCommentDAO,
     UserDAO, 
     ReviewDAO, 
@@ -18,6 +19,7 @@ module.exports = class PaperEventController {
 
         this.paperEventDAO = new PaperEventDAO(core)
         this.paperDAO = new PaperDAO(core)
+        this.paperVersionDAO = new PaperVersionDAO(core)
         this.paperCommentDAO = new PaperCommentDAO(core)
         this.userDAO = new UserDAO(core)
         this.reviewDAO = new ReviewDAO(core)
@@ -29,6 +31,11 @@ module.exports = class PaperEventController {
     async getRelations(currentUser, results, requestedRelations) {
         const relations = {}
 
+        const events = Object.entries(results.dictionary)
+        if ( events.length <= 0 ) {
+            return relations 
+        }
+
         // ======== Default Relations =========================================
         // These are relations we always retrieve and return.
 
@@ -36,8 +43,11 @@ module.exports = class PaperEventController {
         const reviewIds = []
         const reviewCommentIds = []
         const submissionIds = []
+        const paperVersions = []
         const paperCommentIds = []
         for(const [id, event] of Object.entries(results.dictionary)) {
+            paperVersions.push({ paperId: event.paperId, version: event.version })
+
             if ( event.actorId ) {
                 userIds.push(event.actorId)
             } 
@@ -75,6 +85,23 @@ module.exports = class PaperEventController {
             [ submissionIds ]
         )
         relations.submissions = submissionResults.dictionary
+
+        // ======== Paper Versions ============================================
+        if ( paperVersions.length > 0 ) {
+            // If they can view the event, for now we're assuming they can view the version the event is on.
+            // TECHDEBT -- This may not be a safe assumption.
+            let sql = ''
+            let count = 1
+            let params = []
+            for(const version of paperVersions) {
+                sql += `${ count > 1 ? ' OR ' : ''} (paper_versions.paper_id = $${count} AND  paper_versions.version = $${count+1})`
+                params.push(version.paperId)
+                params.push(version.version)
+                count += 2
+            }
+            const paperVersionResults = await this.paperVersionDAO.selectPaperVersions(`WHERE ${sql}`, params)
+            relations.paperVersions = paperVersionResults.dictionary
+        }
 
         // ======== Paper Comments ============================================
         const paperCommentResults = await this.paperCommentDAO.selectPaperComments(

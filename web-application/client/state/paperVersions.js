@@ -67,6 +67,11 @@ export const paperVersionsSlice = createSlice({
         queries: {},
 
         // ======== Specific State ============================================
+
+        /**
+         * The most recent version of each paper, keyed by paperID.
+         */
+        mostRecentVersion: {},
         
         /**
          * Loaded paper files. 
@@ -82,20 +87,45 @@ export const paperVersionsSlice = createSlice({
         setPaperVersionsInDictionary: function(state, action) {
             if ( action.payload.dictionary ) {
                 state.dictionary = { ...state.dictionary, ...action.payload.dictionary }
+
+                // Update the most recent versions.
+                for(const [paperId, versions] of Object.entries(state.dictionary)) {
+                    for(const version of Object.values(versions)) {
+                        if ( ! (paperId in state.mostRecentVersion) || version.createdDate > state.mostRecentVersion[paperId].createdDate) {
+                            state.mostRecentVersion[paperId] = version
+                        }
+                    }
+                }
             } else if( action.payload.entity ) {
                 const entity = action.payload.entity
                 if ( entity.paperId in state.dictionary ) {
                     state.dictionary[entity.paperId] = {} 
                 }
                 state.dictionary[entity.paperId][entity.version] = entity 
+
+                // Update the most recent version if appropriate.
+                if ( ! ( entity.paperId in state.mostRecentVersion ) || entity.createdDate > state.mostRecentVersion[entity.paperId].createdDate ) {
+                    state.mostRecentVersion[entity.paperId] = entity
+                }
             } else {
                 console.log(action)
                 throw new Error(`Invalid payload sent to ${action.type}.`)
             }
+
         },
         removePaperVersion: function(state, action) {
             const entity = action.payload.entity
             delete state.dictionary[entity.paperId][entity.version]
+
+            if ( state.mostRecentVersion[entity.paperId].version == entity.version ) {
+                delete state.mostRecentVersion[entity.paperId]
+
+                for(const version of Object.values(state.dictionary[entity.paperId])) {
+                    if ( ! ( entity.paperId in state.mostRecentVersion) || version.createdDate > state.mostRecentVersion[entity.paperId].createdDate) {
+                        state.mostRecentVersion[entity.paperId] = version
+                    }
+                }
+            }
         },
         makePaperVersionQuery: makeQuery,
         setPaperVersionQueryResults: setQueryResults,

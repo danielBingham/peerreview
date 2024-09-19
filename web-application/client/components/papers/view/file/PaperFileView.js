@@ -43,19 +43,19 @@ const PaperFileView = function({ id }) {
         return state.reviews.queries[id]
     })
 
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[id]
-    })
+    const mostRecentVisibleVersion = useSelector(function(state) {
+        if ( ! id in state.paperVersions.mostRecentVersion ) {
+            throw new Error(`Paper(${id}) missing most recent version!`)
+        }
 
-    const paperVersions = useSelector(function(state) {
-        return state.paperVersions.dictionary[id]
+        return state.paperVersions.mostRecentVersion[id]
     })
    
     let versionNumber = 0
     if ( searchParams.get('version') ) {
         versionNumber = searchParams.get('version')
-    } else if (paperVersions) {
-        versionNumber = Object.values(paperVersions).reduce((max, v) => v.version > max ? v.version : max, 0)
+    } else {
+        versionNumber = mostRecentVisibleVersion.version 
     }
 
     // ======= Effect Handling =====================

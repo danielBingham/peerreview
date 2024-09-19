@@ -22,23 +22,23 @@ const PaperVersionSelector = function({ paperId }) {
    
     // ================= Redux State ==========================================
 
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
-
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[paperId]
-    })
-
     const paperVersions = useSelector(function(state) {
         return state.paperVersions.dictionary[paperId]
+    })
+
+    const mostRecentVisibleVersion = useSelector(function(state) {
+        if ( ! paperId in state.paperVersions.mostRecentVersion ) {
+            throw new Error(`Paper(${paperId}) is missing most recent version!`)
+        }
+
+        return state.paperVersions.mostRecentVersion[paperId]
     })
   
     let versionNumber = 0
     if ( searchParams.get('version') ) {
         versionNumber = searchParams.get('version')
-    } else if (paperVersions) {
-        versionNumber = Object.values(paperVersions).reduce((max, v) => v.version > max ? v.version : max, 0)
+    } else {
+        versionNumber =  mostRecentVisibleVersion.version
     }
 
     // ================= User Action Handling  ================================

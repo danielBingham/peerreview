@@ -39,14 +39,15 @@ const StartReviewButton = function({ id }) {
         return state.papers.dictionary[id]
     })
 
-    const paperVersions = useSelector(function(state) {
-        return state.paperVersions.dictionary[id]
+    const mostRecentVisibleVersion = useSelector(function(state) {
+        if ( ! id in state.paperVersions.mostRecentVersion ) {
+            throw new Error(`Paper(${id}) is missing most recent version!`)
+        }
+
+        return state.paperVersions.mostRecentVersion[id]
     })
    
-    let versionNumber = 0
-    if (paperVersions) {
-        versionNumber = Object.values(paperVersions).reduce((max, v) => v.version > max ? v.version : max, 0)
-    }
+    let versionNumber = mostRecentVisibleVersion.version
 
     const reviewInProgress = useSelector(function(state) {
         if ( ! state.reviews.inProgress[paper.id] ) {

@@ -29,10 +29,10 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
     // ================= Redux State ==========================================
 
     const mostRecentVisibleVersion = useSelector(function(state) {
-        if ( ! ( paperId in state.paperVersions.queries)) {
-            throw new Error(`Paper(${paperId}) version query missing!`)
+        if ( ! ( paperId in state.paperVersions.mostRecentVersion)) {
+            throw new Error(`Paper(${paperId}) missing most recent version!`)
         }
-        return state.paperVersions.queries[paperId].list[0].version
+        return state.paperVersions.mostRecentVersion[paperId]
     })
    
     const events = useSelector(function(state) {
@@ -73,7 +73,7 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
     //
     // But this is probably good enough for now.
     useEffect(function() {
-        if ( mostRecentVisibleVersion == versionNumber && request?.state == 'fulfilled') {
+        if ( mostRecentVisibleVersion.version == versionNumber && request?.state == 'fulfilled') {
             if ( timeoutRef.current == null ) { 
                 timeoutRef.current = setTimeout(function() {
                     if ( events.length > 0 ) {

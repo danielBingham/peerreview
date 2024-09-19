@@ -174,7 +174,7 @@ module.exports = class PaperEventService {
 
         const paperVersionResults = await this.paperVersionDAO.selectPaperVersions('WHERE paper_versions.paper_id = $1', [ event.paperId])
         if ( ! event.version ) {
-            event.version = paperVersionResults.list[0] 
+            event.version = paperVersionResults.list[0].version 
         }
 
         const isAuthor = paper.authors.find((a) => a.userId == user.id) ? true : false

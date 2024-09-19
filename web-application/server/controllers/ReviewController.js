@@ -35,6 +35,7 @@ module.exports = class ReviewController {
         this.reviewDAO = new backend.ReviewDAO(core)
         this.userDAO = new backend.UserDAO(core)
         this.paperDAO = new backend.PaperDAO(core)
+        this.paperVersionDAO = new backend.PaperVersionDAO(core)
         this.paperEventDAO = new backend.PaperEventDAO(core)
 
         this.paperService = new backend.PaperService(core)
@@ -209,14 +210,14 @@ module.exports = class ReviewController {
 
         // 5. If review.version is provided, it must be the most recent version for
         //      Paper(:paper_id).
-        const paperVersionResults = await this.paperDAO.selectPaperVersions(`WHERE paper_versions.paper_id = $1`, [ paperId ])
+        const paperVersionResults = await this.paperVersionDAO.selectPaperVersions(`WHERE paper_versions.paper_id = $1`, [ paperId ])
 
         const currentVersion = paperVersionResults.list[0] 
-        if ( review.version && (review.version < 0 || review.version > currentVersion) ) {
+        if ( review.version && (review.version < 0 || review.version > currentVersion.version) ) {
             throw new ControllerError(400, 'invalid-version',
                 `User(${userId}) attempting to create review for invalid Version(${review.version}) of Paper(${paperId}).`)
         } else if ( ! review.version ) {
-             review.version = currentVersion
+             review.version = currentVersion.version
         }
 
         // 6. If review.number is provided, it must be the next increment for

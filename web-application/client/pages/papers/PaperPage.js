@@ -103,7 +103,7 @@ const PaperPage = function({}) {
     }
 
     const selectedTab = ( pageTab ? pageTab : 'file' )
-    
+   
     let content = ( <Spinner local={true} /> )
     if ( request && request.state == 'fulfilled' && versionRequest && versionRequest.state == 'fulfilled') {
 
@@ -122,6 +122,33 @@ const PaperPage = function({}) {
         else {
             throw new Error(`Invalid tab "${selectedTab}".`)
         }
+
+        return (
+            <Page id="paper-page">
+                <PageHeader>
+                    <PageHeaderGrid>
+                        <div></div>
+                        <PaperControlView paperId={id} />
+                        <PaperHeader paperId={id} />
+                        <div></div>
+                    </PageHeaderGrid>
+                </PageHeader>
+                <PageTabBar>
+
+                    <PageTab url={`/paper/${id}/file`} tab="file" initial={true}>
+                        <DocumentTextIcon /> File
+                    </PageTab>
+
+                    <PageTab url={`/paper/${id}/timeline`} tab="timeline">
+                        <ChatBubbleLeftRightIcon /> Timeline 
+                    </PageTab>
+
+                </PageTabBar>
+                <PageBody>
+                    { content }
+                </PageBody>
+            </Page>
+        )
     } 
 
     // ERROR HANDLING.
@@ -136,28 +163,7 @@ const PaperPage = function({}) {
     
     return (
         <Page id="paper-page">
-            <PageHeader>
-                <PageHeaderGrid>
-                    <div></div>
-                    <PaperControlView paperId={id} />
-                    <PaperHeader paperId={id} />
-                    <div></div>
-                </PageHeaderGrid>
-            </PageHeader>
-            <PageTabBar>
-
-                <PageTab url={`/paper/${id}/file`} tab="file" initial={true}>
-                    <DocumentTextIcon /> File
-                </PageTab>
-
-                <PageTab url={`/paper/${id}/timeline`} tab="timeline">
-                    <ChatBubbleLeftRightIcon /> Timeline 
-                </PageTab>
-
-            </PageTabBar>
-            <PageBody>
-                { content }
-            </PageBody>
+            <Spinner />
         </Page>
     )
 }

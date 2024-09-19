@@ -8,7 +8,6 @@
     /*background-color: #329db8;*/
     background-color: white;
     border: thin solid var(--main-border-color);
-    box-shadow: 1px 1px 1px #999;
 }
 .journal-tag:hover {
     filter: opacity(0.75);

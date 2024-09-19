@@ -53,10 +53,10 @@ const AssignmentWidget = function(props) {
     })
 
     const mostRecentVisibleVersion = useSelector(function(state) {
-        if ( ! (submission.paperId in state.paperVersions.queries) ) {
+        if ( ! (submission.paperId in state.paperVersions.mostRecentVersion) ) {
             throw new Error(`Paper(${submission.paperId}) missing from version query!`)
         }
-        return state.paperVersions.queries[submission.paperId].list[0].version
+        return state.paperVersions.mostRecentVersion[submission.PaperId]
     })
 
     const journal = useSelector(function(state) {
@@ -124,7 +124,7 @@ const AssignmentWidget = function(props) {
     for(const assignee of assignees) {
         let reviewRecommendation = null
         if ( props.type == 'reviewer' ) {
-            const review = assignee.reviews.find((r) => r.version == mostRecentVisibleVersion)
+            const review = assignee.reviews.find((r) => r.version == mostRecentVisibleVersion.version)
             if ( review ) {
                 if ( review.recommendation == 'commentary' ) {
                     reviewRecommendation = (<span className="commentary"><ChatBubbleLeftRightIcon /> </span>)

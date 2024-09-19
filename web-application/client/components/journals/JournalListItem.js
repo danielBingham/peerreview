@@ -22,17 +22,10 @@ const JournalListItem = function(props) {
     
     return (
         <div id={journal.id} className="journal-list-item">
-            <div className="impact-factor">
-                0 <span className="label">impact factor</span>
-            </div>
-            <div className="endorsements">
-                0 <span className="label">endorsements</span>
-            </div>
-                
             <div className="wrapper">
                 <div className="name"><Link to={`/journal/${journal.id}`}> {journal.name} </Link></div> 
-                <div className="editors">editted by { editorViews } </div>
                 <div className="description">{ journal.description }</div>
+                <div className="editors">editted by { editorViews } </div>
             </div>
         </div>
     )
