@@ -4,7 +4,7 @@ import { useSearchParams } from 'react-router-dom'
 
 import { getReviews, clearList, cleanupRequest as cleanupReviewRequest } from '/state/reviews'
 
-import ReviewHeaderView from '/components/reviews/wpaperIdgets/ReviewHeaderView'
+import ReviewHeaderView from '/components/reviews/widgets/ReviewHeaderView'
 import PaperPDFView from './pdf/PaperPDFView'
 
 import Spinner from '/components/Spinner'

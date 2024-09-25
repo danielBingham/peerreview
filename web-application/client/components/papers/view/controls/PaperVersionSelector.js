@@ -23,7 +23,7 @@ const PaperVersionSelector = function({ paperId }) {
     // ================= Redux State ==========================================
 
     const paperVersions = useSelector(function(state) {
-        return state.paperVersions.dictionary[paperId]
+        return state.paperVersions.versionsByPaper[paperId]
     })
 
     const mostRecentVisibleVersion = useSelector(function(state) {
@@ -34,18 +34,18 @@ const PaperVersionSelector = function({ paperId }) {
         return state.paperVersions.mostRecentVersion[paperId]
     })
   
-    let versionNumber = 0
+    let paperVersionId = 0
     if ( searchParams.get('version') ) {
-        versionNumber = searchParams.get('version')
+        paperVersionId = searchParams.get('version')
     } else {
-        versionNumber =  mostRecentVisibleVersion.version
+        paperVersionId =  mostRecentVisibleVersion.version
     }
 
     // ================= User Action Handling  ================================
 
     const changeVersion = function(event) {
-        const versionNumber = event.target.value
-        searchParams.set('version', versionNumber)
+        const paperVersionId = event.target.value
+        searchParams.set('version', paperVersionId)
         // If we're changing the version, clear the review since reviews are
         // tied to version.
         searchParams.delete('review')
@@ -60,14 +60,14 @@ const PaperVersionSelector = function({ paperId }) {
 
     const paperVersionOptions = []
     for( const paperVersion of Object.values(paperVersions) ) {
-        paperVersionOptions.push(<option key={paperVersion.version} value={paperVersion.version}>{ paperVersion.version }</option>)     
+        paperVersionOptions.push(<option key={paperVersion.id} value={paperVersion.id}>{ paperVersion.id}</option>)     
     }
 
 
     return (
         <div className="paper-version-selector">
-            <label htmlFor="versionNumber">Version</label>
-            <select name="versionNumber" value={versionNumber} onChange={changeVersion}>
+            <label htmlFor="paperVersionId">Version</label>
+            <select name="paperVersionId" value={paperVersionId} onChange={changeVersion}>
                 {paperVersionOptions}
             </select>
         </div>

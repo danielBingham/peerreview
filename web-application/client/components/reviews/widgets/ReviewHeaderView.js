@@ -172,7 +172,7 @@ const ReviewHeaderView = function(props) {
                     </FloatingMenu>
                 </div>
                 <div className="start-review">
-                    <StartReviewButton paperId={paper.id} />
+                    <StartReviewButton id={paper.id} />
                 </div>
             </div>
             { selectedReview && <div className="selected-review">

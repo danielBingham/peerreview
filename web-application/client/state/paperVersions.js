@@ -28,8 +28,8 @@ const cacheTTL = 5 * 1000 // 5 seconds
 
 function setMostRecentVersion(state, version) {
     const mostRecentVersion = (version.paperId in state.mostRecentVersion) ? state.dictionary[state.mostRecentVersion[version.paperId]] : null
-    if ( mostRecentVersion   
-        || entity.createdDate > mostRecentVersion.createdDate) 
+    if ( ! mostRecentVersion   
+        || version.createdDate > mostRecentVersion.createdDate) 
     {
         state.mostRecentVersion[version.paperId] = version.id
     }
@@ -105,6 +105,9 @@ export const paperVersionsSlice = createSlice({
             if("dictionary" in action.payload) {
                 for(const [id, version] of Object.entries(action.payload.dictionary)) {
                     setMostRecentVersion(state, version)
+                    if ( ! ( version.paperId in state.versionsByPaper) ) {
+                        state.versionsByPaper[version.paperId] = {}
+                    }
                     state.versionsByPaper[version.paperId][version.id] = version
                 }
             } else if ( "entity" in action.payload ) {
@@ -123,8 +126,7 @@ export const paperVersionsSlice = createSlice({
                 delete state.mostRecentVersion[entity.paperId]
 
                 for(const [id, version] of Object.entries(state.versionsByPaper[entity.paperId])) {
-                    const version = state.dictionary[id]
-                    setMostRecentVersion(state, version)
+                    setMostRecentVersion(state, state.dictionary[id])
                 }
             }
         },
@@ -170,9 +172,7 @@ export const loadFiles = function(paperId) {
     return function(dispatch, getState) {
         const state = getState()
 
-        for(const [versionNumber, id] of Object.entries(state.paperVersions.versionsByPaper[paperId])) {
-            const version = state.paperVersions.dictionary[id]
-
+        for(const [id, version] of Object.entries(state.paperVersions.versionsByPaper[paperId])) {
             const url = new URL(version.file.filepath, version.file.location)
             const urlString = url.toString()
 
@@ -187,7 +187,7 @@ export const clearFiles  = function(paperId) {
     return function(dispatch, getState) {
         const state = getState()
 
-        for(const [versionNumber, id] of Object.entries(state.paperVersions.versionsByPaper[paperId])) {
+        for(const [id, version] of Object.entries(state.paperVersions.versionsByPaper[paperId])) {
             dispatch(paperVersionsSlice.actions.clearFiles({ id: id }))
         }
     }

@@ -66,8 +66,8 @@ const PreprintSubmissionButton = function({ id }) {
         setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
 
         const paperVersionPatch = {
+            id: mostRecentVersion.id,
             paperId: id,
-            version: mostRecentVersion.version,
             isPreprint: true
         }
 

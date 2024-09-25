@@ -58,8 +58,8 @@ module.exports = class PreprintSubmissionTiedToPaperVersion {
             await this.core.database.query(`ALTER TABLE paper_versions ALTER COLUMN is_published SET NOT NULL`, [])
 
             // ============== Give paper_versions a uuid primary key
-            await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS PRIMARY KEY`, [])
-            await this.core.database.query(`ALTER TABLE paper_versions ADD COLUMN id uuid PRIMARY KEY DEFAULT get_random_uuid()`, [])
+            await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS paper_versions_pkey`, [])
+            await this.core.database.query(`ALTER TABLE paper_versions ADD COLUMN id uuid PRIMARY KEY DEFAULT gen_random_uuid()`, [])
 
             // ============== Add paper_version_id to `reviews` table 
             await this.core.database.query(`ALTER TABLE reviews ADD COLUMN paper_version_id uuid REFERENCES paper_versions(id) ON DELETE CASCADE`, [])
@@ -84,8 +84,8 @@ module.exports = class PreprintSubmissionTiedToPaperVersion {
                 await this.core.database.query(`DROP INDEX IF EXISTS reviews__paper_version_id`, [])
                 await this.core.database.query(`ALTER TABLE reviews DROP COLUMN IF EXISTS paper_version_id`, [])
 
-                await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS PRIMARY KEY`, [])
-                await this.core.database.query(`ALTER TABLE paper_versions ADD CONSTRAINT PRIMARY KEY(paper_id, version)`, [])
+                await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS paper_versions_pkey`, [])
+                await this.core.database.query(`ALTER TABLE paper_versions ADD CONSTRAINT paper_versions_pkey PRIMARY KEY(paper_id, version)`, [])
 
                 await this.core.database.query(`ALTER TABLE paper_versions DROP COLUMN IF EXISTS id`, [])
 
@@ -115,8 +115,8 @@ module.exports = class PreprintSubmissionTiedToPaperVersion {
             await this.core.database.query(`DROP INDEX IF EXISTS reviews__paper_version_id`, [])
             await this.core.database.query(`ALTER TABLE reviews DROP COLUMN IF EXISTS paper_version_id`, [])
 
-            await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS PRIMARY KEY`, [])
-            await this.core.database.query(`ALTER TABLE paper_versions ADD CONSTRAINT PRIMARY KEY(paper_id, version)`, [])
+            await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS paper_versions_pkey`, [])
+            await this.core.database.query(`ALTER TABLE paper_versions ADD CONSTRAINT paper_versions_pkey PRIMARY KEY(paper_id, version)`, [])
 
             await this.core.database.query(`ALTER TABLE paper_versions DROP COLUMN IF EXISTS id`, [])
 
