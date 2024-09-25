@@ -109,7 +109,7 @@ const PaperPage = function({}) {
 
         if ( selectedTab == 'file' ) {
             content = ( 
-                <PaperFileView id={id} tab={selectedTab} />
+                <PaperFileView paperId={id} tab={selectedTab} />
             )
         }
 

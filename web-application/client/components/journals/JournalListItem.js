@@ -24,7 +24,7 @@ const JournalListItem = function(props) {
         <div id={journal.id} className="journal-list-item">
             <div className="wrapper">
                 <div className="name"><Link to={`/journal/${journal.id}`}> {journal.name} </Link></div> 
-                <div className="description">{ journal.description }</div>
+                { journal.description && <div className="description">{ journal.description }</div> }
                 <div className="editors">editted by { editorViews } </div>
             </div>
         </div>

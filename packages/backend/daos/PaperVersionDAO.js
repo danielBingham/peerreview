@@ -17,6 +17,10 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+const mime = require('mime')
+const sanitizeFilename = require('sanitize-filename')
+const fs = require('fs')
+const pdfjslib = require('pdfjs-dist/legacy/build/pdf.js')
 
 const FileDAO = require('./FileDAO')
 const S3FileService = require('../services/S3FileService')
@@ -32,8 +36,8 @@ module.exports = class PaperVersionDAO {
 
     getPaperVersionsSelectionString() {
         return `
+            paper_versions.id as "PaperVersion_id",
             paper_versions.paper_id as "PaperVersion_paperId",
-            paper_versions.version as "PaperVersion_version",
             paper_versions.is_published as "PaperVersion_isPublished",
             paper_versions.is_preprint as "PaperVersion_isPreprint",
             paper_versions.is_submitted as "PaperVersion_isSubmitted",
@@ -50,9 +54,9 @@ module.exports = class PaperVersionDAO {
 
         for(const row of rows) {
             const paperVersion = {
+                id: row.PaperVersion_id,
                 paperId: row.PaperVersion_paperId,
                 file: this.fileDAO.hydrateFile(row),
-                version: row.PaperVersion_version,
                 isPublished: row.PaperVersion_isPublished,
                 isPreprint: row.PaperVersion_isPreprint,
                 isSubmitted: row.PaperVersion_isSubmitted,
@@ -61,11 +65,8 @@ module.exports = class PaperVersionDAO {
                 createdDate: row.PaperVersion_createdDate,
                 updatedDate: row.PaperVersion_updatedDate
             }
-            if ( ! ( paperVersion.paperId in dictionary) ) {
-                dictionary[paperVersion.paperId] = {}
-            }
-            dictionary[paperVersion.paperId][paperVersion.version] = paperVersion
-            list.push({ paperId: paperVersion.paperId, version: paperVersion.version})
+            dictionary[paperVersion.id] = paperVersion
+            list.push(paperVersion.id)
         }
 
         return { dictionary: dictionary, list: list }
@@ -94,21 +95,12 @@ module.exports = class PaperVersionDAO {
         }
     }
 
-    async insertPaperVersion(paperVersion) {
+    async insertPaperVersion(paper, paperVersion) {
         const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ paperVersion.file.id ])
         if ( files.length <= 0) {
-            throw new DAOError('invalid-file', `Invalid file_id posted with PaperVersion(${paperVersion.version}) of Paper(${paperVersion.paperId}).`)
+            throw new DAOError('invalid-file', `Invalid file_id posted with PaperVersion(${paperVersion.id}) of Paper(${paperVersion.paperId}).`)
         }
         const file = files[0]
-
-        const maxVersionResults = await this.core.database.query(
-            'SELECT MAX(version)+1 as version FROM paper_versions WHERE paper_id=$1', 
-            [ paperVersion.paperId]
-        )
-        let versionNumber = 1
-        if ( maxVersionResults.rows.length > 0 && maxVersionResults.rows[0].version) {
-            versionNumber = maxVersionResults.rows[0].version
-        }
 
         const url = new URL(file.filepath, file.location)
         const pdf = await pdfjslib.getDocument(url.toString()).promise
@@ -131,11 +123,14 @@ module.exports = class PaperVersionDAO {
         const versionResults = await this.core.database.query(`
             INSERT INTO paper_versions (paper_id, version, file_id, content, created_date, updated_date)
                 VALUES ($1, $2, $3, $4, now(), now())
-        `, [ paper.id, versionNumber, file.id, content ])
+            RETURNING id
+        `, [ paper.id, file.id, content ])
 
         if ( versionResults.rowCount <= 0) {
             throw new DAOError('failed-insertion', `Failed to insert version for paper ${paper.id} and file ${file.id}.`)
         }
+
+        const id = versionResults.rows[0].id
 
         const title = paper.title
         let titleFilename = title.replaceAll(/\s/g, '-')
@@ -154,7 +149,7 @@ module.exports = class PaperVersionDAO {
         await this.fileDAO.updateFile(newFile)
         await this.fileService.removeFile(file.filepath)
 
-        return versionNumber
+        return id 
     }
 
     async updatePaperVersion(paperVersion) {
@@ -179,14 +174,13 @@ module.exports = class PaperVersionDAO {
             params.push(paperVersion[key])
             count = count + 1
         }
-        sql += `updated_date = now() WHERE paperId = $${count} AND version = $${count+1}`
-        params.push(paperVersion.paperId)
-        params.push(paperVersion.version)
+        sql += `updated_date = now() WHERE id=${count}`
+        params.push(paperVersion.id)
 
         const results = await this.core.database.query(sql, params)
 
         if ( results.rowCount <= 0 ) {
-            throw new DAOError('update-failure', `Failed to update PaperVersion(${paperVersion.version} of Paper(${paperVersion.paperId}).`)
+            throw new DAOError('update-failure', `Failed to update PaperVersion(${paperVersion.id} of Paper(${paperVersion.paperId}).`)
         }
     }
 }

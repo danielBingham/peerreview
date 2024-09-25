@@ -24,6 +24,17 @@ import {
 
 const cacheTTL = 5 * 1000 // 5 seconds 
 
+// ================ Reducer Helpers ===========================================
+
+function setMostRecentVersion(state, version) {
+    const mostRecentVersion = (version.paperId in state.mostRecentVersion) ? state.dictionary[state.mostRecentVersion[version.paperId]] : null
+    if ( mostRecentVersion   
+        || entity.createdDate > mostRecentVersion.createdDate) 
+    {
+        state.mostRecentVersion[version.paperId] = version.id
+    }
+}
+
 export const paperVersionsSlice = createSlice({
     name: 'paperVersions',
     initialState: {
@@ -39,8 +50,7 @@ export const paperVersionsSlice = createSlice({
         requests: {},
 
         /**
-         * A dictionary of papers we've retrieved from the backend, keyed by
-         * paper.id.
+         * A dictionary of paperVersions keyed by paperVersion.id.
          *
          * @type {object}
          */
@@ -72,6 +82,11 @@ export const paperVersionsSlice = createSlice({
          * The most recent version of each paper, keyed by paperID.
          */
         mostRecentVersion: {},
+
+        /**
+         * A map containing the versions belonging to each paper.
+         */
+        versionsByPaper: {},
         
         /**
          * Loaded paper files. 
@@ -85,45 +100,31 @@ export const paperVersionsSlice = createSlice({
         // @see ./helpers/state.js
 
         setPaperVersionsInDictionary: function(state, action) {
-            if ( action.payload.dictionary ) {
-                state.dictionary = { ...state.dictionary, ...action.payload.dictionary }
+            setInDictionary(state, action)
 
-                // Update the most recent versions.
-                for(const [paperId, versions] of Object.entries(state.dictionary)) {
-                    for(const version of Object.values(versions)) {
-                        if ( ! (paperId in state.mostRecentVersion) || version.createdDate > state.mostRecentVersion[paperId].createdDate) {
-                            state.mostRecentVersion[paperId] = version
-                        }
-                    }
+            if("dictionary" in action.payload) {
+                for(const [id, version] of Object.entries(action.payload.dictionary)) {
+                    setMostRecentVersion(state, version)
+                    state.versionsByPaper[version.paperId][version.id] = version
                 }
-            } else if( action.payload.entity ) {
-                const entity = action.payload.entity
-                if ( entity.paperId in state.dictionary ) {
-                    state.dictionary[entity.paperId] = {} 
-                }
-                state.dictionary[entity.paperId][entity.version] = entity 
+            } else if ( "entity" in action.payload ) {
+                setMostRecentVersion(state, action.payload.entity)
 
-                // Update the most recent version if appropriate.
-                if ( ! ( entity.paperId in state.mostRecentVersion ) || entity.createdDate > state.mostRecentVersion[entity.paperId].createdDate ) {
-                    state.mostRecentVersion[entity.paperId] = entity
+                if ( ! ( action.payload.entity.paperId in state.versionsByPaper) ) {
+                    state.versionsByPaper[action.payload.entity.paperId] = {}
                 }
-            } else {
-                console.log(action)
-                throw new Error(`Invalid payload sent to ${action.type}.`)
+                state.versionsByPaper[action.payload.entity.paperId][action.payload.entity.id] = action.payload.entity
             }
-
         },
         removePaperVersion: function(state, action) {
-            const entity = action.payload.entity
-            delete state.dictionary[entity.paperId][entity.version]
+            removeEntity(state, action)
 
-            if ( state.mostRecentVersion[entity.paperId].version == entity.version ) {
+            if ( state.mostRecentVersion[entity.paperId] == entity.id) {
                 delete state.mostRecentVersion[entity.paperId]
 
-                for(const version of Object.values(state.dictionary[entity.paperId])) {
-                    if ( ! ( entity.paperId in state.mostRecentVersion) || version.createdDate > state.mostRecentVersion[entity.paperId].createdDate) {
-                        state.mostRecentVersion[entity.paperId] = version
-                    }
+                for(const [id, version] of Object.entries(state.versionsByPaper[entity.paperId])) {
+                    const version = state.dictionary[id]
+                    setMostRecentVersion(state, version)
                 }
             }
         },
@@ -149,43 +150,46 @@ export const paperVersionsSlice = createSlice({
             garbageCollectTrackedRequests(state, action)
         },
 
-        setFile: function(state, action) { if ( ! state.files[action.payload.paperId] ) {
-                state.files[action.payload.paperId] = {}
-            }
-            state.files[action.payload.paperId][action.payload.version] = action.payload.url
+        // ======== Specific State ============================================
+
+        setFile: function(state, action) { 
+            state.files[action.payload.id] = action.payload.url
         },
 
         clearFiles: function(state, action) {
-            if ( state.files[action.payload.paperId] ) {
-                for(const [version, url] of Object.entries(state.files[action.payload.paperId])) {
-                    URL.revokeObjectURL(url)
-                }
-                delete state.files[action.payload.paperId]
+            if ( state.files[action.payload.id] ) {
+                URL.revokeObjectURL(state.files[action.payload.id])
+                delete state.files[action.payload.id]
             }
         },
     }
 })
 
+
 export const loadFiles = function(paperId) {
     return function(dispatch, getState) {
         const state = getState()
 
-        for(const versionIds of state.paperVersions.queries[paperId].list) {
-            const version = state.paperVersions.dictionary[versionIds.paperId][versionIds.version]
+        for(const [versionNumber, id] of Object.entries(state.paperVersions.versionsByPaper[paperId])) {
+            const version = state.paperVersions.dictionary[id]
 
             const url = new URL(version.file.filepath, version.file.location)
             const urlString = url.toString()
 
             fetch(urlString)
                 .then(response => response.blob())
-                .then(blob => dispatch(paperVersionsSlice.actions.setFile({ paperId: paperId, version: version.version, url: URL.createObjectURL(blob) })))
+                .then(blob => dispatch(paperVersionsSlice.actions.setFile({ id: id, url: URL.createObjectURL(blob) })))
         }
     }
 }
 
 export const clearFiles  = function(paperId) {
     return function(dispatch, getState) {
-        dispatch(paperVersionsSlice.actions.clearFiles({ paperId: paperId }))
+        const state = getState()
+
+        for(const [versionNumber, id] of Object.entries(state.paperVersions.versionsByPaper[paperId])) {
+            dispatch(paperVersionsSlice.actions.clearFiles({ id: id }))
+        }
     }
 }
 
@@ -286,7 +290,7 @@ export const patchPaperVersion = function(paperId, paperVersion) {
     return function(dispatch, getState) {
         dispatch(paperVersionsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, paperVersionsSlice,
-            'PATCH', `/paper/${paperId}/version/${paperVersion.version}`, paperVersion,
+            'PATCH', `/paper/${paperId}/version/${paperVersion.versionNumber}`, paperVersion,
             function(response) {
                 dispatch(paperVersionsSlice.actions.setPaperVersionsInDictionary({ entity: response.entity }))
 

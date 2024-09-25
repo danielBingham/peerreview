@@ -19,7 +19,7 @@ import './ReviewSummaryForm.css'
  *
  * @param {Object} props    Standard React props object.
  * @param {Object} props.paper  The paper we're rendering review summaries for.
- * @param {integer} props.versionNumber The version of the paper we're currently viewing.
+ * @param {integer} props.paperVersionId The version of the paper we're currently viewing.
  * @param {Object} props.selectedReview The currently selected review.
  */
 const ReviewSummaryForm = function(props) {
@@ -54,13 +54,9 @@ const ReviewSummaryForm = function(props) {
 
     // ======= Redux State ==========================================
 
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
-
     const reviewInProgress = useSelector(function(state) {
         for(const [id, review] of Object.entries(state.reviews.dictionary)) {
-            if ( review.paperId == props.paper.id && review.version == props.versionNumber && review.status == 'in-progress' ) {
+            if ( review.paperId == props.paper.id && review.paperVersionId == props.paperVersionId && review.status == 'in-progress' ) {
                 return review
             }
         }

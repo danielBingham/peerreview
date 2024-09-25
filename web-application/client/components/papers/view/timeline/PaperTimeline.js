@@ -31,7 +31,7 @@ const PaperTimeline = function({ paperId }) {
     // ================= Redux State ==========================================
 
     const paperVersions = useSelector(function(state) {
-        return state.paperVersions.dictionary[paperId]
+        return state.paperVersions.versionsByPaper[paperId]
     })
 
     // ================= User Action Handling  ================================
@@ -52,7 +52,7 @@ const PaperTimeline = function({ paperId }) {
     const versionViews = []
     for(const version of sortedVersions) {
         versionViews.push(
-            <PaperVersionTimeline key={version.version} paperId={paperId} versionNumber={version.version} />
+            <PaperVersionTimeline key={version.id} paperId={paperId} paperVersionId={version.id} />
         )
     }
 

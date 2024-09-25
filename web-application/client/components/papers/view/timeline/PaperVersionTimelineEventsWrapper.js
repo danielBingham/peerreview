@@ -11,7 +11,7 @@ import PaperSubmissionAssignmentEvent from './events/PaperSubmissionAssignmentEv
 import PaperSubmissionStatusChange from './events/PaperSubmissionStatusChange'
 import PaperCommentEvent from './events/PaperCommentEvent'
 
-const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
+const PaperVersionTimelineEventsWrapper = function({ paperId, paperVersionId }) {
     
     const timeoutRef = useRef(null)
 
@@ -37,10 +37,10 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
    
     const events = useSelector(function(state) {
         const results = []
-        const query = state.paperEvents.queries[`${paperId}-${versionNumber}`] 
+        const query = state.paperEvents.queries[`${paperId}-${paperVersionId}`] 
         if ( query ) {
             for ( const eventId of query.list) {
-                if ( state.paperEvents.dictionary[eventId].version == versionNumber) {
+                if ( state.paperEvents.dictionary[eventId].paperVersionId == paperVersionId) {
                     results.push(state.paperEvents.dictionary[eventId])
                 }
             }
@@ -59,7 +59,7 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
      * retrieve it from the paper endpoint to get full and up to date data.
      */
     useEffect(function() {
-        setRequestId(dispatch(getPaperEvents(`${paperId}-${versionNumber}`, paperId, { version: versionNumber })))
+        setRequestId(dispatch(getPaperEvents(`${paperId}-${paperVersionId}`, paperId, { paperVersionId: paperVersionId })))
     }, [])
    
     // Poll for new events.
@@ -73,14 +73,14 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
     //
     // But this is probably good enough for now.
     useEffect(function() {
-        if ( mostRecentVisibleVersion.version == versionNumber && request?.state == 'fulfilled') {
+        if ( mostRecentVisibleVersion.id == paperVersionId && request?.state == 'fulfilled') {
             if ( timeoutRef.current == null ) { 
                 timeoutRef.current = setTimeout(function() {
                     if ( events.length > 0 ) {
                         const last = events[events.length - 1]
-                        setRequestId(dispatch(getPaperEvents(`${paperId}-${versionNumber}`, paperId, { version: versionNumber, since: last.eventDate })))
+                        setRequestId(dispatch(getPaperEvents(`${paperId}-${paperVersionId}`, paperId, { paperVersionId: paperVersionId, since: last.eventDate })))
                     } else {
-                        setRequestId(dispatch(getPaperEvents(`${paperId}-${versionNumber}`, paperId, { version: versionNumber, since: 'always' })))
+                        setRequestId(dispatch(getPaperEvents(`${paperId}-${paperVersionId}`, paperId, { paperVersionId: paperVersionId, since: 'always' })))
                     }
                     timeoutRef.current = null
                 }, 5000)
@@ -139,7 +139,7 @@ const PaperVersionTimelineEventsWrapper = function({ paperId, versionNumber }) {
     for(const event of events) {
         if ( event.type == 'paper:new-review' || event.type == 'submission:new-review') {
             eventViews.push(
-                <ReviewView key={event.id} id={event.reviewId} eventId={event.id} paperId={paperId} versionNumber={versionNumber} />
+                <ReviewView key={event.id} id={event.reviewId} eventId={event.id} paperId={paperId} paperVersionId={paperVersionId} />
             )
         }
 

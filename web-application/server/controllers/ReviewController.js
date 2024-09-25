@@ -180,9 +180,9 @@ module.exports = class ReviewController {
          *
          * Finally, we need to validate the POST body:
          *
-         * 5. review.version must be a valid version of the paper.
+         * 5. review.paperVersionId must be a valid versionId of the paper.
          * 6. If review.number is provided, it must be the next increment for
-         *      Paper(:paper_id) and version.
+         *      Paper(:paper_id) and versionId.
          * 7. review.status may only be 'in-progress' or 'submitted'.
          *
          * ***********************************************************/
@@ -208,16 +208,16 @@ module.exports = class ReviewController {
          *      Begin Input Validation 
          ********************************************************/
 
-        // 5. If review.version is provided, it must be the most recent version for
+        // 5. If review.paperVersionId is provided, it must be the most recent version for
         //      Paper(:paper_id).
         const paperVersionResults = await this.paperVersionDAO.selectPaperVersions(`WHERE paper_versions.paper_id = $1`, [ paperId ])
 
         const currentVersion = paperVersionResults.list[0] 
-        if ( review.version && (review.version < 0 || review.version > currentVersion.version) ) {
+        if ( review.paperVersionId && ( review.paperVersionId in paperVersionResults.dictionary) ) {
             throw new ControllerError(400, 'invalid-version',
                 `User(${userId}) attempting to create review for invalid Version(${review.version}) of Paper(${paperId}).`)
-        } else if ( ! review.version ) {
-             review.version = currentVersion.version
+        } else if ( ! review.paperVersionId) {
+             review.paperVersionId = currentVersion
         }
 
         // 6. If review.number is provided, it must be the next increment for
@@ -239,11 +239,11 @@ module.exports = class ReviewController {
 
 
         const insertResults = await this.database.query(`
-                INSERT INTO reviews (paper_id, user_id, version, summary, recommendation, status, created_date, updated_date) 
+                INSERT INTO reviews (paper_id, user_id, paper_version_id, summary, recommendation, status, created_date, updated_date) 
                     VALUES ($1, $2, $3, $4, $5, $6, now(), now()) 
                     RETURNING id
                 `, 
-            [ paperId, userId, review.version, review.summary, review.recommendation, review.status ]
+            [ paperId, userId, review.paperVersionId, review.summary, review.recommendation, review.status ]
         )
         if ( insertResults.rows.length == 0 ) {
             throw new ControllerError(500, 'server-error', `User(${userId}) failed to insert a new review on Paper(${review.paperId})`)
@@ -262,7 +262,7 @@ module.exports = class ReviewController {
         const event = {
             paperId: entity.paperId,
             actorId: userId,
-            version: entity.version,
+            paperVersionId: entity.paperVersionId,
             status : entity.status == 'submitted' ? 'committed' : 'in-progress',
             type: 'new-review',
             reviewId: entity.id
@@ -273,8 +273,8 @@ module.exports = class ReviewController {
 
             // Update the review count on the version
             await this.database.query(`
-                UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND version = $2
-            `, [ paperId, review.version ])
+                UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND id = $2
+            `, [ paperId, review.paperVersionId])
 
 
             // ==== Notifications =============================================
@@ -549,7 +549,7 @@ module.exports = class ReviewController {
         }
 
         // 9. No one may PATCH `paperId`, `userId`, `version`, or `number`
-        if ( review.paperId || review.userId || review.version || review.number ) {
+        if ( review.paperId || review.userId || review.paperVersionId|| review.number ) {
             throw new ControllerError(403, 'not-authorized:forbidden-fields', 
                 `User(${userId}) attempted to PATCH forbidden fields on Review(${reviewId}).`)
         }
@@ -568,7 +568,7 @@ module.exports = class ReviewController {
         //
         // In this case, we only allow editting of summary, recommandation, and
         // status.
-        const ignoredFields = [ 'id', 'paperId', 'userId', 'version', 'number', 'threads', 'createdDate', 'updatedDate' ]
+        const ignoredFields = [ 'id', 'paperId', 'userId', 'paperVersionId', 'number', 'threads', 'createdDate', 'updatedDate' ]
 
         let sql = 'UPDATE reviews SET '
         let params = []
@@ -604,8 +604,8 @@ module.exports = class ReviewController {
         if ( existing.review_status != 'submitted' && results.dictionary[review.id].status == 'submitted' ) {
             // Update the review count on the version
             await this.database.query(`
-                UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND version = $2
-            `, [ entity.paperId, entity.version ])
+                UPDATE paper_versions SET review_count = review_count+1 WHERE paper_id = $1 AND id = $2
+            `, [ entity.paperId, entity.paperVersionId])
 
             // ==== Paper Events ==============================================
 

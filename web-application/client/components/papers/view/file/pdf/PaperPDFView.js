@@ -25,7 +25,7 @@ import './PaperPDFView.css'
  * @param {object} props    The React props object.
  * @param {object} paper  The `paper` object for the draft paper who's
  * PDF file we're rendering.
- * @param {int} props.versionNumber The version number corresponding to the PDF
+ * @param {int} props.paperVersionId The version number corresponding to the PDF
  * file we're rendering.
  */
 const PaperPDFView = function(props) {
@@ -44,7 +44,7 @@ const PaperPDFView = function(props) {
             return null
         }
 
-        return state.paperVersions.files[props.paperId][props.versionNumber]
+        return state.paperVersions.files[props.paperId][props.paperVersionId]
     })
 
     // We need this to be a ref because the callback can be called mutliple
@@ -52,7 +52,7 @@ const PaperPDFView = function(props) {
     // it will only record a single page as rendered, even if dozens have
     // returned rendered.
     const renderedPagesCount = useRef(0)
-    if ( renderedPagesCount.current !== 0 && loadedVersion !== props.versionNumber ) {
+    if ( renderedPagesCount.current !== 0 && loadedVersion !== props.paperVersionId ) {
         renderedPagesCount.current = 0
     }
 
@@ -69,8 +69,8 @@ const PaperPDFView = function(props) {
      */
     const onLoadSuccess = useCallback(function(pdf) {
         setNumberOfPages(pdf.numPages)
-        setLoadedVersion(props.versionNumber)
-    }, [ props.versionNumber, setNumberOfPages, setLoadedVersion ])
+        setLoadedVersion(props.paperVersionId)
+    }, [ props.paperVersionId, setNumberOfPages, setLoadedVersion ])
 
     const onRenderSuccess = useCallback(function() {
         // TECHDEBT Hack - see comment on ref definition.
@@ -81,14 +81,14 @@ const PaperPDFView = function(props) {
     // ======= Effect Handling ======================================
 
     useEffect(function() {
-        if ( renderedPages !== 0 && loadedVersion != props.versionNumber ) {
+        if ( renderedPages !== 0 && loadedVersion != props.paperVersionId ) {
             setRenderedPages(0)
         }
-    }, [ loadedVersion, props.versionNumber ])
+    }, [ loadedVersion, props.paperVersionId ])
 
     useEffect(function() {
         if ( renderedPages == numberOfPages && numberOfPages !== 0 ) {
-            setRenderedVersion(props.versionNumber)
+            setRenderedVersion(props.paperVersionId)
         }
     }, [ renderedPages ])
 
@@ -96,14 +96,14 @@ const PaperPDFView = function(props) {
 
     if ( file) {
         const pageViews = []
-        if ( props.versionNumber == loadedVersion) {
+        if ( props.paperVersionId == loadedVersion) {
             for(let pageNumber = 1; pageNumber <= numberOfPages; pageNumber++) {
                 pageViews.push(
                     <PaperPDFPageView 
                         key={`page-${pageNumber}`} 
                         pageNumber={pageNumber}
                         paperId={props.paperId}
-                        versionNumber={props.versionNumber}
+                        paperVersionId={props.paperVersionId}
                         onRenderSuccess={onRenderSuccess}
                     />
                 )
@@ -114,7 +114,7 @@ const PaperPDFView = function(props) {
             <article id={`paper-${props.paperId}-content`} className="paper-pdf">
                 <ReviewCommentsWrapper 
                     paperId={props.paperId} 
-                    versionNumber={props.versionNumber} 
+                    paperVersionId={props.paperVersionId} 
                     loadedVersion={loadedVersion}
                     renderedPages={renderedPages}
                     renderedVersion={renderedVersion}

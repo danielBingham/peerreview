@@ -24,28 +24,15 @@ import './ReviewHeaderView.css'
  *
  * @param {Object} props    Standard React props object.
  * @param {Object} props.paperId  The id of the paper this review belongs to.
- * @param {integer} props.versionNumber The version of the paper we're currently viewing.
+ * @param {integer} props.paperVersionId The version of the paper we're currently viewing.
  */
 const ReviewHeaderView = function(props) {
     const [ searchParams, setSearchParams ] = useSearchParams()
     const reviewId = searchParams.get('review')
 
     // ================= Request Tracking =====================================
-    
-    const [ postReviewsRequestId, setPostReviewRequestId ] = useState(null)
-    const postReviewsRequest = useSelector(function(state) {
-        if ( ! postReviewsRequestId ) {
-            return null
-        } else {
-            return state.reviews.requests[postReviewsRequestId]
-        }
-    })
 
     // ================= Redux State ==========================================
-
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
 
     const paper = useSelector(function(state) {
         return state.papers.dictionary[props.paperId]
@@ -55,7 +42,7 @@ const ReviewHeaderView = function(props) {
         const results = []
         if ( state.reviews.queries[props.paperId]?.list) {
             for(const id of state.reviews.queries[props.paperId].list) {
-                if ( state.reviews.dictionary[id].version == props.versionNumber ) {
+                if ( state.reviews.dictionary[id].version == props.paperVersionId ) {
                     results.push(state.reviews.dictionary[id])
                 }
             }
@@ -66,7 +53,7 @@ const ReviewHeaderView = function(props) {
     let selectedReview = useSelector(function(state) {
         if ( reviewId && reviewId !== 'none'
             && state.reviews.dictionary[reviewId] 
-            && state.reviews.dictionary[reviewId].version == props.versionNumber) 
+            && state.reviews.dictionary[reviewId].version == props.paperVersionId) 
         {
             return state.reviews.dictionary[reviewId]
         } else {
@@ -89,7 +76,7 @@ const ReviewHeaderView = function(props) {
 
     const reviewInProgress = useSelector(function(state) {
         if ( state.reviews.inProgress[props.paperId] ) {
-            return state.reviews.inProgress[props.paperId][props.versionNumber]
+            return state.reviews.inProgress[props.paperId][props.paperVersionId]
         } else {
             return null
         }
@@ -100,8 +87,6 @@ const ReviewHeaderView = function(props) {
     }
 
     // ================= User Action Handling  ================================
-    
-    const dispatch = useDispatch()
 
     const setReview = function(reviewId) {
         if ( reviewId ) {
@@ -114,15 +99,6 @@ const ReviewHeaderView = function(props) {
     }
 
     // ======= Effect Handling ======================================
-
-    // Request tracker cleanup.
-    useEffect(function() {
-        return function cleanup() {
-            if ( postReviewsRequestId ) {
-                dispatch(cleanupReviewRequest({ requestId: postReviewsRequestId }))
-            }
-        }
-    }, [ postReviewsRequestId ])
 
     // ======= Render ===============================================
     let content = null 
@@ -156,14 +132,14 @@ const ReviewHeaderView = function(props) {
     if ( reviewInProgress ) {
         reviewInProgressView = ( 
             <>
-                <ReviewSummaryForm paper={paper} versionNumber={props.versionNumber} selectedReview={reviewInProgress} /> 
+                <ReviewSummaryForm paper={paper} paperVersionId={props.paperVersionId} selectedReview={reviewInProgress} /> 
             </>
         )
     }
 
     if ( selectedReview && event ) {
             selectedReviewView = (
-                <ReviewSummaryView eventId={event.id} paper={paper} versionNumber={props.versionNumber} selectedReview={selectedReview} />
+                <ReviewSummaryView eventId={event.id} paper={paper} selectedReview={selectedReview} />
             )
     } else if ( selectedReview && ! event && selectedReview.id != reviewInProgress.id) {
         selectedReviewView = (
@@ -196,7 +172,7 @@ const ReviewHeaderView = function(props) {
                     </FloatingMenu>
                 </div>
                 <div className="start-review">
-                    <StartReviewButton id={paper.id} />
+                    <StartReviewButton paperId={paper.id} />
                 </div>
             </div>
             { selectedReview && <div className="selected-review">

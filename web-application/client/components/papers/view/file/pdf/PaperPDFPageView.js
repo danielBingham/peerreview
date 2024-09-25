@@ -26,7 +26,7 @@ import './PaperPDFPageView.css'
  * used to select it from the PDF object.  1 indexed.
  * @param {Object} props.paper  The populated paper object of the paper we're
  * viewing.
- * @param {Object} props.versionNumber  The number of the paper's version that
+ * @param {Object} props.paperVersionId  The number of the paper's version that
  * we're viewing. 1 index.
  *
  */
@@ -73,7 +73,7 @@ const PaperPDFPageView = function(props) {
 
     const reviewInProgress = useSelector(function(state) {
         for(const [id, review] of Object.entries(state.reviews.dictionary)) {
-            if ( review.paperId == props.paperId && review.version == props.versionNumber  && review.status == 'in-progress') {
+            if ( review.paperId == props.paperId && review.paperVersionId == props.paperVersionId  && review.status == 'in-progress') {
                 return review
             }
         }
@@ -82,7 +82,7 @@ const PaperPDFPageView = function(props) {
 
     const threads = useSelector(function(state) {
         if ( state.reviews.queries[props.paperId]?.list && ! selectedReviewId) {
-            const reviewIds = state.reviews.queries[props.paperId].list.filter((id) => state.reviews.dictionary[id].version == props.versionNumber)
+            const reviewIds = state.reviews.queries[props.paperId].list.filter((id) => state.reviews.dictionary[id].paperVersionId == props.paperVersionId)
             const results = []
             for (const id of reviewIds ) {
                 results.push(...state.reviews.dictionary[id].threads.filter((t) => t.page == props.pageNumber))
@@ -90,7 +90,7 @@ const PaperPDFPageView = function(props) {
             return results
         } else if ( selectedReviewId && selectedReviewId != 'none' ) {
             const results = []
-            if ( state.reviews.dictionary[selectedReviewId].version == props.versionNumber ) {
+            if ( state.reviews.dictionary[selectedReviewId].paperVersionId == props.paperVersionId ) {
                 results.push(...state.reviews.dictionary[selectedReviewId].threads.filter((t) => t.page == props.pageNumber))
             }
             return results

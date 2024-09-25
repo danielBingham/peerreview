@@ -1,1 +1,3 @@
-.upload-paper-version-form {}
+.upload-paper-version-form .submit {
+    margin: 20px auto 0 auto;
+}

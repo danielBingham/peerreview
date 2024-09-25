@@ -14,7 +14,7 @@ import Spinner from '/components/Spinner'
 
 import './CommentThreadView.css'
 
-const CommentThreadView = function({ id, reviewId, paperId, versionNumber }) {
+const CommentThreadView = function({ id, reviewId, paperId }) {
 
     const [ width, setWidth ] = useState(0)
     const [ height, setHeight ] = useState(0)

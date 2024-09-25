@@ -121,8 +121,11 @@ body {
     margin: 0;
     height: 100%;
 
-    font-family: Arial, sans-serif;
+    font-family: Roboto, Arial, sans-serif; 
+    /*font-family: "Atkinson Hyperlegible", Roboto, Arial, sans-serif;*/
     font-size: 14px;
+    font-weight: 400;
+    font-style: normal;
     background-color: white;
 }
 

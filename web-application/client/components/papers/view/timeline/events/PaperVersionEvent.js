@@ -21,10 +21,7 @@ const PaperVersionEvent = function({ eventId }) {
     })
 
     const version = useSelector(function(state) {
-        if ( ! ( event.paperId in state.paperVersions.dictionary ) ) {
-            throw new Error(`Paper(${event.paperId}) missing from state.paperVersions!`)
-        }
-        return state.paperVersions.dictionary[event.paperId][event.version]
+        return state.paperVersions.dictionary[event.paperVersionId]
     })
 
     // ================= Render ===============================================
@@ -35,7 +32,7 @@ const PaperVersionEvent = function({ eventId }) {
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <UserTag id={event.actorId} /> uploaded <strong><Link to={`/paper/${event.paperId}/file?version=${version.version}`}>version { version.version}</Link></strong> <DateTag timestamp={event.eventDate} type="full" />. <VisibilityControl eventId={eventId} compact={true}/>
+                <UserTag id={event.actorId} /> uploaded <strong><Link to={`/paper/${event.paperId}/file?version=${version.id}`}>version { version.id}</Link></strong> <DateTag timestamp={event.eventDate} type="full" />. <VisibilityControl eventId={eventId} compact={true}/>
             </TimelineItemWrapper>
         </TimelineItem> 
     )

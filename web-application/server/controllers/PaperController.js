@@ -38,6 +38,7 @@ module.exports = class PaperController {
         this.logger = core.logger
 
         this.paperDAO = new backend.PaperDAO(core)
+        this.paperVersionDAO = new backend.PaperVersionDAO(core)
         this.fieldDAO = new backend.FieldDAO(core)
         this.userDAO = new backend.UserDAO(core)
         this.journalDAO = new backend.JournalDAO(core)
@@ -607,22 +608,26 @@ module.exports = class PaperController {
         paper.id = await this.paperDAO.insertPaper(paper) 
         await this.paperDAO.insertAuthors(paper) 
         await this.paperDAO.insertFields(paper)
-        await this.paperDAO.insertVersions(paper)
 
+        for ( const version of paper.versions) {
+            version.id = await this.paperVersionDAO.insertPaperVersion(paper, version)
+        }
         
         const results = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
         const entity = results.dictionary[paper.id]
         if ( ! entity ) {
             throw new ControllerError(500, `server-error`, `Paper ${paper.id} does not exist after insert!`)
         }
-        
-        const event = {
-            paperId: entity.id,
-            actorId: user.id,
-            version: entity.versions[0].version,
-            type: 'paper:new-version'
+       
+        for(const version of paper.versions) {
+            const event = {
+                paperId: entity.id,
+                actorId: user.id,
+                paperVersionId: version.id, 
+                type: 'paper:new-version'
+            }
+            await this.paperEventService.createEvent(request.session.user, event)
         }
-        await this.paperEventService.createEvent(request.session.user, event)
 
         // ==== Notifications =============================================
 
@@ -761,6 +766,7 @@ module.exports = class PaperController {
                 `User(${user.id}) attempting to PATCH a published paper.`)
         }
 
+
         /********************************************************
          * Permissions Checks and Validation Complete
          *      PATCH the Paper.
@@ -775,11 +781,24 @@ module.exports = class PaperController {
             throw new ControllerError(500, `server-error`, `Failed to find paper(${paper.id}) after patching!`)
         } 
 
+
         if ( entity.showPreprint && ! existing.showPreprint ) {
+
+            const versionResults = await this.database.query(`
+                SELECT id FROM paper_versions WHERE paper_id = $1 ORDER BY created_date desc LIMIT 1
+            `, [ paper.id ])
+
+            if ( versionResults.rows.length < 0 ) {
+                throw new ControllerError(500, 'missing-version',
+                    `Paper(${paper.id}) has no version!`)
+            }
+
+            const versionId = versionResults.rows[0].id
+
             const event = {
                 paperId: entity.id,
                 actorId: user.id,
-                version: entity.versions[0].version,
+                paperVersionId: versionId,
                 type: 'paper:preprint-posted'
             }
             await this.paperEventService.createEvent(request.session.user, event)

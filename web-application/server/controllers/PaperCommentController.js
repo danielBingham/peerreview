@@ -78,10 +78,10 @@ module.exports = class PaperCommentsController {
        
         // We're only ever allowed to comment on the current version.
         const paperVersionResults = await this.core.database.query(`
-            SELECT version FROM paper_versions WHERE paper_versions.paper_id = $1 ORDER BY version DESC
+            SELECT id FROM paper_versions WHERE paper_versions.paper_id = $1 ORDER BY created_date DESC
         `, [ paperComment.paperId ])
 
-        paperComment.paperVersion = paperVersionResults.rows[0].version
+        paperComment.paperVersionId = paperVersionResults.rows[0].id
 
 
         const id = await this.paperCommentDAO.insertPaperComment(paperComment)

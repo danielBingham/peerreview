@@ -306,61 +306,6 @@ export const deletePaper = function(paper) {
     }
 } 
 
-
-/**
- * POST /paper/:id/versions
- *
- * Create a new version of a paper.
- *  
- * Makes the request asynchronously and returns a id that can be used to track
- * the request and retreive the results from the state slice.
- *
- * @param {object} paper    A populated paper object.
- * @param {object} version  A populate paper version object.
- *
- * @returns {string} A uuid requestId that can be used to track this request.
- */
-export const postPaperVersions = function(paper, version) {
-    return function(dispatch, getState) {
-        dispatch(papersSlice.actions.bustRequestCache())
-        return makeTrackedRequest(dispatch, getState, papersSlice,
-            'POST', `/paper/${paper.id}/versions`, version,
-            function(response) {
-                dispatch(papersSlice.actions.setPapersInDictionary({ entity: response.entity }))
-
-                dispatch(setRelationsInState(response.relations))
-            }
-        )
-    }
-}
-
-/**
- * PATCH /paper/:id/versions
- *
- * Create a new version of a paper.
- *  
- * Makes the request asynchronously and returns a id that can be used to track
- * the request and retreive the results from the state slice.
- *
- * @param {object} paper    A populated paper object.
- * @param {object} version  A populated paper version object. 
- *
- * @returns {string} A uuid requestId that can be used to track this request.
- */
-export const patchPaperVersion = function(paper, version) {
-    return function(dispatch, getState) {
-        dispatch(papersSlice.actions.bustRequestCache())
-        return makeTrackedRequest(dispatch, getState, papersSlice,
-            'PATCH', `/paper/${paper.id}/version/${version.version}`, version,
-            function(response) {
-                dispatch(papersSlice.actions.setPapersInDictionary({ entity: response.entity }))
-
-                dispatch(setRelationsInState(response.relations))
-            }
-        )
-    }
-}
-
 export const getPaperSubmissions = function(paperId) {
     return function(dispatch, getState) {
         dispatch(papersSlice.actions.bustRequestCache())

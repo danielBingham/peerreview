@@ -46,7 +46,7 @@ module.exports = class PaperEventController {
         const paperVersions = []
         const paperCommentIds = []
         for(const [id, event] of Object.entries(results.dictionary)) {
-            paperVersions.push({ paperId: event.paperId, version: event.version })
+            paperVersions.push(event.paperVersionId)
 
             if ( event.actorId ) {
                 userIds.push(event.actorId)
@@ -90,16 +90,7 @@ module.exports = class PaperEventController {
         if ( paperVersions.length > 0 ) {
             // If they can view the event, for now we're assuming they can view the version the event is on.
             // TECHDEBT -- This may not be a safe assumption.
-            let sql = ''
-            let count = 1
-            let params = []
-            for(const version of paperVersions) {
-                sql += `${ count > 1 ? ' OR ' : ''} (paper_versions.paper_id = $${count} AND  paper_versions.version = $${count+1})`
-                params.push(version.paperId)
-                params.push(version.version)
-                count += 2
-            }
-            const paperVersionResults = await this.paperVersionDAO.selectPaperVersions(`WHERE ${sql}`, params)
+            const paperVersionResults = await this.paperVersionDAO.selectPaperVersions(`WHERE paper_versions.id = ANY($1::uuid[])`, [ paperVersions ])
             relations.paperVersions = paperVersionResults.dictionary
         }
 
@@ -151,12 +142,12 @@ module.exports = class PaperEventController {
 
         // ======== END Visibility ============================================
 
-        if ( query.version ) {
+        if ( query.paperVersionId) {
             count += 1
             and = ( count > 1 ? ' AND ' : '')
 
-            result.where += `${and} paper_events.version = $${count}`
-            result.params.push(query.version)
+            result.where += `${and} paper_events.paper_version_id= $${count}`
+            result.params.push(query.paperVersionId)
         }
 
         if ( query.since && query.since != 'always') {

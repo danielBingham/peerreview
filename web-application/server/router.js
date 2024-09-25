@@ -430,13 +430,13 @@ module.exports = function(core) {
         })
     })
 
-    router.get('/paper/:paperId/verion/:version', function(request, response, next) {
+    router.get('/paper/:paperId/verion/:id', function(request, response, next) {
         paperVersionController.getPaperVersion(request, response).catch(function(error) {
             next(error)
         })
     })
 
-    router.patch('/paper/:paperId/version/:version', function(request, response, next) {
+    router.patch('/paper/:paperId/version/:id', function(request, response, next) {
         paperVersionController.patchPaperVersion(request, response).catch(function(error) {
             next(error)
         })

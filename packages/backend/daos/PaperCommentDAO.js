@@ -10,7 +10,7 @@ module.exports = class PaperCommentDAO {
         return {
             id: row.comment_id,
             paperId: row.comment_paperId,
-            paperVersion: row.comment_paperVersion,
+            paperVersionId: row.comment_paperVersionId,
             userId: row.comment_userId,
             status: row.comment_status,
             content: row.comment_content,
@@ -47,7 +47,7 @@ module.exports = class PaperCommentDAO {
             SELECT 
                 paper_comments.id as comment_id,
                 paper_comments.paper_id as "comment_paperId",
-                paper_comments.paper_version as "comment_paperVersion",
+                paper_comments.paper_version_id as "comment_paperVersionId",
                 paper_comments.user_id as "comment_userId",
                 paper_comments.status as comment_status,
                 paper_comments.content as comment_content,
@@ -65,10 +65,10 @@ module.exports = class PaperCommentDAO {
 
     async insertPaperComment(paperComment) {
         const results = await this.database.query(`
-            INSERT INTO paper_comments (paper_id, paper_version, user_id, status, content, created_date, updated_date )
+            INSERT INTO paper_comments (paper_id, paper_version_id, user_id, status, content, created_date, updated_date )
                 VALUES ( $1, $2, $3, $4, $5, now(), now())
                 RETURNING id
-        `, [ paperComment.paperId, paperComment.paperVersion, paperComment.userId, paperComment.status, paperComment.content ])
+        `, [ paperComment.paperId, paperComment.paperVersionId, paperComment.userId, paperComment.status, paperComment.content ])
 
         if ( results.rowCount <= 0 ) {
             throw new DAOError('insert-failure', 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
-import { postPaperVersions, cleanupRequest } from '/state/papers'
+import { postPaperVersions, cleanupRequest } from '/state/paperVersions'
 
 import FileUploadInput from '/components/files/FileUploadInput'
 
@@ -57,11 +57,10 @@ const UploadPaperVersionForm = function(props) {
 
         if ( file ) {
             const version = {
-                file: file,
-                is_published: false
+                file: file
             }
 
-            setRequestId(dispatch(postPaperVersions(props.paper, version)))
+            setRequestId(dispatch(postPaperVersions(props.paper.id, version)))
         } else {
             setError('no-file')
         }
@@ -121,7 +120,6 @@ const UploadPaperVersionForm = function(props) {
 
         return (
             <div  className="upload-paper-version-form">
-                <h1>Submit a New Version of {props.paper.title}</h1>
                 <form onSubmit={onSubmit}>
                     <FileUploadInput setFile={setFile} types={[ 'application/pdf' ]} />
                     <div className="error">{ errorView }</div>

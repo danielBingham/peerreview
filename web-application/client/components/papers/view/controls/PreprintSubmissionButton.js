@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import {  patchPaper, cleanupRequest } from '/state/papers'
+import { patchPaperVersion, cleanupRequest as cleanupPaperVersionRequest } from '/state/paperVersions'
 
 import Button from '/components/generic/button/Button'
 
@@ -25,6 +26,15 @@ const PreprintSubmissionButton = function({ id }) {
             return state.papers.requests[patchPaperRequestId]
         }
     })
+
+    const [ patchPaperVersionRequestId, setPatchPaperVersionRequestId ] = useState(null)
+    const patchPaperVersionRequest = useSelector(function(state) {
+        if ( ! patchPaperVersionRequestId ) {
+            return null
+        } else {
+            return state.paperVersions.requests[patchPaperVersionRequestId]
+        }
+    })
    
     // ================= Redux State ==========================================
 
@@ -34,6 +44,10 @@ const PreprintSubmissionButton = function({ id }) {
 
     const paper = useSelector(function(state) {
         return state.papers.dictionary[id]
+    })
+
+    const mostRecentVersion = useSelector(function(state) {
+        return state.paperVersions.mostRecentVersion[id]
     })
 
     const isAuthor = (currentUser && paper.authors.find((a) => a.userId == currentUser.id) ? true : false)
@@ -50,6 +64,14 @@ const PreprintSubmissionButton = function({ id }) {
         }
 
         setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
+
+        const paperVersionPatch = {
+            paperId: id,
+            version: mostRecentVersion.version,
+            isPreprint: true
+        }
+
+        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(id, paperVersionPatch)))
     }
 
     // ======= Effect Handling ======================================
@@ -63,7 +85,6 @@ const PreprintSubmissionButton = function({ id }) {
     }, [ patchPaperRequestId ])
 
     // ======= Render ===============================================
-   
 
     if ( isOwner && paper.isDraft && ! paper.showPreprint ) {
         return (

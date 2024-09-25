@@ -17,10 +17,6 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
-const mime = require('mime')
-const sanitizeFilename = require('sanitize-filename')
-const fs = require('fs')
-const pdfjslib = require('pdfjs-dist/legacy/build/pdf.js')
 
 const DAOError = require('../errors/DAOError')
 
@@ -136,11 +132,10 @@ module.exports = class PaperDAO {
 
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
-                    LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
                     ${activeOrderJoins}
                 ${where} 
-                ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
+                ORDER BY ${order}paper_authors.author_order asc
         `
         const results = await this.database.query(sql, params)
 
