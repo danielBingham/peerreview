@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 
-import { postPaperVersions, cleanupRequest } from '/state/paperVersions'
+import { postPaperVersions, loadFiles, cleanupRequest } from '/state/paperVersions'
 
 import FileUploadInput from '/components/files/FileUploadInput'
 
@@ -33,7 +33,7 @@ const UploadPaperVersionForm = function(props) {
 
     const request = useSelector(function(state) {
         if ( requestId ) {
-            return state.papers.requests[requestId]
+            return state.paperVersions.requests[requestId]
         } else {
             return null
         }
@@ -98,6 +98,7 @@ const UploadPaperVersionForm = function(props) {
      */
     useEffect(function() {
         if ( request && request.state == 'fulfilled') {
+            dispatch(loadFiles(props.paper.id))
             if ( props.close ) {
                 props.close()
             } else {

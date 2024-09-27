@@ -121,8 +121,8 @@ module.exports = class PaperVersionDAO {
         }
 
         const versionResults = await this.core.database.query(`
-            INSERT INTO paper_versions (paper_id, version, file_id, content, created_date, updated_date)
-                VALUES ($1, $2, $3, $4, now(), now())
+            INSERT INTO paper_versions (paper_id, file_id, content, created_date, updated_date)
+                VALUES ($1, $2, $3, now(), now())
             RETURNING id
         `, [ paper.id, file.id, content ])
 
@@ -137,7 +137,7 @@ module.exports = class PaperVersionDAO {
         titleFilename = titleFilename.toLowerCase()
         titleFilename = sanitizeFilename(titleFilename)
 
-        const filename = `${paper.id}-${versionNumber}-${titleFilename}.${mime.getExtension(file.type)}`
+        const filename = `${paper.id}-${id}-${titleFilename}.${mime.getExtension(file.type)}`
         const filepath = 'papers/' + filename
 
         const newFile = { ...file }
@@ -168,13 +168,13 @@ module.exports = class PaperVersionDAO {
             } else if ( key == 'isPreprint' ) {
                 sql += `is_preprint = $${count}, `
             } else if ( key == 'isSubmitted' ) {
-                sql += `is_submitted = $${count}`
+                sql += `is_submitted = $${count}, `
             }
 
             params.push(paperVersion[key])
             count = count + 1
         }
-        sql += `updated_date = now() WHERE id=${count}`
+        sql += `updated_date = now() WHERE id=$${count}`
         params.push(paperVersion.id)
 
         const results = await this.core.database.query(sql, params)

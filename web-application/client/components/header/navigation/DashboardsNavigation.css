@@ -8,13 +8,21 @@
     width: 18px;
     height: 18px;
     margin-right: 6px;
-    margin-bottom: -4px;
+    margin-bottom: -2px;
+}
+#dashboards-navigation svg.arrow {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-left: 3px;
+    margin-bottom: -2px;
 }
 
 #dashboards-menu {
     position: absolute;
-    top: 44px;
+    top: 52px;
     left: 0;
+    min-width: 160px;
     text-align: left;
     background-color: var(--header-menu-background-color);
     border-bottom: thin solid var(--header-menu-border-color);

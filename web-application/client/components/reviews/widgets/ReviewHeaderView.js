@@ -42,7 +42,7 @@ const ReviewHeaderView = function(props) {
         const results = []
         if ( state.reviews.queries[props.paperId]?.list) {
             for(const id of state.reviews.queries[props.paperId].list) {
-                if ( state.reviews.dictionary[id].version == props.paperVersionId ) {
+                if ( state.reviews.dictionary[id].paperVersionId == props.paperVersionId ) {
                     results.push(state.reviews.dictionary[id])
                 }
             }
@@ -53,7 +53,7 @@ const ReviewHeaderView = function(props) {
     let selectedReview = useSelector(function(state) {
         if ( reviewId && reviewId !== 'none'
             && state.reviews.dictionary[reviewId] 
-            && state.reviews.dictionary[reviewId].version == props.paperVersionId) 
+            && state.reviews.dictionary[reviewId].paperVersionId == props.paperVersionId) 
         {
             return state.reviews.dictionary[reviewId]
         } else {

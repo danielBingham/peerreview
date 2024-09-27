@@ -54,7 +54,7 @@ const DashboardsNavigation = function(props) {
     return (
         <div ref={menuRef} id="dashboards-navigation" className="navigation-block">
             <span className="dashboards-menu-trigger">
-                <a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<InboxStackIcon/>Dashboards</a>
+                <a href="" onClick={toggleMenu}><InboxStackIcon/>Dashboards{ menuVisible ? <ChevronUpIcon className="arrow" /> : <ChevronDownIcon className="arrow" /> }</a>
             </span>
             <div id="dashboards-menu" className="floating-menu" style={{ display: ( menuVisible ? 'block' : 'none' ) }} >
                 <div className="menu-item" onClick={toggleMenu}><Link to="/author"><DocumentIcon/>Author</Link></div>

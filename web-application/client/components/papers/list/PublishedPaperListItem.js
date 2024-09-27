@@ -30,7 +30,7 @@ const PublishedPaperListItem = function(props) {
         <div id={paper.id} className="published-paper-list-item">
             <div className="wrapper">
                 <JournalSubmissionsTags id={paper.id} />
-                <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title} <ArrowLeftOnRectangleIcon /></Link></div> 
+                <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title}</Link></div> 
                 <div className="date-and-authors">published <DateTag timestamp={paper.updatedDate} /> by {authors}</div>
                 <div className="fields">{fields}</div>
             </div>

@@ -46,8 +46,12 @@ const PreprintSubmissionButton = function({ id }) {
         return state.papers.dictionary[id]
     })
 
-    const mostRecentVersion = useSelector(function(state) {
+    const mostRecentVersionId = useSelector(function(state) {
         return state.paperVersions.mostRecentVersion[id]
+    })
+
+    const mostRecentVersion = useSelector(function(state) {
+        return state.paperVersions.dictionary[mostRecentVersionId]
     })
 
     const isAuthor = (currentUser && paper.authors.find((a) => a.userId == currentUser.id) ? true : false)
@@ -58,15 +62,17 @@ const PreprintSubmissionButton = function({ id }) {
     const dispatch = useDispatch()
 
     const submitPreprint = function() {
-        const paperPatch = {
-            id: id,
-            showPreprint: true
+        if ( ! paper.showPreprint ) {
+            const paperPatch = {
+                id: id,
+                showPreprint: true
+            }
+
+            setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
         }
 
-        setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
-
         const paperVersionPatch = {
-            id: mostRecentVersion.id,
+            id: mostRecentVersionId,
             paperId: id,
             isPreprint: true
         }
@@ -84,11 +90,23 @@ const PreprintSubmissionButton = function({ id }) {
         }
     }, [ patchPaperRequestId ])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( patchPaperVersionRequestId ) {
+                dispatch(cleanupPaperVersionRequest({ requestId: patchPaperVersionRequestId}))
+            }
+        }
+    }, [ patchPaperVersionRequestId ])
+
     // ======= Render ===============================================
 
     if ( isOwner && paper.isDraft && ! paper.showPreprint ) {
         return (
              <Button onClick={submitPreprint} type="secondary">Submit Preprint</Button>
+        )
+    } else if ( isOwner && paper.isDraft && paper.showPreprint && ! mostRecentVersion.isPreprint ) {
+        return (
+            <Button onClick={submitPreprint} type="secondary">Add Version to Preprint</Button>
         )
     } else {
         return null

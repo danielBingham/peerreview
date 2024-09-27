@@ -137,7 +137,7 @@ module.exports = class PaperEventService {
     // Event Creation
     // ========================================================================
 
-    async getEventVisibility(user, event, paper, activeSubmissionInfo) {
+    async getEventVisibility(user, event, paper, paperVersion, activeSubmissionInfo) {
         let visibility = [ 'authors' ]
 
         if ( activeSubmissionInfo && this.core.features.hasFeature('journal-permission-models-194') ) {
@@ -156,7 +156,7 @@ module.exports = class PaperEventService {
                 throw new ServiceError('missing-visibility',
                     `model: ${journalModel}, type: ${event.type}, Visibility: ${this.visibilityByModelAndEvent[journalModel][event.type]}`)
             }
-        } else if ( paper.showPreprint ) {
+        } else if ( paper.showPreprint && paperVersion.isPreprint) {
             visibility = [ 'public' ]
         }
 
@@ -164,17 +164,21 @@ module.exports = class PaperEventService {
     }
 
     async createEvent(user, event) {
-        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, event.paperId)
-        if ( ! event.submissionId && activeSubmissionInfo ) {
-            event.submissionId = activeSubmissionInfo.id
-        }
-
         const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ event.paperId ])
         const paper = paperResults.dictionary[event.paperId]
 
         const paperVersionResults = await this.paperVersionDAO.selectPaperVersions('WHERE paper_versions.paper_id = $1', [ event.paperId])
         if ( ! event.paperVersionId ) {
-            event.paperVersionId = paperVersionResults.list[0].paperVersionId 
+            event.paperVersionId = paperVersionResults.list[0]
+        }
+        const paperVersion = paperVersionResults.dictionary[event.paperVersionId]
+
+        let activeSubmissionInfo = null
+        if ( paperVersion.isSubmitted ) {
+            activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, event.paperId, paperVersion)
+            if ( ! event.submissionId && activeSubmissionInfo ) {
+                event.submissionId = activeSubmissionInfo.id
+            }
         }
 
         const isAuthor = paper.authors.find((a) => a.userId == user.id) ? true : false
@@ -196,7 +200,7 @@ module.exports = class PaperEventService {
         }
 
         if ( ! event.visibility ) {
-            event.visibility = await this.getEventVisibility(user, event, paper, activeSubmissionInfo)
+            event.visibility = await this.getEventVisibility(user, event, paper, paperVersion, activeSubmissionInfo)
         }
 
         await this.paperEventDAO.insertEvent(event)

@@ -15,11 +15,7 @@ const PaperVersionTimeline = function({ paperId, paperVersionId }) {
     // ================= Redux State ==========================================
 
     const file = useSelector(function(state) {
-        if ( ! state.paperVersions.files[paperId] ) {
-            return null
-        }
-
-        return state.paperVersions.files[paperId][paperVersionId]
+        return state.paperVersions.files[paperVersionId]
     })
 
     // ====== User Action Handling  ================================

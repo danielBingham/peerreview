@@ -66,12 +66,12 @@ const PaperPage = function({}) {
     }, [ id ])
 
     useEffect(function() {
-        if ( paper && versionRequest && versionRequest.state == 'fulfilled') {
+        if ( request && request.state == 'fulfilled' && versionRequest && versionRequest.state == 'fulfilled') {
             dispatch(loadFiles(paper.id))
         }
 
         return function cleanup() {
-            if ( paper ) {
+            if ( request && request.state == 'fulfilled' && versionRequest && versionRequest.state == 'fulfilled') {
                 dispatch(clearFiles(paper.id))
             }
         }

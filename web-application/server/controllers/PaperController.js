@@ -341,8 +341,6 @@ module.exports = class PaperController {
                         papers.searchable_title @@ websearch_to_tsquery('english', $1) )
             `, [ query.searchString ])
 
-            console.log(results.rows)
-
             if ( results.rows.length > 0 ) {
                 count += 1
                 and = ( count > 1 ? ' AND ' : '' )

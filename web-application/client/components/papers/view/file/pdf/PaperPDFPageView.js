@@ -24,22 +24,21 @@ import './PaperPDFPageView.css'
  * @param {Object} props    The standard React props object.
  * @param {integer} props.pageNumber    The number of page the we're viewing,
  * used to select it from the PDF object.  1 indexed.
- * @param {Object} props.paper  The populated paper object of the paper we're
- * viewing.
- * @param {Object} props.paperVersionId  The number of the paper's version that
+ * @param {number} props.paperId The id of the paper.:w
+ * @param {number} props.paperVersionId  The number of the paper's version that
  * we're viewing. 1 index.
+ * @param {function} props.onRenderSuccess A callback to call when we've successfully rendered.
  *
  */
 const PaperPDFPageView = function(props) {
 
     const [ searchParams, setSearchParams ] = useSearchParams()
-
+    const selectedReviewId = searchParams.get('review')
 
     const [ width, setWidth ] = useState(0)
     const [ height, setHeight ] = useState(0)
     const [ loaded, setLoaded ] = useState(false)
     const [ rendered, setRendered ] = useState(false)
-    const [ selectedReviewId, setSelectedReviewId ] = useState(null)
 
     // ============ Request Tracking ==========================================
 
@@ -153,15 +152,7 @@ const PaperPDFPageView = function(props) {
         if ( props.onRenderSuccess ) {
             props.onRenderSuccess()
         }
-    }, [ props.onRenderSuccess ])
-
-    useEffect(function() {
-        const reviewId = searchParams.get('review')
-        if ( reviewId ) {
-            setSelectedReviewId(reviewId)
-        }
-    }, [ searchParams ])
-
+    }, [ props.onRenderSuccess, setRendered ])
 
     useEffect(function() {
         if ( postThreadsRequest && postThreadsRequest.state == 'fulfilled') {

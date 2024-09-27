@@ -55,7 +55,7 @@ const PaperFileView = function({ paperId }) {
     if ( searchParams.get('version') ) {
         paperVersionId = searchParams.get('version')
     } else {
-        paperVersionId = mostRecentVisibleVersion.id
+        paperVersionId = mostRecentVisibleVersion
     }
 
     // ======= Effect Handling =====================

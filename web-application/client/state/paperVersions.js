@@ -171,7 +171,7 @@ export const paperVersionsSlice = createSlice({
 export const loadFiles = function(paperId) {
     return function(dispatch, getState) {
         const state = getState()
-
+        
         for(const [id, version] of Object.entries(state.paperVersions.versionsByPaper[paperId])) {
             const url = new URL(version.file.filepath, version.file.location)
             const urlString = url.toString()
@@ -261,10 +261,10 @@ export const postPaperVersions = function(paperId, paperVersion) {
  *
  * @returns {string} A uuid requestId that can be used to track this request.
  */
-export const getPaperVersion = function(paperId, versionNumber) {
+export const getPaperVersion = function(paperId, id) {
     return function(dispatch, getState) {
         return makeTrackedRequest(dispatch, getState, paperVersionsSlice,
-            'GET', `/paper/${paperId}/version/${versionNumber}`, null,
+            'GET', `/paper/${paperId}/version/${id}`, null,
             function(response) {
                 dispatch(paperVersionsSlice.actions.setPaperVersionsInDictionary({ entity: response.entity }))
 
@@ -290,7 +290,7 @@ export const patchPaperVersion = function(paperId, paperVersion) {
     return function(dispatch, getState) {
         dispatch(paperVersionsSlice.actions.bustRequestCache())
         return makeTrackedRequest(dispatch, getState, paperVersionsSlice,
-            'PATCH', `/paper/${paperId}/version/${paperVersion.versionNumber}`, paperVersion,
+            'PATCH', `/paper/${paperId}/version/${paperVersion.id}`, paperVersion,
             function(response) {
                 dispatch(paperVersionsSlice.actions.setPaperVersionsInDictionary({ entity: response.entity }))
 

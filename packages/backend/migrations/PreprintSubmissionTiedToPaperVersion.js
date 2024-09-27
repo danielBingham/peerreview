@@ -60,32 +60,40 @@ module.exports = class PreprintSubmissionTiedToPaperVersion {
             // ============== Give paper_versions a uuid primary key
             await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS paper_versions_pkey`, [])
             await this.core.database.query(`ALTER TABLE paper_versions ADD COLUMN id uuid PRIMARY KEY DEFAULT gen_random_uuid()`, [])
+            await this.core.database.query(`ALTER TABLE paper_versions ALTER COLUMN version DROP NOT NULL`, [])
 
             // ============== Add paper_version_id to `reviews` table 
             await this.core.database.query(`ALTER TABLE reviews ADD COLUMN paper_version_id uuid REFERENCES paper_versions(id) ON DELETE CASCADE`, [])
             await this.core.database.query(`CREATE INDEX reviews__paper_version_id ON reviews (paper_version_id)`, [])
+            await this.core.database.query(`ALTER TABLE reviews ALTER COLUMN version DROP NOT NULL`, [])
 
             // ============= Add paper_version_id to `paper_events` table 
             await this.core.database.query(`ALTER TABLE paper_events ADD COLUMN paper_version_id uuid REFERENCES paper_versions(id) ON DELETE CASCADE`, [])
             await this.core.database.query(`CREATE INDEX paper_events__paper_version_id ON paper_events (paper_version_id)`, [])
+            await this.core.database.query(`ALTER TABLE paper_events ALTER COLUMN version DROP NOT NULL`, [])
 
             // ============= Add paper_version_id to `paper_comments` table
             await this.core.database.query(`ALTER TABLE paper_comments ADD COLUMN paper_version_id uuid REFERENCES paper_versions(id) ON DELETE CASCADE`, [])
             await this.core.database.query(`CREATE INDEX paper_comments__paper_version_id ON paper_comments (paper_version_id)`, [])
+            await this.core.database.query(`ALTER TABLE paper_comments ALTER COLUMN paper_version DROP NOT NULL`, [])
 
         } catch (error) {
             try {
                 await this.core.database.query(`DROP INDEX IF EXISTS paper_comments__paper_version_id`, [])
                 await this.core.database.query(`ALTER TABLE paper_comments DROP COLUMN IF EXISTS paper_version_id`, [])
+                await this.core.database.query(`ALTER TABLE paper_comments ALTER COLUMN paper_version SET NOT NULL`, [])
 
                 await this.core.database.query(`DROP INDEX IF EXISTS paper_events__paper_version_id`, [])
                 await this.core.database.query(`ALTER TABLE paper_events DROP COLUMN IF EXISTS paper_version_id`, [])
+                await this.core.database.query(`ALTER TABLE paper_events ALTER COLUMN version SET NOT NULL`, [])
 
                 await this.core.database.query(`DROP INDEX IF EXISTS reviews__paper_version_id`, [])
                 await this.core.database.query(`ALTER TABLE reviews DROP COLUMN IF EXISTS paper_version_id`, [])
+                await this.core.database.query(`ALTER TABLE reviews ALTER COLUMN version SET NOT NULL`, [])
 
                 await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS paper_versions_pkey`, [])
                 await this.core.database.query(`ALTER TABLE paper_versions ADD CONSTRAINT paper_versions_pkey PRIMARY KEY(paper_id, version)`, [])
+                await this.core.database.query(`ALTER TABLE paper_versions ALTER COLUMN version SET NOT NULL`, [])
 
                 await this.core.database.query(`ALTER TABLE paper_versions DROP COLUMN IF EXISTS id`, [])
 
@@ -108,15 +116,19 @@ module.exports = class PreprintSubmissionTiedToPaperVersion {
         try {
             await this.core.database.query(`DROP INDEX IF EXISTS paper_comments__paper_version_id`, [])
             await this.core.database.query(`ALTER TABLE paper_comments DROP COLUMN IF EXISTS paper_version_id`, [])
+            await this.core.database.query(`ALTER TABLE paper_comments ALTER COLUMN paper_version SET NOT NULL`, [])
 
             await this.core.database.query(`DROP INDEX IF EXISTS paper_events__paper_version_id`, [])
             await this.core.database.query(`ALTER TABLE paper_events DROP COLUMN IF EXISTS paper_version_id`, [])
+            await this.core.database.query(`ALTER TABLE paper_events ALTER COLUMN version SET NOT NULL`, [])
 
             await this.core.database.query(`DROP INDEX IF EXISTS reviews__paper_version_id`, [])
             await this.core.database.query(`ALTER TABLE reviews DROP COLUMN IF EXISTS paper_version_id`, [])
+            await this.core.database.query(`ALTER TABLE reviews ALTER COLUMN version SET NOT NULL`, [])
 
             await this.core.database.query(`ALTER TABLE paper_versions DROP CONSTRAINT IF EXISTS paper_versions_pkey`, [])
             await this.core.database.query(`ALTER TABLE paper_versions ADD CONSTRAINT paper_versions_pkey PRIMARY KEY(paper_id, version)`, [])
+            await this.core.database.query(`ALTER TABLE paper_versions ALTER COLUMN version SET NOT NULL`, [])
 
             await this.core.database.query(`ALTER TABLE paper_versions DROP COLUMN IF EXISTS id`, [])
 
@@ -146,9 +158,21 @@ module.exports = class PreprintSubmissionTiedToPaperVersion {
             await this.core.database.query(`UPDATE paper_versions SET is_preprint = true WHERE paper_id = ANY($1::bigint[])`, [ preprintIds ])
             await this.core.database.query(`UPDATE paper_versions SET is_submitted = true WHERE paper_id = ANY($1::bigint[])`, [ submissionIds ])
 
-            await this.core.database.query(`UPDATE paper_comments SET paper_version_id = paper_versions.id FROM paper_versions WHERE paper_comments.paper_version = paper_versions.version`, [])
-            await this.core.database.query(`UPDATE paper_events SET paper_version_id = paper_versions.id FROM paper_versions WHERE paper_versions.version = paper_events.version`, [])
-            await this.core.database.query(`UPDATE reviews SET paper_version_id = paper_versions.id FROM paper_versions WHERE paper_versions.version = reviews.version`, [])
+            await this.core.database.query(`
+                UPDATE paper_comments SET paper_version_id = paper_versions.id 
+                    FROM paper_versions 
+                    WHERE paper_comments.paper_id = paper_versions.paper_id AND paper_comments.paper_version = paper_versions.version
+            `, [])
+            await this.core.database.query(`
+                UPDATE paper_events SET paper_version_id = paper_versions.id 
+                    FROM paper_versions 
+                    WHERE paper_events.paper_id = paper_versions.paper_id AND paper_versions.version = paper_events.version
+            `, [])
+            await this.core.database.query(`
+                UPDATE reviews SET paper_version_id = paper_versions.id 
+                    FROM paper_versions 
+                    WHERE reviews.paper_id = paper_versions.paper_id AND paper_versions.version = reviews.version
+            `, [])
 
         } catch (error) {
             try {

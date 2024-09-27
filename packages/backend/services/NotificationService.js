@@ -685,7 +685,7 @@ module.exports = class NotificationService {
     async sendNewVersion(currentUser, context) {
         console.log(context)
         const eventResults = await this.paperEventDAO.selectEvents(
-            `WHERE paper_events.type = 'paper:new-version' AND paper_events.paper_id = $1 AND paper_events.paperVersionId = $2`,
+            `WHERE paper_events.type = 'paper:new-version' AND paper_events.paper_id = $1 AND paper_events.paper_version_id = $2`,
             [ context.paper.id, context.paperVersionId]
         )
         if ( eventResults.list.length <= 0 ) {

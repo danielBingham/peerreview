@@ -213,9 +213,9 @@ module.exports = class ReviewController {
         const paperVersionResults = await this.paperVersionDAO.selectPaperVersions(`WHERE paper_versions.paper_id = $1`, [ paperId ])
 
         const currentVersion = paperVersionResults.list[0] 
-        if ( review.paperVersionId && ( review.paperVersionId in paperVersionResults.dictionary) ) {
+        if ( review.paperVersionId && ! ( review.paperVersionId in paperVersionResults.dictionary) ) {
             throw new ControllerError(400, 'invalid-version',
-                `User(${userId}) attempting to create review for invalid Version(${review.version}) of Paper(${paperId}).`)
+                `User(${userId}) attempting to create review for invalid Version(${review.paperVersionId}) of Paper(${paperId}).`)
         } else if ( ! review.paperVersionId) {
              review.paperVersionId = currentVersion
         }

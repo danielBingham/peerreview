@@ -127,17 +127,7 @@ const ReviewCommentsWrapper = function(props) {
     // An effect to trigger whenever searchParams changes - since that likely
     // means the selected thread has also changed.  Triggers a reflow.
     useEffect(function() {
-        const centeredThread = searchParams.get('thread')
-        if ( centeredThread !== null ) {
-            reflow()
-        }
-
-        const reviewId = searchParams.get('review')
-        if ( reviewId ) {
-            if ( reviewId != selectedReviewId ) {
-                reflow()
-            }
-        }
+        reflow()
     }, [ searchParams ])
 
 

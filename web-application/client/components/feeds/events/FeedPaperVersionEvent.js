@@ -28,7 +28,7 @@ const FeedPaperVersionEvent = function({ eventId }) {
             </TimelineIcon>
             <TimelineItemWrapper>
                 <div className="header">
-                    <UserTag id={event.actorId} /> uploaded new version (<strong><Link to={`/paper/${event.paperId}/file?version=${event.version}`}>version { event.version}</Link></strong>) for submission -- <DateTag timestamp={event.eventDate} type="full" />
+                    <UserTag id={event.actorId} /> uploaded new version (<strong><Link to={`/paper/${event.paperId}/file?version=${event.paperVersionId}`}>version { event.paperVersionId}</Link></strong>) for submission -- <DateTag timestamp={event.eventDate} type="full" />
                 </div>
                 <div className="event-body">
                 </div>

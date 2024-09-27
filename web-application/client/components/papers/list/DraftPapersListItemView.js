@@ -41,7 +41,7 @@ const DraftPapersListItemView = function(props) {
         <div id={props.paper.id} className="draft-paper-list-item">
             <div className="wrapper">
                 <JournalSubmissionsTags id={props.paper.id} />
-                <div className="title"> <Link to={paperPath}>{props.paper.title}<ArrowLeftOnRectangleIcon /></Link></div>
+                <div className="title"> <Link to={paperPath}>{props.paper.title}</Link></div>
                 <div className="authors">submitted on <DateTag timestamp={props.paper.createdDate} /> by {authors}</div>
                 <div className="fields"> {fields}</div>
             </div>

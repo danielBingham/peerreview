@@ -107,7 +107,6 @@ module.exports = class PaperVersionController {
         }
 
         const results = await this.paperVersionDAO.selectPaperVersions(where, params, order)
-        console.log(results)
         results.meta = {
             count: results.list.length,
             page: 1,
@@ -219,7 +218,7 @@ module.exports = class PaperVersionController {
         const event = {
             paperId: paperId,
             actorId: currentUser.id,
-            versionId: id,
+            paperVersionId: id,
             type: 'paper:new-version'
         }
         await this.paperEventService.createEvent(currentUser, event)
@@ -231,7 +230,7 @@ module.exports = class PaperVersionController {
             'new-version',
             {
                 paper: existing,
-                versionId: id 
+                paperVersionId: id 
             }
         )
 
@@ -391,35 +390,35 @@ module.exports = class PaperVersionController {
             throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to PATCH PaperVersion(${request.params.id}) of Paper(${request.params.paperId}).`)
         }
 
-        const user = request.session.user
+        const currentUser = request.session.user
 
         const papers = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
 
         // 2. Paper(:paper_id) must exist.
         if ( papers.list.length <= 0) {
             throw new ControllerError(404, 'not-found',
-                `User(${user.id}) attempted to patch a version of Paper(${paperId}), but it didn't exist!`)
+                `User(${currentUser.id}) attempted to patch a version of Paper(${paperId}), but it didn't exist!`)
         }
 
         const paper = papers.dictionary[paperId]
 
         // 3. User must be an owning author on Paper(:paper_id)
-        if ( ! paper.authors.find((a) => a.userId == user.id && a.owner)) {
+        if ( ! paper.authors.find((a) => a.userId == currentUser.id && a.owner)) {
             throw new ControllerError(403, 'not-owner', 
-                `Non-owner user(${user.id}) attempting to PATCH PaperVersion(${request.params.id}) of Paper(${request.params.paperId}).`)
+                `Non-owner user(${currentUser.id}) attempting to PATCH PaperVersion(${request.params.id}) of Paper(${request.params.paperId}).`)
         }
 
         // 4. Paper(:paper_id) must be a draft.
         if ( ! paper.isDraft ) {
             throw new ControllerError(403, 'not-authorized:not-draft',
-                `User(${user.id}) attempting to PATCH published PaperVersion(${request.params.id}) of Paper(${request.params.paperId}).`)
+                `User(${currentUser.id}) attempting to PATCH published PaperVersion(${request.params.id}) of Paper(${request.params.paperId}).`)
         }
 
         // 5. PaperVersion(:version) must exist.
         const existing = await this.paperVersionDAO.selectPaperVersions('WHERE paper_versions.id = $1', [ paperVersion.id ])
         if ( ! paperVersion.id in existing.dictionary) {
             throw new ControllerError(404, 'version-not-found',
-                `User(${user.id}) attempted to patch Version(${paperVersion.id}) on Paper(${paperId}), but it didn't exist!`)
+                `User(${currentUser.id}) attempted to patch Version(${paperVersion.id}) on Paper(${paperId}), but it didn't exist!`)
         }
 
         // 6. May only patch isPublished, isPreprint, and isSubmitted.

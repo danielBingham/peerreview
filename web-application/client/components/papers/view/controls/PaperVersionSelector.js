@@ -38,8 +38,9 @@ const PaperVersionSelector = function({ paperId }) {
     if ( searchParams.get('version') ) {
         paperVersionId = searchParams.get('version')
     } else {
-        paperVersionId =  mostRecentVisibleVersion.version
+        paperVersionId =  mostRecentVisibleVersion
     }
+    console.log(`Most recent version: ${paperVersionId}.`)
 
     // ================= User Action Handling  ================================
 

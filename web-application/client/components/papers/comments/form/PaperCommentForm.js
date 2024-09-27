@@ -93,7 +93,7 @@ const PaperCommentForm = function({ paperId, paperCommentId }) {
             return null
         }
 
-        return state.paperEvents.queries[`${event.paperId}-${event.version}`]
+        return state.paperEvents.queries[`${event.paperId}-${event.paperVersionId}`]
     })
 
     // ======= Actions and Event Handling ===========================
@@ -129,7 +129,7 @@ const PaperCommentForm = function({ paperId, paperCommentId }) {
         if ( event ) {
             const list = query.list.filter((id) => id != event.id)
             list.push(event.id)
-            dispatch(setPaperEventQueryResults({ name: `${event.paperId}-${event.version}`, meta: query.meta, list: list }))
+            dispatch(setPaperEventQueryResults({ name: `${event.paperId}-${event.paperVersionId}`, meta: query.meta, list: list }))
         }
 
         const comment = {
