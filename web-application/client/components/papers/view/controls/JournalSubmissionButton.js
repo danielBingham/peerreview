@@ -135,7 +135,7 @@ const JournalSubmissionButton = function({ id }) {
         )
     } else if ( isOwner && paper.isDraft && activeSubmission && ! mostRecentVersion.isSubmitted ) {
         return (
-            <Button onClick={(e) => addToSubmission()} type="primary">Add to Submission</Button>
+            <Button onClick={(e) => addToSubmission()} type="primary">Add to Version Submission</Button>
         )
     } else {
         return null
