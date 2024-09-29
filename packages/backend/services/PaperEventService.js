@@ -1,4 +1,23 @@
 /******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+/******************************************************************************
  * PaperEventService
  *
  * In addition to creating events, the Paper Event Service is the primary
@@ -57,6 +76,7 @@ const PaperEventDAO = require('../daos/PaperEventDAO')
 const PaperDAO = require('../daos/PaperDAO')
 const PaperVersionDAO = require('../daos/PaperVersionDAO')
 
+const PaperService = require('./PaperService')
 const SubmissionService = require('./SubmissionService')
 
 const ServiceError = require('../errors/ServiceError')
@@ -70,6 +90,7 @@ module.exports = class PaperEventService {
         this.paperDAO = new PaperDAO(core)
         this.paperVersionDAO = new PaperVersionDAO(core)
 
+        this.paperService = new PaperService(core)
         this.submissionService = new SubmissionService(core)
 
         this.visibilityByModelAndEvent = {
@@ -140,7 +161,7 @@ module.exports = class PaperEventService {
     async getEventVisibility(user, event, paper, paperVersion, activeSubmissionInfo) {
         let visibility = [ 'authors' ]
 
-        if ( activeSubmissionInfo && this.core.features.hasFeature('journal-permission-models-194') ) {
+        if ( activeSubmissionInfo && paperVersion.isSubmitted && this.core.features.hasFeature('journal-permission-models-194') ) {
             const journalResults = await this.core.database.query(`
                 SELECT model FROM journals WHERE id = $1
             `, [ activeSubmissionInfo.journalId ])
@@ -169,77 +190,13 @@ module.exports = class PaperEventService {
         
         const isAuthor = paper.authors.find((a) => a.userId == user.id) ? true : false
 
-        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, event.paperId, paperVersion)
+        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, event.paperId)
         if ( ! event.submissionId && activeSubmissionInfo ) {
             event.submissionId = activeSubmissionInfo.id
         }
 
-        const paperVersionResults = await this.paperVersionDAO.selectPaperVersions('WHERE paper_versions.paper_id = $1', [ event.paperId])
-       
-        if ( ! event.paperVersionId ) {
-            // We don't have a passed in version, so we need to pick our version for this event.
-            // Otherwise, if the paper is a preprint, use the most recent preprint version.
-
-
-            // If the user is an Author, use the most recent version.
-            if ( isAuthor ) {
-                event.paperVersionId = paperResults.list[0]
-            }
-
-            // If the paper is published, use the published version.
-            else if ( ! paper.isDraft ) {
-                for( const versionId of paperVersionResults.list) {
-                    const version = paperVersionResults.dictionary[versionId]
-                    if ( version.isPublished ) {
-                        event.paperVersionId = version.id
-                    }
-                }
-
-                if ( ! event.paperVersionId ) {
-                    throw new ServiceError('missing-version',
-                        `Paper(${event.paperId}) is published, but no versions are published!`)
-                }
-            }
-
-            // If we have an active submission, then the user is acting on that submission, use the most recent submitted version.
-            else if (  activeSubmissionInfo ) {
-                for(const versionId of paperVersionResults.list) {
-                    const version = paperVersionResults.dictionary[versionId]
-                    if ( version.isSubmitted ) {
-                        event.paperVersionId = version.id 
-                    }
-                }
-
-                // If no versions have been submitted then we're in an invalid state.
-                if ( ! event.paperVersionId ) {
-                    throw new ServiceError('missing-version', 
-                        `Paper(${event.paperId}) is submitted, but no versions have been submitted!`)
-                }
-            } 
-
-            // If they aren't an author, then we use the most recent preprinted version.
-            else if ( paper.showPreprint ) {
-                for(const versionId of paperVersionResults.list) {
-                    const version = paperVersionResults.dictionary[versionId]
-                    if ( version.isPreprint) {
-                        event.paperVersionId = version.id 
-                    }
-                }
-
-                // If no versions have been submitted then we're in an invalid state.
-                if ( ! event.paperVersionId ) {
-                    throw new ServiceError('missing-version', 
-                        `Paper(${event.paperId}) is a preprint, but no versions have been preprinted!`)
-                }
-            } 
-
-            // If we get here, then they don't actually have permission to post any events against this paper. 
-            else {
-                throw new ServiceError('not-authorized', `Attempt to create event on Paper(${event.paperId}) without authorization.`)
-            }
-        }
-        const paperVersion = paperVersionResults.dictionary[event.paperVersionId]
-
+        const paperVersion = await this.paperService.getMostRecentVisibleVersion(user, event.paperId, paper, activeSubmissionInfo)
+        event.paperVersionId = paperVersion.id
 
         if ( event.type == 'new-review' && isAuthor ) {
             event.type = 'paper:new-review'

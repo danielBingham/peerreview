@@ -1,4 +1,24 @@
-
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+const PaperDAO = require('../daos/PaperDAO')
+const PaperVersionDAO = require('../daos/PaperVersionDAO')
 const SubmissionService = require('./SubmissionService')
 
 /**
@@ -22,6 +42,8 @@ module.exports = class PaperService {
         this.logger = core.logger
 
         this.submissionService = new SubmissionService(core)
+        this.paperDAO = new PaperDAO(core)
+        this.paperVersionDAO = new PaperVersionDAO(core)
     }
 
     /**
@@ -85,6 +107,79 @@ module.exports = class PaperService {
         }
 
         return await this.submissionService.canViewSubmission(user, paperId)
+    }
+
+    async getMostRecentVisibleVersion(user, paperId, paper, activeSubmissionInfo) {
+        if ( ! paper ) {
+            const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
+            paper = paperResults.dictionary[paperId]
+        }
+        
+        const isAuthor = paper.authors.find((a) => a.userId == user.id) ? true : false
+
+        if ( ! activeSubmissionInfo ) {
+            activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, paperId)
+        }
+
+        const paperVersionResults = await this.paperVersionDAO.selectPaperVersions('WHERE paper_versions.paper_id = $1', [paperId])
+
+        let paperVersionId = null
+
+        // If the user is an Author, use the most recent version.
+        if ( isAuthor ) {
+            paperVersionId = paperVersionResults.list[0]
+        }
+
+        // If the paper is published, use the published version.
+        else if ( ! paper.isDraft ) {
+            for( const id of paperVersionResults.list) {
+                if ( paperVersionResults.dictionary[id].isPublished ) {
+                    paperVersionId = id  
+                }
+            }
+
+            if ( ! paperVersionId ) {
+                throw new ServiceError('missing-version',
+                    `Paper(${paperId}) is published, but no versions are published!`)
+            }
+        }
+
+        // If we have an active submission, then the user is acting on that submission, use the most recent submitted version.
+        else if (  activeSubmissionInfo ) {
+            for(const id of paperVersionResults.list) {
+                if ( paperVersionResults.dictionary[id].isSubmitted ) {
+                    paperVersionId = id 
+                }
+            }
+
+            // If no versions have been submitted then we're in an invalid state.
+            if ( ! paperVersionId ) {
+                throw new ServiceError('missing-version', 
+                    `Paper(${paperId}) is submitted, but no versions have been submitted!`)
+            }
+        } 
+
+        // If they aren't an author, then we use the most recent preprinted version.
+        else if ( paper.showPreprint ) {
+            for(const id of paperVersionResults.list) {
+                if ( paperVersionResults.dictionary[id].isPreprint) {
+                    paperVersionId = id 
+                }
+            }
+
+            // If no versions have been submitted then we're in an invalid state.
+            if ( ! paperVersionId ) {
+                throw new ServiceError('missing-version', 
+                    `Paper(${paperId}) is a preprint, but no versions have been preprinted!`)
+            }
+        } 
+
+        // If we get here, then they don't actually have permission to post any events against this paper. 
+        else {
+            throw new ServiceError('not-authorized', `Attempt to create event on Paper(${paperId}) without authorization.`)
+        }
+
+        return paperVersionResults.dictionary[paperVersionId]
     }
 
     async getPreprints() {

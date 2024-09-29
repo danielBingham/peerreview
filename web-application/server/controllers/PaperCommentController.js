@@ -1,4 +1,22 @@
-
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 const { PaperCommentDAO, PaperDAO, PaperEventDAO, PaperService, PaperEventService, NotificationService } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
@@ -75,14 +93,9 @@ module.exports = class PaperCommentsController {
         } else if ( paperComment.status == 'reverted' || paperComment.status == 'edit-in-progress' ) {
             paperComment.status = 'in-progress'
         }
-       
-        // We're only ever allowed to comment on the current version.
-        const paperVersionResults = await this.core.database.query(`
-            SELECT id FROM paper_versions WHERE paper_versions.paper_id = $1 ORDER BY created_date DESC
-        `, [ paperComment.paperId ])
 
-        paperComment.paperVersionId = paperVersionResults.rows[0].id
-
+        const paperVersion = await this.paperService.getMostRecentVisibleVersion(currentUser, paperId)
+        paperComment.paperVersionId = paperVersion.id
 
         const id = await this.paperCommentDAO.insertPaperComment(paperComment)
 
@@ -99,6 +112,7 @@ module.exports = class PaperCommentsController {
 
         const event = {
             paperId: paperId,
+            paperVersionId: entity.paperVersionId,
             actorId: currentUser.id,
             status: entity.status == 'in-progress' ? 'in-progress' : 'committed',
             type: 'new-comment',
