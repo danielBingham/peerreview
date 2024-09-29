@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 
 import { postPaperVersions, loadFiles, cleanupRequest } from '/state/paperVersions'
 
@@ -21,6 +22,7 @@ import './UploadPaperVersionForm.css'
  * @param {object} props.paper  The paper we're uploading a new version of.
  */
 const UploadPaperVersionForm = function(props) {
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ======= Render State =========================================
     
@@ -56,6 +58,7 @@ const UploadPaperVersionForm = function(props) {
         event.preventDefault()
 
         if ( file ) {
+
             const version = {
                 file: file
             }
@@ -98,7 +101,13 @@ const UploadPaperVersionForm = function(props) {
      */
     useEffect(function() {
         if ( request && request.state == 'fulfilled') {
+            // Reset the search params before we load the new file.
+            searchParams.delete('review')
+            searchParams.delete('thread')
+            setSearchParams(searchParams)
+
             dispatch(loadFiles(props.paper.id))
+
             if ( props.close ) {
                 props.close()
             } else {

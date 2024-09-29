@@ -47,6 +47,7 @@ export const reflowThreads = function(threads, centeredThreadId, shouldFocus) {
     alignThreadsWithPins(threads)
 
     const centeredIndex = threads.findIndex((t) => t.id == centeredThreadId)
+    console.log(centeredIndex)
     if (centeredThreadId !== null && centeredIndex !== -1) {
         spreadThreadsFromThread(threads, centeredThreadId)
     } else {
@@ -112,10 +113,18 @@ const alignThreadsWithPins = function(threads) {
  * @return {void}
  */
 const centerThreadOnPin = function(thread, highlight) {
+    console.log(thread)
     const documentElement = document.getElementsByClassName(`paper-pdf-document`)[0]
+    if ( ! documentElement ) {
+        return
+    }
     const documentRect = documentElement.getBoundingClientRect()
 
     const pageElement = document.getElementById(`paper-pdf-page-${thread.page}`)
+    if ( ! pageElement ) {
+        // We must be running outside the render loop somehow.  Bail out.
+        return
+    }
     const pageRect = pageElement.getBoundingClientRect()
 
     threadInfo[thread.id].rect.top = (pageRect.top - documentRect.top) + pageRect.height*thread.pinY - 50

@@ -26,6 +26,7 @@ const ReviewCommentsWrapper = function(props) {
         return state.papers.dictionary[props.paperId]
     })
 
+    console.log(`Version: ${props.paperVersionId}, Review: ${selectedReviewId}`)
     const threads = useSelector(function(state) {
         if ( state.reviews.queries[props.paperId]?.list && ! selectedReviewId) {
             const reviewIds = state.reviews.queries[props.paperId].list.filter((id) => state.reviews.dictionary[id].paperVersionId == props.paperVersionId)
@@ -82,7 +83,9 @@ const ReviewCommentsWrapper = function(props) {
             const centeredThreadId = searchParams.get('thread')
 
             const shouldFocus = props.loadedVersion == props.renderedVersion
-           
+          
+            console.log(`Centered Thread: ${centeredThreadId}`)
+            console.log(threads)
             const numberOfCollapsedComments = reflowThreads(threads, centeredThreadId, shouldFocus) 
             if ( numberOfCollapsedComments > 0 ) {
                 showCollapsed(numberOfCollapsedComments)
