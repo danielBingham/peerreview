@@ -46,7 +46,7 @@ const UploadNewVersionButton = function({ id }) {
     if ( isOwner && paper.isDraft ) {
         return (
             <>
-                <Button onClick={(e) => setModalIsVisible(true)}>Upload New Version</Button>
+                <Button type="secondary" onClick={(e) => setModalIsVisible(true)}>Upload New Version</Button>
                 <Modal isVisible={modalIsVisible} setIsVisible={setModalIsVisible}>
                     <UploadPaperVersionForm paper={paper} close={() => setModalIsVisible(false)} />
                 </Modal>

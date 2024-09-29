@@ -9,6 +9,7 @@
 
 .published-paper-list-item .title {
     font-size: 20px; 
+    font-weight: 400;
     padding: 5px;
 }
 .published-paper-list-item .title a:link, .published-paper-list-item .title a:active, .published-paper-list-item .title a:visited {

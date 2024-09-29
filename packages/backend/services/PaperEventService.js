@@ -166,22 +166,81 @@ module.exports = class PaperEventService {
     async createEvent(user, event) {
         const paperResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ event.paperId ])
         const paper = paperResults.dictionary[event.paperId]
+        
+        const isAuthor = paper.authors.find((a) => a.userId == user.id) ? true : false
+
+        const activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, event.paperId, paperVersion)
+        if ( ! event.submissionId && activeSubmissionInfo ) {
+            event.submissionId = activeSubmissionInfo.id
+        }
 
         const paperVersionResults = await this.paperVersionDAO.selectPaperVersions('WHERE paper_versions.paper_id = $1', [ event.paperId])
+       
         if ( ! event.paperVersionId ) {
-            event.paperVersionId = paperVersionResults.list[0]
+            // We don't have a passed in version, so we need to pick our version for this event.
+            // Otherwise, if the paper is a preprint, use the most recent preprint version.
+
+
+            // If the user is an Author, use the most recent version.
+            if ( isAuthor ) {
+                event.paperVersionId = paperResults.list[0]
+            }
+
+            // If the paper is published, use the published version.
+            else if ( ! paper.isDraft ) {
+                for( const versionId of paperVersionResults.list) {
+                    const version = paperVersionResults.dictionary[versionId]
+                    if ( version.isPublished ) {
+                        event.paperVersionId = version.id
+                    }
+                }
+
+                if ( ! event.paperVersionId ) {
+                    throw new ServiceError('missing-version',
+                        `Paper(${event.paperId}) is published, but no versions are published!`)
+                }
+            }
+
+            // If we have an active submission, then the user is acting on that submission, use the most recent submitted version.
+            else if (  activeSubmissionInfo ) {
+                for(const versionId of paperVersionResults.list) {
+                    const version = paperVersionResults.dictionary[versionId]
+                    if ( version.isSubmitted ) {
+                        event.paperVersionId = version.id 
+                    }
+                }
+
+                // If no versions have been submitted then we're in an invalid state.
+                if ( ! event.paperVersionId ) {
+                    throw new ServiceError('missing-version', 
+                        `Paper(${event.paperId}) is submitted, but no versions have been submitted!`)
+                }
+            } 
+
+            // If they aren't an author, then we use the most recent preprinted version.
+            else if ( paper.showPreprint ) {
+                for(const versionId of paperVersionResults.list) {
+                    const version = paperVersionResults.dictionary[versionId]
+                    if ( version.isPreprint) {
+                        event.paperVersionId = version.id 
+                    }
+                }
+
+                // If no versions have been submitted then we're in an invalid state.
+                if ( ! event.paperVersionId ) {
+                    throw new ServiceError('missing-version', 
+                        `Paper(${event.paperId}) is a preprint, but no versions have been preprinted!`)
+                }
+            } 
+
+            // If we get here, then they don't actually have permission to post any events against this paper. 
+            else {
+                throw new ServiceError('not-authorized', `Attempt to create event on Paper(${event.paperId}) without authorization.`)
+            }
         }
         const paperVersion = paperVersionResults.dictionary[event.paperVersionId]
 
-        let activeSubmissionInfo = null
-        if ( paperVersion.isSubmitted ) {
-            activeSubmissionInfo = await this.submissionService.getActiveSubmission(user, event.paperId, paperVersion)
-            if ( ! event.submissionId && activeSubmissionInfo ) {
-                event.submissionId = activeSubmissionInfo.id
-            }
-        }
 
-        const isAuthor = paper.authors.find((a) => a.userId == user.id) ? true : false
         if ( event.type == 'new-review' && isAuthor ) {
             event.type = 'paper:new-review'
             event.visibility = [ 'authors' ]
