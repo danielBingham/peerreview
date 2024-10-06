@@ -10,24 +10,12 @@ import Spinner from '/components/Spinner'
 
 import PaperVersionTimelineEventsWrapper from './PaperVersionTimelineEventsWrapper'
 
-const PaperVersionTimeline = function({ paperId, versionNumber }) {
+const PaperVersionTimeline = function({ paperId, paperVersionId }) {
     
     // ================= Redux State ==========================================
-    
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
-    })
-
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[paperId]
-    })
 
     const file = useSelector(function(state) {
-        if ( ! state.papers.files[paperId] ) {
-            return null
-        }
-
-        return state.papers.files[paperId][versionNumber]
+        return state.paperVersions.files[paperVersionId]
     })
 
     // ====== User Action Handling  ================================
@@ -59,7 +47,7 @@ const PaperVersionTimeline = function({ paperId, versionNumber }) {
                 onSourceError={onSourceError}
                 onLoadError={onLoadError}
             >
-                <PaperVersionTimelineEventsWrapper paperId={paperId} versionNumber={versionNumber} /> 
+                <PaperVersionTimelineEventsWrapper paperId={paperId} paperVersionId={paperVersionId} /> 
             </Document>
         </>
     )

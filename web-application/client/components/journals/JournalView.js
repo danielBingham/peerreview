@@ -6,6 +6,8 @@ import { getJournal, cleanupRequest } from '/state/journals'
 
 import Spinner from '/components/Spinner'
 
+import './JournalView.css'
+
 const JournalView = function({ id }) {
 
     // ================= Request Tracking =====================================

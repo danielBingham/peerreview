@@ -1,14 +1,27 @@
-const mime = require('mime')
-const sanitizeFilename = require('sanitize-filename')
-const fs = require('fs')
-const pdfjslib = require('pdfjs-dist/legacy/build/pdf.js')
+/******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
 
 const DAOError = require('../errors/DAOError')
 
 const UserDAO = require('./UserDAO')
-const FileDAO = require('./FileDAO')
 const FieldDAO = require('./FieldDAO')
-const S3FileService = require('../services/S3FileService')
 
 const PAGE_SIZE = 50 
 
@@ -19,9 +32,7 @@ module.exports = class PaperDAO {
 
         this.database = core.database
         this.userDAO = new UserDAO(core)
-        this.fileDAO = new FileDAO(core)
         this.fieldDAO = new FieldDAO(core)
-        this.fileService = new S3FileService(core)
     }
 
     /**
@@ -45,8 +56,7 @@ module.exports = class PaperDAO {
                 createdDate: row.paper_createdDate,
                 updatedDate: row.paper_updatedDate,
                 authors: [],
-                fields: [],
-                versions: []
+                fields: []
             }
 
             if ( ! dictionary[paper.id] ) {
@@ -65,18 +75,6 @@ module.exports = class PaperDAO {
                 dictionary[paper.id].authors.push(author)
             }
 
-            const paper_version = {
-                file: this.fileDAO.hydrateFile(row),
-                version: row.version_version,
-                content: row.version_content,
-                reviewCount: row.version_reviewCount,
-                createdDate: row.version_createdDate,
-                updatedDate: row.version_updatedDate
-            }
-            // Ignore versions that haven't finished uploading.
-            if (paper_version.version && ! dictionary[paper.id].versions.find((v) => v.version == paper_version.version)) {
-                dictionary[paper.id].versions.push(paper_version)
-            }
 
             if ( row.paperField_fieldId) {
                 const paper_field = {
@@ -108,16 +106,12 @@ module.exports = class PaperDAO {
 
         // TECHDEBT - Definitely not the ideal way to handle this.  But so it goes.
         let activeOrderJoins = ''
-        if ( order == 'published-active' ) {
-            activeOrderJoins = `
-                LEFT OUTER JOIN responses ON responses.paper_id = papers.id
-            `
-            order = 'greatest(responses.updated_date, papers.updated_date) DESC NULLS LAST, '
-        } else if ( order == 'draft-active' ) {
+        if ( order == 'active' ) {
             activeOrderJoins = `
                 LEFT OUTER JOIN reviews ON reviews.paper_id = papers.id AND reviews.status != 'in-progress'
                 LEFT OUTER JOIN review_comment_threads ON review_comment_threads.review_id = reviews.id
                 LEFT OUTER JOIN review_comments ON review_comments.thread_id = review_comment_threads.id AND review_comments.status != 'in-progress'
+                LEFT OUTER JOIN paper_versions ON paper_versions.paper_id = papers.id
             `
             order = 'greatest(paper_versions.updated_date, reviews.updated_date, review_comments.updated_date) DESC NULLS LAST, '
         } else {
@@ -134,22 +128,14 @@ module.exports = class PaperDAO {
                     paper_authors.user_id as "author_userId", paper_authors.author_order as author_order,
                     paper_authors.owner as author_owner, paper_authors.submitter as author_submitter,
 
-                    paper_versions.version as version_version,
-                    paper_versions.content as version_content, paper_versions.review_count as "version_reviewCount",
-                    paper_versions.created_date as "version_createdDate", paper_versions.updated_date as "version_updatedDate",
-
-                    ${ this.fileDAO.getFilesSelectionString() },
-
                     paper_fields.field_id as "paperField_fieldId"
 
                 FROM papers 
                     LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id
-                    LEFT OUTER JOIN paper_versions ON papers.id = paper_versions.paper_id
-                    LEFT OUTER JOIN files on paper_versions.file_id = files.id
                     LEFT OUTER JOIN paper_fields ON papers.id = paper_fields.paper_id
                     ${activeOrderJoins}
                 ${where} 
-                ORDER BY ${order}paper_authors.author_order asc, paper_versions.version desc
+                ORDER BY ${order}paper_authors.author_order asc
         `
         const results = await this.database.query(sql, params)
 
@@ -327,74 +313,6 @@ module.exports = class PaperDAO {
         }
     }
 
-    async insertVersions(paper) {
-        for(const version of paper.versions ) {
-            await this.insertVersion(paper, version)
-        }
-    }
-
-    async insertVersion(paper, version) {
-        const files = await this.fileDAO.selectFiles('WHERE files.id = $1', [ version.file.id ])
-        if ( files.length <= 0) {
-            throw new DAOError('invalid-file', `Invalid file_id posted with paper ${paper.id}.`)
-        }
-        const file = files[0]
-
-        const maxVersionResults = await this.database.query(
-            'SELECT MAX(version)+1 as version FROM paper_versions WHERE paper_id=$1', 
-            [ paper.id ]
-        )
-        let versionNumber = 1
-        if ( maxVersionResults.rows.length > 0 && maxVersionResults.rows[0].version) {
-            versionNumber = maxVersionResults.rows[0].version
-        }
-
-        const url = new URL(file.filepath, file.location)
-        const pdf = await pdfjslib.getDocument(url.toString()).promise
-        let content = ''
-        for(let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber++) {
-            const page = await pdf.getPage(pageNumber)
-            const textContent = await page.getTextContent()
-
-            for(const item of textContent.items ) {
-                content += item.str 
-            }
-        }
-
-        content = content.replace(/\0/g, '')
-
-        if ( content.trim().length == 0 ) {
-            console.log('Empty PDF!')
-        }
-
-        const versionResults = await this.database.query(`
-            INSERT INTO paper_versions (paper_id, version, file_id, content, created_date, updated_date)
-                VALUES ($1, $2, $3, $4, now(), now())
-        `, [ paper.id, versionNumber, file.id, content ])
-
-        if ( versionResults.rowCount <= 0) {
-            throw new DAOError('failed-insertion', `Failed to insert version for paper ${paper.id} and file ${file.id}.`)
-        }
-
-        const title = paper.title
-        let titleFilename = title.replaceAll(/\s/g, '-')
-        titleFilename = titleFilename.toLowerCase()
-        titleFilename = sanitizeFilename(titleFilename)
-
-        const filename = `${paper.id}-${versionNumber}-${titleFilename}.${mime.getExtension(file.type)}`
-        const filepath = 'papers/' + filename
-
-        const newFile = { ...file }
-        newFile.filepath = filepath
-
-        // TODO Should moving the file when the file is updated be the
-        // responsibility of the FileDAO?  Probably.
-        await this.fileService.copyFile(file.filepath, filepath)
-        await this.fileDAO.updateFile(newFile)
-        await this.fileService.removeFile(file.filepath)
-    }
-
-
     async updatePartialPaper(paper) {
         // We'll ignore these fields when assembling the patch SQL.  These are
         // fields that either need more processing (authors) or that we let the
@@ -429,7 +347,6 @@ module.exports = class PaperDAO {
         if ( results.rowCount <= 0 ) {
             throw new DAOError('update-failure', `Failed to update paper ${paper.id} with partial update.`) 
         }
-
     }
 
     async deletePaper(id) {

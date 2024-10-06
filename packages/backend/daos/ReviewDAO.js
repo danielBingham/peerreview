@@ -28,8 +28,8 @@ module.exports = class ReviewDAO {
                 const review = {
                     id: row.review_id,
                     paperId: row.review_paperId,
+                    paperVersionId: row.review_paperVersionId,
                     userId: row.review_userId,
-                    version: row.review_version,
                     summary: row.review_summary,
                     recommendation: row.review_recommendation,
                     status: row.review_status,
@@ -115,11 +115,15 @@ module.exports = class ReviewDAO {
         const sql = `
             SELECT
 
-              reviews.id as review_id, reviews.paper_id as "review_paperId", 
-              reviews.version as review_version, reviews.user_id as "review_userId", 
+              reviews.id as review_id, 
+              reviews.paper_id as "review_paperId", 
+              reviews.paper_version_id as "review_paperVersionId",
+              reviews.user_id as "review_userId", 
               reviews.summary as review_summary, 
-              reviews.recommendation as review_recommendation, reviews.status as review_status, 
-              reviews.created_date as "review_createdDate", reviews.updated_date as "review_updatedDate",
+              reviews.recommendation as review_recommendation, 
+              reviews.status as review_status, 
+              reviews.created_date as "review_createdDate", 
+              reviews.updated_date as "review_updatedDate",
 
               review_comment_threads.id as thread_id, review_comment_threads.review_id as "thread_reviewId", 
               review_comment_threads.page as thread_page, 

@@ -50,6 +50,8 @@
 .notification-menu .notification-body {
     max-height: 400px;
     overflow: auto;
+    margin-left: -120px;
+    top: 42px;
 }
 .notification-menu .notification-header {
     padding: 5px 10px;

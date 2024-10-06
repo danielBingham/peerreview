@@ -391,8 +391,8 @@ module.exports = class ReputationGenerationService {
         }
 
         const reviewResults = await this.database.query(`
-                SELECT id FROM reviews WHERE paper_id = $1 AND version = $2 AND user_id = $3 AND status='accepted'
-             `, [ review.paperId, review.version, review.userId ])
+                SELECT id FROM reviews WHERE paper_id = $1 AND paper_version_id = $2 AND user_id = $3 AND status='accepted'
+             `, [ review.paperId, review.paperVersionId, review.userId ])
 
         // You're only allowed to gain reputation from a single review on each
         // versions, so if there's one that already exists, we assume you've

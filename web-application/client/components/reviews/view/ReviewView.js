@@ -14,7 +14,7 @@ import Spinner from '/components/Spinner'
 
 import './ReviewView.css'
 
-const ReviewView = function({ id, eventId, paperId, versionNumber }) {
+const ReviewView = function({ id, eventId, paperId, paperVersionId }) {
     
     const paper = useSelector(function(state) {
         return state.papers.dictionary[paperId]
@@ -26,14 +26,6 @@ const ReviewView = function({ id, eventId, paperId, versionNumber }) {
         }
 
         return state.reviews.dictionary[id]
-    })
-
-    const user = useSelector(function(state) {
-        if ( ! review || ! state.users.dictionary[review.userId]) {
-            return null
-        } else {
-            return state.users.dictionary[review.userId]
-        }
     })
 
     useEffect(function() {
@@ -51,14 +43,13 @@ const ReviewView = function({ id, eventId, paperId, versionNumber }) {
         return null
     }
 
-    const pages = []
     const commentThreadViews = []
 
     for(let thread of review.threads) {
         commentThreadViews.push(
             <div key={thread.id}>
                 <EllipsisVerticalIcon className="ellipsis" />
-                <CommentThreadView id={thread.id} reviewId={review.id} paperId={paper.id} versionNumber={versionNumber} />
+                <CommentThreadView id={thread.id} reviewId={review.id} paperId={paper.id} />
             </div>
         )
     }
@@ -66,11 +57,11 @@ const ReviewView = function({ id, eventId, paperId, versionNumber }) {
     let summary = null
     if ( review.status == 'in-progress' && paper.isDraft ) {
         summary = ( 
-            <ReviewSummaryForm paper={paper} versionNumber={versionNumber} selectedReview={review} /> 
+            <ReviewSummaryForm paper={paper} paperVersionId={paperVersionId} selectedReview={review} /> 
         )
     } else {
         summary = (
-            <ReviewSummaryView eventId={eventId} paper={paper} versionNumber={versionNumber} selectedReview={review} />
+            <ReviewSummaryView eventId={eventId} paper={paper} selectedReview={review} />
         )
     }
 

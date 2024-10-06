@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import { postJournalSubmissions, cleanupRequest } from '/state/journalSubmissions'
+import { patchPaperVersion, cleanupRequest as cleanupPaperVersionRequest } from '/state/paperVersions'
 
 import Button from '/components/generic/button/Button'
 import Modal from '/components/generic/modal/Modal'
@@ -34,6 +35,15 @@ const JournalSubmissionButton = function({ id }) {
             return state.journalSubmissions.requests[requestId]
         }
     })
+
+    const [ patchPaperVersionRequestId, setPatchPaperVersionRequestId ] = useState(null)
+    const patchPaperVersionRequest = useSelector(function(state) {
+        if ( ! patchPaperVersionRequestId ) {
+            return null
+        } else {
+            return state.paperVersions.requests[patchPaperVersionRequestId]
+        }
+    })
    
     // ================= Redux State ==========================================
 
@@ -50,6 +60,11 @@ const JournalSubmissionButton = function({ id }) {
         return allSubmissions.filter((s) => s.paperId == paper.id)
     })
 
+    const mostRecentVersion = useSelector(function(state) {
+        const mostRecentVersionId = state.paperVersions.mostRecentVersion[paper.id]
+        return state.paperVersions.dictionary[mostRecentVersionId]
+    })
+
     const isAuthor = (currentUser && paper.authors.find((a) => a.userId == currentUser.id) ? true : false)
     const isOwner = (currentUser && isAuthor && paper.authors.find((a) => a.userId == currentUser.id).owner ? true : false)
 
@@ -60,6 +75,18 @@ const JournalSubmissionButton = function({ id }) {
     const submitToJournal = function() {
         const submission = { paperId: paper.id}
         setRequestId(dispatch(postJournalSubmissions(selectedJournalId, submission)))
+
+        addToSubmission()
+    }
+
+    const addToSubmission = function() {
+        const paperVersionPatch = {
+            id:  mostRecentVersion.id,
+            paperId: id,
+            isSubmitted: true
+        }
+
+        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(id, paperVersionPatch)))
     }
 
     // ======= Effect Handling ======================================
@@ -71,6 +98,14 @@ const JournalSubmissionButton = function({ id }) {
             }
         }
     }, [ requestId ])
+
+    useEffect(function() {
+        return function cleanup() {
+            if ( patchPaperVersionRequestId ) {
+                dispatch(cleanupPaperVersionRequest({ requestId: patchPaperVersionRequestId}))
+            }
+        }
+    }, [ patchPaperVersionRequestId ])
 
     // ======= Render ===============================================
   
@@ -97,6 +132,10 @@ const JournalSubmissionButton = function({ id }) {
                     <Button type="primary-highlight" disabled={ selectedJournalId ? false : true } onClick={(e) => submitToJournal()}>Submit to Journal</Button> 
                 </Modal>
             </>
+        )
+    } else if ( isOwner && paper.isDraft && activeSubmission && ! mostRecentVersion.isSubmitted ) {
+        return (
+            <Button onClick={(e) => addToSubmission()} type="primary">Add to Version Submission</Button>
         )
     } else {
         return null

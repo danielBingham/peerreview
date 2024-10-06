@@ -2,6 +2,11 @@ import React from 'react'
 import {  useSelector } from 'react-redux'
 import {  useSearchParams } from 'react-router-dom'
 
+import { CheckIcon } from '@heroicons/react/24/solid'
+
+import { Select, SelectBody, SelectTrigger, SelectItem } from '/components/generic/select/Select'
+import DateTag from '/components/DateTag'
+
 import './PaperVersionSelector.css'
 
 /**
@@ -22,19 +27,30 @@ const PaperVersionSelector = function({ paperId }) {
    
     // ================= Redux State ==========================================
 
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
+    const paperVersions = useSelector(function(state) {
+        return state.paperVersions.versionsByPaper[paperId]
     })
 
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[paperId]
+    const mostRecentVisibleVersion = useSelector(function(state) {
+        if ( ! paperId in state.paperVersions.mostRecentVersion ) {
+            throw new Error(`Paper(${paperId}) is missing most recent version!`)
+        }
+
+        return state.paperVersions.mostRecentVersion[paperId]
     })
+  
+    let paperVersionId = 0
+    if ( searchParams.get('version') ) {
+        paperVersionId = searchParams.get('version')
+    } else {
+        paperVersionId =  mostRecentVisibleVersion
+    }
+    console.log(`Most recent version: ${paperVersionId}.`)
 
     // ================= User Action Handling  ================================
 
-    const changeVersion = function(event) {
-        const versionNumber = event.target.value
-        searchParams.set('version', versionNumber)
+    const changeVersion = function(id) {
+        searchParams.set('version', id)
         // If we're changing the version, clear the review since reviews are
         // tied to version.
         searchParams.delete('review')
@@ -47,20 +63,33 @@ const PaperVersionSelector = function({ paperId }) {
 
     // ======= Render ===============================================
 
-    const versionNumber = ( searchParams.get('version') ? searchParams.get('version') : paper.versions[0].version)
-
     const paperVersionOptions = []
-    for( const paperVersion of paper.versions ) {
-        paperVersionOptions.push(<option key={paperVersion.version} value={paperVersion.version}>{ paperVersion.version }</option>)     
+    for( const paperVersion of Object.values(paperVersions) ) {
+        paperVersionOptions.push(
+            <SelectItem key={paperVersion.id} onClick={(e) => changeVersion(paperVersion.id)}>
+                <div className="version">
+                    <div className="id">{ paperVersionId == paperVersion.id && <CheckIcon />} { paperVersion.id }</div>
+                    <DateTag type="full" timestamp={paperVersion.createdDate} />
+                    { /*<div className="status">
+                        <div className={paperVersion.isPreprint ? "yes" : "no"}>preprint</div>
+                        <div className={paperVersion.isSubmitted ? "yes" : "no"}>submitted</div>
+                        <div className={paperVersion.isPublished ? "yes" : "no"}>published</div>
+                    </div> */ }
+                </div>
+            </SelectItem>)     
     }
 
 
     return (
         <div className="paper-version-selector">
-            <label htmlFor="versionNumber">Version</label>
-            <select name="versionNumber" value={versionNumber} onChange={changeVersion}>
+            <Select>
+                <SelectTrigger>
+                    Version: { paperVersionId.substring(0,16) + "..." } 
+                </SelectTrigger>
+                <SelectBody>
                 {paperVersionOptions}
-            </select>
+                </SelectBody>
+            </Select>
         </div>
     )
 

@@ -20,7 +20,7 @@ module.exports = class PaperEventsDAO {
                 id: row.event_id,
                 paperId: row.event_paperId,
                 actorId: row.event_actorId,
-                version: row.event_version,
+                paperVersionId: row.event_paperVersionId,
                 status: row.event_status,
                 type: row.event_type,
                 visibility: row.event_visibility,
@@ -58,7 +58,7 @@ module.exports = class PaperEventsDAO {
                 paper_events.id as event_id, 
                 paper_events.paper_id as "event_paperId",
                 paper_events.actor_id as "event_actorId",
-                paper_events.version as event_version,
+                paper_events.paper_version_id as "event_paperVersionId",
                 paper_events.status as event_status,
                 paper_events.type as event_type,
                 paper_events.visibility::text[] as event_visibility, 
@@ -90,7 +90,7 @@ module.exports = class PaperEventsDAO {
         let params = []
 
         const validFields = [ 
-            'paperId', 'actorId', 'version', 'status', 'type', 
+            'paperId', 'actorId', 'paperVersionId', 'status', 'type', 
             'visibility', 'eventDate', 'assigneeId', 'reviewId', 
             'reviewCommentId', 'submissionId', 'newStatus', 'paperCommentId'
         ]
@@ -103,6 +103,8 @@ module.exports = class PaperEventsDAO {
             
             if ( key == 'paperId' ) {
                 columns += `paper_id, `
+            } else if ( key == 'paperVersionId' ) {
+                columns += `paper_version_id, `
             } else if ( key == 'actorId' ) {
                 columns += `actor_id, `
             } else if ( key == 'assigneeId' ) {

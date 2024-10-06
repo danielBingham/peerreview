@@ -1,35 +1,10 @@
 .journal-list-item {
-    display: grid;
-    grid-template-columns: 60px 60px auto;
-    grid-template-rows: auto;
     margin: 0px auto;
     padding: 0px 5px;
 }
 .journal-list-item .wrapper {
     display: block; 
-    grid-column: 3 / 4;
-    padding: 10px;
-}
-.journal-list-item .impact-factor{
-    grid-column: 1 / 2; 
-}
-.journal-list-item .endorsements {
-    grid-column: 2 / 3;
-}
-.journal-list-item .impact-factor, .journal-list-item .endorsements {
-    display: block;
-
-    height: 60px;
-    width: 54px; 
-    margin: auto 0;
-    padding: 20px 5px 20px 5px;
-    text-align: center;
-    vertical-align: center; 
-    font-size: 24px;
-}
-.journal-list-item .impact-factor .label, .journal-list-item .endorsements .label {
-    font-size: 9px;
-    white-space: nowrap;
+    padding: 10px 20px;
 }
 
 .journal-list-item .name {
@@ -43,11 +18,11 @@
     color: #666;
 }
 .journal-list-item .description{
-    font-size: 12px;
+    font-size: 14px;
     padding: 5px;
 }
 .journal-list-item .editors {
-    font-size: 16px;
-    padding: 5px;
+    font-size: 12px;
+    padding: 5px 10px;
 }
 

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 
 import {  patchPaper, cleanupRequest } from '/state/papers'
+import { patchPaperVersion, cleanupRequest as cleanupPaperVersionRequest } from '/state/paperVersions'
 
 import Button from '/components/generic/button/Button'
 
@@ -25,6 +26,15 @@ const PreprintSubmissionButton = function({ id }) {
             return state.papers.requests[patchPaperRequestId]
         }
     })
+
+    const [ patchPaperVersionRequestId, setPatchPaperVersionRequestId ] = useState(null)
+    const patchPaperVersionRequest = useSelector(function(state) {
+        if ( ! patchPaperVersionRequestId ) {
+            return null
+        } else {
+            return state.paperVersions.requests[patchPaperVersionRequestId]
+        }
+    })
    
     // ================= Redux State ==========================================
 
@@ -36,6 +46,14 @@ const PreprintSubmissionButton = function({ id }) {
         return state.papers.dictionary[id]
     })
 
+    const mostRecentVersionId = useSelector(function(state) {
+        return state.paperVersions.mostRecentVersion[id]
+    })
+
+    const mostRecentVersion = useSelector(function(state) {
+        return state.paperVersions.dictionary[mostRecentVersionId]
+    })
+
     const isAuthor = (currentUser && paper.authors.find((a) => a.userId == currentUser.id) ? true : false)
     const isOwner = (currentUser && isAuthor && paper.authors.find((a) => a.userId == currentUser.id).owner ? true : false)
 
@@ -44,12 +62,22 @@ const PreprintSubmissionButton = function({ id }) {
     const dispatch = useDispatch()
 
     const submitPreprint = function() {
-        const paperPatch = {
-            id: id,
-            showPreprint: true
+        if ( ! paper.showPreprint ) {
+            const paperPatch = {
+                id: id,
+                showPreprint: true
+            }
+
+            setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
         }
 
-        setPatchPaperRequestId(dispatch(patchPaper(paperPatch)))
+        const paperVersionPatch = {
+            id: mostRecentVersionId,
+            paperId: id,
+            isPreprint: true
+        }
+
+        setPatchPaperVersionRequestId(dispatch(patchPaperVersion(id, paperVersionPatch)))
     }
 
     // ======= Effect Handling ======================================
@@ -62,12 +90,23 @@ const PreprintSubmissionButton = function({ id }) {
         }
     }, [ patchPaperRequestId ])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( patchPaperVersionRequestId ) {
+                dispatch(cleanupPaperVersionRequest({ requestId: patchPaperVersionRequestId}))
+            }
+        }
+    }, [ patchPaperVersionRequestId ])
+
     // ======= Render ===============================================
-   
 
     if ( isOwner && paper.isDraft && ! paper.showPreprint ) {
         return (
              <Button onClick={submitPreprint} type="secondary">Submit Preprint</Button>
+        )
+    } else if ( isOwner && paper.isDraft && paper.showPreprint && ! mostRecentVersion.isPreprint ) {
+        return (
+            <Button onClick={submitPreprint} type="secondary">Add Version to Preprint</Button>
         )
     } else {
         return null

@@ -13,7 +13,6 @@
     background-color: white;
     color: black;
     border: thin solid var(--main-border-color);
-    box-shadow: 1px 1px 1px #999;
 }
 
 .journal-submissions-tags .private-draft-tag {
@@ -26,5 +25,4 @@
     background-color: white;
     color: black;
     border: thin solid var(--main-border-color);
-    box-shadow: 1px 1px 1px #999;
 }

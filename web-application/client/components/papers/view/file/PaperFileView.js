@@ -19,10 +19,10 @@ import './PaperFileView.css'
  *  - Assumes we have a current user logged in.  
  * 
  * @param {Object} props    Standard react props object.
- * @param {int} props.id    The id of the draft paper we want to load and show
+ * @param {int} props.paperId    The id of the draft paper we want to load and show
  * reviews for. 
  */
-const PaperFileView = function({ id }) {
+const PaperFileView = function({ paperId }) {
 
     const [ searchParams, setSearchParams ] = useSearchParams()
 
@@ -40,14 +40,23 @@ const PaperFileView = function({ id }) {
     // ================= Redux State ==========================================
 
     const reviewQuery = useSelector(function(state) {
-        return state.reviews.queries[id]
+        return state.reviews.queries[paperId]
     })
 
-    const paper = useSelector(function(state) {
-        return state.papers.dictionary[id]
-    })
+    const mostRecentVisibleVersion = useSelector(function(state) {
+        if ( ! paperId in state.paperVersions.mostRecentVersion ) {
+            throw new Error(`Paper(${paperId}) missing most recent version!`)
+        }
 
-    const versionNumber = ( searchParams.get('version') ? searchParams.get('version') : paper.versions[0].version )
+        return state.paperVersions.mostRecentVersion[paperId]
+    })
+   
+    let paperVersionId = 0
+    if ( searchParams.get('version') ) {
+        paperVersionId = searchParams.get('version')
+    } else {
+        paperVersionId = mostRecentVisibleVersion
+    }
 
     // ======= Effect Handling =====================
    
@@ -58,9 +67,9 @@ const PaperFileView = function({ id }) {
      */
     useEffect(function() {
         if ( ! reviewsRequestId ) {
-            setReviewsRequestId(dispatch(getReviews(id, id)))
+            setReviewsRequestId(dispatch(getReviews(paperId, paperId)))
         } else if (reviewsRequest?.state == 'fulfilled' && ! reviewQuery ) {
-            setReviewsRequestId(dispatch(getReviews(id, id)))
+            setReviewsRequestId(dispatch(getReviews(paperId, paperId)))
         }
     }, [ reviewQuery ])
 
@@ -76,14 +85,14 @@ const PaperFileView = function({ id }) {
 
     if ( reviewsRequest && reviewsRequest.state == 'fulfilled') {
         return (
-            <div id={`paper-${id}`} className="paper-file-view">
-                <ReviewHeaderView paperId={id} versionNumber={versionNumber} />
-                <PaperPDFView paperId={id} versionNumber={versionNumber} />
+            <div id={`paper-${paperId}`} className="paper-file-view">
+                <ReviewHeaderView paperId={paperId} paperVersionId={paperVersionId} />
+                <PaperPDFView paperId={paperId} paperVersionId={paperVersionId} />
             </div>
         )
     } else {
         return (
-            <div id={`paper-${id}`} className="paper-file-view">
+            <div id={`paper-${paperId}`} className="paper-file-view">
                 <Spinner local={true}/>
             </div>
         )

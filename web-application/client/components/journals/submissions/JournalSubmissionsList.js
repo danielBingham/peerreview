@@ -94,7 +94,7 @@ const JournalSubmissionsList = function(props) {
     const queryForPapers = function({ fields, status, authors, reviewers, editors, sortBy, page }) {
         let query = { 
             status: [ 'submitted', 'review', 'proofing' ], 
-            relations: [ "papers", "users"] 
+            relations: [ "papers", "paperVersions", "users"] 
         }
 
         if ( fields.length > 0 ) {

@@ -683,13 +683,14 @@ module.exports = class NotificationService {
     }
 
     async sendNewVersion(currentUser, context) {
+        console.log(context)
         const eventResults = await this.paperEventDAO.selectEvents(
-            `WHERE paper_events.type = 'paper:new-version' AND paper_events.paper_id = $1 AND paper_events.version = $2`,
-            [ context.paper.id, context.paper.versions[0].version ]
+            `WHERE paper_events.type = 'paper:new-version' AND paper_events.paper_id = $1 AND paper_events.paper_version_id = $2`,
+            [ context.paper.id, context.paperVersionId]
         )
         if ( eventResults.list.length <= 0 ) {
             throw new ServiceError('missing-event', 
-                `Missing submission event for Submission(${context.submission.id}).`)
+                `Missing submission event for Paper(${context.paper.id}) and PaperVersion(${context.paperVersionId}).`)
         }
         const event = eventResults.dictionary[eventResults.list[0]]
 

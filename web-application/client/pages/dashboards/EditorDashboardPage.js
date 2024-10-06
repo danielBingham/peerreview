@@ -86,6 +86,8 @@ const EditorDashboardPage = function(props) {
 
     const selectedTab = ( pageTab ? pageTab : 'feed' )
 
+    console.log(currentUser)
+    console.log(journalDictionary)
     const tabs = []
     for( const membership of currentUser.memberships ) {
         if ( membership.permissions == 'owner' || membership.permissions == 'editor' ) {

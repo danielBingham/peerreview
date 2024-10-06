@@ -142,7 +142,7 @@ module.exports = class JournalSubmissionDAO {
                 journal_submission_reviewers.user_id as "reviewer_userId",
                 journal_submission_reviewers.created_date as "reviewer_assignedDate",
 
-                reviews.id as review_id, reviews.version as review_version,
+                reviews.id as review_id, reviews.paper_version_id as review_paperVersionId,
                 reviews.recommendation as review_recommendation, reviews.user_id as "review_userId",
 
                 journal_submission_editors.submission_id as "editor_submissionId",

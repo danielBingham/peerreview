@@ -4,12 +4,12 @@
     width: 18px;
     height: 18px;
     margin-right: 6px;
-    margin-bottom: -4px;
+    margin-bottom: -2px;
 }
-.navigation-block a:link, 
-.navigation-block a:active, 
-.navigation-block a:visited,
-.navigation-block a:hover {
+#about-navigation a:link, 
+#about-navigation a:active, 
+#about-navigation a:visited,
+#about-navigation a:hover {
     padding: 5px;
     margin: 0 5px;
 }
@@ -24,12 +24,19 @@
     width: 18px;
     height: 18px;
     margin-right: 6px;
-    margin-bottom: -4px;
+    margin-bottom: -2px;
+}
+#main-navigation svg.arrow {
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    margin-left: 3px;
+    margin-bottom: -2px;
 }
 
 #explore-menu {
     position: absolute;
-    top: 44px;
+    top: 52px;
     left: 0;
     text-align: left;
     background-color: var(--header-menu-background-color);

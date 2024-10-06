@@ -9,6 +9,7 @@ import {
     DocumentArrowUpIcon, 
     BookOpenIcon, 
     PlusIcon,
+    PlusCircleIcon,
     ClipboardDocumentIcon,
     PencilSquareIcon
 } from '@heroicons/react/24/outline'
@@ -55,7 +56,7 @@ const CreationNavigation = function(props) {
     return (
         <div ref={menuRef} id="creation-navigation" className="navigation-block">
             <span className="creation-menu-trigger">
-                <a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<PlusIcon />New</a>
+                <a href="" onClick={toggleMenu}><PlusCircleIcon />New{ menuVisible ? <ChevronUpIcon className="arrow" /> : <ChevronDownIcon className="arrow" /> }</a>
             </span>
             <div id="creation-menu" className="floating-menu" style={{ display: ( menuVisible ? 'block' : 'none' ) }} >
                 <div className="menu-item" onClick={toggleMenu}><Link to="/submit"><DocumentArrowUpIcon />New Submission</Link></div>

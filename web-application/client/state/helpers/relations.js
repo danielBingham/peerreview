@@ -4,6 +4,7 @@ import { setJournalSubmissionsInDictionary } from '../journalSubmissions'
 import { setPapersInDictionary } from '../papers'
 import { setUsersInDictionary } from '../users'
 import { setReviewsInDictionary } from '../reviews'
+import { setPaperVersionsInDictionary } from '../paperVersions'
 import { setPaperEventsInDictionary } from '../paperEvents'
 import { setPaperCommentsInDictionary } from '../paperComments'
 
@@ -28,6 +29,8 @@ const setRelationsInState = function(relations) {
                     dispatch(setPaperEventsInDictionary({ dictionary: dictionary }))
                 } else if ( relation == 'paperComments' ) {
                     dispatch(setPaperCommentsInDictionary({ dictionary: dictionary }))
+                } else if ( relation == 'paperVersions' ) {
+                    dispatch(setPaperVersionsInDictionary({ dictionary: dictionary }))
                 }
             }
         }

@@ -1,6 +1,7 @@
 const { 
     PaperEventDAO, 
     PaperDAO, 
+    PaperVersionDAO,
     PaperCommentDAO,
     UserDAO, 
     ReviewDAO, 
@@ -18,6 +19,7 @@ module.exports = class PaperEventController {
 
         this.paperEventDAO = new PaperEventDAO(core)
         this.paperDAO = new PaperDAO(core)
+        this.paperVersionDAO = new PaperVersionDAO(core)
         this.paperCommentDAO = new PaperCommentDAO(core)
         this.userDAO = new UserDAO(core)
         this.reviewDAO = new ReviewDAO(core)
@@ -29,6 +31,11 @@ module.exports = class PaperEventController {
     async getRelations(currentUser, results, requestedRelations) {
         const relations = {}
 
+        const events = Object.entries(results.dictionary)
+        if ( events.length <= 0 ) {
+            return relations 
+        }
+
         // ======== Default Relations =========================================
         // These are relations we always retrieve and return.
 
@@ -36,8 +43,11 @@ module.exports = class PaperEventController {
         const reviewIds = []
         const reviewCommentIds = []
         const submissionIds = []
+        const paperVersions = []
         const paperCommentIds = []
         for(const [id, event] of Object.entries(results.dictionary)) {
+            paperVersions.push(event.paperVersionId)
+
             if ( event.actorId ) {
                 userIds.push(event.actorId)
             } 
@@ -75,6 +85,14 @@ module.exports = class PaperEventController {
             [ submissionIds ]
         )
         relations.submissions = submissionResults.dictionary
+
+        // ======== Paper Versions ============================================
+        if ( paperVersions.length > 0 ) {
+            // If they can view the event, for now we're assuming they can view the version the event is on.
+            // TECHDEBT -- This may not be a safe assumption.
+            const paperVersionResults = await this.paperVersionDAO.selectPaperVersions(`WHERE paper_versions.id = ANY($1::uuid[])`, [ paperVersions ])
+            relations.paperVersions = paperVersionResults.dictionary
+        }
 
         // ======== Paper Comments ============================================
         const paperCommentResults = await this.paperCommentDAO.selectPaperComments(
@@ -124,12 +142,12 @@ module.exports = class PaperEventController {
 
         // ======== END Visibility ============================================
 
-        if ( query.version ) {
+        if ( query.paperVersionId) {
             count += 1
             and = ( count > 1 ? ' AND ' : '')
 
-            result.where += `${and} paper_events.version = $${count}`
-            result.params.push(query.version)
+            result.where += `${and} paper_events.paper_version_id= $${count}`
+            result.params.push(query.paperVersionId)
         }
 
         if ( query.since && query.since != 'always') {

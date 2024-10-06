@@ -14,10 +14,6 @@ import './PublishedPaperListItem.css'
 const PublishedPaperListItem = function(props) {
     const paper = props.paper
 
-    const responseCount = useSelector(function(state) {
-        return  ( state.responses.counts[paper.id] ? state.responses.counts[paper.id] : 0)
-    })
-
     // ======= Render ===============================================
     
     const authors = []
@@ -32,11 +28,9 @@ const PublishedPaperListItem = function(props) {
 
     return (
         <div id={paper.id} className="published-paper-list-item">
-            <div className="endorsements">{paper.score}<br /> <span className="label">endorsements</span></div> 
-            <div className="responses">{responseCount} <br /><span className="label">responses</span></div>
             <div className="wrapper">
                 <JournalSubmissionsTags id={paper.id} />
-                <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title} <ArrowLeftOnRectangleIcon /></Link></div> 
+                <div className="title"> <Link to={`/paper/${paper.id}`}> {paper.title}</Link></div> 
                 <div className="date-and-authors">published <DateTag timestamp={paper.updatedDate} /> by {authors}</div>
                 <div className="fields">{fields}</div>
             </div>

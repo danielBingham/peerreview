@@ -1,4 +1,23 @@
 /******************************************************************************
+ *
+ *  JournalHub -- Universal Scholarly Publishing 
+ *  Copyright (C) 2022 - 2024 Daniel Bingham 
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as published
+ *  by the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ ******************************************************************************/
+/******************************************************************************
  *     PaperController 
  *
  * Restful routes for manipulating papers.
@@ -19,6 +38,7 @@ module.exports = class PaperController {
         this.logger = core.logger
 
         this.paperDAO = new backend.PaperDAO(core)
+        this.paperVersionDAO = new backend.PaperVersionDAO(core)
         this.fieldDAO = new backend.FieldDAO(core)
         this.userDAO = new backend.UserDAO(core)
         this.journalDAO = new backend.JournalDAO(core)
@@ -321,8 +341,6 @@ module.exports = class PaperController {
                         papers.searchable_title @@ websearch_to_tsquery('english', $1) )
             `, [ query.searchString ])
 
-            console.log(results.rows)
-
             if ( results.rows.length > 0 ) {
                 count += 1
                 and = ( count > 1 ? ' AND ' : '' )
@@ -588,22 +606,26 @@ module.exports = class PaperController {
         paper.id = await this.paperDAO.insertPaper(paper) 
         await this.paperDAO.insertAuthors(paper) 
         await this.paperDAO.insertFields(paper)
-        await this.paperDAO.insertVersions(paper)
 
+        for ( const version of paper.versions) {
+            version.id = await this.paperVersionDAO.insertPaperVersion(paper, version)
+        }
         
         const results = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
         const entity = results.dictionary[paper.id]
         if ( ! entity ) {
             throw new ControllerError(500, `server-error`, `Paper ${paper.id} does not exist after insert!`)
         }
-        
-        const event = {
-            paperId: entity.id,
-            actorId: user.id,
-            version: entity.versions[0].version,
-            type: 'paper:new-version'
+       
+        for(const version of paper.versions) {
+            const event = {
+                paperId: entity.id,
+                actorId: user.id,
+                paperVersionId: version.id, 
+                type: 'paper:new-version'
+            }
+            await this.paperEventService.createEvent(request.session.user, event)
         }
-        await this.paperEventService.createEvent(request.session.user, event)
 
         // ==== Notifications =============================================
 
@@ -742,6 +764,7 @@ module.exports = class PaperController {
                 `User(${user.id}) attempting to PATCH a published paper.`)
         }
 
+
         /********************************************************
          * Permissions Checks and Validation Complete
          *      PATCH the Paper.
@@ -756,11 +779,24 @@ module.exports = class PaperController {
             throw new ControllerError(500, `server-error`, `Failed to find paper(${paper.id}) after patching!`)
         } 
 
+
         if ( entity.showPreprint && ! existing.showPreprint ) {
+
+            const versionResults = await this.database.query(`
+                SELECT id FROM paper_versions WHERE paper_id = $1 ORDER BY created_date desc LIMIT 1
+            `, [ paper.id ])
+
+            if ( versionResults.rows.length < 0 ) {
+                throw new ControllerError(500, 'missing-version',
+                    `Paper(${paper.id}) has no version!`)
+            }
+
+            const versionId = versionResults.rows[0].id
+
             const event = {
                 paperId: entity.id,
                 actorId: user.id,
-                version: entity.versions[0].version,
+                paperVersionId: versionId,
                 type: 'paper:preprint-posted'
             }
             await this.paperEventService.createEvent(request.session.user, event)
@@ -847,239 +883,6 @@ module.exports = class PaperController {
         })
     }
 
-    /**
-     * POST /papers/:paper_id/versions
-     *
-     * Add a new version to an existing paper.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {int} request.params.paper_id The database id of the paper we
-     * wish to add a version to.
-     * @param {Object} request.body The paper_version we're adding to
-     * Paper(:paper_id).
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {Promise}   Resolves to void.
-     */
-    async postPaperVersions(request, response) {
-        const paperId = request.params.paper_id
-        const version = request.body
-
-        /*************************************************************
-         * Permissions Checking and Input Validation
-         *
-         * 1. User must be logged in.
-         * 2. Paper(:paper_id) must exist.
-         * 3. User must be an owning author on Paper(:paper_id).
-         * 4. Paper(:paper_id) must be a draft.
-         * 5. File(version.file.id) must be a valid file.
-         * 6. File(verison.file.id) must not be attached to any other paper.
-         * 
-         * **********************************************************/
-        
-        // 1. User must be logged in.
-        if ( ! request.session.user ) {
-            throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to delete paper(${request.params.id}).`)
-        }
-
-        const user = request.session.user
-
-        const existingResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
-        const existing = existingResults.dictionary[paperId]
-
-        // 2. Paper(:paper_id) must exist.
-        if ( ! existing ) {
-            throw new ControllerError(404, 'not-found',
-                `User(${user.id}) attempted to post a new version of a paper that doesn't exist.`)
-        }
-
-        // 3. User must be an owning author on Paper(:paper_id)
-        if ( ! existing.authors.find((a) => a.userId == user.id && a.owner)) {
-            throw new ControllerError(403, 'not-owner', 
-                `Non-owner user(${user.id}) attempting to delete paper(${request.params.id}).`)
-        }
-
-        // 4. Paper(:paper_id) must be a draft.
-        if ( ! existing.isDraft ) {
-            throw new ControllerError(403, 'not-authorized:not-draft',
-                `User(${user.id}) attempting to delete published Paper(${paperId}).`)
-        }
-
-        const fileResults = await this.database.query(`
-            SELECT files.id, paper_versions.version
-                FROM files
-                    LEFT OUTER JOIN paper_versions on files.id = paper_versions.file_id
-                WHERE files.id = $1
-        `, [ version.file.id ])
-
-        // 5. File(verison.file.id) must be a valid file.
-        if ( fileResults.rows.length <= 0) {
-            throw new ControllerError(400, 'file-not-found',
-                `User(${user.id}) attempted to create a new version for Paper(${paperId}) with invalid File(${version.file.id}).`)
-        }
-
-        // 6. File(version.file.id) must not be attached to any other paper.
-        if ( fileResults.rows[0].version ) {
-            throw new ControllerError(400, 'file-in-use',
-                `User(${user.id}) attempted to attach File(${version.file.id}) to a second paper.`)
-
-        }
-
-        /********************************************************
-         * Permissions Checks and Validation Complete
-         *      POST the new version.
-         ********************************************************/
-
-        await this.paperDAO.insertVersion(existing, version)
-
-        const results = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
-        const entity = results.dictionary[paperId]
-
-        if ( ! entity ) {
-            throw new ControllerError(500, 'server-error', `Paper(${paperId}) not found after inserting a new version!`)
-        }
-
-        const event = {
-            paperId: entity.id,
-            actorId: user.id,
-            version: entity.versions[0].version,
-            type: 'paper:new-version'
-        }
-        await this.paperEventService.createEvent(request.session.user, event)
-
-        // ==== Notifications =============================================
-        
-        this.notificationService.sendNotifications(
-            request.session.user,
-            'new-version',
-            {
-                paper: entity
-            }
-        )
-
-        const relations = await this.getRelations(request.session.user, results)
-
-        return response.status(201).json({ 
-            entity: entity,
-            relations: relations
-        })
-    }
-
-    /**
-     * NOT IMPLEMENTED
-     *
-     * PATCH /papers/:paper_id/version/:version
-     *
-     * Update an existing version on a paper.
-     *
-     * @param {Object} request  Standard Express request object.
-     * @param {int} request.params.paper_id The id of the paper in question.
-     * @param {int} request.params.version The version of that paper we want to patch.
-     * @param {Object} request.body The partial paper_version object that will be used to update the paper_verison.
-     * @param {Object} response Standard Express response object.
-     *
-     * @returns {Promise}   Resolves to void.
-     */
-    async patchPaperVersion(request, response) {
-        throw new ControllerError(501, 'not-implemented', `Attempt to call unimplemented PATCH version.`)
-
-        /*let paper_version = request.body
-        const paperId = request.params.paper_id
-
-        /*************************************************************
-         * Permissions Checking and Input Validation
-         *
-         * 1. User must be logged in.
-         * 2. Paper(:paper_id) must exist.
-         * 3. User must be an owning author on Paper(:paper_id).
-         * 4. Paper(:paper_id) must be a draft.
-         * 5. PaperVersion(:version) must exist.
-         * 
-         * **********************************************************
-        
-        // We want to use the params.id over any id in the body.
-        //
-        // @TODO check these for mismatch and throw an error instead of
-        // overriding.
-        paper_version.paperId = request.params.paper_id
-        paper_version.version = request.params.version
-
-        // 1. User must be logged in.
-        if ( ! request.session.user ) {
-            throw new ControllerError(403, 'not-authorized', `Unauthenticated user attempting to delete paper(${request.params.id}).`)
-        }
-
-        const user = request.session.user
-
-        const papers = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
-
-        // 2. Paper(:paper_id) must exist.
-        if ( papers.length <= 0) {
-            throw new ControllerError(404, 'not-found',
-                `User(${user.id}) attempted to patch a version of Paper(${paperId}), but it didn't exist!`)
-        }
-
-        const paper = papers[0]
-
-        // 3. User must be an owning author on Paper(:paper_id)
-        if ( ! paper.authors.find((a) => a.user.id == user.id && a.owner)) {
-            throw new ControllerError(403, 'not-owner', 
-                `Non-owner user(${user.id}) attempting to PATCH Paper(${request.params.id}).`)
-        }
-
-        // 4. Paper(:paper_id) must be a draft.
-        if ( ! paper.isDraft ) {
-            throw new ControllerError(403, 'not-authorized:not-draft',
-                `User(${user.id}) attempting to delete published Paper(${paperId}).`)
-        }
-
-        // 5. PaperVersion(:version) must exist.
-        if ( ! paper.versions.find((v) => v.version == paper_version.version) ) {
-            throw new ControllerError(404, 'version-not-found',
-                `User(${user.id}) attempted to patch Version(${paper_version.version}) on Paper(${paperId}), but it didn't exist!`)
-        }
-
-
-        /********************************************************
-         * Permissions Checks and Validation Complete
-         *      PATCH the version.
-         ********************************************************
-
-        // We'll ignore these fields when assembling the patch SQL.  These are
-        // fields that either need more processing (authors) or that we let the
-        // database handle (date fields, id, etc)
-        const ignoredFields = [ 'paperId', 'version', 'file', 'createdDate', 'updatedDate' ]
-
-        let sql = 'UPDATE paper_versions SET '
-        let params = []
-        let count = 1
-        for(let key in paper_version) {
-            if (ignoredFields.includes(key)) {
-                continue
-            }
-
-            sql += key + ' = $' + count + ', '
-
-            params.push(paper_version[key])
-            count = count + 1
-        }
-
-        sql += `updated_date = now() WHERE paper_id = $${count} AND version = $${count+1}`
-
-        params.push(paper_version.paperId, paper_version.version )
-
-        const results = await this.database.query(sql, params)
-
-        if ( results.rowCount == 0 ) {
-            throw new ControllerError(404, 'no-resource', `Paper(${paper.id}) and Version(${paper_version.version}) not found!`)
-        }
-
-        const returnPapers = await this.paperDAO.selectPapers('WHERE papers.id=$1', [paper_version.paperId])
-        if ( ! returnPapers ) {
-            throw new ControllerError(500, 'server-error', `Paper(${paper.id}) not found after inserting a new version!`)
-        } 
-        return response.status(200).json(returnPapers[0])*/
-    }
 
     async getPaperSubmissions(request, response) {
         /*************************************************************

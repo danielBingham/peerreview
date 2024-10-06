@@ -69,8 +69,8 @@ export const reviewsSlice = createSlice({
         // ======== Specific State ============================================
         
         /**
-         * A hash of reviews current in progress, keyed by paperId and version - one review
-         * for each paper version.
+         * A hash of reviews current in progress, keyed by paperId and paperVersionId- one review
+         * for each paper paperVersionId.
          *
          * @type {object}
          */
@@ -97,15 +97,15 @@ export const reviewsSlice = createSlice({
                 state.inProgress[review.paperId] = {}
             }
 
-            state.inProgress[review.paperId][review.version] = review
+            state.inProgress[review.paperId][review.paperVersionId] = review
         },
 
         clearInProgress: function(state, action) {
             const paperId = action.payload.paperId
-            const version = action.payload.version
+            const paperVersionId = action.payload.paperVersionId
 
             if ( state.inProgress[paperId] ) {
-                state.inProgress[paperId][version] = null
+                state.inProgress[paperId][paperVersionId] = null
             }
         },
 
@@ -125,12 +125,12 @@ export const reviewsSlice = createSlice({
 /**
  * Start a new review.
 */
-export const newReview = function(paperId, version, userId, threads) {
+export const newReview = function(paperId, paperVersionId, userId, threads) {
     return function(dispatch, getState) {
         const review = {
             paperId: paperId,
             userId: userId, 
-            version: version,
+            paperVersionId: paperVersionId,
             summary: '',
             status: 'in-progress',
             recommendation: 'request-changes',
@@ -152,10 +152,10 @@ export const updateReview = function(review) {
             && review.userId == state.authentication.currentUser.id && review.status == 'in-progress') 
         {
             dispatch(reviewsSlice.actions.setInProgress(review))
-        } else if ( state.reviews.inProgress[review.paperId] && state.reviews.inProgress[review.paperId][review.version] 
-            && review.id == state.reviews.inProgress[review.paperId][review.version].id && review.status != 'in-progress') 
+        } else if ( state.reviews.inProgress[review.paperId] && state.reviews.inProgress[review.paperId][review.paperVersionId] 
+            && review.id == state.reviews.inProgress[review.paperId][review.paperVersionId].id && review.status != 'in-progress') 
         {
-            dispatch(reviewsSlice.actions.clearInProgress({ paperId: review.paperId, version: review.version })) 
+            dispatch(reviewsSlice.actions.clearInProgress({ paperId: review.paperId, paperVersionId: review.paperVersionId})) 
         }
     }
 }
@@ -308,10 +308,10 @@ export const patchReview = function(paperId, review) {
                     dispatch(reviewsSlice.actions.setInProgress(response.entity))
                 }
                 else if( state.reviews.inProgress[paperId] 
-                    && state.reviews.inProgress[paperId][response.entity.version].id == response.entity.id
+                    && state.reviews.inProgress[paperId][response.entity.paperVersionId].id == response.entity.id
                     && response.entity.status != 'in-progress')  
                 {
-                    dispatch(reviewsSlice.actions.clearInProgress({ paperId: paperId, version: response.entity.version })) 
+                    dispatch(reviewsSlice.actions.clearInProgress({ paperId: paperId, paperVersionId: response.entity.paperVersionId})) 
                 }
             }
         )
@@ -342,7 +342,7 @@ export const deleteReview = function(id) {
                 dispatch(reviewsSlice.actions.clearReviewQueries())
         
                 if ( review.status == 'in-progress') {
-                    dispatch(reviewsSlice.actions.clearInProgress({ paperId: review.paperId, version: review.version }))
+                    dispatch(reviewsSlice.actions.clearInProgress({ paperId: review.paperId, paperVersionId: review.paperVersionId}))
                 }
             }
         )

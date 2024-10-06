@@ -39,15 +39,17 @@ const StartReviewButton = function({ id }) {
         return state.papers.dictionary[id]
     })
 
-    const versionNumber = paper.versions[0].version
-
+    const paperVersionId = useSelector(function(state) {
+        return state.paperVersions.mostRecentVersion[id]
+    })
+   
     const reviewInProgress = useSelector(function(state) {
-        if ( ! state.reviews.inProgress[paper.id] ) {
+        if ( ! ( paper.id in state.reviews.inProgress ) ) {
             return null
-        } else if ( ! state.reviews.inProgress[paper.id][versionNumber] ) {
+        } else if ( ! ( paperVersionId in state.reviews.inProgress[paper.id] ) ) {
             return null
         }
-        return state.reviews.inProgress[paper.id][versionNumber]
+        return state.reviews.inProgress[paper.id][paperVersionId]
     })
 
     const isAuthor = (currentUser && paper.authors.find((a) => a.userId == currentUser.id) ? true : false)
@@ -60,7 +62,7 @@ const StartReviewButton = function({ id }) {
 
     const startReview = function(event) {
         if ( ! reviewInProgress ) {
-            setPostReviewRequestId(dispatch(newReview(paper.id, versionNumber, currentUser.id)))
+            setPostReviewRequestId(dispatch(newReview(paper.id, paperVersionId, currentUser.id)))
 
             let urlString = `/paper/${id}/file`
             navigate(urlString)

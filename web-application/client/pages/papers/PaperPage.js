@@ -4,7 +4,8 @@ import { useParams } from 'react-router-dom'
 
 import { DocumentCheckIcon, ChatBubbleLeftRightIcon, DocumentTextIcon, ChatBubbleLeftEllipsisIcon } from '@heroicons/react/24/outline'
 
-import { getPaper, loadFiles, clearFiles, cleanupRequest } from '/state/papers'
+import { getPaper, cleanupRequest } from '/state/papers'
+import { getPaperVersions, loadFiles, clearFiles, cleanupRequest as cleanupVersionRequest } from '/state/paperVersions'
 
 import Spinner from '/components/Spinner'
 import { Page, PageBody, PageHeader, PageHeaderGrid, PageTabBar, PageTab } from '/components/generic/Page'
@@ -13,9 +14,7 @@ import Error404 from '/components/Error404'
 import PaperHeader from '/components/papers/view/header/PaperHeader'
 import PaperControlView from '/components/papers/view/header/PaperControlView'
 
-import PDFViewer from '/components/pdf/PDFViewer'
 import PaperFileView from '/components/papers/view/file/PaperFileView'
-import ResponseList from '/components/responses/ResponseList'
 import PaperTimeline from '/components/papers/view/timeline/PaperTimeline'
 
 import './PaperPage.css'
@@ -35,16 +34,20 @@ const PaperPage = function({}) {
         }
     })
 
-    // ================= Redux State ==========================================
-
-    const currentUser = useSelector(function(state) {
-        return state.authentication.currentUser
+    const [ versionRequestId, setVersionRequestId ] = useState(null)
+    const versionRequest = useSelector(function(state) {
+        if ( ! versionRequestId ) {
+            return null
+        } else {
+            return state.paperVersions.requests[versionRequestId]
+        }
     })
+
+    // ================= Redux State ==========================================
 
     const paper = useSelector(function(state) {
         return state.papers.dictionary[id]
     })
-    const mostRecentVersion = paper?.versions[0].version
 
     // ======= Actions ====================================
 
@@ -59,19 +62,20 @@ const PaperPage = function({}) {
      */
     useEffect(function() {
         setRequestId(dispatch(getPaper(id)))
+        setVersionRequestId(dispatch(getPaperVersions(id, id)))
     }, [ id ])
 
     useEffect(function() {
-        if ( paper ) {
-            dispatch(loadFiles(paper))
+        if ( request && request.state == 'fulfilled' && versionRequest && versionRequest.state == 'fulfilled') {
+            dispatch(loadFiles(paper.id))
         }
 
         return function cleanup() {
-            if ( paper ) {
-                dispatch(clearFiles(paper))
+            if ( request && request.state == 'fulfilled' && versionRequest && versionRequest.state == 'fulfilled') {
+                dispatch(clearFiles(paper.id))
             }
         }
-    }, [ paper ])
+    }, [ paper, versionRequest ])
 
     // Clean up our request.
     useEffect(function() {
@@ -82,6 +86,14 @@ const PaperPage = function({}) {
         }
     }, [ requestId ])
 
+    useEffect(function() {
+        return function cleanup() {
+            if ( versionRequestId ) {
+                dispatch(cleanupVersionRequest({ requestId: versionRequestId }))
+            }
+        }
+    }, [ versionRequestId ])
+
     // ================= Render ===============================================
 
     if ( ! paper || ! request || request.state !== 'fulfilled' ) {
@@ -90,40 +102,17 @@ const PaperPage = function({}) {
         )
     }
 
-    const selectedTab = ( pageTab ? pageTab : (paper.isDraft ? 'file' :  'paper'))
-    
+    const selectedTab = ( pageTab ? pageTab : 'file' )
+   
     let content = ( <Spinner local={true} /> )
-    if ( request && request.state == 'fulfilled') {
+    if ( request && request.state == 'fulfilled' && versionRequest && versionRequest.state == 'fulfilled') {
 
-        // Published paper tab.  Only selectable if the paper is published.
-        if ( ! paper.isDraft && selectedTab == 'paper' ) {
-            const url = new URL(paper.versions[0].file.filepath, paper.versions[0].file.location)
+        if ( selectedTab == 'file' ) {
             content = ( 
-                <article id={paper.id} className="published-paper">
-                    <section className="main">
-                        <section className="published-paper-pdf-view">
-                            <PDFViewer url={url.href} />        
-                        </section>
-                    </section>
-                </article>
-            )
-        } 
-
-        // Responses tab.  Only selectable if the paper is published.
-        else if ( ! paper.isDraft && selectedTab == 'responses' ) {
-            content = (
-                <ResponseList paper={paper} />
+                <PaperFileView paperId={id} tab={selectedTab} />
             )
         }
 
-        // Drafts tab, visible for drafts and published papers.
-        else if ( selectedTab == 'file' ) {
-            content = ( 
-                <PaperFileView id={id} tab={selectedTab} />
-            )
-        }
-
-        // Reviews tab.  Visible for drafts and published papers.
         else if ( selectedTab == 'timeline' ) {
             content = (
                 <PaperTimeline paperId={id} />
@@ -133,6 +122,33 @@ const PaperPage = function({}) {
         else {
             throw new Error(`Invalid tab "${selectedTab}".`)
         }
+
+        return (
+            <Page id="paper-page">
+                <PageHeader>
+                    <PageHeaderGrid>
+                        <div></div>
+                        <PaperControlView paperId={id} />
+                        <PaperHeader paperId={id} />
+                        <div></div>
+                    </PageHeaderGrid>
+                </PageHeader>
+                <PageTabBar>
+
+                    <PageTab url={`/paper/${id}/file`} tab="file" initial={true}>
+                        <DocumentTextIcon /> File
+                    </PageTab>
+
+                    <PageTab url={`/paper/${id}/timeline`} tab="timeline">
+                        <ChatBubbleLeftRightIcon /> Timeline 
+                    </PageTab>
+
+                </PageTabBar>
+                <PageBody>
+                    { content }
+                </PageBody>
+            </Page>
+        )
     } 
 
     // ERROR HANDLING.
@@ -147,32 +163,7 @@ const PaperPage = function({}) {
     
     return (
         <Page id="paper-page">
-            <PageHeader>
-                <PageHeaderGrid>
-                    <div></div>
-                    <PaperControlView paperId={id} />
-                    <PaperHeader paperId={id} />
-                    <div></div>
-                </PageHeaderGrid>
-            </PageHeader>
-            <PageTabBar>
-
-                { ! paper.isDraft && <PageTab url={`/paper/${id}`} tab="paper" initial={ ! paper.isDraft }>
-                    <DocumentCheckIcon /> Paper
-                </PageTab> }
-
-                <PageTab url={`/paper/${id}/file`} tab="file" initial={ paper.isDraft }>
-                    <DocumentTextIcon /> File
-                </PageTab>
-
-                <PageTab url={`/paper/${id}/timeline`} tab="timeline">
-                    <ChatBubbleLeftRightIcon /> Timeline 
-                </PageTab>
-
-            </PageTabBar>
-            <PageBody>
-                { content }
-            </PageBody>
+            <Spinner />
         </Page>
     )
 }

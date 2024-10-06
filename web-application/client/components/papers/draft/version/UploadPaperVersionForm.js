@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 
-import { postPaperVersions, cleanupRequest } from '/state/papers'
+import { postPaperVersions, loadFiles, cleanupRequest } from '/state/paperVersions'
 
 import FileUploadInput from '/components/files/FileUploadInput'
 
@@ -21,6 +22,7 @@ import './UploadPaperVersionForm.css'
  * @param {object} props.paper  The paper we're uploading a new version of.
  */
 const UploadPaperVersionForm = function(props) {
+    const [ searchParams, setSearchParams ] = useSearchParams()
 
     // ======= Render State =========================================
     
@@ -33,7 +35,7 @@ const UploadPaperVersionForm = function(props) {
 
     const request = useSelector(function(state) {
         if ( requestId ) {
-            return state.papers.requests[requestId]
+            return state.paperVersions.requests[requestId]
         } else {
             return null
         }
@@ -56,12 +58,12 @@ const UploadPaperVersionForm = function(props) {
         event.preventDefault()
 
         if ( file ) {
+
             const version = {
-                file: file,
-                is_published: false
+                file: file
             }
 
-            setRequestId(dispatch(postPaperVersions(props.paper, version)))
+            setRequestId(dispatch(postPaperVersions(props.paper.id, version)))
         } else {
             setError('no-file')
         }
@@ -99,6 +101,13 @@ const UploadPaperVersionForm = function(props) {
      */
     useEffect(function() {
         if ( request && request.state == 'fulfilled') {
+            // Reset the search params before we load the new file.
+            searchParams.delete('review')
+            searchParams.delete('thread')
+            setSearchParams(searchParams)
+
+            dispatch(loadFiles(props.paper.id))
+
             if ( props.close ) {
                 props.close()
             } else {
@@ -121,7 +130,6 @@ const UploadPaperVersionForm = function(props) {
 
         return (
             <div  className="upload-paper-version-form">
-                <h1>Submit a New Version of {props.paper.title}</h1>
                 <form onSubmit={onSubmit}>
                     <FileUploadInput setFile={setFile} types={[ 'application/pdf' ]} />
                     <div className="error">{ errorView }</div>

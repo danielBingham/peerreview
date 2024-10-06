@@ -47,23 +47,24 @@
     --warn-highlight-color: var(--danger-color-dark);
 
     /** Header colors **/
-    --header-background-color: var(--primary-color-darkest);
-    --header-border-color: var(--primary-color-darkest);
-    --header-text-color: var(--primary-color-lightest);
-    --header-text-highlight-color: white;
-    --header-spacer-color: var(--primary-color-lightest);
+    --header-background-color: var(--primary-color-lightest);
+    --header-border-color: var(--primary-color-light);
+    --header-text-color: var(--primary-color-darkest);
+    --header-text-highlight-color: var(--primary-color-dark);
+    --header-spacer-color: var(--primary-color-light);
 
     /** Footer colors **/
-    --footer-background-color: var(--primary-color-darkest);
-    --footer-border-color: var(--primary-color-darkest);
-    --footer-text-color: var(--primary-color-lightest);
+    --footer-background-color: var(--primary-color-lightest);
+    --footer-border-color: var(--primary-color-light);
+    --footer-text-color: var(--primary-color-darkest);
 
     /** Header menu colors **/ 
-    --header-menu-background-color: var(--primary-color-darkest);
-    --header-menu-border-color: var(--primary-color-darkest);
-    --header-menu-spacer-color: var(--primary-color-lightest);
-    --header-menu-text-color: var(--primary-color-lightest);
-    --header-menu-text-highlight-color: white;
+    --header-menu-background-color: var(--primary-color-lightest);
+    --header-menu-border-color: var(--primary-color-light);
+    --header-menu-spacer-color: var(--primary-color-light);
+    --header-menu-text-color: var(--primary-color-darkest);
+    --header-menu-text-highlight-color: var(--primary-color-dark);
+    --header-menu-background-highlight-color: var(--primary-color-main);
 
 
     /** Page Header **/
@@ -121,8 +122,11 @@ body {
     margin: 0;
     height: 100%;
 
-    font-family: Arial, sans-serif;
+    font-family: Roboto, Arial, sans-serif; 
+    /*font-family: "Atkinson Hyperlegible", Roboto, Arial, sans-serif;*/
     font-size: 14px;
+    font-weight: 400;
+    font-style: normal;
     background-color: white;
 }
 

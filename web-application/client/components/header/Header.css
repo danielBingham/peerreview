@@ -9,8 +9,9 @@ header {
 }
 
 header #site-title {
-    font-size: 24px;
-    font-weight: bold;
+    font-family: "Noto Serif", serif;
+    font-size: 30px;
+    font-weight: 300;
 
     flex-grow: 1;
     padding: 11px 0;
@@ -38,8 +39,22 @@ header #navigation {
 
 header .navigation-block {
     display: inline-block;
-    margin-left: 10px;
+    margin-left: 7px;
     padding: 11px 0;
+}
+header .navigation-block .floating-menu a:link, 
+header .navigation-block .floating-menu a:active, 
+header .navigation-block .floating-menu a:visited,
+header .navigation-block .floating-menu a:hover {
+    padding: 5px;
+    margin: 0 5px;
+}
+header .floating-menu .menu-item:hover {
+    color: white;
+    background-color: var(--header-menu-background-highlight-color);
+}
+header .floating-menu .menu-item a:hover {
+    color: white;
 }
 
 header a:link, header a:active, header a:visited {

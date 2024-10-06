@@ -1,9 +1,7 @@
-.file-upload { 
-}
-.field-upload.field-wrapper {
+.file-upload.field-wrapper {
     padding: 20px;
 }
-.file-upload .field-wrapper h3 {
+.file-upload .upload-input h3 {
     display: block;
     width: 100%;
     padding: 0;
@@ -11,8 +9,8 @@
     font-size: 16px;
     font-weight: bold;
 }
-.field-upload .field-wrapper .explanation {
-    padding: 5px 0;
+.file-upload .upload-input .explanation {
+    padding: 10px 0;
 }
 .file-upload .file {
     display: grid;

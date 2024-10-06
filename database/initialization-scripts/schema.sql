@@ -286,16 +286,18 @@ CREATE TABLE papers (
 CREATE INDEX papers__title_search_index ON papers USING GIN (searchable_title);
 
 CREATE TABLE paper_versions (
+    id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
     version int NOT NULL,
     file_id uuid REFERENCES files(id) ON DELETE CASCADE,
     is_published boolean DEFAULT false,
+    is_preprint boolean DEFAULT false,
+    is_submitted boolean DEFAULT false,
     review_count int default 0,
     content text NOT NULL,
     searchable_content tsvector GENERATED ALWAYS AS (to_tsvector('english', content)) STORED,
     created_date timestamptz,
-    updated_date timestamptz,
-    PRIMARY KEY (paper_id, version)
+    updated_date timestamptz
 );
 CREATE INDEX paper_versions__search_index ON paper_versions USING GIN (searchable_content);
 CREATE INDEX paper_versions__file_id_index ON paper_versions (file_id); 
@@ -319,6 +321,7 @@ CREATE TYPE paper_comments_status AS ENUM('in-progress', 'committed', 'edit-in-p
 CREATE TABLE paper_comments (
     id          bigserial PRIMARY KEY,
     paper_id    bigint REFERENCES papers(id) ON DELETE CASCADE,
+    paper_version_id uuid REFERENCES paper_versions(id) ON DELETE CASCADE,
     paper_version   bigint,
     user_id     bigint REFERENCES users(id) ON DELETE CASCADE,
     status      paper_comments_status,
@@ -328,6 +331,7 @@ CREATE TABLE paper_comments (
     committed_date  timestamptz DEFAULT NULL
 );
 CREATE INDEX paper_comments__paper_id ON paper_comments (paper_id);
+CREATE INDEX paper_comments__paper_version_id ON paper_comments (paper_version_id);
 CREATE INDEX paper_comments__user_id ON paper_comments (user_id);
 
 CREATE TABLE paper_comment_versions (
@@ -450,7 +454,8 @@ CREATE TABLE reviews (
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE,
     submission_id bigint REFERENCES journal_submissions(id) DEFAULT null,
     user_id bigint REFERENCES users(id) ON DELETE CASCADE,
-    version int,
+    paper_version_id uuid REFERENCES paper_versions(id) ON DELETE CASCADE,
+    version int, /* Deprecated: Old reference to paper_versions. */
     number int, /* Number of review on this paper version. 0 - n where n is the number of reviews on this paper specifically. */
     summary text,
     recommendation review_recommendation,
@@ -461,6 +466,7 @@ CREATE TABLE reviews (
 CREATE INDEX reviews__paper_id ON reviews (paper_id);
 CREATE INDEX reviews__user_id ON reviews (user_id);
 CREATE INDEX reviews__version ON reviews (version);
+CREATE INDEX reviews__version_id ON reviews (version_id);
 
 CREATE TABLE review_comment_threads (
     id bigserial PRIMARY KEY,
@@ -546,6 +552,7 @@ CREATE TYPE paper_event_status AS ENUM(
 CREATE TABLE paper_events (
     id bigserial PRIMARY KEY,
     paper_id bigint REFERENCES papers(id) ON DELETE CASCADE NOT NULL,
+    paper_version_id uuid REFERENCES paper_versions(id) ON DELETE CASCADE NOT NULL,
     actor_id bigint REFERENCES users(id) NOT NULL,
     version int NOT NULL,
     status paper_event_status DEFAULT 'committed',

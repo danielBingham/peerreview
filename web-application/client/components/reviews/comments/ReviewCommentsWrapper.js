@@ -26,9 +26,10 @@ const ReviewCommentsWrapper = function(props) {
         return state.papers.dictionary[props.paperId]
     })
 
+    console.log(`Version: ${props.paperVersionId}, Review: ${selectedReviewId}`)
     const threads = useSelector(function(state) {
         if ( state.reviews.queries[props.paperId]?.list && ! selectedReviewId) {
-            const reviewIds = state.reviews.queries[props.paperId].list.filter((id) => state.reviews.dictionary[id].version == props.versionNumber)
+            const reviewIds = state.reviews.queries[props.paperId].list.filter((id) => state.reviews.dictionary[id].paperVersionId == props.paperVersionId)
             const results = []
             for (const id of reviewIds) {
                 results.push(...state.reviews.dictionary[id].threads)
@@ -41,7 +42,7 @@ const ReviewCommentsWrapper = function(props) {
             return results
         } else if ( selectedReviewId && selectedReviewId != 'none') {
             const results = []
-            if ( state.reviews.dictionary[selectedReviewId].version == props.versionNumber ) {
+            if ( state.reviews.dictionary[selectedReviewId].paperVersionId == props.paperVersionId ) {
                 results.push(...state.reviews.dictionary[selectedReviewId].threads)
                 results.sort((a,b) => {
                     return (a.page+a.pinY) - (b.page+b.pinY)
@@ -76,13 +77,15 @@ const ReviewCommentsWrapper = function(props) {
     }
 
     const reflow = function() {
-        if ( props.loadedVersion == props.versionNumber ) {
+        if ( props.loadedVersion == props.paperVersionId ) {
             resetCollapsedView()
 
             const centeredThreadId = searchParams.get('thread')
 
             const shouldFocus = props.loadedVersion == props.renderedVersion
-           
+          
+            console.log(`Centered Thread: ${centeredThreadId}`)
+            console.log(threads)
             const numberOfCollapsedComments = reflowThreads(threads, centeredThreadId, shouldFocus) 
             if ( numberOfCollapsedComments > 0 ) {
                 showCollapsed(numberOfCollapsedComments)
@@ -127,17 +130,7 @@ const ReviewCommentsWrapper = function(props) {
     // An effect to trigger whenever searchParams changes - since that likely
     // means the selected thread has also changed.  Triggers a reflow.
     useEffect(function() {
-        const centeredThread = searchParams.get('thread')
-        if ( centeredThread !== null ) {
-            reflow()
-        }
-
-        const reviewId = searchParams.get('review')
-        if ( reviewId ) {
-            if ( reviewId != selectedReviewId ) {
-                reflow()
-            }
-        }
+        reflow()
     }, [ searchParams ])
 
 
@@ -166,13 +159,13 @@ const ReviewCommentsWrapper = function(props) {
         return function cleanup() {
             document.body.removeEventListener('click', onBodyClick)
         }
-    }, [ searchParams, props.versionNumber, props.paperId ])
+    }, [ searchParams, props.paperVersionId, props.paperId ])
     
     // ======= Render =========================================================
 
     const selectedThread = searchParams.get('thread')
     const threadViews = []
-    if ( props.versionNumber == props.loadedVersion) {
+    if ( props.paperVersionId == props.loadedVersion) {
         for(let thread of threads) {
             threadViews.push(
                 <div 
@@ -187,7 +180,7 @@ const ReviewCommentsWrapper = function(props) {
                     <ReviewCommentThreadView 
                         key={thread.id} 
                         paper={paper} 
-                        versionNumber={props.versionNumber}
+                        paperVersionId={props.paperVersionId}
                         reviewId={thread.reviewId}
                         requestThreadReflow={requestThreadReflow}
                         id={thread.id}

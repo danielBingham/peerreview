@@ -64,7 +64,7 @@ const MainNavigation = function(props) {
                 <a href="https://blog.peer-review.io"><NewspaperIcon />News</a>
             </div>
             <div ref={menuRef} id="main-navigation" className="navigation-block">
-                <span className="explore-menu-trigger"><a href="" onClick={toggleMenu}>{ menuVisible ? <ChevronUpIcon/> : <ChevronDownIcon /> }<GlobeAltIcon />Explore</a></span>
+                <span className="explore-menu-trigger"><a href="" onClick={toggleMenu}><GlobeAltIcon />Explore{ menuVisible ? <ChevronUpIcon className="arrow" /> : <ChevronDownIcon className="arrow" /> }</a></span>
                 <div id="explore-menu" className="floating-menu" style={{ display: ( menuVisible ? 'block' : 'none' ) }} >
                     <div className="menu-item" onClick={toggleMenu}><Link to="/"><DocumentCheckIcon />Papers</Link></div>
                     <div className="menu-item" onClick={toggleMenu}><Link to="/preprints"><DocumentIcon/>Preprints</Link></div>

@@ -8,6 +8,7 @@ import authenticationReducer from './authentication'
 import usersReducer from './users'
 import notificationsReducer from './notifications'
 import papersReducer from './papers'
+import paperVersionsReducer from './paperVersions'
 import paperEventsReducer from './paperEvents'
 import paperCommentsReducer from './paperComments'
 import reviewsReducer from './reviews'
@@ -28,6 +29,7 @@ const reducers = combineReducers({
     users: usersReducer,
     notifications: notificationsReducer,
     papers: papersReducer,
+    paperVersions: paperVersionsReducer,
     paperEvents: paperEventsReducer,
     paperComments: paperCommentsReducer,
     reviews: reviewsReducer,

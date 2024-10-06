@@ -8,6 +8,7 @@ const {
     JournalDAO, 
     JournalSubmissionDAO,
     PaperDAO,
+    PaperVersionDAO,
     UserDAO,
     FieldDAO,
     PaperEventService,
@@ -24,6 +25,7 @@ module.exports = class JournalSubmissionController {
         this.journalSubmissionDAO = new JournalSubmissionDAO(this.core)
         this.journalDAO = new JournalDAO(this.core)
         this.paperDAO = new PaperDAO(this.core)
+        this.paperVersionDAO = new PaperVersionDAO(this.core)
         this.userDAO = new UserDAO(this.core)
         this.fieldDAO = new FieldDAO(this.core)
 
@@ -59,6 +61,14 @@ module.exports = class JournalSubmissionController {
 
                     const paperResults = await this.paperDAO.selectPapers(`WHERE papers.id = ANY($1::bigint[])`, [ paperIds ])
                     relations.papers = paperResults.dictionary
+                } else if ( relation == 'paperVersions' ) {
+                    const paperIds = []
+                    for(const submission of results.list) {
+                        paperIds.push(submission.paperId)
+                    }
+
+                    const paperVersionResults = await this.paperVersionDAO.selectPaperVersions(`WHERE paper_versions.paper_id = ANY($1::bigint[])`, [ paperIds ])
+                    relations.paperVersions = paperVersionResults.dictionary
                 } else if (relation == 'users' ) {
                     const userIds = []
                     for(const submission of results.list) {
