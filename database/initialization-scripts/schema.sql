@@ -593,3 +593,55 @@ CREATE TABLE response_versions (
     PRIMARY KEY(response_id, version)
 );
 
+/******************************************************************************
+ * Permissions
+ ******************************************************************************/
+
+
+CREATE TABLE permissions (
+    user_id bigint  REFERENCES users(id),
+    entity varchar(512),
+    action varchar(512),
+
+    paper_id bigint REFERENCES papers(id) DEFAULT NULL,
+    paper_version_id uuid REFERENCES paper_versions(id) DEFAULT NULL,
+    event_id bigint REFERENCES paper_events(id) DEFAULT NULL,
+    review_id bigint REFERENCES reviews(id) DEFAULT NULL,
+    paper_comment_id    bigint REFERENCES paper_comments(id) DEFAULT NULL,
+    submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
+    journal_id  bigint REFERENCES journals(id) DEFAULT NULL
+);
+
+CREATE TYPE role_type AS ENUM('public', 'author', 'editor', 'reviewer');
+CREATE TABLE roles (
+    id  bigserial PRIMARY KEY,
+    name    varchar(1024),
+    short_description varchar(1024),
+    type role_type,
+    is_owner boolean,
+
+    description text,
+    journal_id  bigint REFERENCES journals(id) DEFAULT NULL,
+    paper_id    bigint REFERENCES papers(id) DEFAULT NULL
+);
+INSERT INTO roles (name, type, description) VALUES ('public', 'public', 'The general public.');
+
+CREATE TABLE role_permissions (
+    role_id bigint REFERENCES roles(id) DEFAULT NULL,
+    permission permission_type,
+
+    paper_id bigint REFERENCES papers(id) DEFAULT null,
+    version int DEFAULT null,
+    event_id bigint REFERENCES paper_events(id) DEFAULT NULL,
+    review_id bigint REFERENCES reviews(id) DEFAULT null,
+    paper_comment_id    bigint REFERENCES paper_comments(id) DEFAULT NULL,
+    submission_id   bigint REFERENCES journal_submissions(id) DEFAULT NULL,
+    journal_id  bigint REFERENCES journals(id) DEFAULT NULL
+);
+INSERT INTO role_permissions (role_id, permission)
+    SELECT roles.id, 'Papers:create' FROM roles WHERE roles.name = 'public';
+
+CREATE TABLE user_roles (
+    role_id bigint REFERENCS roles(id) DEFAULT NULL,
+    user_id bigint REFERENCES users(id) DEFAULT NULL
+);
