@@ -2,6 +2,11 @@ import React from 'react'
 import {  useSelector } from 'react-redux'
 import {  useSearchParams } from 'react-router-dom'
 
+import { CheckIcon } from '@heroicons/react/24/solid'
+
+import { Select, SelectBody, SelectTrigger, SelectItem } from '/components/generic/select/Select'
+import DateTag from '/components/DateTag'
+
 import './PaperVersionSelector.css'
 
 /**
@@ -44,9 +49,8 @@ const PaperVersionSelector = function({ paperId }) {
 
     // ================= User Action Handling  ================================
 
-    const changeVersion = function(event) {
-        const paperVersionId = event.target.value
-        searchParams.set('version', paperVersionId)
+    const changeVersion = function(id) {
+        searchParams.set('version', id)
         // If we're changing the version, clear the review since reviews are
         // tied to version.
         searchParams.delete('review')
@@ -61,16 +65,31 @@ const PaperVersionSelector = function({ paperId }) {
 
     const paperVersionOptions = []
     for( const paperVersion of Object.values(paperVersions) ) {
-        paperVersionOptions.push(<option key={paperVersion.id} value={paperVersion.id}>{ paperVersion.id}</option>)     
+        paperVersionOptions.push(
+            <SelectItem key={paperVersion.id} onClick={(e) => changeVersion(paperVersion.id)}>
+                <div className="version">
+                    <div className="id">{ paperVersionId == paperVersion.id && <CheckIcon />} { paperVersion.id }</div>
+                    <DateTag type="full" timestamp={paperVersion.createdDate} />
+                    { /*<div className="status">
+                        <div className={paperVersion.isPreprint ? "yes" : "no"}>preprint</div>
+                        <div className={paperVersion.isSubmitted ? "yes" : "no"}>submitted</div>
+                        <div className={paperVersion.isPublished ? "yes" : "no"}>published</div>
+                    </div> */ }
+                </div>
+            </SelectItem>)     
     }
 
 
     return (
         <div className="paper-version-selector">
-            <label htmlFor="paperVersionId">Version</label>
-            <select name="paperVersionId" value={paperVersionId} onChange={changeVersion}>
+            <Select>
+                <SelectTrigger>
+                    Version: { paperVersionId.substring(0,16) + "..." } 
+                </SelectTrigger>
+                <SelectBody>
                 {paperVersionOptions}
-            </select>
+                </SelectBody>
+            </Select>
         </div>
     )
 

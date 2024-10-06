@@ -214,16 +214,6 @@ const CreateJournalForm = function(props) {
                             <input 
                                 type="radio" 
                                 name="model" 
-                                checked={ model == 'open-public' }
-                                onChange={(e) => setModel('open-public')}
-                                value="open-public" />
-                            <label htmlFor="open-public" onClick={(e) => setModel('open-public')}><LockOpenIcon/>Open -> <GlobeAltIcon/>Public</label>
-                            <div className="explanation">Unpublished submissions will be viewable to the journal's membership, allowing for a high-trust self-organizing journal.  Once submissions are published, everything becomes public.</div>
-                        </div>
-                        <div className="model-option">
-                            <input 
-                                type="radio" 
-                                name="model" 
                                 checked={ model == 'open-closed' }
                                 onChange={(e) => setModel('open-closed')}
                                 value="open-closed" />

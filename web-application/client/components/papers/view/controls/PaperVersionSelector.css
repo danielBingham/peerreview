@@ -1,8 +1,37 @@
 .paper-version-selector {
     display: inline-block;
-    font-weight: bold;
 }
-.paper-version-selector label {
-    display: inline-block;
-    margin-right: 5px;
+.paper-version-selector svg {
+    width: 1em;
+    height: 1em;
+    margin-bottom: -2px;
+}
+.paper-version-selector .select-trigger {
+    overflow: hidden;
+}
+.paper-version-selector .select-item {
+    padding: 10px;
+}
+.paper-version-selector .version {
+    text-align: center;
+}
+.paper-version-selector .version .status {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.paper-version-selector .version .id {
+    font-weight: 400;
+    padding: 5px;
+}
+.paper-version-selector .version .date-tag {
+    font-size: 10px;
+}
+.paper-version-selector .version .status div {
+    padding: 5px;
+}
+.paper-version-selector .version .status div.yes {
+    background-color: var(--success-color-lightest);
+}
+.paper-version-selector .version .status div.no {
+    background-color: var(--danger-color-lightest);
 }

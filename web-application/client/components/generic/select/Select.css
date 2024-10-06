@@ -1,0 +1,60 @@
+.select { 
+    display: inline-block;
+    position: relative;
+}
+
+.select .select-trigger {
+    font-size: 14px;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.select .select-trigger svg {
+    display: inline-block;
+    width: 14px;
+}
+.select .select-trigger a:link {
+    color: var(--main-text-color);
+}
+.select .select-trigger a:active,
+.select .select-trigger a:hover,
+.select .select-trigger a:visited {
+    color: var(--main-text-color);
+    filter: brightness(90%);
+}
+
+
+.select .select-body {
+    position: absolute;
+    top: 2em;
+    left: 0;
+    text-align: left;
+    background-color: white; 
+    border: thin solid var(--main-border-color);
+    box-shadow: 0 0 12px -7px rgba(100,100,100,0.4);
+    padding: 0;
+    z-index: 1000;
+}
+
+
+.select .select-body .select-item {
+    display: block;
+    white-space: nowrap;
+    padding-left: 20px;
+}
+.select .select-body a.select-item:link {
+    color: var(--main-text-color);
+}
+.select .select-body a.select-item:visited {
+    color: var(--main-text-color);
+}
+
+.select .select-body a.select-item:active,
+.select .select-body a.select-item:hover {
+    color: white;
+    background-color: var(--primary-highlight-color);
+}
+.select .select-body .select-item a:active,
+.select .select-body .select-item a:hover {
+    color: white;
+}

@@ -1,0 +1,23 @@
+.timeline-item.paper-version-event .timeline-item-wrapper {
+    border: thin solid var(--main-border-color);
+    padding: 0;
+}
+.paper-version-event .timeline-item-wrapper .paper-version-event-header {
+    border-bottom: thin solid var(--main-border-color);
+    padding: 10px 20px;
+    background-color: var(--card-header-background-color);
+}
+.paper-version-event .paper-version-event-status {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+}
+.paper-version-event .paper-version-event-status div {
+    text-align: center;
+    padding: 10px;
+}
+.paper-version-event .paper-version-event-status div.no {
+    background-color: var(--secondary-color-lightest);
+}
+.paper-version-event .paper-version-event-status div.yes {
+    background-color: var(--success-color-lightest);
+}

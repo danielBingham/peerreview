@@ -9,6 +9,7 @@ import DateTag from '/components/DateTag'
 
 import UserTag from '/components/users/UserTag'
 import VisibilityControl from '/components/papers/view/timeline/events/controls/VisibilityControl'
+import VisibilityBar from '/components/papers/view/timeline/events/controls/VisibilityBar'
 
 import './PaperVersionEvent.css'
 
@@ -32,8 +33,16 @@ const PaperVersionEvent = function({ eventId }) {
                 <InboxArrowDownIcon />
             </TimelineIcon>
             <TimelineItemWrapper>
-                <UserTag id={event.actorId} /> uploaded <strong><Link to={`/paper/${event.paperId}/file?version=${version.id}`}>version { version.id}</Link></strong> <DateTag timestamp={event.eventDate} type="full" />. <VisibilityControl eventId={eventId} compact={true}/>
+                <div className="paper-version-event-header">
+                    <UserTag id={event.actorId} /> uploaded <strong><Link to={`/paper/${event.paperId}/file?version=${version.id}`}>version { version.id}</Link></strong> <DateTag timestamp={event.eventDate} type="full" />.  
+                </div>
+                <div className="paper-version-event-status">
+                    <div className={ version.isPreprint ? "yes" : "no" }>{ version.isPreprint ? "preprint" : "not preprint" }</div>
+                    <div className={ version.isSubmitted ? "yes" : "no" }>{ version.isSubmitted ? "submitted": "not submitted" }</div>
+                    <div className={version.isPublished ? "yes" : "no" }>{ version.isPublished ? "published": "not published" }</div>
+                </div>
             </TimelineItemWrapper>
+                    
         </TimelineItem> 
     )
 

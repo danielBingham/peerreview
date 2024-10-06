@@ -10,18 +10,13 @@ const Footer = function(props) {
      <footer>
          <div className="wrapper">
             <div className="explanation-copyright">
-                <p className="explanation">JournalHub is a universal scholarly
-                    publishing platform. It supports preprints, preprint
-                    review, journal review and publishing, and post publication
-                    review.  There are plans to support library publishing,
-                    university presses, and institutional publishing as well.
-                    It aims to be simple, clear, and cohesive, providing a
-                    consistent user experience while supporting many different
-                        approaches to review and publishing.</p><p className="explanation"> It is currently being
-                    developed by a single developer.  All
-                    publications must be Diamond Open Access.  The platform is
-                    open source and the intention is to become a non-profit,
-                democratically governed, multi-stakeholder cooperative.</p>
+                    <p className="explanation">JournalHub is a universal scholarly
+                        publishing platform. It supports traditional journals, overlay journals, and review clubs. It also supports preprints, preprint
+                        review, post publication
+                        review, iterative publishing, and micropublishing.  </p>
+                    <p className="explanation">All publications must be open access. The platform is
+                        open source and will become a non-profit,
+                        democratically governed, multi-stakeholder cooperative.</p>
                 
                 <p>Site text (c) <a href="https://github.com/danielbingham">Daniel Bingham</a> 2022 - 2023</p>
                 <p>All user content (c) its authors.</p>

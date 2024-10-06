@@ -54,9 +54,9 @@
     --header-spacer-color: var(--primary-color-light);
 
     /** Footer colors **/
-    --footer-background-color: var(--primary-color-darkest);
-    --footer-border-color: var(--primary-color-darkest);
-    --footer-text-color: var(--primary-color-lightest);
+    --footer-background-color: var(--primary-color-lightest);
+    --footer-border-color: var(--primary-color-light);
+    --footer-text-color: var(--primary-color-darkest);
 
     /** Header menu colors **/ 
     --header-menu-background-color: var(--primary-color-lightest);
