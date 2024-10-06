@@ -20,6 +20,7 @@
 const PaperDAO = require('../daos/PaperDAO')
 const PaperVersionDAO = require('../daos/PaperVersionDAO')
 const SubmissionService = require('./SubmissionService')
+const ServiceError = require('../errors/ServiceError')
 
 /**
  * Manages Paper Visibility

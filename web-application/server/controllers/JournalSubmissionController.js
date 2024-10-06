@@ -11,9 +11,10 @@ const {
     PaperVersionDAO,
     UserDAO,
     FieldDAO,
+    PaperService,
     PaperEventService,
     NotificationService,
-    DAOError } = require('@danielbingham/peerreview-backend')
+    SerivceError } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
 
@@ -29,6 +30,7 @@ module.exports = class JournalSubmissionController {
         this.userDAO = new UserDAO(this.core)
         this.fieldDAO = new FieldDAO(this.core)
 
+        this.paperService = new PaperService(this.core)
         this.paperEventService = new PaperEventService(this.core)
         this.notificationService = new NotificationService(this.core)
     }
@@ -668,13 +670,19 @@ module.exports = class JournalSubmissionController {
         // If we published this paper, we need to update its draft status.
         let requestedRelations = []
         if (existing.status != submissionPatch.status && submissionPatch.status == 'published' ) {
+            const currentPaperVersion = await this.paperService.getMostRecentVisibleVersion(user, entity.paperId)
+            const paperVersionPatch = {
+                id: currentPaperVersion.id,
+                isPublished: true
+            }
+            await this.paperVersionDAO.updatePaperVersion(paperVersionPatch)
+
             const paperPatch = {
                 id: entity.paperId,
                 isDraft: false
             }
-
             await this.paperDAO.updatePartialPaper(paperPatch)
-            requestedRelations.push('papers')
+            requestedRelations.push('papers', 'paperVersions')
         }
 
         // If the status changed, we need to post an event.

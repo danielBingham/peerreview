@@ -1,7 +1,7 @@
 #user-menu {
     position: absolute;
     top: 52px;
-    left: 0;
+    right: 0px;
     text-align: left;
     background-color: var(--header-menu-background-color);
     border-bottom: thin solid var(--header-menu-border-color);

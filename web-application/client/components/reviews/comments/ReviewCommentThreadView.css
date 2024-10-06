@@ -1,5 +1,5 @@
 .comment-thread {
-    border: thin solid #ccc;
+    border: thin solid var(--card-border-color);
     background: white;
     z-index: 1;
     width: 378px;
