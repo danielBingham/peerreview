@@ -12,7 +12,8 @@ const {
     UserDAO, 
     DAOError,
     SessionService,
-    NotificationService
+    NotificationService,
+    PermissionService
 } = require('@danielbingham/peerreview-backend')
 
 const ControllerError = require('../errors/ControllerError')
@@ -29,6 +30,7 @@ module.exports = class JournalController {
 
         this.sessionService = new SessionService(this.core)
         this.notificationService = new NotificationService(this.core)
+        this.permissionService = new PermissionService(this.core)
     }
 
     async getRelations(results, requestedRelations) {
@@ -231,11 +233,12 @@ module.exports = class JournalController {
          * Permissions Checking and Input Validation
          *
          * 1. User is authenticated.
-         * 2. Authenticated user must be JournalUser with 'owner' permissions.
+         * 2. User must have 'create' for Journal
+         * 3. Authenticated user must be JournalUser with 'owner' permissions.
          *
          * Data validation:
          *
-         * 3. Journal has at least 1 valid user.
+         * 4. Journal has at least 1 valid user.
          * 
          * **********************************************************/
 
@@ -246,6 +249,12 @@ module.exports = class JournalController {
         }
 
         const user = request.session.user
+
+        const canCreate = await this.permissionService.can(user, 'create', 'Journal')
+        if ( ! canCreate ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${user.id}) attempted to create a Journal without permissions!`)
+        }
 
         // 2. Authenticated user must be JournalUser with 'owner' permissions.
         // 3. Journal has at least 1 valid user.

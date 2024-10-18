@@ -49,6 +49,7 @@ module.exports = class PaperController {
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
         this.permissionService = new backend.PermissionService(core)
+        this.roleService = new backend.RoleService(core)
 
     }
 
@@ -165,6 +166,44 @@ module.exports = class PaperController {
 
         let count = 0
         let and = ''
+
+        // Make sure we're only retrieving papers the user has `read` permissions on.
+        if ( session.user ) {
+            count += 1
+            and = ( count > 1 ? ' AND ' : '')
+
+            const permissionResults = await this.database.query(`
+                SELECT permissions.paper_id
+                    FROM permissions 
+                        LEFT OUTER JOIN roles ON permissions.role_id = roles.id
+                        LEFT OUTER JOIN user_roles ON user_roles.role_id = roles.id 
+                    WHERE permissions.entity = 'Paper' 
+                        AND permissions.action = 'read'
+                        AND (permissions.user_id = $1 OR user_roles.user_id = $1 OR roles.name = 'public')
+            `, [ session.user.id ])
+
+            const visibleIds = permissionResults.rows.map((r) => r.paper_id)
+        
+            result.where += `${and} papers.id = ANY($${count}::bigint[])`
+            result.params.push(visibleIds)
+        } else {
+            count += 1
+            and = ( count > 1 ? ' AND ' : '')
+
+            const permissionResults = await this.database.query(`
+                SELECT permissions.paper_id
+                    FROM permissions 
+                        LEFT OUTER JOIN roles ON permissions.role_id = roles.id
+                    WHERE permissions.entity = 'Paper' 
+                        AND permissions.action = 'read'
+                        AND roles.name = 'public' 
+            `, [])
+
+            const visibleIds = permissionResults.rows.map((r) => r.paper_id)
+        
+            result.where += `${and} papers.id = ANY($${count}::bigint[])`
+            result.params.push(visibleIds)
+        }
 
         // If we're not intentionally retrieving drafts then we're getting
         // published papers.
@@ -619,11 +658,20 @@ module.exports = class PaperController {
         for ( const version of paper.versions) {
             version.id = await this.paperVersionDAO.insertPaperVersion(paper, version)
         }
-        
+
         const results = await this.paperDAO.selectPapers("WHERE papers.id=$1", [paper.id])
         const entity = results.dictionary[paper.id]
         if ( ! entity ) {
             throw new ControllerError(500, `server-error`, `Paper ${paper.id} does not exist after insert!`)
+        }
+
+        await this.roleService.createPaperRoles(entity.id)
+        for(const author of entity.authors) {
+            await this.roleService.grant(
+                ( author.owner ? 'corresponding-author' : 'author'), 
+                author.userId,
+                { paperId: entity.id }
+            )
         }
        
         for(const version of paper.versions) {
@@ -670,15 +718,15 @@ module.exports = class PaperController {
         /*************************************************************
          * Permissions Checking and Input Validation
          *
-         * 1. User must have 'view' permissions on 'paper'.
+         * 1. User must have 'read' permissions on 'paper'.
          *
          * 
          * **********************************************************/
         const currentUser = request.session.user
 
-        // 1. User must have 'view' permissions on 'paper'.
-        const canView = await this.permissionService.can(currentUser, 'view', 'Paper', { paperId: request.params.id })
-        if ( ! canView ) {
+        // 1. User must have 'read' permissions on 'paper'.
+        const canRead = await this.permissionService.can(currentUser, 'read', 'Paper', { paperId: request.params.id })
+        if ( ! canRead ) {
             throw new ControllerError(403, 'not-authorized',
                 `User attempted to access a Paper they were not authorized to view.`)
         }
@@ -724,7 +772,7 @@ module.exports = class PaperController {
          * Permissions Checking and Input Validation
          *
          * 1. User must be logged in.
-         * 2. User must have 'edit' on Paper(:paperId)
+         * 2. User must have 'update' on Paper(:paperId)
          * 3. Paper(:paper_id) must exist.
          * 4. Paper(:paper_id) must be a draft.
          * 5. Only title and isDraft may be patched.
@@ -742,9 +790,9 @@ module.exports = class PaperController {
 
         const user = request.session.user
 
-        // 2. User must have 'edit' on Paper(:paperId)
-        const canEdit = await this.permissionService.can(user, 'edit', 'Paper', { paperId: paper.id })
-        if ( ! canEdit ) {
+        // 2. User must have 'update' on Paper(:paperId)
+        const canUpdate = await this.permissionService.can(user, 'update', 'Paper', { paperId: paper.id })
+        if ( ! canUpdate ) {
             throw new ControllerError(403, 'not-authorized', 
                 `User(${user.id}) attempted to edit Paper(${paper.id}) without permissions.`)
         }
@@ -892,10 +940,7 @@ module.exports = class PaperController {
          * Permissions Checking and Input Validation
          *
          * 1. User is logged in.
-         * 2. If authenticated user is paper author, can see all submissions.
-         * 3. If authenticated user is not paper author, but is Journal Member can see:
-         * 3a. IF authenticated user is 'reviewer', may only view submissions in review.
-         * 3b. IF authenticated user is 'editor' or 'owner', may view all submissions.
+         * 2. User had `read` permissions on `JournalSubmission` for `paperId`
          *
          * Data validation:
          * 
@@ -909,56 +954,13 @@ module.exports = class PaperController {
                 `User must be authenticated to create a journal!`)
         }
 
-        const user = request.session.user
+        const currentUser = request.session.user
 
         const visibleSubmissionsResults = await this.database.query(`
-            SELECT submission_id FROM permissions WHERE entity='Submission' AND action='view' AND paper_id = $1
-        `, [ paperId ])
+            SELECT submission_id FROM permissions WHERE entity='JournalSubmission' AND action='read' AND paper_id = $1 AND user_id = $2
+        `, [ paperId, currentUser.id ])
 
-        const paperAuthorResults = await this.database.query(`
-            SELECT paper_authors.user_id 
-                FROM papers 
-                    LEFT OUTER JOIN paper_authors ON papers.id = paper_authors.paper_id 
-                WHERE papers.id = $1
-        `, [ paperId ])
-
-        if ( paperAuthorResults.rows.length <= 0 ) {
-            throw new ControllerError(404, 'not-found', `Paper(${paperId}) not found when requesting submissions.`)
-        }
-
-        // 2. If authenticated user is paper author, can see all submissions.
-        const isAuthor = paperAuthorResults.rows.find((r) => r.user_id == user.id) ? true : false
-        if ( isAuthor ) {
-            const results = await this.journalSubmissionDAO.selectJournalSubmissions('WHERE journal_submissions.paper_id = $1', [ paperId ])
-
-            // Just return an empty result.
-            if ( results.list.length <= 0 ) {
-                return response.status(200).json([])
-            } else {
-                return response.status(200).json(results.list)
-            }
-        }
-
-        // 3. If authenticated user is not paper author, but is Journal Member can see:
-        const submissionResults = await this.database.query(`
-            SELECT journal_submissions.id, journal_submissions.status, journal_members.permissions 
-                FROM journal_members 
-                    LEFT OUTER JOIN journal_submissions ON journal_submissions.journal_id = journal_members.journal_id
-                WHERE journal_submissions.paper_id = $1 AND journal_members.user_id = $2
-        `, [ paperId, user.id ])
-
-        const submissionIds = []
-        for(const submission of submissionResults.rows) {
-            // 3a. IF authenticated user is 'reviewer', may only view submissions in review.
-            if ( submission.permissions == 'reviewer' && submission.status == 'in-review' ) {
-                submissionIds.push(submission.id)
-            } 
-
-            // 3b. IF authenticated user is 'editor' or 'owner', may view all submissions.
-            else if ( submission.permissions == 'editor' || submission.permissions == 'owner' ) {
-                submissionIds.push(submission.id)
-            }
-        }
+        const submissionIds = visibleSubmissionsResults.rows.map((r) => r.id)
 
         const submissions = await this.journalSubmissionDAO.selectJournalSubmissions(
             'WHERE journal_submissions.id = ANY($1::bigint[])', 
