@@ -18,12 +18,22 @@
  *
  ******************************************************************************/
 
+import { Uuid } from 'uuid'
+
 import ServiceError from '../errors/ServiceError'
 
-module.exports = class RoleService {
+import { RoleDAO } from '../daos/RoleDAO'
+
+import { PermissionService } from './PermissionService'
+
+export class RoleService {
 
     constructor(core) {
         this.core = core
+
+        this.roleDAO = new RoleDAO(core)
+
+        this.permissionService = new PermissionService(core)
     }
 
     /**
@@ -78,56 +88,41 @@ module.exports = class RoleService {
      * @return {Promise<void>}
      */
     async createPaperRoles(paperId) {
-        const correspondingAuthorResults = await this.core.database.query(`
-            INSERT INTO roles (name, description, paper_id) 
-                VALUES 
-                    ( 'corresponding-author', 'One of this paper\'s corresponding authors.', $1)
-                RETURNING id
-        `, [ paperId ])
+        const correspondingAuthorId = Uuid.v4()
+        const authorId = Uuid.v4()
 
-        if ( correspondingAuthorResults.rows.length <= 0 ) {
-            throw new ServiceError('failed-insert', 
-                `Failed to create Role 'corresponding-author' for Paper(${paperId}).`)
-        }
+        await this.roleDAO.insertRoles([
+            { 
+                id: correspondingAuthorId,
+                name: 'Corresponding Author', 
+                description: `One of this paper's corresponding authors.`,
+                paperId: paperId
+            }, 
+            { 
+                id: authorId,
+                name: 'Author',
+                description: `One of this paper's authors.`,
+                paperId: paperId
+            }
+        ])
 
-        const correspondingAuthorId = correspondingAuthorResults.rows[0].id
+        await this.permissionService.grant([
+            { entity:'Paper', action:'update', roleId:correspondingAuthorId, paperId:paperId },
+            { entity:'Paper', action:'read', roleId:correspondingAuthorId, paperId:paperId },
+            { entity:'Paper', action:'delete', roleId:correspondingAuthorId, paperId:paperId },
+            { entity:'Paper', action:'grant', roleId:correspondingAuthorId, paperId:paperId },
+            { entity:'PaperVersion', action:'create', roleId:correspondingAuthorId, paperId:paperId },
+            { entity:'PaperVersion', action:'read', roleId:correspondingAuthorId, paperId:paperId },
+            { entity:'PaperVersion', action:'update', roleId:correspondingAuthorId, paperId:paperId },
+            { entity:'PaperVersion', action:'delete', roleId:correspondingAuthorId, paperId:paperId },
+            { entity:'PaperVersion', action:'grant', roleId:correspondingAuthorId, paperId:paperId }
+        ])
 
-        await this.core.database.query(`
-            INSERT INTO permissions (entity, action, role_id, paper_id)
-                VALUES
-                    ('Paper', 'update', $1, $2),
-                    ('Paper', 'read', $1, $2),
-                    ('Paper', 'delete', $1, $2),
-                    ('Paper', 'grant', $1, $2),
-                    ('PaperVersion', 'create', $1, $2),
-                    ('PaperVersion', 'read', $1, $2),
-                    ('PaperVersion', 'update', $1, $2),
-                    ('PaperVersion', 'delete', $1, $2),
-                    ('PaperVersion', 'grant', $1, $2)
-        `, [ correspondingAuthorId, paperId ])
-
-        const authorResults = await this.core.database.query(`
-            INSERT INTO roles (name, description, paper_id) 
-                VALUES 
-                    ( 'author', 'One of this paper\'s authors.', $1)
-                RETURNING id
-        `, [ paperId ])
-
-        if ( authorResults.rows.length <= 0 ) {
-            throw new ServiceError('failed-insert', 
-                `Failed to create Role 'author' for Paper(${paperId}).`)
-        }
-
-        const authorId = authorResults.rows[0].id
-
-        await this.core.database.query(`
-            INSERT INTO permissions (entity, action, role_id, paper_id)
-                VALUES
-                    ('Paper', 'read', $1, $2),
-                    ('PaperVersion', 'create', $1, $2),
-                    ('PaperVersion', 'read', $1, $2),
-        `, [ authorId, paperId ])
+        await this.permissionService.grant([
+            { entity:'Paper', action:'read', roleId:authorId, paperId:paperId },
+            { entity:'PaperVersion', action:'create', roleId:authorId, paperId:paperId },
+            { entity:'PaperVersion', action:'read', roleId:authorId, paperId:paperId }
+        ])
     }
-
 }
      

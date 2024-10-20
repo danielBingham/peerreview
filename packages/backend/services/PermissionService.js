@@ -17,51 +17,42 @@
  *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  ******************************************************************************/
+
+const PermissionDAO = requre('../daos/PermissionDAO')
+
 const ServiceError = require('../errors/ServiceError')
 
 module.exports = class PermissionService {
     constructor(core) {
         this.core = core
-    }
 
-    async getRoleIds(user) {
-        let where = ''
-        let params = []
+        this.permissionDAO = new PermissionDAO(this.core)
 
-        if ( user ) {
-            where += 'OR user_roles.user_id = $1'
-            params.push(user.id)
-        }
-
-        const roleResults = await this.core.database.query(`
-            SELECT id FROM roles
-                ${ user ? 'LEFT OUTER JOIN user_roles ON user_roles.role_id = roles.id' : ''}
-            WHERE roles.name = 'public' ${where} 
-        `, params) 
-
-        return roleResults.rows.map((r) => r.id)
+        this.publicRoleId = null
     }
 
     /**
-     * Can `user` perform `action` on `entity` identified by `context.
-     *
-     * @returns {boolean} True if the `user` can perform `action` on `entity`
-     * identified by `context`, false otherwise.
+     * @return {Promise<string>}
      */
-    async can(user, action, entity, context) {
-        let where = ''
-        let params = [ entity, action ]
-
-        const roleIds = await this.getRoleIds(user)
-        if ( user ) {
-            where = ` AND ( user_id = ${params.length+1} OR role_id = ANY(${params.length+2}::uuid[]))`
-            params.push(user.id)
-            params.push(roleIds)
-        }  else {
-            where = ` AND role_id = ANY(${params.length+1}::uuid[])`
-            params.push(roleIds)
+    async getPublicRoleId() {
+        if ( this.publicRoleId !== null ) {
+            return this.publicRoleId
         }
 
+        const results = await this.core.database.query(
+            `SELECT id FROM roles WHERE name='public'`, 
+            []
+        )
+
+        if ( results.rows.length <= 0 ) {
+            throw new ServiceError('missing-public', 'Failed to find the public role id!')
+        }
+
+        this.publicRoleId = results.rows[0].id
+        return this.publicRoleId
+    }
+
+    addContextSQL(query, context) {
         const contextMap = {
             paperId: 'paper_id',
             paperVersionId: 'paper_version_id',
@@ -77,26 +68,81 @@ module.exports = class PermissionService {
                     `Invalid context '${key}'.`)
             }
 
-            where += ` AND ${contextMap[key]} = ${params.length+1}`
-            params.push(value)
+            query.where += ` AND ${contextMap[key]} = ${query.params.length+1}`
+            query.params.push(value)
+        }
+        return query 
+    }
+
+    /**
+     * Can `user` perform `action` on `entity` identified by `context.
+     *
+     * @returns {Promise<boolean>} True if the `user` can perform `action` on `entity`
+     * identified by `context`, false otherwise.
+     */
+    async can(user, action, entity, context) {
+        const query = {
+            where:  'permissions.entity = $1 and permissions.action = $2',
+            params: [ entity, action ]
         }
 
-        const results = await this.core.database.query(`
-            SELECT user_id, role_id 
-                FROM permissions
-                WHERE entity = $1 AND action = $2${where}
-        `, params)
+        const publicRoleId = await this.getPublicRoleId()
 
+        if ( user ) {
+            query.where += ` AND 
+                ( permissions.user_id = $${query.params.length+1} 
+                    OR user_roles.user_id = $${query.params.length+1} 
+                    OR permissions.role_id = $${query.params.length+2}
+                )`
+            query.params.push(user.id)
+            query.params.push(publicRoleId)
+        }  else {
+            query.where += ` AND permissions.role_id = $${query.params.length+1}`
+            query.params.push(publicRoleId)
+        }
 
-        return results.rows.length > 0
+        this.addContextSQL(query, context)
+
+        const results = await this.permissionDAO.selectPermissions(query.where, query.params)
+
+        return results.list.length > 0
     }
 
-    async let(user, action, entity, context) {
+    /**
+     * @returns {Promise<any[]>}
+     */
+    async get(user, entity, action, context) {
+        const query = {
+            where: '',
+            params: []
+        }
 
+        const publicRoleId = await this.getPublicRoleId()
+
+        if ( user ) {
+            query.where += '(permissions.user_id = $1 OR user_roles.user_id = $1 OR permissions.role_id = $2)'
+            query.params.push(user.id, publicRoleId)
+        } else {
+            query.where += 'permissions.role_id = $1'
+            query.params.push(publicRoleId)
+        }
+
+        if ( entity) {
+            query.params.push(entity)
+            query.where += ` AND permissions.entity = $${query.params.length}`
+        }
+        if ( action ) {
+            query.params.push(action)
+            query.where += ` AND permissions.action = $${query.params.length}`
+        }
+
+        this.addContextSQL(query,context)
+
+        const results = await this.permissionDAO.selectPermissions(query.where, query.params)
+        return results.list.map((id) => results.dictionary[id])
     }
 
-    async has(user, role, context) {
-
+    async grant(permissions) {
+        await this.insertPermissions(permissions)
     }
-
 }

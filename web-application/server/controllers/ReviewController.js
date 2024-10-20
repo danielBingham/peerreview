@@ -41,6 +41,9 @@ module.exports = class ReviewController {
         this.paperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
+
+        this.permissionService = new backend.PermissionService(core)
+        this.roleService = new backend.RoleService(core)
     }
 
     async getRelations(currentUser, results, requestedRelations) {
@@ -90,6 +93,7 @@ module.exports = class ReviewController {
     async getReviews(request, response) {
         const paperId = request.params.paper_id
 
+        const currentUser = request.session.user
         const userId = request.session.user?.id
 
         /*************************************************************
@@ -105,23 +109,16 @@ module.exports = class ReviewController {
          * **********************************************************/
 
 
-        const canViewPaper = await this.paperService.canViewPaper(request.session.user, paperId)
+        const canReadPaper = await this.permissionService.can(currentUser, 'read', 'Paper', { paperId: paperId })
 
         // 1. Paper(:paper_id) exists.
         // 2. Paper(:paper_id) is visible to CurrentUser or Public.
-        if ( ! canViewPaper ) {
+        if ( ! canReadPaper ) {
             throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) to return reviews for.`)
         }
 
-        // 2. Visibility is controlled on the event.
-        // TECHDEBT This is not going to be efficient.
-        const visibleIds = await this.paperEventService.getVisibleEventIds(userId)
-        const eventResults = await this.database.query(`
-            SELECT review_id FROM paper_events WHERE id = ANY($1::bigint[])
-        `, [ visibleIds ])
-
-        const reviewIds = eventResults.rows.map((r) => r.review_id)
-
+        const permissions = await this.permissionService.get('currentUser', 'read', 'Review', { paperId: paperId })
+        const reviewIds = permissions.map((p) => p.reviewId)
        
         /********************************************************
          * Permission Checks Complete
@@ -131,13 +128,8 @@ module.exports = class ReviewController {
         let where = ''
         let params = []
         
-        if ( userId ) {
-            where = `WHERE reviews.paper_id = $1 AND (reviews.id = ANY($2::bigint[]) OR reviews.user_id = $3)`
-            params = [ paperId, reviewIds, userId ]
-        } else {
-            where = `WHERE reviews.paper_id = $1 AND reviews.id = ANY($2::bigint[])`
-            params = [ paperId, reviewIds ]
-        }
+        where = `WHERE reviews.paper_id = $1 AND reviews.id = ANY($2::bigint[])`
+        params = [ paperId, reviewIds ]
 
         const results = await this.reviewDAO.selectReviews(where, params)
         results.meta = await this.reviewDAO.countReviews(where, params)
@@ -165,10 +157,6 @@ module.exports = class ReviewController {
      * @returns {Promise}   Resolves to void.
      */
     async postReviews(request, response) {
-        const paperId = request.params.paper_id
-
-        const review = request.body
-
         /*************************************************************
          * Permissions Checking and Input Validation
          *
@@ -187,20 +175,29 @@ module.exports = class ReviewController {
          *
          * ***********************************************************/
 
+        const paperId = request.params.paper_id
+        const review = request.body
+
+        const currentUser = request.session.user
+
         // 1. Be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted to POST review on Paper(${review.paperId}).`)
         }
 
-        const userId = request.session.user.id
-
-        const canViewPaper = await this.paperService.canViewPaper(request.session.user, paperId)
+        const canReadPaper = await this.permissionService.can(currentUser, 'read', 'Paper', { paperId: paperId })
 
         // 2. Paper(:paper_id) exists.
         // 3. Paper(:paper_id) is visible to CurrentUser.
-        if ( ! canViewPaper ) {
+        if ( ! canReadPaper ) {
             throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) to return reviews for.`)
+        }
+
+        const canCreateReview = await this.permissionService.can(currentUser, 'create', 'Review', { paperId: paperId })
+        if ( ! canCreateReview ) {
+            throw new ControlleError(403, 'not-authorized', 
+                `User(${currentUser.id}) attempted to POST Review to Paper(${paperId}) when not authorized.`)
         }
 
         /********************************************************

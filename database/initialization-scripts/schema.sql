@@ -599,6 +599,7 @@ CREATE TABLE response_versions (
 
 
 CREATE TABLE permissions (
+    id uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
     entity varchar(512) NOT NULL,
     action varchar(512) NOT NULL,
 
@@ -611,7 +612,10 @@ CREATE TABLE permissions (
     review_id bigint REFERENCES reviews(id) DEFAULT NULL,
     paper_comment_id bigint REFERENCES paper_comments(id) DEFAULT NULL,
     submission_id bigint REFERENCES journal_submissions(id) DEFAULT NULL,
-    journal_id bigint REFERENCES journals(id) DEFAULT NULL
+    journal_id bigint REFERENCES journals(id) DEFAULT NULL,
+
+    created_date timestamptz,
+    updated_date timestamptz
 );
 
 CREATE TABLE roles (
@@ -620,11 +624,16 @@ CREATE TABLE roles (
     description varchar(1024) NOT NULL,
 
     journal_id  bigint REFERENCES journals(id) DEFAULT NULL,
-    paper_id    bigint REFERENCES papers(id) DEFAULT NULL
+    paper_id    bigint REFERENCES papers(id) DEFAULT NULL,
+
+    created_date timestamptz,
+    updated_date timestamptz
 );
 INSERT INTO roles (name, description) VALUES ('public', 'The general public.');
 
 CREATE TABLE user_roles (
     role_id uuid REFERENCS roles(id) NOT NULL,
-    user_id bigint REFERENCES users(id) NOT NULL
+    user_id bigint REFERENCES users(id) NOT NULL,
+
+    created_date timestamptz
 );
