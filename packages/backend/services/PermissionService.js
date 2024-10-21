@@ -127,16 +127,16 @@ module.exports = class PermissionService {
             query.params.push(publicRoleId)
         }
 
-        if ( entity) {
+        if ( entity && entity !== '*' ) {
             query.params.push(entity)
             query.where += ` AND permissions.entity = $${query.params.length}`
         }
-        if ( action ) {
+        if ( action && action !== '*' ) {
             query.params.push(action)
             query.where += ` AND permissions.action = $${query.params.length}`
         }
 
-        this.addContextSQL(query,context)
+        this.addContextSQL(query, context)
 
         const results = await this.permissionDAO.selectPermissions(query.where, query.params)
         return results.list.map((id) => results.dictionary[id])

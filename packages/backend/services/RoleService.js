@@ -72,10 +72,7 @@ export class RoleService {
 
         const id = roleResults.rows[0].id
 
-        await this.database.query(`
-            INSERT INTO user_roles (role_id, user_id)
-                VALUES ($1, $2)
-        `, [ id, userId ])
+        await this.roleDAO.insertUserRoles({ roleId: id, userId: userId })
 
         return true
     }

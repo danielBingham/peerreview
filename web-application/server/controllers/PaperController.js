@@ -668,7 +668,7 @@ module.exports = class PaperController {
         await this.roleService.createPaperRoles(entity.id)
         for(const author of entity.authors) {
             await this.roleService.grant(
-                ( author.owner ? 'corresponding-author' : 'author'), 
+                ( author.owner ? 'Corresponding Author' : 'Author'), 
                 author.userId,
                 { paperId: entity.id }
             )

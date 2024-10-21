@@ -25,25 +25,37 @@ export class RoleDAO extends DAO {
         super(core)
 
         this.fieldMap = {
-            'id': {
-                required: false,
-                key: 'id'
+            'roles': {
+                'id': {
+                    required: false,
+                    key: 'id'
+                },
+                'name': {
+                    required: true,
+                    key: 'name'
+                },
+                'description': {
+                    required: true,
+                    key: 'description'
+                },
+                'journal_id': {
+                    required: false,
+                    key: 'journalId'
+                },
+                'paper_id': {
+                    required: false,
+                    key: 'paperId'
+                }
             },
-            'name': {
-                required: true,
-                key: 'name'
-            },
-            'description': {
-                required: true,
-                key: 'description'
-            },
-            'journal_id': {
-                required: false,
-                key: 'journalId'
-            },
-            'paper_id': {
-                required: false,
-                key: 'paperId'
+            'user_roles': {
+                'user_id': {
+                    required: true,
+                    key: 'userId'
+                },
+                'role_id': {
+                    required: true,
+                    key: 'roleId'
+                }
             }
         }
     }
@@ -124,6 +136,13 @@ export class RoleDAO extends DAO {
      * @return Promise<void>
      */
     async insertRoles(roles) {
-        await this.insert('Role', 'roles', this.fieldMap, roles)
+        await this.insert('Role', 'roles', this.fieldMap['roles'], roles)
+    }
+
+    /**
+     * @return Promise<void>
+     **/
+    async insertUserRoles(userRoles) {
+        await this.insert('UserRole', 'user_roles', this.fieldMap['userRoles'], userRoles)
     }
 }
