@@ -33,6 +33,7 @@ module.exports = class PaperVersionController {
         this.paperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
+        this.permissionService = new backend.PermissionService(core)
     }
 
     async getRelations(currentUser, results, requestedRelations) {
@@ -47,6 +48,20 @@ module.exports = class PaperVersionController {
             emptyResult: false,
             requestedRelations: query.requestedRelations
         }
+
+        const roleIds = await this.permissionService.getRoleIds(currentUser)
+        const visibleVersionResults = await this.core.database.query(`
+            SELECT paper_version_id 
+                FROM permissions
+                WHERE (
+                    ${ currentUser ? 'user_id = $1 OR' : ''} role_id = ANY($2::uuid[])
+                    )
+                    AND entity = 'PaperVersion' AND action = 'view'
+        `, ( currentUser ? [ currentUser.id, roleIds ] : [ roleIds ]))
+        const visiblePaperVersionIds = visibleVersionResults.rows.map((r) => r.paper_version_id)
+
+        parsedQuery.where += ` AND paper_versions.id = ANY(${parsedQuery.params.length}::uuid[])`
+        parsedQuery.params.push(visiblePaperVersionIds)
 
         if ( ! currentUser ) {
             parsedQuery.where += ' AND ( paper_versions.is_preprint = true OR paper_versions.is_published = true )'
@@ -142,6 +157,7 @@ module.exports = class PaperVersionController {
          * Permissions Checking and Input Validation
          *
          * 1. User must be logged in.
+         * 2. User must have 'create' on PaperVersion for Paper(:paper_id)
          * 2. Paper(:paper_id) must exist.
          * 3. User must be an owning author on Paper(:paper_id).
          * 4. Paper(:paper_id) must be a draft.
@@ -156,6 +172,8 @@ module.exports = class PaperVersionController {
         }
 
         const currentUser = request.session.user
+
+        const canCreate = await this.permissionService.can(currentUser, 'create', 'PaperVersion', { paperId: paperId })
 
         const existingResults = await this.paperDAO.selectPapers('WHERE papers.id = $1', [ paperId ])
         const existing = existingResults.dictionary[paperId]
@@ -264,10 +282,16 @@ module.exports = class PaperVersionController {
         const currentUser = request.session.user
 
         // 1. Must be able to view Paper(:paperId)
-        const canViewPaper = await this.paperService.canViewPaper(currentUser, paperId)
+        const canViewPaper = await this.permissionService.can(currentUser, 'view', 'Paper', { paperId: paperId })
         if ( ! canViewPaper ) {
             throw new ControllerError(404, 'not-found'
                 `Attempt to view private PaperVersion(${id}) of Paper(${paperId}).`)
+        }
+
+        const canViewPaperVersion = await this.permissionService.can(currentUser, 'view', 'Paper', { paperVersionId: id })
+        if ( ! canViewPaperVersion ) {
+            throw new ControllerError(404, 'not-found',
+                `Attempt to view PaperVersion(${id}) by User(${currentUser.id}) without permissions.`)
         }
 
         const versionResult = await this.paperVersionDAO.selectPaperVersions(

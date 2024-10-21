@@ -61,6 +61,12 @@ module.exports = class SubmissionService {
         this.logger = core.logger
     }
 
+    /**
+     * @param {Object} user
+     * @param {number} paperId
+     *
+     * @return {Promise<Object>}
+     */
     async getActiveSubmission(user, paperId) {
         // Get the currently active submission for the paper.
         const results = await this.database.query(`
@@ -121,45 +127,28 @@ module.exports = class SubmissionService {
      *
      * @param {User}    user    The user who's visibility we want to check.
      *
-     * @return  {int[]} An array of the visible submissionIds.
+     * @return  {Promise<number[]>} An array of the visible submissionIds.
      */
     async getVisibleSubmissionIds(user) {
-        const sql = `
-            SELECT DISTINCT journal_submissions.id
-                FROM journal_submissions
-                    LEFT OUTER JOIN journals ON journal_submissions.journal_id = journals.id
-                    LEFT OUTER JOIN journal_members ON journal_submissions.journal_id = journal_members.journal_id
-                    LEFT OUTER JOIN journal_submission_editors ON journal_submissions.id = journal_submission_editors.submission_id
-                    LEFT OUTER JOIN journal_submission_reviewers ON journal_submissions.id = journal_submission_reviewers.submission_id
-            WHERE 
-                journals.model = 'public'
-                    OR (journals.model = 'open-public' AND (journal_submissions.status = 'published' 
-                        ${ user ? 'OR journal_members.user_id = $1' : ''}))
-                    OR (journals.model = 'open-closed' AND (journal_submissions.status = 'published' 
-                        ${ user ? 'OR journal_members.user_id = $1' : '' }))
-                    OR (journals.model = 'closed' 
-                        AND (journal_submissions.status = 'published' 
-                            ${ user ? `OR ( journal_members.permissions = 'owner' 
-                                OR journal_submission_editors.user_id = $1 
-                                OR journal_submission_reviewers.user_id = $1
-                                )` : '' }
-                            )
-                       )
-        `
-        const params = []
-        if ( user ) {
-            params.push(user.id)
-        }
+        const results = await this.database.query(`
+            SELECT permissions.submission_id 
+                FROM permissions 
+                    LEFT OUTER JOIN roles ON permissions.role_id = roles.id
+                    LEFT OUTER JOIN user_roles ON user_roles.role_id = roles.id 
+                WHERE permissions.entity = 'JournalSubmission' 
+                    AND permissions.action = 'read'
+                    AND (permissions.user_id = $1 OR user_roles.user_id = $1)
+        `, [ user.id ])
 
-        const results = await this.database.query(sql, params)
-
-        if ( results.rows.length <= 0 ) {
-            return []
-        }
-
-        return results.rows.map((r) => r.id)
+        return results.rows.map((r) => r.submission_id)
     }
 
+    /**
+     * @param {Object} user The populated user.
+     * @param {number} paperId
+     *
+     * @return {Promise<boolean>}
+     */
     async canViewSubmission(user, paperId) {
         const visibleSubmissionIds = await this.getVisibleSubmissionIds(user)
 

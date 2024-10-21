@@ -593,3 +593,47 @@ CREATE TABLE response_versions (
     PRIMARY KEY(response_id, version)
 );
 
+/******************************************************************************
+ * Permissions
+ ******************************************************************************/
+
+
+CREATE TABLE permissions (
+    id uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    entity varchar(512) NOT NULL,
+    action varchar(512) NOT NULL,
+
+    user_id bigint  REFERENCES users(id) DEFAULT NULL,
+    role_id uuid REFERENCES roles(id) DEFAULT NULL,
+
+    paper_id bigint REFERENCES papers(id) DEFAULT NULL,
+    paper_version_id uuid REFERENCES paper_versions(id) DEFAULT NULL,
+    event_id bigint REFERENCES paper_events(id) DEFAULT NULL,
+    review_id bigint REFERENCES reviews(id) DEFAULT NULL,
+    paper_comment_id bigint REFERENCES paper_comments(id) DEFAULT NULL,
+    submission_id bigint REFERENCES journal_submissions(id) DEFAULT NULL,
+    journal_id bigint REFERENCES journals(id) DEFAULT NULL,
+
+    created_date timestamptz,
+    updated_date timestamptz
+);
+
+CREATE TABLE roles (
+    id  uuid PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    name    varchar(1024) NOT NULL,
+    description varchar(1024) NOT NULL,
+
+    journal_id  bigint REFERENCES journals(id) DEFAULT NULL,
+    paper_id    bigint REFERENCES papers(id) DEFAULT NULL,
+
+    created_date timestamptz,
+    updated_date timestamptz
+);
+INSERT INTO roles (name, description) VALUES ('public', 'The general public.');
+
+CREATE TABLE user_roles (
+    role_id uuid REFERENCS roles(id) NOT NULL,
+    user_id bigint REFERENCES users(id) NOT NULL,
+
+    created_date timestamptz
+);

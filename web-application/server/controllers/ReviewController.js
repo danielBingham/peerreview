@@ -41,6 +41,9 @@ module.exports = class ReviewController {
         this.paperService = new backend.PaperService(core)
         this.paperEventService = new backend.PaperEventService(core)
         this.notificationService = new backend.NotificationService(core)
+
+        this.permissionService = new backend.PermissionService(core)
+        this.roleService = new backend.RoleService(core)
     }
 
     async getRelations(currentUser, results, requestedRelations) {
@@ -90,6 +93,7 @@ module.exports = class ReviewController {
     async getReviews(request, response) {
         const paperId = request.params.paper_id
 
+        const currentUser = request.session.user
         const userId = request.session.user?.id
 
         /*************************************************************
@@ -105,23 +109,16 @@ module.exports = class ReviewController {
          * **********************************************************/
 
 
-        const canViewPaper = await this.paperService.canViewPaper(request.session.user, paperId)
+        const canReadPaper = await this.permissionService.can(currentUser, 'read', 'Paper', { paperId: paperId })
 
         // 1. Paper(:paper_id) exists.
         // 2. Paper(:paper_id) is visible to CurrentUser or Public.
-        if ( ! canViewPaper ) {
+        if ( ! canReadPaper ) {
             throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) to return reviews for.`)
         }
 
-        // 2. Visibility is controlled on the event.
-        // TECHDEBT This is not going to be efficient.
-        const visibleIds = await this.paperEventService.getVisibleEventIds(userId)
-        const eventResults = await this.database.query(`
-            SELECT review_id FROM paper_events WHERE id = ANY($1::bigint[])
-        `, [ visibleIds ])
-
-        const reviewIds = eventResults.rows.map((r) => r.review_id)
-
+        const permissions = await this.permissionService.get('currentUser', 'read', 'Review', { paperId: paperId })
+        const reviewIds = permissions.map((p) => p.reviewId)
        
         /********************************************************
          * Permission Checks Complete
@@ -131,13 +128,8 @@ module.exports = class ReviewController {
         let where = ''
         let params = []
         
-        if ( userId ) {
-            where = `WHERE reviews.paper_id = $1 AND (reviews.id = ANY($2::bigint[]) OR reviews.user_id = $3)`
-            params = [ paperId, reviewIds, userId ]
-        } else {
-            where = `WHERE reviews.paper_id = $1 AND reviews.id = ANY($2::bigint[])`
-            params = [ paperId, reviewIds ]
-        }
+        where = `WHERE reviews.paper_id = $1 AND reviews.id = ANY($2::bigint[])`
+        params = [ paperId, reviewIds ]
 
         const results = await this.reviewDAO.selectReviews(where, params)
         results.meta = await this.reviewDAO.countReviews(where, params)
@@ -165,10 +157,6 @@ module.exports = class ReviewController {
      * @returns {Promise}   Resolves to void.
      */
     async postReviews(request, response) {
-        const paperId = request.params.paper_id
-
-        const review = request.body
-
         /*************************************************************
          * Permissions Checking and Input Validation
          *
@@ -187,20 +175,29 @@ module.exports = class ReviewController {
          *
          * ***********************************************************/
 
+        const paperId = request.params.paper_id
+        const review = request.body
+
+        const currentUser = request.session.user
+
         // 1. Be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted to POST review on Paper(${review.paperId}).`)
         }
 
-        const userId = request.session.user.id
-
-        const canViewPaper = await this.paperService.canViewPaper(request.session.user, paperId)
+        const canReadPaper = await this.permissionService.can(currentUser, 'read', 'Paper', { paperId: paperId })
 
         // 2. Paper(:paper_id) exists.
         // 3. Paper(:paper_id) is visible to CurrentUser.
-        if ( ! canViewPaper ) {
+        if ( ! canReadPaper ) {
             throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) to return reviews for.`)
+        }
+
+        const canCreateReview = await this.permissionService.can(currentUser, 'create', 'Review', { paperId: paperId })
+        if ( ! canCreateReview ) {
+            throw new ControllerError(403, 'not-authorized', 
+                `User(${currentUser.id}) attempted to POST Review to Paper(${paperId}) when not authorized.`)
         }
 
         /********************************************************
@@ -257,8 +254,19 @@ module.exports = class ReviewController {
         if ( ! entity ) {
             throw new ControllerError(500, 'server-error', `Failed to find newly inserted review ${review.id}.`)
         }
-           
-        
+
+        // Grant permissions on the newly created entity.
+        //
+        // For now we're just going to grant the author appropriate permissions and we'll handle granting 
+        await this.permissionService.grant([
+            { entity: 'Review', action: 'read', userId: userId, paperId: entity.paperId, reviewId: entity.id },
+            { entity: 'Review', action: 'update', userId: userId, paperId: entity.paperId, reviewId: entity.id },
+            { entity: 'Review', action: 'delete',userId: userId, paperId: entity.paperId, reviewId: entity.id },
+            { entity: 'Review', action: 'grant', userId: userId, paperId: entity.paperId, reviewId: entity.id }
+        ])
+       
+        // Create the event for the review.
+
         const event = {
             paperId: entity.paperId,
             actorId: userId,
@@ -269,6 +277,7 @@ module.exports = class ReviewController {
         }
         await this.paperEventService.createEvent(request.session.user, event)
 
+        // Send notifications for the created review.
         if ( entity.status == 'submitted' ) {
 
             // Update the review count on the version
@@ -312,29 +321,19 @@ module.exports = class ReviewController {
      * @returns {Promise}   Resolves to void.
      */
     async getReview(request, response) {
-        const paperId = request.params.paper_id
-        const reviewId = request.params.id
-
         /*************************************************************
          * Permissions Checking and Input Validation
          *
          * We need to do basic input validation.
          *
-         * 1. Review(:review_id) exists.
-         * 2. Review(:review_id) is on Paper(:paper_id)
-         *
-         * Then we need to check the view permissions.  They are different
-         * depending on whether Paper(:paper_id) is a draft or not.
-         *
-         * 3. Review(:review_id) is in-progress AND User is logged in AND User
-         *      is author of Review(:review_id)
-         * 4. Review(:review_id) is not in-progress AND Paper(:paper_id) is a
-         *      draft AND User is logged in and has Review permissions.
-         * 5. Review(:review_id) is not in-progress AND Paper(:paper_id) is NOT
-         *      a draft. (Anyone may view.)
-         *
+         * 1. Review(:reviewId) exists.
+         * 2. Review(:reviewId) is on Paper(:paperId)
+         * 3. CurrentUser has 'read' on Paper(:paperId)
+         * 4. CurrentUser has 'read' on Review(:reviewId)
          *
          * ***********************************************************/
+        const paperId = request.params.paper_id
+        const reviewId = request.params.id
 
         const existingResults = await this.database.query(`
             SELECT 
@@ -360,43 +359,17 @@ module.exports = class ReviewController {
                 `Review(${reviewId}) is on Paper(${existing.paper_id}) not Paper(${paperId}).`)
         }
 
-        // 3. Review(:review_id) is in-progress AND User is logged in AND User
-        //      is author of Review(:review_id)
-        if ( existing.review_status == 'in-progress') {
-            // ... AND User is logged in
-            if ( ! request.session.user ) {
-                // Return a 404, so we don't let them know that a review they
-                // aren't allowed to see exists.
-                throw new ControllerError(404, 'no-resource',
-                    `Unauthenticated user attempted to view in-progress Review(${reviewId}).`)
-            }
-
-            // ...AND User is author of Review(:review_id)
-            if ( existing.review_userId != request.session.user.id ) {
-                // Return a 404, so we don't let them know that a review they
-                // aren't allowed to see exists.
-                throw new ControllerError(404, 'no-resource',
-                    `User(${request.session.user.id}) attempted to view in-progress Review(${reviewId}) they didn't write.`)
-            }
+        // 3. CurrentUser has 'read' on Paper(:paperId)
+        const canReadPaper = await this.permissionService.can(currentUser, 'read', 'Paper', { paperId: paperId })
+        if ( ! canReadPaper ) {
+            throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) to return reviews for.`)
         }
 
-        // 4. Review(:review_id) is not in-progress AND Paper(:paper_id) is a
-        //      draft AND User is logged in and has Review permissions.
-
-        if ( existing.review_status != 'in-progress' && existing.paper_isDraft ) {
-            if ( ! request.session.user ) {
-                // Return a 404, so we don't let them know that a review they
-                // aren't allowed to see exists.
-                throw new ControllerError(404, 'no-resource',
-                    `Unauthenticated user attempted to view Review(${reviewId}) on draft Paper(${paperId}).`)
-            }
-
-        }
-
-        // 5. Review(:review_id) is not in-progress then CurrentUser must have permission to view the paper. 
-        const canViewPaper = await this.paperService.canViewPaper(request.session.user, paperId)
-        if ( ! canViewPaper ) {
-            throw new ControllerError(404, 'no-resource', `No Paper(${paperId}) or User doesn't have permission.`)
+        // 4. CurrentUser has 'read' on Review(:reviewId)
+        const canCreateReview = await this.permissionService.can(currentUser, 'read', 'Review', { paperId: paperId, reviewId: reviewId })
+        if ( ! canCreateReview ) {
+            throw new ControllerError(403, 'not-authorized', 
+                `User(${currentUser?.id}) attempted to GET Review(${reviewId}) of Paper(${paperId}) when not authorized.`)
         }
 
         /********************************************************
@@ -422,28 +395,6 @@ module.exports = class ReviewController {
     }
 
     /**
-     * PUT /paper/:paper_id/review/:id
-     *
-     * Replace an existing review wholesale with the provided JSON.
-     *
-     * NOT IMPLEMENTED
-     */
-    async putReview(request, response) {
-        throw new ControllerError(501, 'not-implemented',
-            `Attempt to call unimplemented PUT /paper/:paper_id/review/:id.`)
-
-        //  ===================================================================
-        //  ##############  Intentionally Left Unimplemented ##################
-        // 
-        //  This is not wired into the controller.  It is intentionally left 
-        //  unimplemented because we don't actually want to allow users to
-        //  replace their reviews wholesale in any circumstances.  They are
-        //  allowed to edit select fields through PATCH.
-        //
-        //  ===================================================================
-    }
-
-    /**
      * PATCH /paper/:paper_id/review/:review_id
      *
      * Update an existing review given a partial set of fields in JSON.
@@ -463,33 +414,28 @@ module.exports = class ReviewController {
      * @returns {Promise}   Resolves to void.
      */
     async patchReview(request, response) {
-        const paperId = request.params.paper_id
-        const reviewId = request.params.review_id
-
-        const review = request.body
-
         /*************************************************************
          * Permissions Checking and Input Validation
          *
          * To call this endpoint you must:
          *
          * 1. Be logged in.
-         * 2. Be the author of Review(:review_id) OR an owning author of
-         * Paper(:paper_id)
+         * 2. CurrentUser must have 'update' on Review(${reviewId})
          *
          * Then we need to do basic input validation:
          *
-         * 3. Review(:review_id) exists.
-         * 4. Review(:review_id) is on Paper(:paper_id)
+         * 3. Review(:reviewI) exists.
+         * 4. Review(:reviewId) is on Paper(:paper_id)
          *
          * Finally, we need to validate the review content (PATCH body): 
          *
-         * 7. Paper authors may only edit the `status` field.
-         * 8. Review authors may only edit the `status`, `summary`, and `recommendation`
-         * fields. Status may only be 'submitted' when it is currently 'in-progress'.
-         * 9. No one may PATCH `paperId`, `userId`, `version`, or `number`
+         * 5. No one may PATCH `paperId`, `userId`, `version`, or `number`
          *
          * ***********************************************************/
+        const paperId = request.params.paper_id
+        const reviewId = request.params.review_id
+
+        const review = request.body
 
         // 1. Be logged in.
         if ( ! request.session.user ) {
@@ -497,58 +443,19 @@ module.exports = class ReviewController {
                 'not-authenticated', `Unauthenticated user attempted to PATCH review on Paper(${review.paperId}).`)
         }
 
+        const currentUser = request.session.user
         const userId = request.session.user.id
 
-        const existingResults = await this.database.query(`
-            SELECT 
-                papers.id as paper_id, papers.is_draft as "paper_isDraft",
-                reviews.id as review_id, reviews.user_id as "review_userId", reviews.status as "review_status"
-            FROM reviews
-                JOIN papers on reviews.paper_id = papers.id
-            WHERE reviews.id = $1
-        `, [ reviewId ])
-
+        // 2. CurrentUser must have 'update' on Review(${reviewId})
         // 3. Review(:review_id) exists.
-        if ( existingResults.rows.length <= 0) {
-            throw new ControllerError(404, 'no-resource',
-                `Attempt to POST thread to Review(${reviewId}), but it doesn't exist!`)
-        }
-
-        const existing = existingResults.rows[0]
-
         // 4. Review(:review_id) is on Paper(:paper_id)
-        if ( existing.paper_id != paperId) {
-            throw new ControllerError(400, 'id-mismatch:paper', 
-                `Review(${reviewId}) is on Paper(${existing.paper_id}) not Paper(${paperId}).`)
+        const canUpdateReview = await this.permissionService.can(currentUser, 'update', 'Review', { paperId: paperId, reviewId: reviewId })
+        if ( ! canUpdateReview ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${currentUser?.id}) attempted to PATCH Review(${reviewId}) of Paper(${paperId}) without permission.`)
         }
 
-        const isReviewAuthor = (existing.review_userId == userId)
-        // 2. Be the author of Review(:review_id)...
-        if ( ! isReviewAuthor ) {
-            throw new ControllError(403, 'not-authorized',
-                `User(${userid}) attempted to PATCH Review(${reviewId}) that they didn't author.`)
-        }
-
-        // 6. Review(:review_id) is in progress or User is paper author and patch is changing status to 'accepted' or 'rejected'.
-        if (existing.review_status != 'in-progress' ) {
-            throw new ControllerError(403, 'not-authorized:not-in-progress',
-                `User(${userId}) attempted to PATCH Review(${reviewId}), but it was not in progress.`)
-        }
-
-        // 7. Paper authors may only edit the `status` field.
-        if ( ! isReviewAuthor && (review.summary || review.recommendation)) {
-            throw new ControllerError(403, 'not-authorized:forbidden-fields', 
-                `User(${userId}) attempted to PATCH forbidden fields on Review(${reviewId}).`)
-        }
-
-        // 8. Review authors may only edit the `summary` and `recommendation`
-        // fields, or the `status` field if they are setting it to 'submitted'.
-        if ( isReviewAuthor && review.status && review.status != 'submitted') {
-            throw new ControllerError(403, 'not-authorized:forbidden-fields', 
-                `User(${userId}) attempted to PATCH forbidden fields on Review(${reviewId}).`)
-        }
-
-        // 9. No one may PATCH `paperId`, `userId`, `version`, or `number`
+        // 5. No one may PATCH `paperId`, `userId`, `version`, or `number`
         if ( review.paperId || review.userId || review.paperVersionId|| review.number ) {
             throw new ControllerError(403, 'not-authorized:forbidden-fields', 
                 `User(${userId}) attempted to PATCH forbidden fields on Review(${reviewId}).`)
@@ -649,16 +556,13 @@ module.exports = class ReviewController {
      * @returns {Promise}   Resolves to void.
      */
     async deleteReview(request, response) {
-        const paperId = request.params.paper_id
-        const reviewId = request.params.review_id
-
         /*************************************************************
          * Permissions Checking and Input Validation
          *
          * To call this endpoint you must:
          *
-         * 1. Be logged in.
-         * 2. Be the author of Review(:review_id)
+         * 1. CurrentUser must be logged in.
+         * 2. CurrentUser have 'delete' on Review(:review_id) 
          *
          * Then we need to do basic input validation:
          *
@@ -670,14 +574,23 @@ module.exports = class ReviewController {
          * 5. Review(:review_id) is in progress.
          *
          * ***********************************************************/
+        const paperId = request.params.paper_id
+        const reviewId = request.params.review_id
+
+        const currentUser = request.session.user
 
         // 1. Be logged in.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 
                 'not-authenticated', `Unauthenticated user attempted to DELETE review on Paper(${paperId}).`)
         }
 
-        const userId = request.session.user.id
+        // 2. CurrentUser have 'delete' on Review(:review_id) 
+        const canDeleteReview = await this.permissionService.can(currentUser, 'delete', 'Review', { paperId: paperId, reviewId: reviewId})
+        if ( ! canDeleteReview ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${currentUser?.id}) attempting to DELETE Review(${reviewId}) without permission.`)
+        }
 
         const existingResults = await this.database.query(`
             SELECT 
@@ -696,12 +609,6 @@ module.exports = class ReviewController {
 
         const existing = existingResults.rows[0]
 
-        // 2. Be the author of Review(:review_id)
-        if ( existing.review_userId != userId ) {
-            throw new ControllerError(403, 'not-authorized',
-                `User(${userId}) attempted to DELETE Review(${reviewId}) that they did not write.`)
-        }
-
         // 4. Review(:review_id) is on Paper(:paper_id)
         if ( existing.paper_id != paperId) {
             throw new ControllerError(400, 'id-mismatch', 
@@ -711,7 +618,7 @@ module.exports = class ReviewController {
         // 5. Review(:review_id) is in progress.
         if (existing.review_status != 'in-progress' ) {
             throw new ControllerError(400, 'not-in-progress',
-                `User(${userId}) attempted to PUT Review(${reviewId}), but it was not in progress.`)
+                `User(${currentUser?.id}) attempted to DELETE Review(${reviewId}), but it was not in progress.`)
         }
 
         /********************************************************
@@ -746,16 +653,13 @@ module.exports = class ReviewController {
      * @returns {Promise}   Resolves to void.
      */
     async postThreads(request, response) {
-        const paperId = request.params.paper_id
-        const reviewId = request.params.review_id
-
         /*************************************************************
          * Permissions Checking and Input Validation
          *
          * To call this endpoint you must:
          *
          * 1. Be logged in.
-         * 2. Be the author of Review(:review_id)
+         * 2. Have 'create' on Review:thread for Review(:review_id).
          *
          * Then we need to do basic data validation: 
          *
@@ -772,15 +676,23 @@ module.exports = class ReviewController {
          * 5. Review(:review_id) is in progress.
          *
          * ***********************************************************/
+        const paperId = request.params.paper_id
+        const reviewId = request.params.review_id
+
+        const currentUser = request.session.user
 
         // 1. Be logged in.
         // Have to be authenticated to add a comment thread to a review.
-        if ( ! request.session.user ) {
+        if ( ! currentUser ) {
             throw new ControllerError(401, 'not-authenticated', 
                 `Unauthenticated user attempted to POST review thread on Paper(${review.paperId}).`)
         }
 
-        const userId = request.session.user.id
+        const canCreateThread = await this.permissionService.can(currentUser, 'create', 'Review:thread', { paperId: paperId, reviewId: reviewId })
+        if ( ! canCreateThread ) {
+            throw new ControllerError(403, 'not-authorized',
+                `User(${currentUser.id}) attempted to create a thread on Review(${reviewId}) without permission.`)
+        }
 
         const existingResults = await this.database.query(`
             SELECT 
@@ -799,12 +711,6 @@ module.exports = class ReviewController {
 
         const existing = existingResults.rows[0]
 
-        // 2. Be the author of Review(:review_id)
-        if ( existing.review_userId != userId ) {
-            throw new ControllerError(403, 'not-authorized',
-                `User(${userId}) attempting to add comment thread to Review(${reviewId}) when not authorized.`)
-        }
-
         // 4. Review(:review_id) is on Paper(:paper_id)
         if ( ! existing.paper_id == paperId) {
             throw new ControllerError(400, 'id-mismatch',
@@ -814,7 +720,7 @@ module.exports = class ReviewController {
         // 5. Review(:review_id) is in progress
         if ( existing.review_status != 'in-progress') {
             throw new ControllerError(400, 'not-in-progress',
-                `User(${userId}) attempting to add a new thread to Review(${reviewId}) after it has been submitted.`)
+                `User(${currentUser.id}) attempting to add a new thread to Review(${reviewId}) after it has been submitted.`)
         }
 
         /********************************************************
@@ -844,8 +750,9 @@ module.exports = class ReviewController {
                 `Failed to find review ${reviewId} after inserting new threads.`)
         }
 
-        this.reviewDAO.selectVisibleComments(userId, results.dictionary)
-        results.relations = await this.getRelations(request.session.user, results)
+        // TODO 
+        this.reviewDAO.selectVisibleComments(currentUser.id, results.dictionary)
+        results.relations = await this.getRelations(currentUser, results)
 
         return response.status(200).json({ entity: results.dictionary[reviewId], threadIds: threadIds, relations: results.relations })
     }
